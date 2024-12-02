@@ -1,0 +1,15 @@
+[tool.pytest.ini_options]
+minversion = 7.0
+# durations=0 will display all tests execution time, sorted in ascending order starting from from the slowest one.
+# -vv will also display tests with durration = 0.00s
+addopts = [
+    "--cache-clear",
+    "--quiet",
+    "--durations=0",
+    "--cov=launcher/",
+    # uncomment this line to see a detailed HTML test coverage report instead of the usual summary table output to stdout.
+    # "--cov-report=html",
+    "tests/",
+]
+testpaths = ["tests"]
+norecursedirs = [".eggs", ".pytest_cache", "*.egg-info", ".git", "build"]

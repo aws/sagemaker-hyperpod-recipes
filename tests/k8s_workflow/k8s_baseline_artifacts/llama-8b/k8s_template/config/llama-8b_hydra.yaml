@@ -1,0 +1,85 @@
+run:
+  name: llama-8b
+  results_dir: {$results_dir}/llama-8b
+  time_limit: 6-00:00:00
+  model_type: hf
+trainer:
+  devices: 8
+  num_nodes: 4
+  accelerator: gpu
+  precision: bf16
+  max_steps: 50
+  log_every_n_steps: 10
+exp_manager:
+  exp_dir: /fsx/exp/
+  name: my_experiment
+  create_tensorboard_logger: true
+  create_checkpoint_callback: true
+  checkpoint_callback_params:
+    save_top_k: 10
+use_smp_model: true
+distributed_backend: smddp
+model:
+  model_type: llama_v3
+  train_batch_size: 4
+  val_batch_size: 1
+  tensor_model_parallel_degree: 1
+  expert_model_parallel_degree: 1
+  moe: false
+  sequence_parallel: true
+  activation_checkpointing: true
+  activation_loading_horizon: 2
+  delayed_param: true
+  offload_activations: false
+  use_smp_model_flash_attn: false
+  seed: 12345
+  grad_clip: 1.0
+  hf_pretrained_model: null
+  sharding_strategy: hybrid_shard
+  forward_prefetch: true
+  shard_degree: 16
+  backward_fetch_policy: backward_pre
+  auto_wrap_policy: transformer_auto_wrap_policy
+  limit_all_gathers: true
+  use_orig_param: false
+  max_context_width: 2048
+  max_position_embeddings: 2048
+  num_hidden_layers: 8
+  hidden_size: 4096
+  num_attention_heads: 32
+  llama_intermediate_size: 14336
+  initializer_range: 0.02
+  layernorm_epsilon: 1.0e-05
+  vocab_size: 32000
+  num_key_value_heads: 8
+  transformer_engine: true
+  fp8: false
+  fp8_amax_history_len: 1024
+  fp8_amax_compute_algo: max
+  do_finetune: false
+  finetune_with_pretrained_weights: false
+  pretrained_model_weights: null
+  precision: bf16
+  lr_decay_iters: 47683
+  log_reduced_training_loss: true
+  optim:
+    name: adamw
+    lr: 0.0001
+    weight_decay: 0.01
+    betas:
+    - 0.9
+    - 0.95
+    sched:
+      name: CosineAnnealing
+      warmup_steps: 0
+      constant_steps: 0
+      min_lr: 0.000001
+  data:
+    train_dir: <path>/<to>/<data>
+    val_dir: null
+    dataset_type: gpt
+    use_synthetic_data: false
+    zipped_data: true
+cluster_type: k8s
+launcher_scripts_path: {$workspace_dir}/launcher/nemo/nemo_framework_launcher/launcher_scripts/
+data_config: llama-8b
