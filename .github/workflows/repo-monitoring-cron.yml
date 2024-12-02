@@ -1,0 +1,69 @@
+name: Repository Monitoring
+
+on:
+  schedule:
+    - cron: '0 16 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+
+jobs:
+  check-pr-alerts:
+    runs-on: ubuntu-latest
+    if: github.event.repository.visibility == 'public'
+    timeout-minutes: 10
+    outputs:
+      pr_count: ${{ steps.pr-count.outputs.count }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Check for open PRs
+        id: pr-count
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          pr_count=$(gh pr list --state open --limit 1000 | wc -l)
+          echo "count=$pr_count" >> $GITHUB_OUTPUT
+
+  check-issue-alerts:
+    runs-on: ubuntu-latest
+    if: github.event.repository.visibility == 'public'
+    timeout-minutes: 10
+    outputs:
+      issue_count: ${{ steps.issue-count.outputs.count }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Check for open issues
+        id: issue-count
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          issue_count=$(gh issue list --state open --limit 1000 | wc -l)
+          echo "count=$issue_count" >> $GITHUB_OUTPUT
+
+  put-metric-data:
+    runs-on: ubuntu-latest
+    if: github.event.repository.visibility == 'public'
+    timeout-minutes: 10
+    needs: [check-pr-alerts, check-issue-alerts]
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.RUNNER_ROLE_ARN }}
+          role-session-name: repo-monitoring-cron-session
+          aws-region: us-west-2
+
+      - name: Put PR Alert Metric Data
+        run: |
+          aws cloudwatch put-metric-data --metric-name PRAlert --namespace RepoMetrics --value ${{ needs.check-pr-alerts.outputs.pr_count }} --unit Count --dimensions ProjectName=sagemaker-hyperpod-recipes
+
+      - name: Put Issue Alert Metric Data
+        run: |
+          aws cloudwatch put-metric-data --metric-name IssueAlert --namespace RepoMetrics --value ${{ needs.check-issue-alerts.outputs.issue_count }} --unit Count --dimensions ProjectName=sagemaker-hyperpod-recipes

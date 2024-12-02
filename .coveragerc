@@ -1,0 +1,8 @@
+[run]
+# Exclude submodule directory from coverage
+omit =
+    launcher/nemo/nemo_framework_launcher/*
+    template/*
+
+[report]
+fail_under = 85

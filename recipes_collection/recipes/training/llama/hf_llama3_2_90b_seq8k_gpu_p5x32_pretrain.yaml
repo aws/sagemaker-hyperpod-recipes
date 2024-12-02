@@ -1,0 +1,108 @@
+# Original Copyright (c), NVIDIA CORPORATION. Modifications © Amazon.com
+
+run:
+  name: llama3.2-90b
+  results_dir: ${base_results_dir}/${.name}
+  time_limit: "6-00:00:00"
+  model_type: hf # huggingface for our recipes
+
+trainer:
+  devices: 8
+  num_nodes: 32
+  accelerator: gpu
+  precision: bf16
+  max_steps: 50
+  log_every_n_steps: 1
+
+  val_check_interval: 1
+  accumulate_grad_batches: 1
+  gradient_clip_val: 1.0
+
+
+exp_manager:
+  exp_dir: null
+  name: experiment
+  create_tensorboard_logger: True
+  create_checkpoint_callback: True
+  checkpoint_callback_params:
+    # Set save_top_k = 0 to disable sharded checkpointing
+    save_top_k: 0
+    every_n_train_steps: 10
+    monitor: "step"
+    mode: "max"
+    save_last: False
+  checkpoint_dir: ${..exp_manager.exp_dir}/checkpoints/
+  resume_from_checkpoint: null
+  # Set auto_checkpoint = False to disable auto resilience checkpointing
+  auto_checkpoint:
+    enabled: False
+  export_full_model:
+    # Set every_n_train_steps = 0 to disable full checkpointing
+    every_n_train_steps: 0
+    save_last: False
+
+
+use_smp_model: False #enable SMP
+distributed_backend: nccl
+
+
+# Start training from pretrained model
+model:
+  model_type: llama_v3
+  do_finetune: False
+  hf_model_name_or_path: "meta-llama/Llama-3.2-90B-Vision-Instruct"
+  hf_access_token: null
+  train_batch_size: 1
+  seed: 12345
+  grad_clip: 1.0
+  use_flash_attention: True
+  activation_checkpointing: True
+  multi_modal: True
+  delayed_param: True
+
+  # FSDP Configs
+  sharding_strategy: hybrid_shard
+  forward_prefetch: True
+  shard_degree: 256
+  backward_fetch_policy: backward_pre
+  auto_wrap_policy: transformer_auto_wrap_policy
+  limit_all_gathers: true
+  use_orig_param: False
+
+  # model architecture
+  max_context_width: 8192
+  precision: bf16
+  lr_decay_iters: 47683
+  log_reduced_training_loss: True
+
+  # PEFT
+  peft:
+    peft_type: null # lora
+
+  # Optimizer
+  optim:
+    name: adamw
+    lr: 2e-4
+    weight_decay: 0.01
+    betas:
+    - 0.9
+    - 0.98
+    sched:
+      name: CosineAnnealing
+      warmup_steps: 500
+      constant_steps: 0
+      min_lr: 2e-5
+
+  # Data
+  data:
+    train_dir: null
+    val_dir: null
+    dataset_type: hf
+    use_synthetic_data: False
+    tokenizer_name: null
+    zipped_data: False
+
+  # Profiling configs
+  # Viztracer profiling options
+  viztracer:
+    enabled: false

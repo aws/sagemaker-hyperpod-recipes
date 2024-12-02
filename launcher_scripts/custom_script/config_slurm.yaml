@@ -1,0 +1,50 @@
+# Original Copyright (c), NVIDIA CORPORATION. Modifications © Amazon.com
+
+defaults:
+  - override hydra/job_logging: stdout
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+git:
+  repo_url_or_path: null
+  branch: null
+  commit: null
+  token: null
+
+training_cfg:
+
+  entry_script: null # Path to the entry script of training/fine-tuning. This path should be inside container or relative path in git repo
+  # script_args:
+  #   - "--some_args" : "debug"
+  #   - "--some_other_args" : 1
+  run:
+    name: test_custom # Current run name
+    nodes: 2 # Number of nodes to use for current training
+    ntasks_per_node: 8 # Number of devices to use per node
+
+cluster:
+  #Example slurm cluster
+
+  cluster_type: slurm
+  instance_type: p5.48xlarge
+  cluster_config:
+    exclusive: True
+    job_name_prefix: testcustom_slurm_
+    slurm_create_submission_file_only: False # Setting to True if just want to create submission file
+    srun_args:
+      # - "--no-container-mount-home"
+
+base_results_dir: null  # Location to store the results, checkpoints and logs.
+container_mounts: # List of additional paths to mount to container. They will be mounted to same path.
+  - null
+container: null # container to use
+slurm_docker_cfg: # Will only be used with docker on slurm
+  docker_args:
+    # - "--runtime=nvidia" # this is required if the docker runtime version is low
+  post_launch_commands: # commands will run after launching the docker container using bash
+
+env_vars:
+  NCCL_DEBUG: DEBUG # Logging level for NCCL. Set to "INFO" for debug information

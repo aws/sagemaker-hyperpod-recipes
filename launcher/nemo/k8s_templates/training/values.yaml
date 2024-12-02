@@ -1,0 +1,83 @@
+image:
+  # training image
+  trainingImage: cfg.container
+
+  # image pulling policy
+  pullPolicy: IfNotPresent
+
+
+trainingConfig:
+  # current job name
+  jobName: "nil"
+
+  # namespace to launch job
+  namespace: "default"
+
+  # script path
+  scriptPath: null
+
+  # script args
+  scriptArgs: null
+
+  # specify whether to use custom scripts
+  customScript: null
+
+  # list of custom annotations apply to jobs
+  annotations: null
+
+  # list of custom labels apply to jobs and pods
+  customLabels: null
+
+  # Kueue scheduler priority class name
+  priority_class_name: null
+
+  # device type, can be "gpu", "trainium" and "nil", "nil" means cpu
+  device: "nil"
+
+  # number of EFA devices if the instance type support EFA
+  numEFADevices: 0
+
+  # number of Neuron devices if job is for Trainium
+  numNeuronDevices: null
+
+  # number of process per node
+  ntasksPerNode: 0
+
+  # number of nodes to run
+  nodes: training.trainer.num_nodes
+
+  # restart policy
+  restartPolicy: Never
+
+  # from NeMo, not used currently
+  wandbKey: "nil"
+
+  # name of service account associated with the namespace
+  serviceAccountName: null
+
+  # relevant for Trainium chips, either 0 or 1
+  compile: 0
+
+  # persistent volume, usually used to mount FSx
+  persistentVolumeClaims: null
+
+  # temp volume, usually used to mount temp file in the host
+  volumes: null
+
+  # A github repo if user might want to use script inside
+  git:
+    repo_url_or_path: null
+    branch: null
+    commit: null
+    token: null
+
+  # Commands to run before training
+  pre_script: []
+  # Commands to run after training
+  post_script: []
+
+  # select preferred and required labels for nodes
+  labelSelector:
+    required: null # select nodes with required labels
+    preferred: null # select nodes with priority which has preferred labels
+    weights: null # list of weights for the preferred labels
