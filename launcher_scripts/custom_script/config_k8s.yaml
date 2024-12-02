@@ -1,0 +1,98 @@
+# Original Copyright (c), NVIDIA CORPORATION. Modifications © Amazon.com
+
+defaults:
+  - override hydra/job_logging: stdout
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+
+git:
+  repo_url_or_path: null
+  branch: null
+  commit: null
+  token: null
+
+training_cfg:
+
+  entry_script: ??? # Path to the entry script of training/fine-tuning. This path should be inside container or relative path in git repo
+  script_args:
+    - "--some_args" : "debug"
+    - "--some_other_args" : 1
+  run:
+    name: test_custom # Current run name
+    nodes: 8 # Number of nodes to use for current training
+    ntasks_per_node: 8 # Number of devices to use per node
+
+cluster:
+  # Example k8s cluster
+  cluster_type: k8s
+  instance_type: ???
+  cluster_config:
+    namespace: default # the namespace to submit job
+    # create customized labels for the PytorchJob and Pods deployed jobs.
+    # Example:
+    #   custom_labels:
+    #     label-key-1: label-value-1
+    #     label-key-2: label-value-2
+    custom_labels: null
+    # create customized annotations for the jobs.
+    # Example:
+    #   annotations:
+    #     annotation-key-1: annotation-value-1
+    #     annotation-key-2: annotation-value-2
+    annotations: null
+    # add service account to job pods
+    # Example:
+    #  serviceAccountName: service_account
+    service_account_name: null
+    # priorityClassName for Kueue scheduler to decide jobs priority
+    priority_class_name: null
+    # Create k8s NodeAffinity to select nodes to deploy jobs which matches required and preferred labels
+    # Structure:
+    #   label_selector:
+    #     required: <required label key-values pair>
+    #     preferred: <preferred label key-values pair>
+    #     weights: <weights list used by preferred labels to get nodes priority>
+    # Example:
+    #   label_selector:
+    #     required:
+    #       example-label-key:
+    #         - expected-label-value-1
+    #         - expected-label-value-2
+    #     preferred:
+    #       preferred-label-key:
+    #         - preferred-label-value-1
+    #         - preferred-label-value-2
+    #     weights:
+    #       - 100
+    label_selector: null
+    # persistent volume, usually used to mount FSx
+    # Example:
+    # persistent_volume_claims:
+    #       - claimName: null
+    #         mountPath: null
+    #       - claimName: null
+    #         mountPath: null
+    persistent_volume_claims: null
+
+# temp volume: usually used to mount temp directory
+# Example:
+#  volumes:
+#    - volumeName: data1
+#      hostPath: "/data"
+#      mountPath: "/data"
+
+    volumes: null
+
+    pullPolicy: Always # policy to pull container, can be Always, IfNotPresent and Never
+    restartPolicy: Never # restart policy
+
+base_results_dir: ???  # Location to store the results, checkpoints and logs.
+container_mounts: # List of additional paths to mount to container. They will be mounted to same path.
+  - null
+container: ??? # container to use
+
+env_vars:
+  NCCL_DEBUG: DEBUG # Logging level for NCCL. Set to "INFO" for debug information

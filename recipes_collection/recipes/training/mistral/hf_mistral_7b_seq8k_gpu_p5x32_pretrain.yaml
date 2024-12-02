@@ -1,0 +1,127 @@
+# Original Copyright (c), NVIDIA CORPORATION. Modifications © Amazon.com
+
+run:
+  name: mistral
+  results_dir: ${base_results_dir}/${.name}
+  time_limit: "6-00:00:00"
+  model_type: hf # huggingface for our recipes
+
+
+trainer:
+  devices: 8
+  num_nodes: 32
+  accelerator: gpu
+  precision: bf16
+  max_steps: 50
+  log_every_n_steps: 1
+  val_check_interval: 1
+  limit_val_batches: 0 # Number of batches per each validation run, set to 0 to disable validation.
+
+
+exp_manager:
+  exp_dir: null
+  name: experiment
+  create_tensorboard_logger: True
+  create_checkpoint_callback: True
+  checkpoint_callback_params:
+    # Set save_top_k = 0 to disable sharded checkpointing
+    save_top_k: 0
+    every_n_train_steps: 10
+    monitor: "step"
+    mode: "max"
+    save_last: False
+  checkpoint_dir: ${recipes.exp_manager.exp_dir}/checkpoints/
+  resume_from_checkpoint: null
+  # Set auto_checkpoint = False to disable auto resilience checkpointing
+  auto_checkpoint:
+    enabled: False
+  export_full_model:
+    # Set every_n_train_steps = 0 to disable full checkpointing
+    every_n_train_steps: 0
+    save_last: True
+
+use_smp_model: True # Enable sagemaker model parallelism
+distributed_backend: nccl
+
+# Start training from pretrained model
+model:
+  model_type: mistral
+
+  train_batch_size: 2
+  val_batch_size: 1
+  tensor_model_parallel_degree: 2
+  expert_model_parallel_degree: 1
+  moe: False
+  activation_checkpointing: False
+  activation_loading_horizon: 1
+  delayed_param: True
+  offload_activations: False
+  seed: 12345
+  grad_clip: 1.0
+
+
+  # FSDP Configs
+  sharding_strategy: hybrid_shard
+  forward_prefetch: True
+  shard_degree: 64
+  backward_fetch_policy: backward_pre
+  auto_wrap_policy: transformer_auto_wrap_policy
+  limit_all_gathers: true
+  use_orig_param: False
+
+  # model architecture
+  max_context_width: 8192
+  max_position_embeddings: ${.max_context_width}
+  num_hidden_layers: 32
+  hidden_size: 4096
+  num_attention_heads: 32
+  intermediate_size: 14336
+  initializer_range: 0.02
+  layernorm_epsilon: 1e-5
+  vocab_size: 32000
+  num_key_value_heads: 8
+  use_flash_attention: True
+  mistral_sliding_window: 4096
+  rms_norm_eps: 1e-5
+  rope_theta: 1000000.0
+
+  # Transformer Engine
+  fp8: True
+  fp8_amax_history_len: 1024
+  fp8_amax_compute_algo: max
+
+  # finetune
+  do_finetune: False
+
+  hf_model_name_or_path: null
+
+  precision: ${recipes.trainer.precision}
+
+  lr_decay_iters: ${recipes.trainer.max_steps}
+
+  log_reduced_training_loss: True
+
+  # Optimizer
+  optim:
+    name: adamw
+    lr: 0.0001
+    weight_decay: 0.01
+    betas:
+    - 0.9
+    - 0.95
+    sched:
+      name: CosineAnnealing
+      warmup_steps: 0
+      constant_steps: 0
+      min_lr: 0.000001
+
+  # Data
+  data:
+    train_dir: null
+    val_dir: null
+    dataset_type: hf
+    use_synthetic_data: False
+
+  # Viztracer
+  viztracer:
+    enabled: false

@@ -1,0 +1,80 @@
+run:
+  name: llama3.2-11b
+  results_dir: /var/folders/6w/nm79zb595ll18wyj6czl6gfm0000gq/T/tmp1nal2g5n/llama3.2-11b
+  time_limit: 6-00:00:00
+  model_type: hf
+trainer:
+  devices: 8
+  num_nodes: 4
+  accelerator: gpu
+  precision: bf16
+  max_steps: 50
+  log_every_n_steps: 1
+  val_check_interval: 100
+  accumulate_grad_batches: 1
+  gradient_clip_val: 1.0
+exp_manager:
+  exp_dir: null
+  name: experiment
+  create_tensorboard_logger: true
+  create_checkpoint_callback: true
+  checkpoint_callback_params:
+    save_top_k: 0
+    every_n_train_steps: 10
+    monitor: step
+    mode: max
+  checkpoint_dir: None/checkpoints/
+  resume_from_checkpoint: null
+  auto_checkpoint:
+    enabled: false
+  export_full_model:
+    every_n_train_steps: 0
+    save_last: false
+use_smp_model: false
+distributed_backend: nccl
+model:
+  model_type: llama_v3
+  do_finetune: false
+  hf_model_name_or_path: meta-llama/Llama-3.2-11B-Vision-Instruct
+  hf_access_token: null
+  train_batch_size: 1
+  seed: 12345
+  grad_clip: 1.0
+  use_flash_attention: true
+  activation_checkpointing: true
+  multi_modal: true
+  delayed_param: false
+  sharding_strategy: hybrid_shard
+  forward_prefetch: true
+  shard_degree: 32
+  backward_fetch_policy: backward_pre
+  auto_wrap_policy: transformer_auto_wrap_policy
+  limit_all_gathers: false
+  use_orig_param: false
+  max_context_width: 8192
+  precision: bf16
+  lr_decay_iters: 47683
+  log_reduced_training_loss: true
+  peft:
+    peft_type: null
+  optim:
+    name: adamw
+    lr: 0.0002
+    weight_decay: 0.01
+    betas:
+    - 0.9
+    - 0.98
+    sched:
+      name: CosineAnnealing
+      warmup_steps: 500
+      constant_steps: 0
+      min_lr: 2.0e-05
+  data:
+    train_dir: null
+    val_dir: null
+    dataset_type: hf
+    use_synthetic_data: false
+    tokenizer_name: null
+    zipped_data: false
+  viztracer:
+    enabled: false

@@ -1,0 +1,27 @@
+# log and data files
+trace
+.DS_Store
+.hydra
+.bash_history.local
+results/
+outputs/
+tmp/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+**.pyc
+core.*
+
+# Unit test / coverage reports
+coverage_html_report/
+.coverage
+.coverage.*
+.cache
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Playground area
+mypg/
