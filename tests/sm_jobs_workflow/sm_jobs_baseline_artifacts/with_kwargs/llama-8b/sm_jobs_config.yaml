@@ -1,0 +1,17 @@
+output_path: s3://test_path
+tensorboard_config:
+  output_path: null
+  container_logs_path: null
+wait: true
+inputs:
+  s3:
+    train: s3://test_path
+    val: s3://test_path
+  file_system:
+    id: null
+    type: null
+    directory_path: null
+additional_estimator_kwargs:
+  max_run: 1800
+  enable_remote_debug: true
+recipe_overrides: null

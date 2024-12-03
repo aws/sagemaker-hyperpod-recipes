@@ -1,0 +1,177 @@
+{{ $config := .Values.trainingConfig }}
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  name: {{ $config.jobName }}
+  namespace: {{ $config.namespace }}
+  {{- if $config.annotations }}
+  annotations:
+    {{- range $key, $value := $config.annotations }}
+    {{ $key | quote }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  labels:
+    app: {{ $config.jobName }}
+    {{- if $config.customLabels }}
+    {{- range $key, $value := $config.customLabels }}
+    {{ $key | quote }}: {{ $value | quote }}
+    {{- end}}
+    {{- end }}
+spec:
+  pytorchReplicaSpecs:
+    Worker:
+      replicas: {{ $config.nodes }}
+      template:
+        {{- if $config.customLabels }}
+        metadata:
+          labels:
+            {{- range $key, $value := $config.customLabels }}
+            {{ $key | quote }}: {{ $value | quote }}
+            {{- end }}
+        {{- end }}
+        spec:
+          {{- if $config.priorityClassName }}
+          priorityClassName: {{ $config.priorityClassName }}
+          {{- end}}
+          {{- if $config.serviceAccountName }}
+          serviceAccountName: {{ $config.serviceAccountName }}
+          {{- end }}
+          containers:
+          - name: pytorch
+            image: {{ .Values.image.trainingImage }}
+            env:
+              {{- range $key, $value := $config.envVars }}
+              - name: {{ $key }}
+                value: {{ $value | quote }}
+              {{- end}}
+            command:
+            - /etc/config/train-script.sh
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            securityContext:
+              capabilities:
+                add: [ "IPC_LOCK" ]
+            {{- if or (eq $config.device "gpu") (eq $config.device "trainium") (gt (int $config.numEFADevices) 0 ) }}
+            resources:
+              requests:
+                {{- if eq $config.device "gpu" }}
+                nvidia.com/gpu: {{ $config.ntasksPerNode }}
+                {{- end }}
+                {{- if eq $config.device "trainium" }}
+                aws.amazon.com/neurondevice: {{ $config.numNeuronDevices }}
+                {{- end }}
+                {{- if gt (int $config.numEFADevices) 0 }}
+                vpc.amazonaws.com/efa: {{ $config.numEFADevices }}
+                {{- end }}
+              limits:
+                {{- if eq $config.device "gpu" }}
+                nvidia.com/gpu: {{ $config.ntasksPerNode }}
+                {{- end }}
+                {{- if eq $config.device "trainium" }}
+                aws.amazon.com/neurondevice: {{ $config.numNeuronDevices }}
+                {{- end }}
+                {{- if gt (int $config.numEFADevices) 0 }}
+                vpc.amazonaws.com/efa: {{ $config.numEFADevices }}
+                {{- end }}
+            {{- end }}
+            volumeMounts:
+            {{- if $config.persistentVolumeClaims }}
+            {{- range $config.persistentVolumeClaims }}
+            - mountPath: {{ .mountPath }}
+              name: {{ .claimName }}-volume
+            {{- end }}
+            {{- end }}
+            {{- if $config.volumes }}
+            {{- range $config.volumes }}
+            - name: {{ .volumeName }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- end }}
+            {{- if not $config.customScript }}
+            - mountPath: /config
+              name: training-config
+            {{- end }}
+            - mountPath: /etc/config
+              name: train-script
+            - mountPath: /dev/shm
+              name: shm
+            - mountPath: /var/log/aws/clusters
+              name: aws-clusters-logs
+              readOnly: true
+          restartPolicy: {{ $config.restartPolicy }}
+
+          {{- if (or $config.labelSelector.required $config.labelSelector.preferred) }}
+          affinity:
+            nodeAffinity:
+            {{- if $config.labelSelector.required }}
+              {{- range $key, $values := $config.labelSelector.required }}
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                    - key: {{ $key | quote }}
+                      operator: In
+                      values:
+                        {{- range $values }}
+                        - {{ . | quote }}
+                        {{- end}}
+              {{- end }}
+            {{- end }}
+
+            {{- if $config.labelSelector.preferred }}
+              {{- $index := 0 }}
+              {{- range $key, $values := $config.labelSelector.preferred }}
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: {{ index $config.labelSelector.weights $index }}
+                  preference:
+                    matchExpressions:
+                      - key: {{ $key | quote }}
+                        operator: In
+                        values:
+                          {{- range $values }}
+                          - {{ . | quote }}
+                          {{- end }}
+              {{- $index = add $index 1 }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+
+          volumes:
+          {{- if $config.persistentVolumeClaims }}
+          {{- range $config.persistentVolumeClaims }}
+          - name: {{ .claimName }}-volume
+            persistentVolumeClaim:
+              claimName: {{ .claimName }}
+          {{- end }}
+          {{- end }}
+          {{- if $config.volumes }}
+          {{- range $config.volumes }}
+            - name: {{ .volumeName }}
+              hostPath:
+                path: {{ .hostPath }}
+                type: Directory
+          {{- end }}
+          {{- end }}
+          {{- if not $config.customScript }}
+          - configMap:
+              name: training-config-{{ $config.jobName }}
+            name: training-config
+          {{- end }}
+          - name: shm
+            hostPath:
+              path: /dev/shm
+              type: Directory
+          - name: aws-clusters-logs
+            hostPath:
+              path: /var/log/aws/clusters
+              type: DirectoryOrCreate
+          - name: train-script
+            configMap:
+              defaultMode: 420
+              items:
+              - key: train-script.sh
+                mode: 365
+                path: train-script.sh
+              {{- if eq $config.device "trainium" }}
+              name: train-script-trn-{{ $config.jobName }}
+              {{- else }}
+              name: train-script-gpu-{{ $config.jobName }}
+              {{- end }}

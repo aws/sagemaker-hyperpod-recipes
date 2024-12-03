@@ -1,0 +1,44 @@
+image:
+  trainingImage: test_container
+  pullPolicy: Always
+trainingConfig:
+  jobName: test_custom
+  namespace: default
+  scriptPath: test.py
+  scriptArgs: '--some_args debug --some_other_args 1 '
+  customScript: true
+  annotations: null
+  customLabels: null
+  priority_class_name: null
+  device: gpu
+  numEFADevices: 32
+  numNeuronDevices: null
+  ntasksPerNode: 8
+  nodes: 8
+  restartPolicy: Never
+  wandbKey: nil
+  serviceAccountName: null
+  compile: 0
+  persistentVolumeClaims: null
+  volumes: null
+  git:
+    repo_url_or_path: https://github.com/example
+    branch: null
+    commit: null
+    token: null
+  pre_script: []
+  post_script: []
+  labelSelector:
+    required: null
+    preferred: null
+    weights: null
+  envVars:
+    NCCL_DEBUG: DEBUG
+    NEMO_LAUNCHER_DEBUG: 1
+    CUDA_VISIBLE_DEVICES: 0,1,2,3,4,5,6,7
+    FI_PROVIDER: efa
+    NCCL_SOCKET_IFNAME: ^lo,docker0
+    NCCL_IGNORE_DISABLED_P2P: '1'
+    TORCH_NCCL_ASYNC_ERROR_HANDLING: '1'
+    TORCH_DIST_INIT_BARRIER: '1'
+    CUDA_DEVICE_MAX_CONNECTIONS: '1'
