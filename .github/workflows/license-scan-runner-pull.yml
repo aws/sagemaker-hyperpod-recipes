@@ -1,0 +1,71 @@
+name: Python License Scan CI
+
+on:
+  pull_request:
+    branches:
+      - main # Change to the branch we want to target for PRs
+
+permissions:
+   id-token: write # This is required for requesting the JWT
+   contents: read # This is required for actions/checkout
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive # Checkout submodules as well
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8' # Set python version to 3.8
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22 # Set node version to 22
+
+      - name: Install package dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r launcher/nemo/nemo_framework_launcher/requirements.txt
+          pip install -r requirements.txt
+          pip install pip-licenses
+
+      - name: Run license scanner
+        run: |
+          pip-licenses --with-description --order=license --format=json > LicenseArtifact.txt
+
+      - name: Upload license files as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: LicenseArtifact
+          path: |
+            LicenseArtifact.txt
+          retention-days: 5
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.RUNNER_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - name: Git clone repolinter, get ruleset and run repolinter
+        run: |
+          cd ..
+          git clone https://github.com/todogroup/repolinter.git
+          cd repolinter
+          npm install
+          aws s3 cp --recursive ${{ secrets.REPOLINTER_S3LINK }} ./repolinter-ruleset
+          node ./bin/repolinter.js lint ${{ github.workspace }} -r ./repolinter-ruleset/amazon-ospo-ruleset.json > ${{ github.workspace }}/scanOutput.txt
+
+      - name: Perform license check
+        run: |
+          cd ${{ github.workspace }}
+          aws s3 cp ${{ secrets.LICENSES_S3LINK }} ./ApprovedLicenses.txt
+          chmod +x scripts/licenseChecker.sh
+          ./scripts/licenseChecker.sh

@@ -13,7 +13,6 @@
 # Portions taken from https://github.com/NVIDIA/NeMo-Framework-Launcher, Copyright Nvidia Corporation
 
 
-from ast import literal_eval
 import logging
 import shutil
 from pathlib import Path
@@ -695,13 +694,13 @@ class SMTraining(Training):
         if cluster_parameters.get("namespace", None) is not None:
             values_template.trainingConfig.namespace = cluster_parameters["namespace"]
         if cluster_parameters.get("annotations", None) is not None:
-            values_template.trainingConfig.annotations = literal_eval(cluster_parameters["annotations"])
+            values_template.trainingConfig.annotations = cluster_parameters["annotations"]
         if cluster_parameters.get("priority_class_name", None) is not None:
             values_template.trainingConfig.priorityClassName = cluster_parameters["priority_class_name"]
         if cluster_parameters.get("service_account_name") is not None:
             values_template.trainingConfig.serviceAccountName = cluster_parameters["service_account_name"]
         if cluster_parameters.get("custom_labels", None) is not None:
-            values_template.trainingConfig.customLabels = literal_eval(cluster_parameters["custom_labels"])
+            values_template.trainingConfig.customLabels = cluster_parameters["custom_labels"]
         if cluster_parameters.get("label_selector", None) is not None:
             values_template.trainingConfig.labelSelector = cluster_parameters["label_selector"]
         values_template.trainingConfig.compile = OmegaConf.select(self.cfg, "recipes.run.compile", default=0)

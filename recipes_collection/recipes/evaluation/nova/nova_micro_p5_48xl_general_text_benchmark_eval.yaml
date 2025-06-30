@@ -1,0 +1,19 @@
+run:
+  name: nova-micro-mmlu-eval-job
+  model_type: amazon.nova-micro-v1:0:128k # modifiable
+  model_name_or_path: s3://escrow_bucket/model_location or nova-micro/prod # modifiable
+  replicas: 1 # unmodifiable
+  data_s3_path: ""
+
+evaluation:
+  task: mmlu
+  strategy: zs_cot
+  metric: accuracy
+  subtask: anatomy # optional
+
+# Optional Inference configs
+inference:
+  max_new_tokens: 8196
+  top_k: -1
+  top_p: 1.0
+  temperature: 0

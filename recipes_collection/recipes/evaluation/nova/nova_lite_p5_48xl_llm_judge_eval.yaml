@@ -1,0 +1,17 @@
+run:
+  name: nova-lite-llm-judge-eval-job
+  model_type: amazon.nova-lite-v1:0:300k # unmodifiable
+  model_name_or_path: nova-lite/prod # unmodifiable
+  replicas: 1 # unmodifiable
+  data_s3_path: "" # unmodifiable
+
+evaluation:
+  task: llm_judge # unmodifiable
+  strategy: judge # unmodifiable
+  metric: all # unmodifiable
+
+# Optional Inference configs
+inference:
+  top_k: 50
+  top_p: 1.0
+  temperature: 0

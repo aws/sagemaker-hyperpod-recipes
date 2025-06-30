@@ -123,6 +123,35 @@ All model sources are from Hugging Face.
 | Llama 3   | SFT    | 8b   | 8192            | 1     | ml.trn1.32xlarge  | TRN         | [link](recipes_collection/recipes/fine-tuning/llama/hf_llama3_8b_seq8k_trn1_fine_tuning.yaml) | [link](launcher_scripts/llama/run_hf_llama3_8b_seq8k_trn1_fine_tuning.sh) |
 
 
+### Amazon Nova recipes
+List of Amazon Nova recipes for fine-tuning and evaluation. For more information about how to customize and run Nova models, see [SageMaker AI documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/nova-model.html).
+
+| Model type| Method | Category | Link |
+|----------|----------|----------|----------|
+| amazon.nova-lite-v1:0:300k | Full-Rank DPO | fine-tuning | [Link](recipes_collection/recipes/fine-tuning/nova/nova_lite_p5_gpu_dpo.yaml) |
+| amazon.nova-lite-v1:0:300k | LoRA DPO | fine-tuning |[Link](recipes_collection/recipes/fine-tuning/nova/nova_lite_p5_gpu_lora_dpo.yaml)|
+| amazon.nova-lite-v1:0:300k | LoRA SFT | fine-tuning| [Link](recipes_collection/recipes/fine-tuning/nova/nova_lite_p5_gpu_lora_sft.yaml) |
+| amazon.nova-lite-v1:0:300k | Full-Rank SFT | fine-tuning| [Link](recipes_collection/recipes/fine-tuning/nova/nova_lite_p5_gpu_sft.yaml) |
+| amazon.nova-micro-v1:0:128k | Full-Rank DPO | fine-tuning| [Link](recipes_collection/recipes/fine-tuning/nova/nova_micro_p5_gpu_dpo.yaml) |
+| amazon.nova-micro-v1:0:128k | LoRA DPO | fine-tuning| [Link](recipes_collection/recipes/fine-tuning/nova/nova_micro_p5_gpu_lora_dpo.yaml) |
+| amazon.nova-micro-v1:0:128k | LoRA SFT | fine-tuning| [Link](recipes_collection/recipes/fine-tuning/nova/nova_micro_p5_gpu_lora_sft.yaml) |
+| amazon.nova-micro-v1:0:128k | Full-Rank SFT | fine-tuning| [Link](recipes_collection/recipes/fine-tuning/nova/nova_micro_p5_gpu_sft.yaml) |
+| amazon.nova-pro-v1:0:300k | Full-Rank DPO | fine-tuning| [Link](recipes_collection/recipes/fine-tuning/nova/nova_pro_p5_gpu_dpo.yaml) |
+| amazon.nova-pro-v1:0:300k | LoRA DPO | fine-tuning| [Link](recipes_collection/recipes/fine-tuning/nova/nova_pro_p5_gpu_lora_dpo.yaml) |
+| amazon.nova-pro-v1:0:300k | LoRA SFT | fine-tuning| [Link](recipes_collection/recipes/fine-tuning/nova/nova_pro_p5_gpu_lora_sft.yaml) |
+| amazon.nova-pro-v1:0:300k | Full-Rank SFT | fine-tuning| [Link](recipes_collection/recipes/fine-tuning/nova/nova_pro_p5_gpu_sft.yaml) |
+| amazon.nova-lite-v1:0:300k | Bring your own dataset | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_lite_p5_48xl_bring_your_own_dataset_eval.yaml) |
+|amazon.nova-lite-v1:0:300k | Multi-modal benchmark | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_lite_p5_48xl_general_multi_modal_benchmark_eval.yaml) |
+| amazon.nova-lite-v1:0:300k | General text benchmark | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_lite_p5_48xl_general_text_benchmark_eval.yaml) |
+| amazon.nova-lite-v1:0:300k | LLM judge | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_lite_p5_48xl_llm_judge_eval.yaml) |
+| amazon.nova-micro-v1:0:128k | Bring your own dataset | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_micro_p5_48xl_bring_your_own_dataset_eval.yaml) |
+| amazon.nova-micro-v1:0:128k | General text benchmark | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_micro_p5_48xl_general_text_benchmark_eval.yaml) |
+| amazon.nova-micro-v1:0:128k | LLM judge | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_micro_p5_48xl_llm_judge_eval.yaml) |
+| amazon.nova-pro-v1:0:300k | Bring your own dataset | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_pro_p5_48xl_bring_your_own_dataset_eval.yaml) |
+| amazon.nova-pro-v1:0:300k | Multi-modal benchmark | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_pro_p5_48xl_general_multi_modal_benchmark_eval.yaml) |
+| amazon.nova-pro-v1:0:300k | General text benchmark | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_pro_p5_48xl_general_text_benchmark_eval.yaml) |
+| amazon.nova-pro-v1:0:300k | LLM judge | evaluation | [Link](recipes_collection/recipes/evaluation/nova/nova_pro_p5_48xl_llm_judge_eval.yaml) |
+
 ## Installation
 
 Amazon SageMaker HyperPod recipes should be installed on the head node of your HyperPod cluster or on your local machine with a virtual python environment.

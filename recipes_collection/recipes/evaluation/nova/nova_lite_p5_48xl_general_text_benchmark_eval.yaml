@@ -1,0 +1,19 @@
+run:
+  name: nova-lite-mmlu-eval-job
+  model_type: amazon.nova-lite-v1:0:300k
+  model_name_or_path: s3://escrow_bucket/model_location or nova-lite/prod
+  replicas: 1 # unmodifiable
+  data_s3_path: ""
+
+evaluation:
+  task: mmlu
+  strategy: zs_cot
+  metric: accuracy
+  subtask: anatomy # optional
+
+# Optional Inference configs
+inference:
+  max_new_tokens: 8196
+  top_k: -1
+  top_p: 1.0
+  temperature: 0

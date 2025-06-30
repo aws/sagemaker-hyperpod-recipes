@@ -1,0 +1,18 @@
+run:
+  name: nova-pro-byod-eval-job
+  model_type: amazon.nova-pro-v1:0:300k
+  model_name_or_path: s3://escrow_bucket/model_location or nova-pro/prod
+  replicas: 1 # unmodifiable
+  data_s3_path: ""
+
+evaluation:
+  task: gen_qa # unmodifiable
+  strategy: gen_qa # unmodifiable
+  metric: all # unmodifiable
+
+# Optional Inference configs
+inference:
+  max_new_tokens: 12000
+  top_k: -1
+  top_p: 1.0
+  temperature: 0

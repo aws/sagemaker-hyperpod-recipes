@@ -25,7 +25,6 @@ spec:
   pytorchReplicaSpecs:
     Worker:
       replicas: {{ $config.nodes }}
-      restartPolicy: {{ $config.restartPolicy }}
       template:
         {{- if $config.customLabels }}
         metadata:
@@ -102,6 +101,7 @@ spec:
             - mountPath: /var/log/aws/clusters
               name: aws-clusters-logs
               readOnly: true
+          restartPolicy: {{ $config.restartPolicy }}
 
           {{- if (or $config.labelSelector.required $config.labelSelector.preferred) }}
           affinity:
