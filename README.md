@@ -203,7 +203,7 @@ aws eks update-kubeconfig --region "${CLUSTER_REGION}" --name "${CLUSTER_NAME}"
 launcher_scripts/llama/run_hf_llama3_8b_seq8192.sh
 ```
 
-We recommend that you utilize [HyperPod command-line tool](https://github.com/aws/sagemaker-hyperpod-cli)
+We recommend that you utilize [HyperPod command-line tool](https://github.com/aws/sagemaker-hyperpod-cli/tree/release_v2)
 to launch a training job.
 
 ```
