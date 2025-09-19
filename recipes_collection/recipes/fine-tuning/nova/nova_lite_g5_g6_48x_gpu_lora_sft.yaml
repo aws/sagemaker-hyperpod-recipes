@@ -1,12 +1,12 @@
 # Note:
 # This recipe is currently supported only on Amazon SageMaker training jobs.
-
+# This recipe can run on g5.48xlarge and g6.48xlarge instance types.
 
 ## Run config
 run:
   name: "my-lora-run"             # A descriptive name for your training job
-  model_type: "amazon.nova-micro-v1:0:128k"  # Model variant specification, do not change
-  model_name_or_path: "nova-micro/prod"      # Base model path, do not change
+  model_type: "amazon.nova-lite-v1:0:300k"  # Model variant specification, do not change
+  model_name_or_path: "nova-lite/prod"      # Base model path, do not change
   replicas: 1                     # Number of compute instances for training, allowed value is 1
   data_s3_path: ""                # Customer data path
   output_s3_path: ""              # Output artifact path, Sagemaker Hyperpod job-specific configuration - not compatible with standard Sagemaker Training jobs
