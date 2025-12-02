@@ -10,6 +10,12 @@ The recipes support Amazon SageMaker HyperPod (with Amazon EKS for workload orch
 
 This document provides recipes and guidance for training and fine-tuning models.
 
+## Version History
+
+This repository contains **v2.0.0** of Amazon SageMaker HyperPod recipes, which includes recipes built on the latest training frameworks.
+
+**Looking for v1 recipes?** Please refer to the [v1 branch](../../tree/v1). We recommend using v2 recipes for new projects as they provide improved performance and additional features.
+
 ## Model Support
 
 ### Pre-Training
