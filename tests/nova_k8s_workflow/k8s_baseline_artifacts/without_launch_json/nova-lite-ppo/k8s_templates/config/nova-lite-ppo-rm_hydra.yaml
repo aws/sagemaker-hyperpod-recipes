@@ -1,0 +1,17 @@
+run:
+  name: nova-lite-ppo
+  model_type: amazon.nova-pro-v1:0:300k
+  model_name_or_path: nova-pro/prod
+  data_s3_path: ''
+  output_s3_path: ''
+  actor_generation_replicas: 2
+  display_name: Nova Pro PPO on P5 GPU
+  versions:
+  - '1.0'
+training_config:
+  max_length: 8192
+  trainer:
+    num_nodes: 1
+  model:
+    global_batch_size: 40
+  task_type: ppo_rm

@@ -1,0 +1,176 @@
+image:
+  trainingImage: test_container
+  stormImage: 708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest
+  generationImage: 708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest
+  natsServerImage: 708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest
+  natsReloaderImage: 708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest
+  redis: 708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest
+  pullPolicy: Always
+trainingConfig:
+  namespace: kubeflow
+  annotations: null
+  customLabels: null
+  serviceAccountName: test-service-account
+  jobName: nova-lite-rft
+  region: us-west-2
+  alias: test-user
+  nodeType: p5.48xlarge
+  requiredTolerations:
+  - key: sagemaker.amazonaws.com/RestrictedNode
+    operator: Equal
+    value: Worker
+    effect: NoSchedule
+  restartPolicy: OnFailure
+  priorityClassName: null
+  labelSelector:
+    required:
+      node.kubernetes.io/instance-type:
+      - ml.p5.48xlarge
+      sagemaker.amazonaws.com/instance-group-type:
+      - Restricted
+  envVars:
+    X_AMZ_SOURCE_ACCOUNT: '123456789012'
+    INSTANCE_TYPE: ml.p5.48xlarge
+  initContainer:
+    name: init-container
+    image: 708977205387.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest
+  numEFADevices: 32
+  defaultResources:
+    instanceType: ml.p5.48xlarge
+  training:
+    replicas: 2
+    worker_replicas: 1
+    instanceType: ml.p5.48xlarge
+    nodeSelector: null
+    affinity: null
+    resources:
+      master:
+        requests:
+          nvidia.com/gpu: '8'
+          vpc.amazonaws.com/efa: 32
+        limits:
+          nvidia.com/gpu: '8'
+          vpc.amazonaws.com/efa: 32
+      worker:
+        requests:
+          nvidia.com/gpu: '8'
+          vpc.amazonaws.com/efa: 32
+        limits:
+          nvidia.com/gpu: '8'
+          vpc.amazonaws.com/efa: 32
+    tolerations: []
+  vllmGeneration:
+    replicas: 2
+    instanceType: ml.p5.48xlarge
+    nodeSelector: null
+    affinity: null
+    resources:
+      requests:
+        nvidia.com/gpu: '8'
+        hugepages-2Mi: 20000Mi
+        memory: 1600Gi
+        vpc.amazonaws.com/efa: 32
+      limits:
+        nvidia.com/gpu: '8'
+        hugepages-2Mi: 20000Mi
+        memory: 1600Gi
+        vpc.amazonaws.com/efa: 32
+    tolerations: []
+  hub:
+    replicas: 1
+    instanceType: ml.p5.48xlarge
+    nodeSelector: null
+    affinity: null
+    resources:
+      requests:
+        cpu: '90'
+        ephemeral-storage: 80Gi
+        memory: 720Gi
+      limits:
+        cpu: '90'
+        ephemeral-storage: 80Gi
+        memory: 720Gi
+    tolerations: []
+  prompter:
+    replicas: 1
+    instanceType: ml.p5.48xlarge
+    affinity: null
+    resources:
+      requests:
+        cpu: '5'
+        ephemeral-storage: 50Gi
+        memory: 369Gi
+      limits:
+        cpu: '5'
+        ephemeral-storage: 50Gi
+        memory: 369Gi
+    tolerations: []
+  rbs:
+    replicas: 1
+    instanceType: ml.p5.48xlarge
+    affinity: null
+    resources:
+      requests:
+        cpu: '85'
+        ephemeral-storage: 50Gi
+        memory: 369Gi
+      limits:
+        cpu: '85'
+        ephemeral-storage: 50Gi
+        memory: 369Gi
+    tolerations: []
+  natsServer:
+    replicas: 3
+    instanceType: ml.p5.48xlarge
+    nodeSelector: null
+    affinity: null
+    resources:
+      requests:
+        cpu: '30'
+        ephemeral-storage: 20Gi
+        memory: 256Gi
+      limits:
+        cpu: '30'
+        ephemeral-storage: 20Gi
+        memory: 256Gi
+    tolerations: []
+    config:
+      goMemLimit: 7GiB
+      prometheusPort: 9090
+      httpPort: 8222
+  redis:
+    enabled: false
+    replicas: 1
+    instanceType: ml.p5.48xlarge
+    affinity: null
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: '2'
+        memory: 8Gi
+    tolerations: []
+    maxMemory: 8gb
+    maxMemoryPolicy: allkeys-lru
+    nodeSelector: null
+  volumeMounts: []
+jobList:
+- jobName: nova-lite-rft-training
+  replicas: 2
+  serviceType: training
+- jobName: nova-lite-rft-vllm-generation
+  replicas: 2
+  serviceType: vllm-generation
+- jobName: nova-lite-rft-hub
+  replicas: 1
+  serviceType: hub
+- jobName: nova-lite-rft-nats-bootstrap
+  replicas: 1
+  serviceType: nats-bootstrap
+- jobName: nova-lite-rft-prompter
+  replicas: 1
+  serviceType: prompter
+- jobName: nova-lite-rft-rbs
+  replicas: 1
+  serviceType: rbs

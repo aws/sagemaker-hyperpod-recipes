@@ -1,0 +1,9 @@
+{{ $config := .Values.trainingConfig }}
+{{- $file := .Files.Get (printf "config/%s_hydra.yaml" $config.jobName) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: training-config-{{ $config.jobName }}
+data:
+  config.yaml: |-
+{{ $file | indent 4 }}

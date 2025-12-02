@@ -1,0 +1,170 @@
+image:
+  # RFT images
+  trainingImage: null
+  stormImage: null # Hub service
+  generationImage: null # VLLM generation service
+  # NATS infrastructure images
+  natsServerImage: null
+  natsReloaderImage: null
+  # Redis cache image
+  redis: null
+
+  pullPolicy: Always
+
+trainingConfig:
+  # Base configuration - set by launcher
+  namespace: "namespace_placeholder"
+  annotations: null
+  customLabels: null
+  serviceAccountName: null
+  jobName: null # Set dynamically
+  region: null # Set dynamically
+  alias: null # Set dynamically
+  nodeType: null # Set dynamically
+  requiredTolerations: [] # Set dynamically by launcher
+  restartPolicy: OnFailure # Set dynamically
+  priorityClassName: null # Set from cluster config
+  labelSelector: null # Set dynamically
+
+  # Environment variables and init container
+  envVars: {}
+  initContainer:
+    name: init-container
+    image: null
+
+  # EFA configuration
+  numEFADevices: 0 # Set by launcher
+
+  # Default resources applied to all services unless overridden
+  # These can be overridden in k8s.yaml or recipe files
+  defaultResources:
+    instanceType: "ml.p5.48xlarge"
+
+  # Service configurations - ONLY fields used by Helm templates
+  training:
+    replicas: 2
+    worker_replicas: "{{replicas}}"  # Set by launcher: actual number for runs, "{{replicas}}" for launch.json
+    instanceType: "ml.p5.48xlarge"
+    nodeSelector: null
+    affinity: null
+    resources:
+      master:
+        requests:
+          nvidia.com/gpu: "8"
+          vpc.amazonaws.com/efa: 0 # Set by launcher
+        limits:
+          nvidia.com/gpu: "8"
+          vpc.amazonaws.com/efa: 0 # Set by launcher
+      worker:
+        requests:
+          nvidia.com/gpu: "8"
+          vpc.amazonaws.com/efa: 0 # Set by launcher
+        limits:
+          nvidia.com/gpu: "8"
+          vpc.amazonaws.com/efa: 0 # Set by launcher
+    tolerations: []
+
+  vllmGeneration:
+    replicas: 2
+    instanceType: "ml.p5.48xlarge"
+    nodeSelector: null
+    affinity: null
+    resources:
+      requests:
+        nvidia.com/gpu: "8"
+        hugepages-2Mi: "20000Mi"
+        memory: "1600Gi"
+        vpc.amazonaws.com/efa: 0 # Set by launcher
+      limits:
+        nvidia.com/gpu: "8"
+        hugepages-2Mi: "20000Mi"
+        memory: "1600Gi"
+        vpc.amazonaws.com/efa: 0 # Set by launcher
+    tolerations: []
+
+  hub:
+    replicas: 1
+    instanceType: "ml.p5.48xlarge"
+    nodeSelector: null
+    affinity: null
+    resources:
+      requests:
+        cpu: "90"
+        ephemeral-storage: "80Gi"
+        memory: "720Gi"
+      limits:
+        cpu: "90"
+        ephemeral-storage: "80Gi"
+        memory: "720Gi"
+    tolerations: []
+
+  prompter:
+    replicas: 1
+    instanceType: "ml.p5.48xlarge"
+    affinity: null
+    resources:
+      requests:
+        cpu: "5"
+        ephemeral-storage: "50Gi"
+        memory: "369Gi"
+      limits:
+        cpu: "5"
+        ephemeral-storage: "50Gi"
+        memory: "369Gi"
+    tolerations: []
+
+  rbs:
+    replicas: 1
+    instanceType: "ml.p5.48xlarge"
+    affinity: null
+    resources:
+      requests:
+        cpu: "85"
+        ephemeral-storage: "50Gi"
+        memory: "369Gi"
+      limits:
+        cpu: "85"
+        ephemeral-storage: "50Gi"
+        memory: "369Gi"
+    tolerations: []
+
+  natsServer:
+    replicas: 3
+    instanceType: "ml.p5.48xlarge"
+    nodeSelector: null
+    affinity: null
+    resources:
+      requests:
+        cpu: "30"
+        ephemeral-storage: "20Gi"
+        memory: "256Gi"
+      limits:
+        cpu: "30"
+        ephemeral-storage: "20Gi"
+        memory: "256Gi"
+    tolerations: []
+    config:
+      goMemLimit: "7GiB"
+      prometheusPort: 9090
+      httpPort: 8222
+
+  redis:
+    enabled: false
+    replicas: 1
+    instanceType: "ml.p5.48xlarge"
+    affinity: null
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "8Gi"
+    tolerations: []
+    maxMemory: "8gb"
+    maxMemoryPolicy: "allkeys-lru"
+    nodeSelector: null
+
+  volumeMounts: [] # Additional mounts for prompt-rbs
+
+jobList: [] # Dynamic job list set by launcher

@@ -11,7 +11,7 @@ trainingConfig:
   jobName: "nil"
 
   # namespace to launch job
-  namespace: "default"
+  namespace: "namespace_placeholder"
 
   # list of custom annotations apply to jobs
   annotations: null
@@ -24,7 +24,6 @@ trainingConfig:
 
   # name of service account associated with the namespace
   serviceAccountName: null
-
   # number of GPUs to request
   devices: null
 
@@ -32,10 +31,13 @@ trainingConfig:
   # Hardcoding to 32 as it provides better performance
   numEFADevices: 32
 
+  # Used to enable access to AWS Lambda
+  lambdaAccess: false
+
   # number of nodes to run
   master_nodes: 1
   worker_nodes: 0
-
+  processed_worker_nodes: 0
 
   # restart policy
   restartPolicy: OnFailure

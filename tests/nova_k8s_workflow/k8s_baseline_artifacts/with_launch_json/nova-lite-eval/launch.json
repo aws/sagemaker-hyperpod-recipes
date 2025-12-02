@@ -1,0 +1,179 @@
+{
+  "training-config.yaml": "---\n# Source: sagemaker-training/templates/training-config.yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: training-config-{{name}}\ndata:\n  config.yaml: |-\n    run:\n      name: '{{name}}'\n      model_type: amazon.nova-micro-v1:0:128k\n      model_name_or_path: '{{model_name_or_path}}'\n      replicas: 1\n      data_s3_path: ''\n      output_s3_path: '{{output_s3_path}}'\n      mlflow_tracking_uri: ''\n      mlflow_experiment_name: ''\n      mlflow_run_name: ''\n    evaluation:\n      task: '{{task}}'\n      strategy: '{{strategy}}'\n      metric: '{{metric}}'\n      subtask: '{{subtask}}'\n    inference:\n      max_new_tokens: '{{max_new_tokens}}'\n      top_k: -1\n      top_p: 1.0\n      temperature: 0\n      top_logprobs: 0\n",
+  "training.yaml": "---\n# Source: sagemaker-training/templates/training.yaml\napiVersion: kubeflow.org/v1\nkind: PyTorchJob\nmetadata:\n  name: {{name}}\n  namespace: {{namespace}}\n  annotations:\n    \"annotation_key_1\": \"annotation-value-1\"\n  labels:\n    app: {{name}}\n    \"placeholder\": \"custom_labels\"\nspec:\n  pytorchReplicaSpecs:\n    Master:\n      replicas: 1\n      restartPolicy: OnFailure\n      template:\n        metadata:\n          labels:\n            \"placeholder\": \"custom_labels\"\n        spec:\n          tolerations:\n            - key: \"sagemaker.amazonaws.com/RestrictedNode\"\n              operator: \"Equal\"\n              value: \"Worker\"\n              effect: \"NoSchedule\"\n          hostNetwork: true\n          dnsPolicy: ClusterFirstWithHostNet\n          priorityClassName: test_pc_name\n          serviceAccountName: placeholder_service_account_name\n          initContainers:\n            - name: init-container\n              image: {{init_container_image}}\n              imagePullPolicy: Always\n              volumeMounts:\n              - name: fsx-path-init\n                mountPath: /sagemaker/fsx/init\n              - mountPath: /config\n                name: training-config\n              - mountPath: /var/log/aws/clusters\n                name: logs\n          containers:\n          - name: pytorch\n            image: {{container_image}}\n            env:\n              - name: INSTANCE_TYPE\n                value: \"{{instance_type}}\"\n            imagePullPolicy: Always\n            resources:\n              limits:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n              requests:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n            securityContext:\n              capabilities:\n                add: [ \"IPC_LOCK\" ]\n            volumeMounts:\n            - name: fsx-path-main\n              mountPath: /sagemaker/fsx/main\n            - mountPath: /config\n              name: training-config\n            - mountPath: /dev/shm\n              name: dshm\n            - mountPath: /var/log/aws/clusters\n              name: logs\n            - mountPath: /sagemaker/fsx/output_artifacts\n              name: fsx-path-output-artifacts\n            - name: tmp-storage\n              mountPath: /tmp\n            - name: k8s-ca-cert\n              mountPath: /etc/kubernetes/pki/ca.crt\n              readOnly: true\n          affinity:\n            nodeAffinity:\n              requiredDuringSchedulingIgnoredDuringExecution:\n                nodeSelectorTerms:\n                  - matchExpressions:\n                    - key: \"example_label_key\"\n                      operator: In\n                      values:\n                        - \"expected-label-value-1\"\n                        - \"expected-label-value-2\"\n                    - key: \"node.kubernetes.io/instance-type\"\n                      operator: In\n                      values:\n                        - \"{{instance_type}}\"\n                    - key: \"sagemaker.amazonaws.com/instance-group-type\"\n                      operator: In\n                      values:\n                        - \"Restricted\"\n          volumes:\n            - name: fsx-path-main\n              hostPath:\n                path: /sagemaker/fsx/main\n                type: DirectoryOrCreate\n            - name: fsx-path-init\n              hostPath:\n                path: /sagemaker/fsx/init\n                type: DirectoryOrCreate\n            - configMap:\n                name: training-config-{{name}}\n              name: training-config\n            - name: dshm\n              emptyDir:\n                medium: Memory\n            - name: logs\n              hostPath:\n                path: /var/log/aws/clusters\n                type: DirectoryOrCreate\n            - name: fsx-path-output-artifacts\n              hostPath:\n                path: /sagemaker/fsx/output_artifacts\n                type: DirectoryOrCreate\n            - name: tmp-storage\n              hostPath:\n                path: /opt/dlami/nvme\n                type: Directory\n            - name: k8s-ca-cert\n              hostPath:\n                path: /etc/kubernetes/pki/ca.crt\n                type: File\n",
+  "metadata": {
+    "Name": "nova_micro_1_0_p5_48xl_gpu_general_text_benchmark_eval",
+    "RecipeFilePath": "recipes/evaluation/nova/nova_1_0/nova_micro/nova_micro_1_0_p5_48xl_gpu_general_text_benchmark_eval.yaml",
+    "DisplayName": "Nova Micro General Text Benchmark Evaluation on P5",
+    "DefaultModelNameOrPath": "nova-micro/prod",
+    "nova_model_name": "nova-micro/prod",
+    "Hardware": "GPU",
+    "InstanceTypes": [
+      "ml.p5.48xlarge",
+      "ml.g5.12xlarge",
+      "ml.g5.24xlarge",
+      "ml.g6.12xlarge",
+      "ml.g6.24xlarge"
+    ],
+    "Type": "Evaluation",
+    "EvaluationType": "DeterministicTextBenchmark",
+    "ServerlessMeteringType": "Token-based",
+    "Model_ID": "nova-textgeneration-micro",
+    "Versions": [
+      "1.0.0"
+    ],
+    "OutputConfig": {
+      "SageMakerInferenceRecipeName": "default"
+    },
+    "HostingConfigs": [
+      {
+        "InstanceType": "ml.p5.48xlarge",
+        "Profile": "Default",
+        "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+        "Environment": {
+          "OPTION_ENABLE_LORA": "true",
+          "OPTION_MAX_LORAS": "8",
+          "OPTION_MAX_CPU_LORAS": "64",
+          "OPTION_TENSOR_PARALLEL_DEGREE": "8",
+          "OPTION_ROLLING_BATCH": "disable",
+          "OPTION_MAX_ROLLING_BATCH_SIZE": "1",
+          "OPTION_ASYNC_MODE": "true",
+          "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+          "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "128",
+          "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+        },
+        "ComputeResourceRequirements": {
+          "MinMemoryRequiredInMb": 1024000,
+          "NumberOfCpuCoresRequired": 100,
+          "NumberOfAcceleratorDevicesRequired": 8
+        }
+      }
+    ]
+  },
+  "recipe_override_parameters": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "default": "nova-lite-eval"
+    },
+    "output_s3_path": {
+      "type": "string",
+      "required": true,
+      "default": ""
+    },
+    "task": {
+      "type": "string",
+      "required": true,
+      "default": "mmlu"
+    },
+    "strategy": {
+      "type": "string",
+      "required": true,
+      "default": "zs_cot"
+    },
+    "metric": {
+      "type": "string",
+      "required": true,
+      "default": "accuracy"
+    },
+    "subtask": {
+      "type": "string",
+      "required": false,
+      "default": ""
+    },
+    "max_new_tokens": {
+      "type": "integer",
+      "required": false,
+      "min": 0,
+      "max": 100000,
+      "default": 8196
+    },
+    "namespace": {
+      "type": "string",
+      "required": true,
+      "default": "kubeflow"
+    },
+    "model_name_or_path": {
+      "type": "string",
+      "required": false,
+      "default": "nova-micro/prod"
+    },
+    "max_context_length": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "max": 131072,
+      "default": 8192
+    },
+    "instance_type": {
+      "type": "string",
+      "required": false,
+      "enum": [
+        "ml.p5.48xlarge",
+        "ml.g5.12xlarge",
+        "ml.g5.24xlarge",
+        "ml.g6.12xlarge",
+        "ml.g6.24xlarge"
+      ],
+      "default": "ml.p5.48xlarge"
+    }
+  },
+  "regional_parameters": {
+    "hp_eks_regional_ecr_uri": {
+      "prod": {
+        "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+        "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+      },
+      "gamma": {
+        "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+      }
+    },
+    "init_container_image": {
+      "prod": {
+        "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest",
+        "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/init-container-repo:latest",
+        "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/init-container-repo:latest"
+      },
+      "gamma": {
+        "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest"
+      }
+    },
+    "smtj_regional_ecr_uri": {
+      "prod": {
+        "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+        "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+      },
+      "gamma": {
+        "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+      }
+    }
+  },
+  "training_recipe.json": {
+    "recipes": {
+      "run": {
+        "name": "nova-micro-mmlu-eval-job",
+        "model_type": "amazon.nova-micro-v1:0:128k",
+        "model_name_or_path": "nova-micro/prod",
+        "replicas": 1,
+        "data_s3_path": "",
+        "output_s3_path": "",
+        "mlflow_tracking_uri": "",
+        "mlflow_experiment_name": "",
+        "mlflow_run_name": ""
+      },
+      "evaluation": {
+        "task": "mmlu",
+        "strategy": "zs_cot",
+        "metric": "accuracy",
+        "subtask": ""
+      },
+      "inference": {
+        "max_new_tokens": 8196,
+        "top_k": -1,
+        "top_p": 1.0,
+        "temperature": 0,
+        "top_logprobs": 0
+      }
+    }
+  }
+}

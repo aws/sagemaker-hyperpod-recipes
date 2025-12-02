@@ -1,0 +1,1065 @@
+{
+    "_comment": "Container availability based on AWS Nova recipes documentation https://docs.aws.amazon.com/sagemaker/latest/dg/nova-model-recipes.html#nova-model-recipes-reference. Each container field contains pipeline_stage-region-specific URIs. The regional parameters under 'all' is to be applied to all the recipes.",
+    "all": {
+        "k8s": {
+            "init_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest",
+                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/init-container-repo:latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/init-container-repo:latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest"
+                }
+            }
+        },
+        "sm_jobs": {}
+    },
+    "nova_lite_2_0_p5_gpu_lora_sft": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_2_0_p5_gpu_sft": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_1_0_p5_p4d_gpu_lora_sft": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_1_0_p5_p4d_gpu_sft": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_1_0_p5_p4d_gpu_dpo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_1_0_p5_p4d_gpu_lora_dpo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_1_0_p5_gpu_ppo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+                }
+            },
+            "actor_generation_container_image": {
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+                },
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+                }
+            }
+        },
+        "sm_jobs": {}
+    },
+    "nova_lite_1_0_p5x16_gpu_pretrain": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
+                }
+            }
+        },
+        "sm_jobs": {}
+    },
+    "nova_lite_1_0_p5_48xl_gpu_general_text_benchmark_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_1_0_p5_48xl_gpu_bring_your_own_dataset_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_1_0_p5_48xl_gpu_general_multi_modal_benchmark_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_1_0_g5_g6_12x_gpu_lora_sft": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_1_0_g5_g6_48x_gpu_lora_sft": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_1_0_g5_g6_48x_gpu_lora_dpo": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_g5_12x_gpu_lora_sft": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_p5_p4d_gpu_sft": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_p5_p4d_gpu_lora_sft": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_p5_p4d_gpu_dpo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_p5_p4d_gpu_lora_dpo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_p5_gpu_ppo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+                }
+            },
+            "actor_generation_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+                }
+            }
+        },
+        "sm_jobs": {}
+    },
+    "nova_lite_2_0_p5_gpu_rft": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest"
+                }
+            },
+            "rft_generation_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest"
+                }
+            },
+            "rft_storm_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest"
+                }
+            },
+            "rft_nats_server_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest"
+                }
+            },
+            "rft_nats_reloader_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest"
+                }
+            },
+            "rft_redis_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {}
+    },
+    "nova_lite_2_0_p5_gpu_lora_rft": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest"
+                }
+            },
+            "rft_generation_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest"
+                }
+            },
+            "rft_storm_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest"
+                }
+            },
+            "rft_nats_server_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest"
+                }
+            },
+            "rft_nats_reloader_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest"
+                }
+            },
+            "rft_redis_container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {}
+    },
+    "nova_micro_1_0_p5x8_gpu_pretrain": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
+                }
+            }
+        },
+        "sm_jobs": {}
+    },
+    "nova_micro_1_0_p5_48xl_gpu_general_text_benchmark_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_p5_48xl_gpu_bring_your_own_dataset_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_g5_g6_12x_gpu_lora_sft": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_g5_g6_48x_gpu_lora_sft": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_g5_g6_48x_gpu_sft": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_g5_g6_12x_gpu_lora_dpo": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                }
+            }
+        }
+    },
+    "nova_micro_1_0_g5_g6_48x_gpu_lora_dpo": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                }
+            }
+        }
+    },
+    "nova_pro_1_0_p5_p4d_gpu_lora_sft": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_pro_1_0_p5_gpu_sft": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                }
+            }
+        }
+    },
+    "nova_pro_1_0_p5_gpu_dpo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                }
+            }
+        }
+    },
+    "nova_pro_1_0_p4d_gpu_dpo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                }
+            }
+        }
+    },
+    "nova_pro_1_0_p5_p4d_gpu_lora_dpo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                }
+            }
+        }
+    },
+    "nova_pro_1_0_p5_gpu_ppo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+                }
+            },
+            "actor_generation_container_image": {
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+                },
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+                }
+            }
+        },
+        "sm_jobs": {}
+    },
+    "nova_pro_1_0_p5x24_gpu_pretrain": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
+                }
+            }
+        },
+        "sm_jobs": {}
+    },
+    "nova_pro_1_0_r5_cpu_distill": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST"
+                }
+            }
+        }
+    },
+    "nova_pro_1_0_p5_48xl_gpu_general_text_benchmark_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_pro_1_0_p5_48xl_gpu_bring_your_own_dataset_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_pro_1_0_p5_48xl_gpu_general_multi_modal_benchmark_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_2_0_p5_48xl_gpu_general_text_benchmark_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_2_0_p5_48xl_gpu_general_multi_modal_benchmark_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_2_0_p5_48xl_gpu_bring_your_own_dataset_eval": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_premier_1_0_r5_cpu_distill": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST"
+                },
+                "gamma": {}
+            }
+        }
+    },
+    "nova_lite_2_0_p5x8_gpu_pretrain": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-CPT-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-CPT-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-CPT-V2-latest"
+                }
+            }
+        },
+        "sm_jobs": {}
+    },
+    "nova_lite_v2_smtj_p5_p5en_gpu_lora_rft": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest"
+                }
+            }
+        }
+    },
+    "nova_lite_v2_smtj_p5_p5en_gpu_rft": {
+        "k8s": {},
+        "sm_jobs": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest"
+                }
+            }
+        }
+    }
+}

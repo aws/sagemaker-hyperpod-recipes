@@ -1,0 +1,33 @@
+{{- $root := . }}
+{{- $config := .Values.trainingConfig }}
+{{/* Create ConfigMaps for each GRPO service using job-specific config files */}}
+{{- range $job := .Values.jobList }}
+  {{/* Skip NATS server as it creates its own ConfigMap in nats-server.yaml */}}
+  {{- if ne $job.serviceType "nats-server" }}
+    {{- $configFile := printf "config/%s_hydra.yaml" $job.jobName }}
+    {{- $file := $root.Files.Get $configFile }}
+    {{- if $file }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $config.jobName }}-{{ $job.serviceType }}-config
+  namespace: {{ $config.namespace }}
+  {{- if $config.annotations }}
+  annotations:
+    {{- range $key, $value := $config.annotations }}
+    {{ $key | quote }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  {{- if $config.customLabels }}
+  labels:
+    {{- range $key, $value := $config.customLabels }}
+    {{ $key | quote }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+data:
+  config.yaml: |-
+{{ $file | indent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end }}

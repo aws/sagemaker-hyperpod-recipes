@@ -1,0 +1,135 @@
+{{- $root := .Values }}
+{{ $config := .Values.trainingConfig }}
+
+{{- if .Values.trainingConfig.redis.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.trainingConfig.jobName }}-redis
+  namespace: {{ .Values.trainingConfig.namespace }}
+  {{- with .Values.trainingConfig.customLabels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.trainingConfig.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    app: {{ .Values.trainingConfig.jobName }}-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.trainingConfig.jobName }}-redis
+  namespace: {{ .Values.trainingConfig.namespace }}
+  {{- with .Values.trainingConfig.customLabels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.trainingConfig.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.trainingConfig.redis.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.trainingConfig.jobName }}-redis
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.trainingConfig.jobName }}-redis
+        workload-type: "cpu-only-{{ .Values.trainingConfig.jobName }}"
+        {{- with .Values.trainingConfig.customLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ .Values.trainingConfig.serviceAccountName }}
+      enableServiceLinks: false
+      shareProcessNamespace: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: workload-type
+                  operator: In
+                  values: ["cpu-only-{{ .Values.trainingConfig.jobName }}"]
+              topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: workload-type
+                operator: In
+                values: ["gpu-intensive-{{ .Values.trainingConfig.jobName }}"]
+            topologyKey: kubernetes.io/hostname
+        {{- if (or $config.labelSelector.required $config.labelSelector.preferred) }}
+        nodeAffinity:
+          {{- if $config.labelSelector.required }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                {{- range $key, $values := $config.labelSelector.required }}
+                - key: {{ $key | quote }}
+                  operator: In
+                  values:
+                    {{- range $values }}
+                    - {{ . | quote }}
+                    {{- end}}
+                {{- end }}
+          {{- end }}
+          {{- if $config.labelSelector.preferred }}
+          {{- $index := 0 }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- range $key, $values := $config.labelSelector.preferred }}
+            - weight: {{ index $config.labelSelector.weights $index }}
+              preference:
+                matchExpressions:
+                  - key: {{ $key | quote }}
+                    operator: In
+                    values:
+                      {{- range $values }}
+                      - {{ . | quote }}
+                      {{- end }}
+            {{- $index = add $index 1 }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      tolerations:
+        {{- range .Values.trainingConfig.requiredTolerations }}
+        - key: {{ .key }}
+          operator: {{ .operator }}
+          value: {{ .value }}
+          effect: {{ .effect }}
+        {{- end }}
+      containers:
+        - name: redis
+          image: {{ .Values.image.redis }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 6379
+          resources:
+            {{- toYaml .Values.trainingConfig.redis.resources | nindent 12 }}
+          {{- if .Values.trainingConfig.podSecurityContext }}
+          securityContext:
+            {{- toYaml .Values.trainingConfig.podSecurityContext | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: redis-tmp
+              mountPath: /data
+      volumes:
+        - name: redis-tmp
+          emptyDir: {}
+{{- end }}

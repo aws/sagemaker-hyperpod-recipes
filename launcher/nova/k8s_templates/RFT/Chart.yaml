@@ -1,0 +1,6 @@
+apiVersion: v2
+name: grpo
+description: A Helm chart for GRPO (Generalized Reward Policy Optimization) training on SageMaker HyperPod
+type: application
+version: 0.1.0
+appVersion: "1.0"

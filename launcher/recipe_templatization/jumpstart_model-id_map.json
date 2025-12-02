@@ -1,0 +1,8 @@
+{
+    "amazon.nova-micro-v1:0:128k": "nova-textgeneration-micro",
+    "amazon.nova-lite-v1:0:300k": "nova-textgeneration-lite",
+    "amazon.nova-pro-v1:0:300k": "nova-textgeneration-pro",
+    "amazon.nova-premier-v1:0:300k": "nova-premier",
+    "amazon.nova-lite-1-5-v1:0:128k": "nova-lite-1-5",
+    "amazon.nova-2-lite-v1:0:256k": "nova-textgeneration-lite-v2"
+}

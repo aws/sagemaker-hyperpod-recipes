@@ -3,9 +3,13 @@ trace
 .DS_Store
 .hydra
 .bash_history.local
+.venv
 results/
 outputs/
 tmp/
+scripts/validations/models_folder/
+.venv/
+venv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -26,3 +30,10 @@ coverage_html_report/
 # Playground area
 mypg/
 .idea/
+recipes_collection/recipes/fine-tuning/sft/
+
+# Test artifacts
+launch_json_test_report.json
+launch_json_test.log
+templatized*
+failed*

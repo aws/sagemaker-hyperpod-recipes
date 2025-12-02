@@ -11,9 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 # Portions taken from <repo>, Copyright Nvidia Corporation
-
 import math
-import os
 import random
 import string
 import sys
@@ -21,9 +19,7 @@ from typing import Tuple
 
 from validations_wrapper import validate_config
 
-LAUNCHER_SCRIPT_PATH = (
-    f"{os.path.dirname(os.path.abspath(__file__))}/launcher/nemo/nemo_framework_launcher/launcher_scripts/"
-)
+LAUNCHER_SCRIPT_PATH = "./launcher/nemo/nemo_framework_launcher/launcher_scripts/"
 sys.path.append(LAUNCHER_SCRIPT_PATH)
 
 import hydra
@@ -65,8 +61,12 @@ from launcher.nemo.stages import (
 from launcher.nova.launchers import (
     NovaK8SLauncher,
     SMNovaK8SLauncherPPO,
+    SMNovaK8SLauncherRFT,
     SMNovaK8SLauncherSFT,
+    SMNovaSMTJLauncherRFT,
+    get_recipe_file_path,
 )
+from utils.model_utils import download_model
 
 omegaconf.OmegaConf.register_new_resolver("multiply", lambda x, y: x * y, replace=True)
 omegaconf.OmegaConf.register_new_resolver("divide_ceil", lambda x, y: int(math.ceil(x / y)), replace=True)
@@ -234,31 +234,77 @@ def get_nova_launcher(cfg) -> NovaK8SLauncher:
     """
     Selects and returns the appropriate NovaK8SLauncher instance based on the configuration.
 
-    If all PPO-related recipe keys are present in the configuration, returns an instance of SMNovaK8SLauncherPPO.
-    Otherwise, returns an instance of SMNovaK8SLauncherSFT.
+    The launcher selection follows this priority:
+    1. If RFT-specific service keys are present, returns SMNovaK8SLauncherRFT
+    2. If all PPO-related recipe keys are present, returns SMNovaK8SLauncherPPO
+    3. Otherwise, returns SMNovaK8SLauncherSFT (default for supervised fine-tuning)
 
     Args:
         cfg: Configuration object containing recipe information.
 
     Returns:
-        NovaK8SLauncher: An instance of either SMNovaK8SLauncherPPO or SMNovaK8SLauncherSFT, depending on the configuration.
+        NovaK8SLauncher: An instance of SMNovaK8SLauncherRFT, SMNovaK8SLauncherPPO,
+                        or SMNovaK8SLauncherSFT, depending on the configuration.
     """
+    # Check for RFT configuration - simple detection based on key indicators
+    rft_detected = False
+    # Check for RFT-specific replica configuration in run section
+    if hasattr(cfg.recipes, "run") and cfg.recipes.run is not None:
+        run_config = cfg.recipes.run
+        if run_config.get("generation_replicas") is not None or run_config.get("rollout_worker_replicas") is not None:
+            rft_detected = True
+
+    # Check if the recipe if SMTJ RFT
+    recipe_file_path = get_recipe_file_path()
+    if recipe_file_path is not None:
+        recipe_file_path = recipe_file_path.lower()
+        if all([i in recipe_file_path for i in ["nova", "rft", "smtj"]]):
+            return SMNovaSMTJLauncherRFT(cfg)
+
+    # Check for RFT rollout configuration in training_config
+    if not rft_detected and hasattr(cfg.recipes, "training_config") and cfg.recipes.training_config is not None:
+        training_config = cfg.recipes.training_config
+        if training_config.get("rollout") is not None:
+            rft_detected = True
+
+        # Check for RFT data type (single-turn or multi-turn)
+        if not rft_detected and training_config.get("data") is not None:
+            data_config = training_config.data
+            data_type = data_config.get("type")
+            if data_type in ["single-turn", "multi-turn"]:
+                rft_detected = True
+
+    if rft_detected:
+        return SMNovaK8SLauncherRFT(cfg)
+
+    # Check for PPO configuration keys (second priority)
+    # PPO keys can also be at top level or under training_config
     ppo_keys = ["ppo_reward", "ppo_critic", "ppo_anchor", "ppo_actor_generation", "ppo_actor_train"]
-    if all(cfg.recipes.get(key) is not None for key in ppo_keys):
+
+    # Check if PPO keys exist at top level
+    ppo_at_top_level = all(cfg.recipes.get(key) is not None for key in ppo_keys)
+
+    # Check if PPO keys exist under training_config
+    ppo_under_training_config = False
+    if hasattr(cfg.recipes, "training_config") and cfg.recipes.training_config is not None:
+        ppo_under_training_config = all(cfg.recipes.training_config.get(key) is not None for key in ppo_keys)
+
+    if ppo_at_top_level or ppo_under_training_config:
         return SMNovaK8SLauncherPPO(cfg)
+
+    # Default to SFT launcher
     return SMNovaK8SLauncherSFT(cfg)
 
 
 @hydra.main(config_path="recipes_collection", config_name="config", version_base="1.2")
 @validate_config
 def main(cfg):
+    # Check if model exists and download if it doesn't
+    download_model(cfg)
+
     # check if model_type is nova
     model_type = omegaconf.OmegaConf.select(cfg, "recipes.run.model_type", default=None)
     if model_type and model_type.startswith("amazon.nova"):
-        if cfg.cluster_type != "k8s":
-            raise ValueError(
-                "Nova recipes are only available for EKS clusters. Please update the config file to use k8s."
-            )
         # if not in a unit-test environment de-dupe consecutive runs by appending random hash to end of job name
         if "pytest" not in sys.modules and "name" in cfg.recipes.run:
             cfg.recipes.run.name = valid_run_name(cfg.recipes.run.get("name", None))

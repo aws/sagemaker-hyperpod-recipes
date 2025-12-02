@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 
 import difflib
+import json
 import logging
 import os
 import re
@@ -37,6 +38,8 @@ PROG_JOB_RUN_NAME = re.compile(REGEX_JOB_RUN_NAME)
 
 BASELINE_CONFIG = {"recipes": {"exp_manager": {"exp_dir": None}}}
 
+GOLDEN_WRITE = bool(os.getenv("GOLDEN_TEST_WRITE", False))
+
 
 def is_helm_template(file_path: str) -> bool:
     # using values present in the first line of training.yaml (helm file) to heuristically differentiate helm from yaml
@@ -44,9 +47,14 @@ def is_helm_template(file_path: str) -> bool:
     return "{{" in content or "}}" in content or ".Values" in content
 
 
-def create_temp_directory():
+def create_temp_directory(dir_name=None):
     """Create a temporary directory and Set full permissions for the directory"""
-    temp_dir = tempfile.mkdtemp()
+    if dir_name is not None:
+        base_tmp = tempfile.gettempdir()
+        temp_dir = os.path.join(base_tmp, dir_name)
+        os.makedirs(temp_dir, exist_ok=True)
+    else:
+        temp_dir = tempfile.mkdtemp()
     os.chmod(temp_dir, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
     return temp_dir
 
@@ -71,16 +79,28 @@ def compare_artifacts(artifacts_paths, artifacts_dir, baseline_artifacts_path):
         # Make a copy of baseline artifacts to replace placeholders
         baseline_artifact_copy_folder = create_temp_directory()
         shutil.copytree(baseline_artifact_folder, baseline_artifact_copy_folder, dirs_exist_ok=True)
+        original_baseline_artifact_path = baseline_artifact_folder + artifact_path
         baseline_artifact_path = baseline_artifact_copy_folder + artifact_path
 
         results_dir_placeholder = "{$results_dir}"
         replace_placeholder(baseline_artifact_path, results_dir_placeholder, artifacts_dir)
+
+        # Also replace hardcoded /tmp path that might exist in baseline
+        replace_placeholder(baseline_artifact_path, "/tmp/test_sm_jobs_workflow_with_launch_json", artifacts_dir)
+        replace_placeholder(baseline_artifact_path, "/tmp/test_recipe_k8s_workflow_with_launch_json", artifacts_dir)
+
         workspace_dir_placeholder = "{$workspace_dir}"
         replace_placeholder(baseline_artifact_path, workspace_dir_placeholder, current_dir)
 
+        # if GOLDEN_WRITE:
         comparison_result = compare_files(baseline_artifact_path, actual_artifact_path)
         if comparison_result is False:
-            assert False, baseline_artifact_path + " does not match " + actual_artifact_path
+            if GOLDEN_WRITE:
+                shutil.copyfile(actual_artifact_path, original_baseline_artifact_path)
+            else:
+                assert (
+                    False
+                ), f"{baseline_artifact_path} does not match {actual_artifact_path}. Run with GOLDEN_TEST_WRITE=1 to update"
 
 
 def compare_files(file1_path, file2_path):
@@ -123,6 +143,7 @@ def compare_files(file1_path, file2_path):
             return False
 
     """Compare two files character by character."""
+    print(file1_path, file2_path)
     with open(file1_path, "r") as file1, open(file2_path, "r") as file2:
         file1_content = file1.readlines()
         file2_content = file2.readlines()
@@ -210,3 +231,40 @@ def is_job_run_name_valid_for_clusters(run_name: Optional[str]) -> bool:
         return False
 
     return bool(PROG_JOB_RUN_NAME.match(run_name))
+
+
+def mock_load_hosting_config(recipe_name: str):
+    """Mock function that validates the recipe name and returns test hosting config"""
+    # Extract the actual recipe name from full recipe paths
+    # Handle patterns like "fine-tuning/nova/nova_1_0/nova_lite/SFT/nova_lite_1_0_p5_p4d_gpu_sft" -> "nova_lite_1_0_p5_p4d_gpu_sft"
+    if "/" in recipe_name:
+        actual_recipe_name = recipe_name.split("/")[-1]
+    else:
+        actual_recipe_name = recipe_name
+
+    # List of valid recipe names that tests should use (extracted from full paths)
+    valid_recipe_names = [
+        # Evaluation recipes
+        "open_source_deterministic_eval",
+        # Nova recipes (from full paths like "fine-tuning/nova/...")
+        "nova_lite_1_0_p5_p4d_gpu_sft",
+        "nova_micro_1_0_p5_p4d_gpu_lora_dpo",
+        "nova_pro_1_0_p5_gpu_ppo",
+        "nova_micro_1_0_p5_48xl_gpu_general_text_benchmark_eval",
+        # VERL recipes (from full paths like "fine-tuning/verl/...")
+        "verl-ppo-qwen-2-dot-5-0-dot-5b",
+        "verl-grpo-rlaif-llama-3-dot-2-1b-instruct-lora",
+        "verl-grpo-rlvr-llama-3-dot-1-8b-instruct-lora",
+        # LLMFT recipes
+        "llmft_llama3_2_1b_instruct_seq4k_gpu_sft_lora",
+    ]
+
+    # Validate that we're being called with a valid recipe name
+    assert (
+        actual_recipe_name in valid_recipe_names
+    ), f"Expected one of {valid_recipe_names}, got '{actual_recipe_name}' (from full recipe '{recipe_name}')"
+
+    # Load and return the test hosting config
+    test_config_path = ROOT_DIR / "utils" / "inference_configs" / "hosting-test.json"
+    with open(test_config_path, "r") as f:
+        return json.load(f)
