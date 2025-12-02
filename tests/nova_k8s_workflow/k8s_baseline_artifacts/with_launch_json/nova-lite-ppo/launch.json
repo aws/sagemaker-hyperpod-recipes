@@ -1,0 +1,252 @@
+{
+  "training-ag.yaml": "---\n# Source: sagemaker-training/templates/training-ag.yaml\napiVersion: v1\nkind: Service\nmetadata:\n  name: {{name}}-ag\nspec:\n  clusterIP: None\n  selector:\n    app: {{name}}-ag\n---\n# Source: sagemaker-training/templates/training-ag.yaml\napiVersion: apps/v1\nkind: StatefulSet\nmetadata:\n  name: {{name}}-ag\n  namespace: {{namespace}}\n  annotations:\n    \"annotation_key_1\": \"annotation-value-1\"\n  labels:\n    app: {{name}}-ag\n    \"placeholder\": \"custom_labels\"\nspec:\n  podManagementPolicy: Parallel\n  replicas: 2\n  selector:\n    matchLabels:\n      app: {{name}}-ag\n  serviceName: {{name}}-ag\n  template:\n    metadata:\n      labels:\n        app: {{name}}-ag\n        \"placeholder\": \"custom_labels\"\n    spec:\n      tolerations:\n        - key: \"sagemaker.amazonaws.com/RestrictedNode\"\n          operator: \"Equal\"\n          value: \"Worker\"\n          effect: \"NoSchedule\"\n      affinity:\n        nodeAffinity:\n          requiredDuringSchedulingIgnoredDuringExecution:\n            nodeSelectorTerms:\n              - matchExpressions:\n                - key: \"example_label_key\"\n                  operator: In\n                  values:\n                    - \"expected-label-value-1\"\n                    - \"expected-label-value-2\"\n                - key: \"node.kubernetes.io/instance-type\"\n                  operator: In\n                  values:\n                    - \"{{instance_type}}\"\n                - key: \"sagemaker.amazonaws.com/instance-group-type\"\n                  operator: In\n                  values:\n                    - \"Restricted\"\n      initContainers:\n        - name: init-container\n          image: {{init_container_image}}\n          imagePullPolicy: Always\n          volumeMounts:\n          - name: fsx-path-init\n            mountPath: /sagemaker/fsx/init\n          - mountPath: /config\n            name: training-config\n          - mountPath: /var/log/aws/clusters\n            name: logs\n      containers:\n        - name: server\n          env:\n            - name: \"SVC_NAME\"\n              value: {{name}}-ag\n            - name: \"NAMESPACE\"\n              value: default\n          image: {{actor_generation_container_image}}\n          imagePullPolicy: Always\n          resources:\n            limits:\n              nvidia.com/gpu: 8\n              vpc.amazonaws.com/efa: 32\n            requests:\n              nvidia.com/gpu: 8\n              vpc.amazonaws.com/efa: 32\n          securityContext:\n            privileged: true\n          volumeMounts:\n            - name: fsx-path-main\n              mountPath: /sagemaker/fsx/main\n            - mountPath: /config\n              name: training-config\n            - mountPath: /dev/shm\n              name: dshm\n            - mountPath: /var/log/aws/clusters\n              name: logs\n            - mountPath: /sagemaker/fsx/output_artifacts\n              name: fsx-path-output-artifacts\n      restartPolicy: Always\n      volumes:\n        - name: fsx-path-main\n          hostPath:\n            path: /sagemaker/fsx/main\n            type: DirectoryOrCreate\n        - name: fsx-path-init\n          hostPath:\n            path: /sagemaker/fsx/init\n            type: DirectoryOrCreate\n        - configMap:\n            name: training-config-{{name}}-ag\n          name: training-config\n        - name: dshm\n          emptyDir:\n            medium: Memory\n        - name: logs\n          hostPath:\n            path: /var/log/aws/clusters\n            type: DirectoryOrCreate\n        - name: fsx-path-output-artifacts\n          hostPath:\n            path: /sagemaker/fsx/output_artifacts\n            type: DirectoryOrCreate\n",
+  "training-config.yaml": "---\n# Source: sagemaker-training/templates/training-config.yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: training-config-{{name}}-rm\ndata:\n  config.yaml: |-\n    run:\n      name: '{{name}}'\n      model_type: amazon.nova-pro-v1:0:300k\n      model_name_or_path: nova-pro/prod\n      data_s3_path: '{{data_s3_path}}'\n      output_s3_path: '{{output_s3_path}}'\n      actor_generation_replicas: 2\n      mlflow_tracking_uri: '{{mlflow_tracking_uri}}'\n      mlflow_experiment_name: '{{mlflow_experiment_name}}'\n      mlflow_run_name: '{{mlflow_run_name}}'\n    training_config:\n      max_length: 8192\n      trainer:\n        num_nodes: 1\n      model:\n        global_batch_size: 40\n      task_type: ppo_rm\n---\n# Source: sagemaker-training/templates/training-config.yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: training-config-{{name}}-cm\ndata:\n  config.yaml: |-\n    run:\n      name: '{{name}}'\n      model_type: amazon.nova-pro-v1:0:300k\n      model_name_or_path: nova-pro/prod\n      data_s3_path: '{{data_s3_path}}'\n      output_s3_path: '{{output_s3_path}}'\n      actor_generation_replicas: 2\n      mlflow_tracking_uri: '{{mlflow_tracking_uri}}'\n      mlflow_experiment_name: '{{mlflow_experiment_name}}'\n      mlflow_run_name: '{{mlflow_run_name}}'\n    training_config:\n      max_length: 8192\n      trainer:\n        num_nodes: 1\n      model:\n        global_batch_size: 32\n        optim:\n          lr: '{{learning_rate}}'\n          name: distributed_fused_adam\n          adam_w_mode: true\n          eps: 1.0e-06\n          weight_decay: 0.0\n          betas:\n          - 0.9\n          - 0.999\n      task_type: ppo_cm\n---\n# Source: sagemaker-training/templates/training-config.yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: training-config-{{name}}-am\ndata:\n  config.yaml: |-\n    run:\n      name: '{{name}}'\n      model_type: amazon.nova-pro-v1:0:300k\n      model_name_or_path: nova-pro/prod\n      data_s3_path: '{{data_s3_path}}'\n      output_s3_path: '{{output_s3_path}}'\n      actor_generation_replicas: 2\n      mlflow_tracking_uri: '{{mlflow_tracking_uri}}'\n      mlflow_experiment_name: '{{mlflow_experiment_name}}'\n      mlflow_run_name: '{{mlflow_run_name}}'\n    training_config:\n      max_length: 8192\n      trainer:\n        num_nodes: 1\n      model:\n        global_batch_size: 40\n      task_type: ppo_anchor\n---\n# Source: sagemaker-training/templates/training-config.yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: training-config-{{name}}-ag\ndata:\n  config.yaml: |-\n    run:\n      name: '{{name}}'\n      model_type: amazon.nova-pro-v1:0:300k\n      model_name_or_path: nova-pro/prod\n      data_s3_path: '{{data_s3_path}}'\n      output_s3_path: '{{output_s3_path}}'\n      actor_generation_replicas: 2\n      mlflow_tracking_uri: '{{mlflow_tracking_uri}}'\n      mlflow_experiment_name: '{{mlflow_experiment_name}}'\n      mlflow_run_name: '{{mlflow_run_name}}'\n    training_config:\n      actor_model_max_length: 8192\n      trainer:\n        num_nodes: 2\n      task_type: ppo_actor_gen\n---\n# Source: sagemaker-training/templates/training-config.yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: training-config-{{name}}-at\ndata:\n  config.yaml: |-\n    run:\n      name: '{{name}}'\n      model_type: amazon.nova-pro-v1:0:300k\n      model_name_or_path: nova-pro/prod\n      data_s3_path: '{{data_s3_path}}'\n      output_s3_path: '{{output_s3_path}}'\n      actor_generation_replicas: 2\n      mlflow_tracking_uri: '{{mlflow_tracking_uri}}'\n      mlflow_experiment_name: '{{mlflow_experiment_name}}'\n      mlflow_run_name: '{{mlflow_run_name}}'\n    training_config:\n      max_length: 8192\n      max_steps: 1040\n      actor_model_max_length: 8192\n      reward_model_max_length: 8192\n      trajectory_buffer_scale: 8\n      trainer:\n        num_nodes: '{{replicas}}'\n      model:\n        global_batch_size: '{{global_batch_size}}'\n        ent_coeff: 0\n        clip_ratio: 0.2\n        lam: 1\n        kl_loss_coeff: 0.0\n        kl_loss_type: low_var_kl\n        kl_reward_penalty_coeff: 0.0\n        hidden_dropout: 0.0\n        attention_dropout: 0.0\n        ffn_dropout: 0.0\n        optim:\n          lr: '{{learning_rate}}'\n          name: distributed_fused_adam\n          adam_w_mode: true\n          eps: 1.0e-08\n          weight_decay: 0.0\n          betas:\n          - 0.9\n          - 0.999\n      task_type: ppo_actor_train\n",
+  "training.yaml": "---\n# Source: sagemaker-training/templates/training.yaml\napiVersion: kubeflow.org/v1\nkind: PyTorchJob\nmetadata:\n  name: {{name}}-rm\n  namespace: {{namespace}}\n  annotations:\n    \"annotation_key_1\": \"annotation-value-1\"\n  labels:\n    app: {{name}}-rm\n    \"placeholder\": \"custom_labels\"\nspec:\n  pytorchReplicaSpecs:\n    Master:\n      replicas: 1\n      restartPolicy: OnFailure\n      template:\n        metadata:\n          labels:\n            \"placeholder\": \"custom_labels\"\n        spec:\n          tolerations:\n            - key: \"sagemaker.amazonaws.com/RestrictedNode\"\n              operator: \"Equal\"\n              value: \"Worker\"\n              effect: \"NoSchedule\"\n          priorityClassName: test_pc_name\n          serviceAccountName: placeholder_service_account_name\n          initContainers:\n            - name: init-container\n              image: {{init_container_image}}\n              imagePullPolicy: Always\n              volumeMounts:\n              - name: fsx-path-init\n                mountPath: /sagemaker/fsx/init\n              - mountPath: /config\n                name: training-config\n              - mountPath: /var/log/aws/clusters\n                name: logs\n          containers:\n          - name: pytorch\n            image: {{container_image}}\n            imagePullPolicy: Always\n            resources:\n              limits:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n              requests:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n            env:\n              - name: \"SVC_NAME\"\n                value: {{name}}-rm\n              - name: \"NAMESPACE\"\n                value: default\n            securityContext:\n              capabilities:\n                add: [ \"IPC_LOCK\" ]\n            volumeMounts:\n            - name: fsx-path-main\n              mountPath: /sagemaker/fsx/main\n            - mountPath: /config\n              name: training-config\n            - mountPath: /dev/shm\n              name: dshm\n            - mountPath: /var/log/aws/clusters\n              name: logs\n            - mountPath: /sagemaker/fsx/output_artifacts\n              name: fsx-path-output-artifacts\n          affinity:\n            nodeAffinity:\n              requiredDuringSchedulingIgnoredDuringExecution:\n                nodeSelectorTerms:\n                  - matchExpressions:\n                    - key: \"example_label_key\"\n                      operator: In\n                      values:\n                        - \"expected-label-value-1\"\n                        - \"expected-label-value-2\"\n                    - key: \"node.kubernetes.io/instance-type\"\n                      operator: In\n                      values:\n                        - \"{{instance_type}}\"\n                    - key: \"sagemaker.amazonaws.com/instance-group-type\"\n                      operator: In\n                      values:\n                        - \"Restricted\"\n          volumes:\n            - name: fsx-path-main\n              hostPath:\n                path: /sagemaker/fsx/main\n                type: DirectoryOrCreate\n            - name: fsx-path-init\n              hostPath:\n                path: /sagemaker/fsx/init\n                type: DirectoryOrCreate\n            - configMap:\n                name: training-config-{{name}}-rm\n              name: training-config\n            - name: dshm\n              emptyDir:\n                medium: Memory\n            - name: logs\n              hostPath:\n                path: /var/log/aws/clusters\n                type: DirectoryOrCreate\n            - name: fsx-path-output-artifacts\n              hostPath:\n                path: /sagemaker/fsx/output_artifacts\n                type: DirectoryOrCreate\n---\n# Source: sagemaker-training/templates/training.yaml\napiVersion: kubeflow.org/v1\nkind: PyTorchJob\nmetadata:\n  name: {{name}}-cm\n  namespace: {{namespace}}\n  annotations:\n    \"annotation_key_1\": \"annotation-value-1\"\n  labels:\n    app: {{name}}-cm\n    \"placeholder\": \"custom_labels\"\nspec:\n  pytorchReplicaSpecs:\n    Master:\n      replicas: 1\n      restartPolicy: OnFailure\n      template:\n        metadata:\n          labels:\n            \"placeholder\": \"custom_labels\"\n        spec:\n          tolerations:\n            - key: \"sagemaker.amazonaws.com/RestrictedNode\"\n              operator: \"Equal\"\n              value: \"Worker\"\n              effect: \"NoSchedule\"\n          priorityClassName: test_pc_name\n          serviceAccountName: placeholder_service_account_name\n          initContainers:\n            - name: init-container\n              image: {{init_container_image}}\n              imagePullPolicy: Always\n              volumeMounts:\n              - name: fsx-path-init\n                mountPath: /sagemaker/fsx/init\n              - mountPath: /config\n                name: training-config\n              - mountPath: /var/log/aws/clusters\n                name: logs\n          containers:\n          - name: pytorch\n            image: {{container_image}}\n            imagePullPolicy: Always\n            resources:\n              limits:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n              requests:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n            env:\n              - name: \"SVC_NAME\"\n                value: {{name}}-cm\n              - name: \"NAMESPACE\"\n                value: default\n            securityContext:\n              capabilities:\n                add: [ \"IPC_LOCK\" ]\n            volumeMounts:\n            - name: fsx-path-main\n              mountPath: /sagemaker/fsx/main\n            - mountPath: /config\n              name: training-config\n            - mountPath: /dev/shm\n              name: dshm\n            - mountPath: /var/log/aws/clusters\n              name: logs\n            - mountPath: /sagemaker/fsx/output_artifacts\n              name: fsx-path-output-artifacts\n          affinity:\n            nodeAffinity:\n              requiredDuringSchedulingIgnoredDuringExecution:\n                nodeSelectorTerms:\n                  - matchExpressions:\n                    - key: \"example_label_key\"\n                      operator: In\n                      values:\n                        - \"expected-label-value-1\"\n                        - \"expected-label-value-2\"\n                    - key: \"node.kubernetes.io/instance-type\"\n                      operator: In\n                      values:\n                        - \"{{instance_type}}\"\n                    - key: \"sagemaker.amazonaws.com/instance-group-type\"\n                      operator: In\n                      values:\n                        - \"Restricted\"\n          volumes:\n            - name: fsx-path-main\n              hostPath:\n                path: /sagemaker/fsx/main\n                type: DirectoryOrCreate\n            - name: fsx-path-init\n              hostPath:\n                path: /sagemaker/fsx/init\n                type: DirectoryOrCreate\n            - configMap:\n                name: training-config-{{name}}-cm\n              name: training-config\n            - name: dshm\n              emptyDir:\n                medium: Memory\n            - name: logs\n              hostPath:\n                path: /var/log/aws/clusters\n                type: DirectoryOrCreate\n            - name: fsx-path-output-artifacts\n              hostPath:\n                path: /sagemaker/fsx/output_artifacts\n                type: DirectoryOrCreate\n---\n# Source: sagemaker-training/templates/training.yaml\napiVersion: kubeflow.org/v1\nkind: PyTorchJob\nmetadata:\n  name: {{name}}-am\n  namespace: {{namespace}}\n  annotations:\n    \"annotation_key_1\": \"annotation-value-1\"\n  labels:\n    app: {{name}}-am\n    \"placeholder\": \"custom_labels\"\nspec:\n  pytorchReplicaSpecs:\n    Master:\n      replicas: 1\n      restartPolicy: OnFailure\n      template:\n        metadata:\n          labels:\n            \"placeholder\": \"custom_labels\"\n        spec:\n          tolerations:\n            - key: \"sagemaker.amazonaws.com/RestrictedNode\"\n              operator: \"Equal\"\n              value: \"Worker\"\n              effect: \"NoSchedule\"\n          priorityClassName: test_pc_name\n          serviceAccountName: placeholder_service_account_name\n          initContainers:\n            - name: init-container\n              image: {{init_container_image}}\n              imagePullPolicy: Always\n              volumeMounts:\n              - name: fsx-path-init\n                mountPath: /sagemaker/fsx/init\n              - mountPath: /config\n                name: training-config\n              - mountPath: /var/log/aws/clusters\n                name: logs\n          containers:\n          - name: pytorch\n            image: {{container_image}}\n            imagePullPolicy: Always\n            resources:\n              limits:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n              requests:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n            env:\n              - name: \"SVC_NAME\"\n                value: {{name}}-am\n              - name: \"NAMESPACE\"\n                value: default\n            securityContext:\n              capabilities:\n                add: [ \"IPC_LOCK\" ]\n            volumeMounts:\n            - name: fsx-path-main\n              mountPath: /sagemaker/fsx/main\n            - mountPath: /config\n              name: training-config\n            - mountPath: /dev/shm\n              name: dshm\n            - mountPath: /var/log/aws/clusters\n              name: logs\n            - mountPath: /sagemaker/fsx/output_artifacts\n              name: fsx-path-output-artifacts\n          affinity:\n            nodeAffinity:\n              requiredDuringSchedulingIgnoredDuringExecution:\n                nodeSelectorTerms:\n                  - matchExpressions:\n                    - key: \"example_label_key\"\n                      operator: In\n                      values:\n                        - \"expected-label-value-1\"\n                        - \"expected-label-value-2\"\n                    - key: \"node.kubernetes.io/instance-type\"\n                      operator: In\n                      values:\n                        - \"{{instance_type}}\"\n                    - key: \"sagemaker.amazonaws.com/instance-group-type\"\n                      operator: In\n                      values:\n                        - \"Restricted\"\n          volumes:\n            - name: fsx-path-main\n              hostPath:\n                path: /sagemaker/fsx/main\n                type: DirectoryOrCreate\n            - name: fsx-path-init\n              hostPath:\n                path: /sagemaker/fsx/init\n                type: DirectoryOrCreate\n            - configMap:\n                name: training-config-{{name}}-am\n              name: training-config\n            - name: dshm\n              emptyDir:\n                medium: Memory\n            - name: logs\n              hostPath:\n                path: /var/log/aws/clusters\n                type: DirectoryOrCreate\n            - name: fsx-path-output-artifacts\n              hostPath:\n                path: /sagemaker/fsx/output_artifacts\n                type: DirectoryOrCreate\n---\n# Source: sagemaker-training/templates/training.yaml\napiVersion: kubeflow.org/v1\nkind: PyTorchJob\nmetadata:\n  name: {{name}}-at\n  namespace: {{namespace}}\n  annotations:\n    \"annotation_key_1\": \"annotation-value-1\"\n  labels:\n    app: {{name}}-at\n    \"placeholder\": \"custom_labels\"\nspec:\n  pytorchReplicaSpecs:\n    Master:\n      replicas: 1\n      restartPolicy: OnFailure\n      template:\n        metadata:\n          labels:\n            \"placeholder\": \"custom_labels\"\n        spec:\n          tolerations:\n            - key: \"sagemaker.amazonaws.com/RestrictedNode\"\n              operator: \"Equal\"\n              value: \"Worker\"\n              effect: \"NoSchedule\"\n          priorityClassName: test_pc_name\n          serviceAccountName: placeholder_service_account_name\n          initContainers:\n            - name: init-container\n              image: {{init_container_image}}\n              imagePullPolicy: Always\n              volumeMounts:\n              - name: fsx-path-init\n                mountPath: /sagemaker/fsx/init\n              - mountPath: /config\n                name: training-config\n              - mountPath: /var/log/aws/clusters\n                name: logs\n          containers:\n          - name: pytorch\n            image: {{container_image}}\n            imagePullPolicy: Always\n            resources:\n              limits:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n              requests:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n            env:\n              - name: \"SVC_NAME\"\n                value: {{name}}-at\n              - name: \"NAMESPACE\"\n                value: default\n            securityContext:\n              capabilities:\n                add: [ \"IPC_LOCK\" ]\n            volumeMounts:\n            - name: fsx-path-main\n              mountPath: /sagemaker/fsx/main\n            - mountPath: /config\n              name: training-config\n            - mountPath: /dev/shm\n              name: dshm\n            - mountPath: /var/log/aws/clusters\n              name: logs\n            - mountPath: /sagemaker/fsx/output_artifacts\n              name: fsx-path-output-artifacts\n          affinity:\n            nodeAffinity:\n              requiredDuringSchedulingIgnoredDuringExecution:\n                nodeSelectorTerms:\n                  - matchExpressions:\n                    - key: \"example_label_key\"\n                      operator: In\n                      values:\n                        - \"expected-label-value-1\"\n                        - \"expected-label-value-2\"\n                    - key: \"node.kubernetes.io/instance-type\"\n                      operator: In\n                      values:\n                        - \"{{instance_type}}\"\n                    - key: \"sagemaker.amazonaws.com/instance-group-type\"\n                      operator: In\n                      values:\n                        - \"Restricted\"\n          volumes:\n            - name: fsx-path-main\n              hostPath:\n                path: /sagemaker/fsx/main\n                type: DirectoryOrCreate\n            - name: fsx-path-init\n              hostPath:\n                path: /sagemaker/fsx/init\n                type: DirectoryOrCreate\n            - configMap:\n                name: training-config-{{name}}-at\n              name: training-config\n            - name: dshm\n              emptyDir:\n                medium: Memory\n            - name: logs\n              hostPath:\n                path: /var/log/aws/clusters\n                type: DirectoryOrCreate\n            - name: fsx-path-output-artifacts\n              hostPath:\n                path: /sagemaker/fsx/output_artifacts\n                type: DirectoryOrCreate\n    Worker:\n      replicas: {{replicas}}\n      restartPolicy: OnFailure\n      template:\n        metadata:\n          labels:\n            \"placeholder\": \"custom_labels\"\n        spec:\n          tolerations:\n            - key: \"sagemaker.amazonaws.com/RestrictedNode\"\n              operator: \"Equal\"\n              value: \"Worker\"\n              effect: \"NoSchedule\"\n          priorityClassName: test_pc_name\n          serviceAccountName: placeholder_service_account_name\n          initContainers:\n            - name: init-container\n              image: {{init_container_image}}\n              imagePullPolicy: Always\n              volumeMounts:\n              - name: fsx-path-init\n                mountPath: /sagemaker/fsx/init\n              - mountPath: /config\n                name: training-config\n              - mountPath: /var/log/aws/clusters\n                name: logs\n          containers:\n          - name: pytorch\n            image: {{container_image}}\n            imagePullPolicy: Always\n            resources:\n              limits:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n              requests:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n            env:\n              - name: \"SVC_NAME\"\n                value: {{name}}-at\n              - name: \"NAMESPACE\"\n                value: default\n            securityContext:\n              capabilities:\n                add: [ \"IPC_LOCK\" ]\n            volumeMounts:\n            - name: fsx-path-main\n              mountPath: /sagemaker/fsx/main\n            - mountPath: /config\n              name: training-config\n            - mountPath: /dev/shm\n              name: dshm\n            - mountPath: /var/log/aws/clusters\n              name: logs\n            - mountPath: /sagemaker/fsx/output_artifacts\n              name: fsx-path-output-artifacts\n          affinity:\n            nodeAffinity:\n              requiredDuringSchedulingIgnoredDuringExecution:\n                nodeSelectorTerms:\n                  - matchExpressions:\n                    - key: \"example_label_key\"\n                      operator: In\n                      values:\n                        - \"expected-label-value-1\"\n                        - \"expected-label-value-2\"\n                    - key: \"node.kubernetes.io/instance-type\"\n                      operator: In\n                      values:\n                        - \"{{instance_type}}\"\n                    - key: \"sagemaker.amazonaws.com/instance-group-type\"\n                      operator: In\n                      values:\n                        - \"Restricted\"\n          volumes:\n            - name: fsx-path-main\n              hostPath:\n                path: /sagemaker/fsx/main\n                type: DirectoryOrCreate\n            - name: fsx-path-init\n              hostPath:\n                path: /sagemaker/fsx/init\n                type: DirectoryOrCreate\n            - configMap:\n                name: training-config-{{name}}-at\n              name: training-config\n            - name: dshm\n              emptyDir:\n                medium: Memory\n            - name: logs\n              hostPath:\n                path: /var/log/aws/clusters\n                type: DirectoryOrCreate\n            - name: fsx-path-output-artifacts\n              hostPath:\n                path: /sagemaker/fsx/output_artifacts\n                type: DirectoryOrCreate\n",
+  "metadata": {
+    "Name": "nova_pro_1_0_p5_gpu_ppo",
+    "RecipeFilePath": "recipes/fine-tuning/nova/nova_1_0/nova_pro/PPO/nova_pro_1_0_p5_gpu_ppo.yaml",
+    "DisplayName": "Nova Pro PPO on GPU",
+    "DefaultModelNameOrPath": "nova-pro/prod",
+    "nova_model_name": "nova-pro/prod",
+    "Hardware": "GPU",
+    "InstanceTypes": [
+      "ml.p5.48xlarge"
+    ],
+    "Type": "FineTuning",
+    "CustomizationTechnique": "ppo",
+    "InstanceCount": 11,
+    "SequenceLength": "8K",
+    "Model_ID": "nova-textgeneration-pro",
+    "Versions": [
+      "1.0.0"
+    ],
+    "OutputConfig": {
+      "SageMakerInferenceRecipeName": "default"
+    },
+    "HostingConfigs": [
+      {
+        "InstanceType": "ml.p5.48xlarge",
+        "Profile": "Default",
+        "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+        "Environment": {
+          "OPTION_ENABLE_LORA": "true",
+          "OPTION_MAX_LORAS": "8",
+          "OPTION_MAX_CPU_LORAS": "64",
+          "OPTION_TENSOR_PARALLEL_DEGREE": "8",
+          "OPTION_ROLLING_BATCH": "disable",
+          "OPTION_MAX_ROLLING_BATCH_SIZE": "1",
+          "OPTION_ASYNC_MODE": "true",
+          "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+          "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "128",
+          "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+        },
+        "ComputeResourceRequirements": {
+          "MinMemoryRequiredInMb": 1024000,
+          "NumberOfCpuCoresRequired": 100,
+          "NumberOfAcceleratorDevicesRequired": 8
+        }
+      }
+    ]
+  },
+  "recipe_override_parameters": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "default": "nova-lite-ppo"
+    },
+    "data_s3_path": {
+      "type": "string",
+      "required": true,
+      "default": ""
+    },
+    "output_s3_path": {
+      "type": "string",
+      "required": true,
+      "default": ""
+    },
+    "global_batch_size": {
+      "type": "integer",
+      "required": true,
+      "enum": [
+        160
+      ],
+      "default": 160
+    },
+    "learning_rate": {
+      "type": "float",
+      "required": true,
+      "min": 0,
+      "max": 1,
+      "default": 3e-06
+    },
+    "replicas": {
+      "type": "integer",
+      "required": true,
+      "enum": [
+        6
+      ],
+      "default": 6
+    },
+    "namespace": {
+      "type": "string",
+      "required": true,
+      "default": "kubeflow"
+    },
+    "max_context_length": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "max": 131072,
+      "default": 8192
+    },
+    "mlflow_tracking_uri": {
+      "type": "string",
+      "required": false,
+      "default": ""
+    },
+    "mlflow_experiment_name": {
+      "type": "string",
+      "required": false,
+      "default": "my-ppo-experiment"
+    },
+    "mlflow_run_name": {
+      "type": "string",
+      "required": false,
+      "default": "my-ppo-run"
+    },
+    "instance_type": {
+      "type": "string",
+      "required": false,
+      "enum": [
+        "ml.p5.48xlarge"
+      ],
+      "default": "ml.p5.48xlarge"
+    }
+  },
+  "regional_parameters": {
+    "hp_eks_regional_ecr_uri": {
+      "prod": {
+        "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
+        "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+      },
+      "gamma": {
+        "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+      }
+    },
+    "actor_generation_container_image": {
+      "gamma": {
+        "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+      },
+      "prod": {
+        "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
+        "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+      }
+    },
+    "init_container_image": {
+      "prod": {
+        "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest",
+        "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/init-container-repo:latest",
+        "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/init-container-repo:latest"
+      },
+      "gamma": {
+        "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest"
+      }
+    }
+  },
+  "training_recipe.json": {
+    "recipes": {
+      "run": {
+        "name": "my-ppo-run",
+        "model_type": "amazon.nova-pro-v1:0:300k",
+        "model_name_or_path": "nova-pro/prod",
+        "data_s3_path": "",
+        "output_s3_path": "",
+        "actor_train_replicas": 6,
+        "rm_replicas": 1,
+        "cm_replicas": 1,
+        "actor_generation_replicas": 2,
+        "am_replicas": 1,
+        "mlflow_tracking_uri": "",
+        "mlflow_experiment_name": "my-ppo-experiment",
+        "mlflow_run_name": "my-ppo-run"
+      },
+      "ppo_reward": {
+        "max_length": 8192,
+        "trainer": {
+          "num_nodes": 1
+        },
+        "model": {
+          "global_batch_size": 40
+        }
+      },
+      "ppo_critic": {
+        "max_length": 8192,
+        "trainer": {
+          "num_nodes": 1
+        },
+        "model": {
+          "global_batch_size": 32,
+          "optim": {
+            "lr": 3e-06,
+            "name": "distributed_fused_adam",
+            "adam_w_mode": true,
+            "eps": 1e-06,
+            "weight_decay": 0.0,
+            "betas": [
+              0.9,
+              0.999
+            ]
+          }
+        }
+      },
+      "ppo_anchor": {
+        "max_length": 8192,
+        "trainer": {
+          "num_nodes": 1
+        },
+        "model": {
+          "global_batch_size": 40
+        }
+      },
+      "ppo_actor_generation": {
+        "actor_model_max_length": 8192,
+        "trainer": {
+          "num_nodes": 2
+        }
+      },
+      "ppo_actor_train": {
+        "max_length": 8192,
+        "max_steps": 1040,
+        "actor_model_max_length": 8192,
+        "reward_model_max_length": 8192,
+        "trajectory_buffer_scale": 8,
+        "trainer": {
+          "num_nodes": 6
+        },
+        "model": {
+          "global_batch_size": 160,
+          "ent_coeff": 0,
+          "clip_ratio": 0.2,
+          "lam": 1,
+          "kl_loss_coeff": 0.0,
+          "kl_loss_type": "low_var_kl",
+          "kl_reward_penalty_coeff": 0.0,
+          "hidden_dropout": 0.0,
+          "attention_dropout": 0.0,
+          "ffn_dropout": 0.0,
+          "optim": {
+            "lr": 3e-06,
+            "name": "distributed_fused_adam",
+            "adam_w_mode": true,
+            "eps": 1e-08,
+            "weight_decay": 0.0,
+            "betas": [
+              0.9,
+              0.999
+            ]
+          }
+        }
+      }
+    }
+  }
+}

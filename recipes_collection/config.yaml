@@ -2,11 +2,11 @@
 
 defaults:
   - _self_
-  - cluster: slurm  # set to `slurm`, `k8s` or `sm_jobs`, depending on the desired cluster
-  - recipes: training/llama/hf_llama3_8b_seq16k_gpu_p5x16_pretrain # select desired config inside the training directory
+  - cluster: slurm # set to `slurm`, `k8s` or `sm_jobs`, depending on the desired cluster
+  - recipes: training/custom_model/falcon # select desired config inside the training directory
   - override hydra/job_logging: stdout
 
-cluster_type: slurm  # bcm, bcp, k8s or sm_jobs. If bcm, k8s or sm_jobs, it must match - cluster above.
+cluster_type: slurm # bcm, bcp, k8s or sm_jobs. If bcm, k8s or sm_jobs, it must match - cluster above.
 # If using sm_jobs cluster_type, set sm_jobs_config. See cluster/sm_jobs.yaml for example.
 
 hydra:
@@ -15,9 +15,11 @@ hydra:
   output_subdir: null
 
 debug: False
+dry_run: false
+launch_json: false
 
 instance_type: p5.48xlarge
-base_results_dir: null  # Location to store the results, checkpoints and logs.
+base_results_dir: null # Location to store the results, checkpoints and logs.
 
 container: null
 
@@ -28,9 +30,10 @@ git:
   entry_script: null
   token: null
   update_adapter: false # if true it will re-install the Adapter code but not its dependencies
+  use_default: True
 
 env_vars:
-  NCCL_DEBUG: WARN  # Logging level for NCCL. Set to "INFO" for debug information
+  NCCL_DEBUG: WARN # Logging level for NCCL. Set to "INFO" for debug information
 
 # Do not modify below, use the values above instead.
 training_config: ${hydra:runtime.choices.recipes}

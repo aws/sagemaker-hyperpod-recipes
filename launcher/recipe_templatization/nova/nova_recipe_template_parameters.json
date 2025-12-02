@@ -1,0 +1,2647 @@
+{
+    "_comment": [
+        "Nova Recipe Template Parameters Configuration - Unified (Pretraining, Fine-tuning, and Eval recipes)",
+        "",
+        "This file defines unique templates for each Nova recipe type",
+        "Template Types:",
+        "Fine-tuning: lora_sft, lora_dpo, sft, dpo, ppo, distill, cpt",
+        "Evaluation: general_text_benchmark_eval, general_multi_modal_benchmark_eval, llm_judge_eval, bring_your_own_dataset_eval",
+        "",
+        "HOW TO ADD A NEW TEMPLATE:",
+        "",
+        "1. ANALYZE THE RECIPE FILE:",
+        "   - Examine the actual YAML recipe file",
+        "   - Identify ALL parameters that need to be overridden with {{variable}} template syntax and enforce the selections as a contract with the stakeholders",
+        "   - Note the structure and nesting of parameters in the YAML",
+        "",
+        "2. CREATE THE TEMPLATE STRUCTURE:",
+        "   - Template name should follow pattern: nova_{recipe_type}",
+        "   - Template name should also be a substring in the recipe filename",
+        "   - Must include three main sections: recipe_template, recipe_override_parameters, recipe_metadata_helpers",
+        "",
+        "3. RECIPE_TEMPLATE SECTION:",
+        "   - Mirror the exact YAML structure from the recipe file",
+        "   - Replace actual values with {{variable_name}} template variables",
+        "   - Only include sections that contain parametrizable values",
+        "   - Maintain proper nesting and hierarchy",
+        "",
+        "4. RECIPE_OVERRIDE_PARAMETERS SECTION:",
+        "   - Define each parameter with: type, required, default",
+        "   - Add constraints in scenarios where multiple recipe files using the same template have different value-sets for a parameter",
+        "     Example: Supported instance types can differ for the same type of recipes. Therefore needs constraint resolution. ",
+        "     Look at examples in the nova templates for instance type based constraints",
+        "   - Look at constraint resolution patterns section below for conventions.",
+        "",
+        "5. RECIPE_METADATA_HELPERS SECTION:",
+        "   - Just a section for you to add any information for a template which can help you in computing the metadata for a recipe file",
+        "",
+        "6. PARAMETER NAMING CONVENTIONS:",
+        "   - Use snake_case for parameter names",
+        "   - Match exactly with template variables in recipe_template",
+        "",
+        "7. CONSTRAINT RESOLUTION PATTERNS:",
+        "   - conditional_constraints section should follow the following pattern",
+        "     conditional_constraints:{field_to_be_overriden: {metadata_field_to_be_used_as_condition:{constraint_field:constraint_value}}}",
+        "     Ex: For instance type:-  conditional_constraints:{enum:{Model_ID:{nova-micro:[p5.48xlarge], nova-pro:[g6.48xlarge]}}}",
+        "   - Only use a recipe metadata field as the constraint_field else you will have to override the base_recipe_template_processor's '_resolve_constraints_using_metadata()'",
+        "",
+        "EXAMPLE MINIMAL TEMPLATE STRUCTURE:",
+        "{",
+        "  'nova_new_recipe': {",
+        "    'recipe_template': { /* YAML structure with {{variables}} */ },",
+        "    'recipe_override_parameters': { /* parameter definitions */ },",
+        "    'recipe_metadata_helpers': { /* For metadata generation support */ }",
+        "  }",
+        "}",
+        ""
+    ],
+    "templates": {
+        "nova_lora_sft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "replicas": "{{replicas}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "training_config": {
+                    "global_batch_size": "{{global_batch_size}}",
+                    "trainer": {
+                        "max_epochs": "{{max_epochs}}"
+                    },
+                    "model": {
+                        "optim": {
+                            "lr": "{{learning_rate}}"
+                        },
+                        "peft": {
+                            "lora_tuning": {
+                                "alpha": "{{lora_alpha}}",
+                                "loraplus_lr_ratio": "{{learning_rate_ratio}}",
+                                "lora_plus_lr_ratio": "{{learning_rate_ratio}}"
+                            }
+                        }
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [1, 2, 4, 6, 8, 12, 16, 24],
+                    "default": 1,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_lite_1_0_g5_g6_12x_gpu_lora_sft": [1],
+                                "nova_lite_1_0_g5_g6_48x_gpu_lora_sft": [1],
+                                "nova_lite_1_0_p5_p4d_gpu_lora_sft": [4, 8, 16],
+                                "nova_micro_1_0_g5_g6_12x_gpu_lora_sft": [1],
+                                "nova_micro_1_0_g5_g6_48x_gpu_lora_sft": [1],
+                                "nova_micro_1_0_p5_p4d_gpu_lora_sft": [2, 4, 8],
+                                "nova_pro_1_0_p5_p4d_gpu_lora_sft": [6, 12, 24],
+                                "default": [1]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_lite_1_0_g5_g6_12x_gpu_lora_sft": 1,
+                                "nova_lite_1_0_g5_g6_48x_gpu_lora_sft": 1,
+                                "nova_lite_1_0_p5_p4d_gpu_lora_sft": 4,
+                                "nova_micro_1_0_g5_g6_12x_gpu_lora_sft": 1,
+                                "nova_micro_1_0_g5_g6_48x_gpu_lora_sft": 1,
+                                "nova_micro_1_0_p5_p4d_gpu_lora_sft": 2,
+                                "nova_pro_1_0_p5_p4d_gpu_lora_sft": 6,
+                                "default": 1
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-lora-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64
+                    ],
+                    "default": 64
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 2
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.00001
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": false,
+                    "enum": [
+                        32,
+                        64,
+                        96,
+                        128,
+                        160,
+                        192
+                    ],
+                    "default": 128
+                },
+                "learning_rate_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 1.0,
+                    "max": 70.0,
+                    "default": 16.0
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "training_techniques": {
+                    "sft": "SFT"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge",
+                        "ml.g5.12xlarge",
+                        "ml.g5.48xlarge",
+                        "ml.g6.12xlarge",
+                        "ml.g6.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_lora_sft_2_0": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "replicas": "{{replicas}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "training_config": {
+                    "global_batch_size": "{{global_batch_size}}",
+                    "max_steps": "{{max_steps}}",
+                    "save_steps": "{{max_steps}}",
+                    "reasoning_enabled": "{{reasoning_enabled}}",
+                        "optim_config": {
+                            "lr": "{{learning_rate}}"
+                        },
+                        "peft": {
+                            "lora_tuning": {
+                                "alpha": "{{lora_alpha}}",
+                                "lora_plus_lr_ratio": "{{learning_rate_ratio}}"
+                            }
+                        }
+                }
+            },
+            "recipe_override_parameters": {
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [4,8],
+                    "default": 4,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_lite_2_0_p5_gpu_lora_sft": [4, 8, 16, 32],
+                                "default": [4, 8, 16, 32]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_lite_2_0_p5_gpu_lora_sft": 4,
+                                "default": 4
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-lora-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "reasoning_enabled": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 32
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 4,
+                    "max": 100000,
+                    "default": 10,
+                    "conditional_constraints": {
+                        "default": {
+                            "Name": {
+                                "nova_lite_2_0_p5_gpu_lora_sft": 10,
+                                "default": 10
+                            }
+                        }
+                    }
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.00001
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": false,
+                    "enum": [
+                        32,
+                        64,
+                        96,
+                        128,
+                        160,
+                        192
+                    ],
+                    "default": 64
+                },
+                "learning_rate_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 1.0,
+                    "max": 70.0,
+                    "default": 64.0
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "training_techniques": {
+                    "sft": "SFT"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge",
+                        "ml.g5.12xlarge",
+                        "ml.g5.48xlarge",
+                        "ml.g6.12xlarge",
+                        "ml.g6.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_sft_2_0": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "replicas": "{{replicas}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "training_config": {
+                    "global_batch_size": "{{global_batch_size}}",
+                    "max_steps": "{{max_steps}}",
+                    "save_steps": "{{max_steps}}",
+                    "reasoning_enabled": "{{reasoning_enabled}}",
+                    "optim_config": {
+                        "lr": "{{learning_rate}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [4,8],
+                    "default": 4,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_lite_2_0_p5_gpu_sft": [4, 8, 16, 32],
+                                "default": [4, 8, 16, 32]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_lite_2_0_p5_gpu_sft": 4,
+                                "default": 4
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-lora-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 32
+                },
+                "reasoning_enabled": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 4,
+                    "max": 100000,
+                    "default": 100,
+                    "conditional_constraints": {
+                        "default": {
+                            "Name": {
+                                "nova_lite_2_0_p5_gpu_sft": 100,
+                                "default": 100
+                            }
+                        }
+                    }
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.00001
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "training_techniques": {
+                    "sft": "SFT"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge",
+                        "ml.g5.12xlarge",
+                        "ml.g5.48xlarge",
+                        "ml.g6.12xlarge",
+                        "ml.g6.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_lora_dpo": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "replicas": "{{replicas}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "training_config": {
+                    "global_batch_size": "{{global_batch_size}}",
+                    "trainer": {
+                        "max_epochs": "{{max_epochs}}"
+                    },
+                    "model": {
+                        "optim": {
+                            "lr": "{{learning_rate}}"
+                        },
+                        "dpo_cfg": {
+                            "beta": "{{adam_beta}}"
+                        },
+                        "peft": {
+                            "lora_tuning": {
+                                "alpha": "{{lora_alpha}}",
+                                "loraplus_lr_ratio": "{{learning_rate_ratio}}",
+                                "lora_plus_lr_ratio": "{{learning_rate_ratio}}"
+                            }
+                        }
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [1, 2, 4, 6, 8, 12, 16, 24],
+                    "default": 1,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_lite_1_0_g5_g6_48x_gpu_lora_dpo": [1],
+                                "nova_lite_1_0_p5_p4d_gpu_lora_dpo": [4, 8, 16],
+                                "nova_micro_1_0_g5_g6_12x_gpu_lora_dpo": [1],
+                                "nova_micro_1_0_g5_g6_48x_gpu_lora_dpo": [1],
+                                "nova_micro_1_0_p5_p4d_gpu_lora_dpo": [2, 4, 8],
+                                "nova_pro_1_0_p5_p4d_gpu_lora_dpo": [6, 12, 24],
+                                "default": [1]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_lite_1_0_g5_g6_48x_gpu_lora_dpo": 1,
+                                "nova_lite_1_0_p5_p4d_gpu_lora_dpo": 4,
+                                "nova_micro_1_0_g5_g6_12x_gpu_lora_dpo": 1,
+                                "nova_micro_1_0_g5_g6_48x_gpu_lora_dpo": 1,
+                                "nova_micro_1_0_p5_p4d_gpu_lora_dpo": 2,
+                                "nova_pro_1_0_p5_p4d_gpu_lora_dpo": 6,
+                                "default": 1
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-lora-dpo-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64
+                    ],
+                    "default": 32
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 2
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.00001
+                },
+                "adam_beta": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.001,
+                    "max": 0.1,
+                    "default": 0.1
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": false,
+                    "enum": [
+                        32,
+                        64,
+                        96,
+                        128,
+                        160,
+                        192
+                    ],
+                    "default": 128
+                },
+                "learning_rate_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 1.0,
+                    "max": 70.0,
+                    "default": 16.0
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "training_techniques": {
+                    "dpo": "DPO"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge",
+                        "ml.g5.12xlarge",
+                        "ml.g5.48xlarge",
+                        "ml.g6.12xlarge",
+                        "ml.g6.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_sft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "replicas": "{{replicas}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "training_config": {
+                    "global_batch_size": "{{global_batch_size}}",
+                    "trainer": {
+                        "max_epochs": "{{max_epochs}}"
+                    },
+                    "model": {
+                        "optim": {
+                            "lr": "{{learning_rate}}"
+                        }
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [1, 2, 4, 6, 8, 12, 16, 24],
+                    "default": 1,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_lite_1_0_p5_p4d_gpu_sft": [4, 8, 16],
+                                "nova_micro_1_0_g5_g6_48x_gpu_sft": [1],
+                                "nova_micro_1_0_p5_p4d_gpu_sft": [2, 4, 8],
+                                "nova_pro_1_0_p5_gpu_sft": [6, 12, 24],
+                                "default": [1]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_lite_1_0_p5_p4d_gpu_sft": 4,
+                                "nova_micro_1_0_g5_g6_48x_gpu_sft": 1,
+                                "nova_micro_1_0_p5_p4d_gpu_sft": 2,
+                                "nova_pro_1_0_p5_gpu_sft": 6,
+                                "default": 1
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-fullrank-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64
+                    ],
+                    "default": 16
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 2
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.000005
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "training_techniques": {
+                    "sft": "SFT"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge",
+                        "ml.g5.12xlarge",
+                        "ml.g5.48xlarge",
+                        "ml.g6.12xlarge",
+                        "ml.g6.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_dpo": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "replicas": "{{replicas}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "training_config": {
+                    "global_batch_size": "{{global_batch_size}}",
+                    "trainer": {
+                        "max_epochs": "{{max_epochs}}"
+                    },
+                    "model": {
+                        "optim": {
+                            "lr": "{{learning_rate}}"
+                        },
+                        "dpo_cfg": {
+                            "beta": "{{adam_beta}}"
+                        }
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [1, 2, 4, 6, 8, 12, 16, 24],
+                    "default": 1,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_lite_1_0_p5_p4d_gpu_dpo": [4, 8, 16],
+                                "nova_micro_1_0_p5_p4d_gpu_dpo": [2, 4, 8],
+                                "nova_pro_1_0_p4d_gpu_dpo": [12, 24],
+                                "nova_pro_1_0_p5_gpu_dpo": [6, 12, 24],
+                                "default": [1]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_lite_1_0_p5_p4d_gpu_dpo": 4,
+                                "nova_micro_1_0_p5_p4d_gpu_dpo": 2,
+                                "nova_pro_1_0_p4d_gpu_dpo": 12,
+                                "nova_pro_1_0_p5_gpu_dpo": 6,
+                                "default": 1
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-fullrank-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 32
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 3
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.00001
+                },
+                "adam_beta": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.001,
+                    "max": 0.1,
+                    "default": 0.1
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "training_techniques": {
+                    "dpo": "DPO"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge",
+                        "ml.g5.12xlarge",
+                        "ml.g5.48xlarge",
+                        "ml.g6.12xlarge",
+                        "ml.g6.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_ppo": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "actor_train_replicas": "{{replicas}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "ppo_critic": {
+                    "model": {
+                        "optim": {
+                            "lr": "{{learning_rate}}"
+                        }
+                    }
+                },
+                "ppo_actor_train": {
+                    "model": {
+                        "global_batch_size": "{{global_batch_size}}",
+                        "optim": {
+                            "lr": "{{learning_rate}}"
+                        }
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-ppo-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        160
+                    ],
+                    "default": 160,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Model_ID": {
+                                "nova-textgeneration-micro": [
+                                    256
+                                ],
+                                "nova-textgeneration-lite": [160],
+                                "nova-textgeneration-pro": [
+                                    160
+                                ]
+                            }
+                        },
+                        "default": {
+                             "Model_ID": {
+                                "nova-textgeneration-micro": 256,
+                                "nova-textgeneration-lite": 160,
+                                "nova-textgeneration-pro": 160
+                            }
+                        }
+                    }
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.000003
+                },
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        2,
+                        4,
+                        6
+                    ],
+                    "default": 2,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Model_ID": {
+                                "nova-textgeneration-micro": [
+                                    2
+                                ],
+                                "nova-textgeneration-lite": [2],
+                                "nova-textgeneration-pro": [
+                                    6
+                                ]
+                            }
+                        },
+                        "default": {
+                             "Model_ID": {
+                                "nova-textgeneration-micro": 2,
+                                "nova-textgeneration-lite": 2,
+                                "nova-textgeneration-pro": 6
+                            }
+                        }
+                    }
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "training_techniques": {
+                    "ppo": "PPO"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
+                },
+                "batch_size_constraints": {
+                    "ppo": [
+                        16,
+                        32
+                    ]
+                }
+            }
+        },
+        "nova_distill": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}"
+                },
+                "training_config": {
+                    "maxResponseLength": "{{max_response_length}}",
+                    "customer_bucket": "{{customer_bucket}}",
+                    "kms_key": "{{kms_key}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "data-distillation-premier-teacher"
+                },
+                "customer_bucket": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "kms_key": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 5000,
+                    "max": 5120,
+                    "default": 5120
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-premier": "Nova Premier",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "training_techniques": {
+                    "distill": "Distillation"
+                },
+                "hardware_types": {
+                    "cpu": [
+                        "ml.r5.24xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_general_text_benchmark_eval": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "model_name_or_path": "{{model_name_or_path}}",
+                    "output_s3_path": "{{output_s3_path}}"
+                },
+                "evaluation": {
+                    "task": "{{task}}",
+                    "strategy": "{{strategy}}",
+                    "metric": "{{metric}}",
+                    "subtask": "{{subtask}}"
+                },
+                "inference": {
+                    "max_new_tokens": "{{max_new_tokens}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "nova-lite-mmlu-eval-job"
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "task": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "strategy": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "metric": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "subtask": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "max_new_tokens": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 8196
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "evaluation_types": {
+                    "general_text_benchmark": "DeterministicTextBenchmark"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_general_text_benchmark_2_0_eval": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "model_name_or_path": "{{model_name_or_path}}",
+                    "output_s3_path": "{{output_s3_path}}"
+                },
+                "evaluation": {
+                    "task": "{{task}}",
+                    "strategy": "{{strategy}}",
+                    "metric": "{{metric}}",
+                    "subtask": "{{subtask}}"
+                },
+                "inference": {
+                    "max_new_tokens": "{{max_new_tokens}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "nova-lite-mmlu-eval-job"
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "task": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "strategy": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "metric": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "subtask": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "max_new_tokens": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 8196
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "evaluation_types": {
+                    "general_text_benchmark_2_0": "DeterministicTextBenchmark"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_general_multi_modal_benchmark_eval": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "model_name_or_path": "{{model_name_or_path}}",
+                    "output_s3_path": "{{output_s3_path}}"
+                },
+                "evaluation": {
+                    "task": "{{task}}",
+                    "strategy": "{{strategy}}",
+                    "metric": "{{metric}}",
+                    "subtask": "{{subtask}}"
+                },
+                "inference": {
+                    "max_new_tokens": "{{max_new_tokens}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "nova-lite-mmlu-eval-job"
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "task": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "strategy": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "metric": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "subtask": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "max_new_tokens": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 8196
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "evaluation_types": {
+                    "general_multi_modal_benchmark": "DeterministicMultiModalBenchmark"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_general_multi_modal_benchmark_2_0_eval": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "model_name_or_path": "{{model_name_or_path}}",
+                    "output_s3_path": "{{output_s3_path}}"
+                },
+                "evaluation": {
+                    "task": "{{task}}",
+                    "strategy": "{{strategy}}",
+                    "metric": "{{metric}}",
+                    "subtask": "{{subtask}}"
+                },
+                "inference": {
+                    "max_new_tokens": "{{max_new_tokens}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "nova-lite-mmlu-eval-job"
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "task": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "strategy": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "metric": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "subtask": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "max_new_tokens": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 8196
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "evaluation_types": {
+                    "general_multi_modal_benchmark_2_0": "DeterministicMultiModalBenchmark"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_llm_judge_eval": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "model_name_or_path": "{{model_name_or_path}}",
+                    "output_s3_path": "{{output_s3_path}}"
+                },
+                "evaluation": {
+                    "task": "{{task}}",
+                    "strategy": "{{strategy}}",
+                    "metric": "{{metric}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "nova-lite-mmlu-eval-job"
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "task": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "strategy": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "metric": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "evaluation_types": {
+                    "llm_judge": "LLMAJEvaluation"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_bring_your_own_dataset_eval": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "model_name_or_path": "{{model_name_or_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "data_s3_path": "{{data_s3_path}}"
+                },
+                "evaluation": {
+                    "task": "{{task}}",
+                    "strategy": "{{strategy}}",
+                    "metric": "{{metric}}"
+                },
+                "inference": {
+                    "max_new_tokens": "{{max_new_tokens}}"
+                },
+                "processor": {
+                    "lambda_arn": "{{lambda_arn}}",
+                    "lambda_type": "{{lambda_type}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "nova-lite-mmlu-eval-job"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "task": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "strategy": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "metric": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_new_tokens": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 8196
+                },
+                "lambda_arn": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "lambda_type": {
+                    "type": "string",
+                    "required": true,
+                    "enum": [
+                        "rft",
+                        "custom_metrics"
+                    ],
+                    "default": "rft"
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 200000,
+                    "default": 2048
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "evaluation_types": {
+                    "bring_your_own_dataset": "DeterministicEvaluation"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_bring_your_own_dataset_2_0_eval": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "model_name_or_path": "{{model_name_or_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "data_s3_path": "{{data_s3_path}}"
+                },
+                "evaluation": {
+                    "task": "{{task}}",
+                    "strategy": "{{strategy}}",
+                    "metric": "{{metric}}"
+                },
+                "inference": {
+                    "max_new_tokens": "{{max_new_tokens}}"
+                },
+                "processor": {
+                    "lambda_arn": "{{lambda_arn}}",
+                    "lambda_type": "{{lambda_type}}",
+                    "preset_reward_function": "{{preset_reward_function}}"
+
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "nova-lite-mmlu-eval-job"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "task": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "strategy": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "metric": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_new_tokens": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 8196
+                },
+                "lambda_arn": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "lambda_type": {
+                    "type": "string",
+                    "required": true,
+                    "enum": [
+                        "rft",
+                        "custom_metrics"
+                    ],
+                    "default": "rft"
+                },
+                "preset_reward_function": {
+                    "type": "string",
+                    "required": false,
+                    "enum": [
+                        "prime_math",
+                        "prime_code"
+                    ],
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 200000,
+                    "default": 2048
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite-v2": "Nova Lite V2",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "evaluation_types": {
+                    "bring_your_own_dataset_2_0": "DeterministicEvaluation"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_pretrain": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "replicas": "{{replicas}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "training_config": {
+                    "global_batch_size": "{{global_batch_size}}",
+                    "trainer": {
+                        "max_epochs": "{{max_epochs}}"
+                    },
+                    "model": {
+                        "optim": {
+                            "lr": "{{learning_rate}}"
+                        }
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [2, 4, 6, 8, 12, 16, 24, 32],
+                    "default": 2,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_lite_1_0_p5x16_gpu_pretrain": [4, 8, 16, 32],
+                                "nova_micro_1_0_p5x8_gpu_pretrain": [2, 4, 8, 16, 32],
+                                "nova_pro_1_0_p5x24_gpu_pretrain": [6, 12, 24],
+                                "default": [2]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_lite_1_0_p5x16_gpu_pretrain": 16,
+                                "nova_micro_1_0_p5x8_gpu_pretrain": 8,
+                                "nova_pro_1_0_p5x24_gpu_pretrain": 24,
+                                "default": 2
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-cpt-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 256
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 1
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.00001
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "training_techniques": {
+                    "CPT": "Continued Pre-Training"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_pretrain_2_0": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "replicas": "{{replicas}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "validation_data_s3_path": "{{validation_s3_path}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "training_config": {
+                    "global_batch_size": "{{global_batch_size}}",
+                    "trainer": {
+                        "max_steps": "{{max_steps}}"
+                    },
+                    "optim":{
+                        "lr": "{{learning_rate}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [2, 4, 6, 8, 12, 16, 24, 32],
+                    "default": 2,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_lite_2_0_p5x8_gpu_pretrain": [4, 8, 16, 32],
+                                "default": [8]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_lite_2_0_p5x8_gpu_pretrain": 8,
+                                "default": 8
+                            }
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-cpt-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_s3_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 256
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 10,
+                    "max": 100000,
+                    "default": 10
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.00001
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-micro": "Nova Micro",
+                    "nova-textgeneration-lite": "Nova Lite",
+                    "nova-textgeneration-pro": "Nova Pro"
+                },
+                "training_techniques": {
+                    "CPT": "Continued Pre-Training"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "nova_lora_rft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "reward_lambda_arn": "{{reward_lambda_arn}}",
+                    "replicas": "{{replicas}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "training_config": {
+                    "max_length": "{{max_length}}",
+                    "global_batch_size": "{{global_batch_size}}",
+                    "rollout": {
+                        "advantage_strategy": {
+                            "number_generation": "{{number_generation}}"
+                        },
+                        "rewards": {
+                            "api_endpoint": {
+                                "lambda_arn": "{{reward_lambda_arn}}"
+                            }
+                        }
+                    },
+                    "trainer": {
+                        "max_steps": "{{max_steps}}",
+                        "save_steps": "{{max_steps}}",
+                        "optim_config": {
+                            "lr": "{{learning_rate}}"
+                        },
+                        "peft": {
+                            "lora_tuning": {
+                                "alpha": "{{lora_alpha}}",
+                                "loraplus_lr_ratio": "{{learning_rate_ratio}}"
+                            }
+                        }
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-rft-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "reward_lambda_arn": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [2, 4, 8, 16],
+                    "default": 2
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.00000001,
+                    "max": 0.001,
+                    "default": 0.0000007
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 5,
+                    "max": 100000,
+                    "default": 10,
+                    "conditional_constraints": {
+                        "default": {
+                            "Name": {
+                                "nova_lite_2_0_p5_gpu_lora_rft": 10,
+                                "default": 10
+                            }
+                        }
+                    }
+                },
+                "number_generation": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 2,
+                    "max": 16,
+                    "default": 8
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [16, 32, 64],
+                    "default": 32
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 16,
+                    "max": 256,
+                    "default": 256
+                },
+                "max_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 4096,
+                    "max": 32768,
+                    "default": 10240
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "learning_rate_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 1.0,
+                    "max": 70.0,
+                    "default": 64.0
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-lite-v2": "Nova Lite"
+                },
+                "training_techniques": {
+                    "rft": "rft"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p5.48xlarge"]
+                }
+            }
+        },
+        "nova_rft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "output_s3_path": "{{output_s3_path}}",
+                    "replicas": "{{replicas}}",
+                    "reward_lambda_arn": "{{reward_lambda_arn}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}"
+                },
+                "training_config": {
+                    "max_length": "{{max_length}}",
+                    "global_batch_size": "{{global_batch_size}}",
+                    "rollout": {
+                        "advantage_strategy": {
+                            "number_generation": "{{number_generation}}"
+                        },
+                        "rewards": {
+                            "api_endpoint": {
+                                "lambda_arn": "{{reward_lambda_arn}}"
+                            }
+                        }
+                    },
+                    "trainer": {
+                        "max_steps": "{{max_steps}}",
+                        "save_steps": "{{max_steps}}",
+                        "optim_config": {
+                            "lr": "{{learning_rate}}"
+                        }
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-rft-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "replicas": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [2, 4, 8, 16],
+                    "default": 4
+                },
+                "reward_lambda_arn": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.00000001,
+                    "max": 0.001,
+                    "default": 0.0000007
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 5,
+                    "max": 100000,
+                    "default": 10,
+                    "conditional_constraints": {
+                        "default": {
+                            "Name": {
+                                "nova_lite_2_0_p5_gpu_rft": 10,
+                                "default": 10
+                            }
+                        }
+                    }
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 16,
+                    "max": 256,
+                    "default": 256
+                },
+                "max_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 4096,
+                    "max": 32768,
+                    "default": 10240
+                },
+                "number_generation": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 2,
+                    "max": 16,
+                    "default": 8
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "kubeflow"
+                },
+                "max_context_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 131072,
+                    "default": 8192
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-lite-v2": "Nova Lite"
+                },
+                "training_techniques": {
+                    "rft": "rft"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p5.48xlarge"]
+                }
+            }
+        },
+        "nova_smtj_lora_rft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "reward_lambda_arn": "{{reward_lambda_arn}}"
+                },
+                "training_config": {
+                    "global_batch_size": "{{global_batch_size}}",
+                    "max_length": "{{max_length}}",
+                    "trainer": {
+                        "max_steps":"{{max_steps}}",
+                        "save_steps":"{{max_steps}}",
+                        "optim_config": {
+                            "lr": "{{learning_rate}}"
+                        },
+                        "peft": {
+                            "lora_tuning": {
+                                "alpha": "{{lora_alpha}}",
+                                "lora_plus_lr_ratio": "{{learning_rate_ratio}}"
+                            }
+                        }
+                    },
+                    "rollout": {
+                        "rewards": {
+                            "api_endpoint": {
+                                "lambda_arn": "{{reward_lambda_arn}}"
+                            }
+                        }
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-rft-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "reward_lambda_arn": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0000001,
+                    "max": 0.001,
+                    "default": 0.00001
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 5,
+                    "max": 100000,
+                    "default": 10,
+                    "conditional_constraints": {
+                        "default": {
+                            "Name": {
+                                "nova_lite_v2_smtj_p5_p5en_gpu_lora_rft": 10,
+                                "default": 10
+                            }
+                        }
+                    }
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": false,
+                    "enum": [
+                        16,
+                        32,
+                        64
+                    ],
+                    "default": 32
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 16,
+                    "max": 128,
+                    "default": 64
+                },
+                "max_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 4096,
+                    "max": 32768,
+                    "default": 8192
+                },
+                "learning_rate_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 100.0,
+                    "default": 64.0
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-lite-v2": "Nova Lite"
+                },
+                "training_techniques": {
+                    "rft": "rft"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p5.48xlarge", "ml.p5en.48xlarge"]
+                }
+            }
+        },
+        "nova_smtj_rft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "data_s3_path": "{{data_s3_path}}",
+                    "reward_lambda_arn": "{{reward_lambda_arn}}"
+                },
+                "training_config": {
+                    "global_batch_size": "{{global_batch_size}}",
+                    "max_length": "{{max_length}}",
+                    "rollout": {
+                        "rewards": {
+                            "api_endpoint": {
+                                "lambda_arn": "{{reward_lambda_arn}}"
+                            }
+                        }
+                    },
+                    "trainer": {
+                        "max_steps": "{{max_steps}}",
+                        "save_steps": "{{max_steps}}",
+                        "optim_config": {
+                            "lr": "{{learning_rate}}"
+                        }
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "my-rft-run"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "reward_lambda_arn": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0000001,
+                    "max": 0.001,
+                    "default": 0.00001
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 16,
+                    "max": 256,
+                    "default": 64
+                },
+                "max_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 4096,
+                    "max": 32768,
+                    "default": 8192
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 5,
+                    "max": 100000,
+                    "default": 10,
+                       "conditional_constraints": {
+                        "default": {
+                            "Name": {
+                                "nova_lite_v2_smtj_p5_p5en_gpu_rft": 10,
+                                "default": 10
+                            }
+                        }
+                    }
+                }
+            },
+            "recipe_metadata_helpers": {
+                "model_variants": {
+                    "nova-textgeneration-lite-v2": "Nova Lite"
+                },
+                "training_techniques": {
+                    "rft": "rft"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p5en.48xlarge"]
+                }
+            }
+        }
+    }
+}

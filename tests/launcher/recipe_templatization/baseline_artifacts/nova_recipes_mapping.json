@@ -1,0 +1,440 @@
+{
+  "nova_lite_1_0_g5_g6_12x_gpu_lora_sft": {
+    "display_name": "Nova Lite LoRA SFT on GPU",
+    "instance_types": [
+      "ml.g5.12xlarge",
+      "ml.g6.12xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_g5_g6_48x_gpu_lora_dpo": {
+    "display_name": "Nova Lite LoRA DPO on GPU",
+    "instance_types": [
+      "ml.g5.48xlarge",
+      "ml.g6.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_g5_g6_48x_gpu_lora_sft": {
+    "display_name": "Nova Lite LoRA SFT on GPU",
+    "instance_types": [
+      "ml.g5.48xlarge",
+      "ml.g6.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5_48xl_gpu_bring_your_own_dataset_eval": {
+    "display_name": "Nova Lite Bring Your Own Dataset Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.g5.12xlarge",
+      "ml.g5.24xlarge",
+      "ml.g6.12xlarge",
+      "ml.g6.24xlarge",
+      "ml.g6.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5_48xl_gpu_general_multi_modal_benchmark_eval": {
+    "display_name": "Nova Lite General Multi-Modal Benchmark Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.g5.12xlarge",
+      "ml.g5.24xlarge",
+      "ml.g6.12xlarge",
+      "ml.g6.24xlarge",
+      "ml.g6.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5_48xl_gpu_general_text_benchmark_eval": {
+    "display_name": "Nova Lite General Text Benchmark Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.g5.12xlarge",
+      "ml.g5.24xlarge",
+      "ml.g6.12xlarge",
+      "ml.g6.24xlarge",
+      "ml.g6.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5_48xl_gpu_llm_judge_eval": {
+    "display_name": "Nova Lite LLM Judge Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.g5.12xlarge",
+      "ml.g5.24xlarge",
+      "ml.g6.12xlarge",
+      "ml.g6.24xlarge",
+      "ml.g6.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5_48xl_gpu_rft_eval": {
+    "display_name": "Nova Lite RFT Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.g5.12xlarge",
+      "ml.g5.24xlarge",
+      "ml.g6.12xlarge",
+      "ml.g6.24xlarge",
+      "ml.g6.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5_gpu_ppo": {
+    "display_name": "Nova Lite PPO on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5_p4d_gpu_dpo": {
+    "display_name": "Nova Lite DPO on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5_p4d_gpu_lora_dpo": {
+    "display_name": "Nova Lite LoRA DPO on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5_p4d_gpu_lora_sft": {
+    "display_name": "Nova Lite LoRA SFT on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5_p4d_gpu_sft": {
+    "display_name": "Nova Lite SFT on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_1_0_p5x16_gpu_pretrain": {
+    "display_name": "Nova Lite Pretrain on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_2_0_p5_48xl_gpu_bring_your_own_dataset_eval": {
+    "display_name": "Nova Lite 2.0 Bring Your Own Dataset Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_2_0_p5_48xl_gpu_general_multi_modal_benchmark_eval": {
+    "display_name": "Nova Lite 2.0 General Multi-Modal Benchmark Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_2_0_p5_48xl_gpu_general_text_benchmark_eval": {
+    "display_name": "Nova Lite 2.0 General Text Benchmark Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_2_0_p5_48xl_gpu_rft_eval": {
+    "display_name": "Nova Lite 2.0 RFT Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_2_0_p5_48xl_gpu_rubric_llm_judge_eval": {
+    "display_name": "Nova Lite 2.0 Rubric LLM Judge Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_2_0_p5_gpu_lora_rft": {
+    "display_name": "Nova Lite RLVR Training (PEFT)",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.p5en.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_2_0_p5_gpu_lora_sft": {
+    "display_name": "Nova Lite LoRA SFT on P5 GPU",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.p5en.48xlarge"
+    ],
+    "version": "2.0.0"
+  },
+  "nova_lite_2_0_p5_gpu_rft": {
+    "display_name": "Nova Lite RLVR Training",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.p5en.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_lite_2_0_p5_gpu_sft": {
+    "display_name": "Nova Lite SFT on P5 GPU",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.p5en.48xlarge"
+    ],
+    "version": "2.0.0"
+  },
+  "nova_lite_2_0_p5x8_gpu_pretrain": {
+    "display_name": "Nova Lite Pretrain on P5 GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.5"
+  },
+  "nova_lite_v2_smtj_p5_p5en_gpu_lora_rft": {
+    "display_name": "Nova Lite V2 LoRA RLVR SMTJ training on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.p5en.48xlarge"
+    ],
+    "version": "1.0"
+  },
+  "nova_lite_v2_smtj_p5_p5en_gpu_rft": {
+    "display_name": "Nova Lite V2 Full Rank RLVR SMTJ training on GPU",
+    "instance_types": [
+      "ml.p5en.48xlarge",
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0"
+  },
+  "nova_micro_1_0_g5_g6_12x_gpu_lora_dpo": {
+    "display_name": "Nova Micro LoRA DPO on GPU",
+    "instance_types": [
+      "ml.g5.12xlarge",
+      "ml.g6.12xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_g5_g6_12x_gpu_lora_sft": {
+    "display_name": "Nova Micro LoRA SFT on GPU",
+    "instance_types": [
+      "ml.g5.12xlarge",
+      "ml.g6.12xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_g5_g6_48x_gpu_lora_dpo": {
+    "display_name": "Nova Micro LoRA DPO on GPU",
+    "instance_types": [
+      "ml.g5.48xlarge",
+      "ml.g6.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_g5_g6_48x_gpu_lora_sft": {
+    "display_name": "Nova Micro LoRA SFT on GPU",
+    "instance_types": [
+      "ml.g5.48xlarge",
+      "ml.g6.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_g5_g6_48x_gpu_sft": {
+    "display_name": "Nova Micro SFT on GPU",
+    "instance_types": [
+      "ml.g5.48xlarge",
+      "ml.g6.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_p5_48xl_gpu_bring_your_own_dataset_eval": {
+    "display_name": "Nova Micro Bring Your Own Dataset Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.g5.12xlarge",
+      "ml.g5.24xlarge",
+      "ml.g6.12xlarge",
+      "ml.g6.24xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_p5_48xl_gpu_general_text_benchmark_eval": {
+    "display_name": "Nova Micro General Text Benchmark Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.g5.12xlarge",
+      "ml.g5.24xlarge",
+      "ml.g6.12xlarge",
+      "ml.g6.24xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_p5_48xl_gpu_llm_judge_eval": {
+    "display_name": "Nova Micro LLM Judge Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.g5.12xlarge",
+      "ml.g5.24xlarge",
+      "ml.g6.12xlarge",
+      "ml.g6.24xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_p5_48xl_gpu_rft_eval": {
+    "display_name": "Nova Micro RFT Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge",
+      "ml.g5.12xlarge",
+      "ml.g5.24xlarge",
+      "ml.g6.12xlarge",
+      "ml.g6.24xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_p5_gpu_ppo": {
+    "display_name": "Nova Micro PPO on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_p5_p4d_gpu_dpo": {
+    "display_name": "Nova Micro DPO on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_p5_p4d_gpu_lora_dpo": {
+    "display_name": "Nova Micro LoRA DPO on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_p5_p4d_gpu_lora_sft": {
+    "display_name": "Nova Micro LoRA SFT on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_p5_p4d_gpu_sft": {
+    "display_name": "Nova Micro SFT on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_micro_1_0_p5x8_gpu_pretrain": {
+    "display_name": "Nova Micro Pretrain on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_premier_1_0_r5_cpu_distill": {
+    "display_name": "Nova Premier Data Distillation on CPU",
+    "instance_types": [
+      "ml.r5.24xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5_48xl_gpu_bring_your_own_dataset_eval": {
+    "display_name": "Nova Pro Bring Your Own Dataset Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5_48xl_gpu_general_multi_modal_benchmark_eval": {
+    "display_name": "Nova Pro General Multi-Modal Benchmark Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5_48xl_gpu_general_text_benchmark_eval": {
+    "display_name": "Nova Pro General Text Benchmark Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5_48xl_gpu_llm_judge_eval": {
+    "display_name": "Nova Pro LLM Judge Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5_48xl_gpu_rft_eval": {
+    "display_name": "Nova Pro RFT Evaluation on P5",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5_gpu_dpo": {
+    "display_name": "Nova Pro DPO on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5_gpu_ppo": {
+    "display_name": "Nova Pro PPO on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5_gpu_sft": {
+    "display_name": "Nova Pro SFT on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5_p4d_gpu_lora_dpo": {
+    "display_name": "Nova Pro LoRA DPO on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5_p4d_gpu_lora_sft": {
+    "display_name": "Nova Pro LoRA SFT on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_p5x24_gpu_pretrain": {
+    "display_name": "Nova Pro Pretrain on GPU",
+    "instance_types": [
+      "ml.p5.48xlarge"
+    ],
+    "version": "1.0.0"
+  },
+  "nova_pro_1_0_r5_cpu_distill": {
+    "display_name": "Nova Pro Data Distillation on CPU",
+    "instance_types": [
+      "ml.r5.24xlarge"
+    ],
+    "version": "1.0.0"
+  }
+}

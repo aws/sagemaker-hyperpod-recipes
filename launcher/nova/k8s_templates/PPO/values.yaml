@@ -10,7 +10,7 @@ jobList: null
 
 trainingConfig:
   # namespace to launch job
-  namespace: "default"
+  namespace: "namespace_placeholder"
 
   # list of custom annotations apply to jobs
   annotations: null

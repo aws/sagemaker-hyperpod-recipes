@@ -1,0 +1,155 @@
+{{- $root := .Values }}
+{{ $config := .Values.trainingConfig }}
+{{- range $i, $job := .Values.jobList }}
+  {{- if (regexMatch "-ag$" (trim $job.jobName)) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $job.jobName }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ $job.jobName }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $job.jobName }}
+  namespace: {{ $config.namespace }}
+  {{- if $config.annotations }}
+  annotations:
+    {{- range $key, $value := $config.annotations }}
+    {{ $key | quote }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  labels:
+    app: {{ $job.jobName }}
+    {{- if $config.customLabels }}
+    {{- range $key, $value := $config.customLabels }}
+    {{ $key | quote }}: {{ $value | quote }}
+    {{- end}}
+    {{- end }}
+spec:
+  podManagementPolicy: Parallel
+  replicas: {{ $job.master_nodes }}
+  selector:
+    matchLabels:
+      app: {{ $job.jobName }}
+  serviceName: {{ $job.jobName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $job.jobName }}
+        {{- if $config.customLabels }}
+        {{- range $key, $value := $config.customLabels }}
+        {{ $key | quote }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+    spec:
+      tolerations:
+        - key: "sagemaker.amazonaws.com/RestrictedNode"
+          operator: "Equal"
+          value: "Worker"
+          effect: "NoSchedule"
+      {{- if (or $config.labelSelector.required $config.labelSelector.preferred) }}
+      affinity:
+        nodeAffinity:
+        {{- if $config.labelSelector.required }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                {{- range $key, $values := $config.labelSelector.required }}
+                - key: {{ $key | quote }}
+                  operator: In
+                  values:
+                    {{- range $values }}
+                    - {{ . | quote }}
+                    {{- end }}
+                {{- end }}
+        {{- end }}
+
+        {{- if $config.labelSelector.preferred }}
+          {{- $index := 0 }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- range $key, $values := $config.labelSelector.preferred }}
+            - weight: {{ index $config.labelSelector.weights $index }}
+              preference:
+                matchExpressions:
+                  - key: {{ $key | quote }}
+                    operator: In
+                    values:
+                      {{- range $values }}
+                      - {{ . | quote }}
+                      {{- end }}
+            {{- $index = add $index 1 }}
+            {{- end }}
+          {{- end }}
+      {{- end }}
+      {{- if $config.initContainer }}
+      initContainers:
+        - name: {{ $config.initContainer.name }}
+          image: {{ $config.initContainer.image }}
+          imagePullPolicy: {{ $root.image.pullPolicy }}
+          volumeMounts:
+          - name: fsx-path-init
+            mountPath: /sagemaker/fsx/init
+          - mountPath: /config
+            name: training-config
+          - mountPath: /var/log/aws/clusters
+            name: logs
+      {{- end }}
+      containers:
+        - name: server
+          env:
+            - name: "SVC_NAME"
+              value: {{ $job.jobName }}
+            - name: "NAMESPACE"
+              value: {{ $config.namespace }}
+          image: {{ $root.image.actor_generation_image }}
+          imagePullPolicy: Always
+          resources:
+            limits:
+              nvidia.com/gpu: {{ $job.devices }}
+              vpc.amazonaws.com/efa: {{ $config.numEFADevices }}
+            requests:
+              nvidia.com/gpu: {{ $job.devices }}
+              vpc.amazonaws.com/efa: {{ $config.numEFADevices }}
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: fsx-path-main
+              mountPath: /sagemaker/fsx/main
+            - mountPath: /config
+              name: training-config
+            - mountPath: /dev/shm
+              name: dshm
+            - mountPath: /var/log/aws/clusters
+              name: logs
+            - mountPath: /sagemaker/fsx/output_artifacts
+              name: fsx-path-output-artifacts
+      restartPolicy: Always
+      volumes:
+        - name: fsx-path-main
+          hostPath:
+            path: /sagemaker/fsx/main
+            type: DirectoryOrCreate
+        - name: fsx-path-init
+          hostPath:
+            path: /sagemaker/fsx/init
+            type: DirectoryOrCreate
+        - configMap:
+            name: training-config-{{ $job.jobName }}
+          name: training-config
+        - name: dshm
+          emptyDir:
+            medium: Memory
+        - name: logs
+          hostPath:
+            path: /var/log/aws/clusters
+            type: DirectoryOrCreate
+        - name: fsx-path-output-artifacts
+          hostPath:
+            path: /sagemaker/fsx/output_artifacts
+            type: DirectoryOrCreate
+      {{- end }}
+  {{- end }}

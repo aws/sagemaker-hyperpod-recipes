@@ -1,0 +1,35 @@
+run:
+  name: nova-pro-byod-eval-job
+  model_type: amazon.nova-pro-v1:0:300k
+  model_name_or_path: nova-pro/prod # modifiable
+  replicas: 1 # modifiable for Sagemaker Training job, unmodifiable for Sagemaker Hyperpod job
+  data_s3_path: "" # Leave empty for Sagemaker Training job, required for Sagemaker Hyperpod job
+  output_s3_path: "" # Output artifact path, Sagemaker Hyperpod job-specific configuration - not compatible with Sagemaker Training jobs
+  mlflow_tracking_uri: "" # Optional for MLFlow
+  mlflow_experiment_name : "" # Optional for MLFlow
+  mlflow_run_name : "" # Optional for MLFlow
+
+evaluation:
+  task: gen_qa # unmodifiable
+  strategy: gen_qa # unmodifiable
+  metric: all # unmodifiable
+
+# Optional Inference configs
+inference:
+  max_new_tokens: 8196
+  top_k: -1
+  top_p: 1.0
+  temperature: 0
+  top_logprobs: 0 # Change to a value between (0,20] to enable
+
+# =============================================================================
+# OPTIONAL: Bring Your Own Metrics/RFT lambda Configuration
+# =============================================================================
+processor:
+  lambda_arn: "" # Provide valid lambda arn to enable custom metrics processing
+  lambda_type: "rft" # or "custom_metrics"
+  preprocessing:
+    enabled: false
+  postprocessing:
+    enabled: true
+  aggregation: average

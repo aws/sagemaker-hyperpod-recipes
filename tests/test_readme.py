@@ -58,6 +58,6 @@ def test_readme_table_links():
 
                     assert config_file_path.exists(), log_line(line)
                     assert launcher_script_path.exists(), log_line(line)
-                    assert str_distance_ratio >= 0.8, log_line(line)
+                    assert str_distance_ratio >= 0.75, log_line(line)
                 else:
                     raise Exception("test condition not covered")

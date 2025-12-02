@@ -18,14 +18,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.8' # Set python version to 3.8
+          python-version: '3.10' # Set python version to 3.10
 
       - name: Install unit test dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r launcher/nemo/nemo_framework_launcher/requirements.txt
+          pip install sagemaker
           pip install pytest
           pip install pytest-cov
+          pip install pytest-subtests
           pip install boto3
           pip install botocore
 

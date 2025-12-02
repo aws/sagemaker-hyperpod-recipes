@@ -1,0 +1,354 @@
+{{- $root := .Values }}
+{{- $config := .Values.trainingConfig }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.trainingConfig.jobName }}-prompter
+  namespace: {{ .Values.trainingConfig.namespace }}
+  {{- with .Values.trainingConfig.customLabels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.trainingConfig.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ .Values.trainingConfig.jobName }}-prompter
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.trainingConfig.jobName }}-rbs
+  namespace: {{ .Values.trainingConfig.namespace }}
+  {{- with .Values.trainingConfig.customLabels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.trainingConfig.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  clusterIP: None
+  selector:
+    app: {{ .Values.trainingConfig.jobName }}-rbs
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.trainingConfig.jobName }}-prompter
+  namespace: {{ .Values.trainingConfig.namespace }}
+  labels:
+    app: {{ .Values.trainingConfig.jobName }}-prompter
+    workload-type: "cpu-only-{{ .Values.trainingConfig.jobName }}"
+    {{- with .Values.trainingConfig.customLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    job: {{ .Values.trainingConfig.jobName }}-prompter
+    region: {{ .Values.trainingConfig.region }}
+    {{- if .Values.image.stormImage }}
+    image: {{ .Values.image.stormImage }}
+    {{- else }}
+    image: "placeholder:latest"
+    {{- end }}
+    discover_hosts: /config/discover_hosts.sh
+    worker_replicas: {{ .Values.trainingConfig.prompter.replicas | quote }}
+    {{- with .Values.trainingConfig.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.trainingConfig.jobName }}-prompter
+        user: {{ .Values.trainingConfig.alias }}
+        run_id: {{ .Values.trainingConfig.jobName }}
+        workload-type: "cpu-only-{{ .Values.trainingConfig.jobName }}"
+        {{- with .Values.trainingConfig.customLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9090"
+        prometheus.io/scrape: "true"
+        job_type: "stormrl"
+    spec:
+      serviceAccountName: {{ .Values.trainingConfig.serviceAccountName }}
+      enableServiceLinks: false
+      tolerations:
+        {{- range .Values.trainingConfig.requiredTolerations }}
+        - key: {{ .key }}
+          operator: {{ .operator }}
+          value: {{ .value }}
+          effect: {{ .effect }}
+        {{- end }}
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: workload-type
+                  operator: In
+                  values: ["cpu-only-{{ .Values.trainingConfig.jobName }}"]
+              topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: workload-type
+                operator: In
+                values: ["gpu-intensive-{{ .Values.trainingConfig.jobName }}"]
+            topologyKey: kubernetes.io/hostname
+        {{- if (or $config.labelSelector.required $config.labelSelector.preferred) }}
+        nodeAffinity:
+          {{- if $config.labelSelector.required }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                {{- range $key, $values := $config.labelSelector.required }}
+                - key: {{ $key | quote }}
+                  operator: In
+                  values:
+                    {{- range $values }}
+                    - {{ . | quote }}
+                    {{- end}}
+                {{- end }}
+          {{- end }}
+          {{- if $config.labelSelector.preferred }}
+          {{- $index := 0 }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- range $key, $values := $config.labelSelector.preferred }}
+            - weight: {{ index $config.labelSelector.weights $index }}
+              preference:
+                matchExpressions:
+                  - key: {{ $key | quote }}
+                    operator: In
+                    values:
+                      {{- range $values }}
+                      - {{ . | quote }}
+                      {{- end }}
+            {{- $index = add $index 1 }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: {{ .Values.trainingConfig.restartPolicy }}
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
+      {{- if $config.initContainer }}
+      initContainers:
+        - name: {{ $config.initContainer.name }}
+          image: {{ $config.initContainer.image }}
+          imagePullPolicy: {{ $root.image.pullPolicy }}
+          volumeMounts:
+          - name: fsx-path-init
+            mountPath: /sagemaker/fsx/init
+          - mountPath: /config
+            name: training-config
+          - mountPath: /var/log/aws/clusters
+            name: logs
+      {{- end }}
+      containers:
+        - name: promptcli
+          {{- if .Values.image.stormImage }}
+          image: {{ .Values.image.stormImage }}
+          {{- else }}
+          image: "placeholder:latest"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.trainingConfig.prompter.resources | nindent 12 }}
+          volumeMounts:
+            - name: fsx-path-main
+              mountPath: /sagemaker/fsx/main
+            - mountPath: /config
+              name: training-config
+            - mountPath: /dev/shm
+              name: dshm
+            - mountPath: /var/log/aws/clusters
+              name: logs
+            - mountPath: /sagemaker/fsx/output_artifacts
+              name: fsx-path-output-artifacts
+
+      volumes:
+        - name: fsx-path-main
+          hostPath:
+            path: /sagemaker/fsx/main
+            type: DirectoryOrCreate
+        - name: fsx-path-init
+          hostPath:
+            path: /sagemaker/fsx/init
+            type: DirectoryOrCreate
+        - name: training-config
+          configMap:
+            name: {{ .Values.trainingConfig.jobName }}-prompter-config
+        - name: dshm
+          emptyDir:
+            medium: Memory
+        - name: logs
+          hostPath:
+            path: /var/log/aws/clusters
+            type: DirectoryOrCreate
+        - name: fsx-path-output-artifacts
+          hostPath:
+            path: /sagemaker/fsx/output_artifacts
+            type: DirectoryOrCreate
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.trainingConfig.jobName }}-rbs
+  namespace: {{ .Values.trainingConfig.namespace }}
+  labels:
+    app: {{ .Values.trainingConfig.jobName }}-rbs
+    user: {{ .Values.trainingConfig.alias }}
+    workload-type: "cpu-only-{{ .Values.trainingConfig.jobName }}"
+    {{- with .Values.trainingConfig.customLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    job: {{ .Values.trainingConfig.jobName }}-rbs
+    region: {{ .Values.trainingConfig.region }}
+    {{- if .Values.image.stormImage }}
+    image: {{ .Values.image.stormImage }}
+    {{- else }}
+    image: "placeholder:latest"
+    {{- end }}
+    discover_hosts: /config/discover_hosts.sh
+    worker_replicas: {{ .Values.trainingConfig.rbs.replicas | quote }}
+    {{- with .Values.trainingConfig.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.trainingConfig.jobName }}-rbs
+        user: {{ .Values.trainingConfig.alias }}
+        run_id: {{ .Values.trainingConfig.jobName }}
+        workload-type: "cpu-only-{{ .Values.trainingConfig.jobName }}"
+        {{- with .Values.trainingConfig.customLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9090"
+        prometheus.io/scrape: "true"
+        job_type: "stormrl"
+    spec:
+      serviceAccountName: {{ .Values.trainingConfig.serviceAccountName }}
+      enableServiceLinks: false
+      tolerations:
+        {{- range .Values.trainingConfig.requiredTolerations }}
+        - key: {{ .key }}
+          operator: {{ .operator }}
+          value: {{ .value }}
+          effect: {{ .effect }}
+        {{- end }}
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: workload-type
+                  operator: In
+                  values: ["cpu-only-{{ .Values.trainingConfig.jobName }}"]
+              topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: workload-type
+                operator: In
+                values: ["gpu-intensive-{{ .Values.trainingConfig.jobName }}"]
+            topologyKey: kubernetes.io/hostname
+        {{- if (or $config.labelSelector.required $config.labelSelector.preferred) }}
+        nodeAffinity:
+          {{- if $config.labelSelector.required }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                {{- range $key, $values := $config.labelSelector.required }}
+                - key: {{ $key | quote }}
+                  operator: In
+                  values:
+                    {{- range $values }}
+                    - {{ . | quote }}
+                    {{- end}}
+                {{- end }}
+          {{- end }}
+          {{- if $config.labelSelector.preferred }}
+          {{- $index := 0 }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- range $key, $values := $config.labelSelector.preferred }}
+            - weight: {{ index $config.labelSelector.weights $index }}
+              preference:
+                matchExpressions:
+                  - key: {{ $key | quote }}
+                    operator: In
+                    values:
+                      {{- range $values }}
+                      - {{ . | quote }}
+                      {{- end }}
+            {{- $index = add $index 1 }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      dnsPolicy: ClusterFirst
+      restartPolicy: {{ .Values.trainingConfig.restartPolicy }}
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: rbscli
+          {{- if .Values.image.stormImage }}
+          image: {{ .Values.image.stormImage }}
+          {{- else }}
+          image: "placeholder:latest"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.trainingConfig.rbs.resources | nindent 12 }}
+          volumeMounts:
+            - name: fsx-path-main
+              mountPath: /sagemaker/fsx/main
+            - mountPath: /config
+              name: training-config
+            - mountPath: /dev/shm
+              name: dshm
+            - mountPath: /var/log/aws/clusters
+              name: logs
+            - mountPath: /sagemaker/fsx/output_artifacts
+              name: fsx-path-output-artifacts
+      volumes:
+        - name: fsx-path-main
+          hostPath:
+            path: /sagemaker/fsx/main
+            type: DirectoryOrCreate
+        - name: fsx-path-init
+          hostPath:
+            path: /sagemaker/fsx/init
+            type: DirectoryOrCreate
+        - name: training-config
+          configMap:
+            name: {{ .Values.trainingConfig.jobName }}-rbs-config
+        - name: dshm
+          emptyDir:
+            medium: Memory
+        - name: logs
+          hostPath:
+            path: /var/log/aws/clusters
+            type: DirectoryOrCreate
+        - name: fsx-path-output-artifacts
+          hostPath:
+            path: /sagemaker/fsx/output_artifacts
+            type: DirectoryOrCreate

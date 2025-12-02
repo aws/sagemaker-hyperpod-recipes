@@ -4,5 +4,5 @@ set -e
 SAGEMAKER_TRAINING_LAUNCHER_DIR=${SAGEMAKER_TRAINING_LAUNCHER_DIR:-"$(pwd)"}
 
 HYDRA_FULL_ERROR=1 python3 "${SAGEMAKER_TRAINING_LAUNCHER_DIR}/main.py" \
-    recipes=fine-tuning/nova/nova_lite_p5_gpu_dpo \
+    recipes=fine-tuning/nova/nova_1_0/nova_lite/DPO/nova_lite_1_0_p5_p4d_gpu_dpo \
     base_results_dir="${SAGEMAKER_TRAINING_LAUNCHER_DIR}/results"

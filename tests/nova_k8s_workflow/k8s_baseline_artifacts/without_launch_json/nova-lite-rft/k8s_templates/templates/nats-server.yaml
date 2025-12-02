@@ -1,0 +1,344 @@
+{{- $root := .Values }}
+{{ $config := .Values.trainingConfig }}
+
+---
+# Source: storm-rl/templates/nats-server.yaml
+# Source: nats/templates/nats-box/contexts-secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    app.kubernetes.io/component: nats-box
+    app.kubernetes.io/instance: {{ $config.jobName }}-nats-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nats
+    app.kubernetes.io/version: 2.11.3
+    helm.sh/chart: nats-1.3.6
+    {{- if $config.customLabels }}
+    {{- range $key, $value := $config.customLabels }}
+    {{ $key | quote }}: {{ $value | quote }}
+    {{- end }}
+    {{- end }}
+  name: {{ $config.jobName }}-nats-server-box-contexts
+  namespace: {{ $config.namespace }}
+  {{- if $config.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+stringData:
+  default.json: |
+    {
+      "url": "nats://{{ .Values.trainingConfig.jobName }}-nats-server"
+    }
+type: Opaque
+---
+# Source: storm-rl/templates/nats-server.yaml
+# Source: nats/templates/config-map.yaml
+apiVersion: v1
+data:
+  nats.conf: |
+    {
+      "accounts": {
+        $SYS { users = [ { user: "nats", pass: "pass" } ] }
+      },
+      "cluster": {
+        "name": {{ .Values.trainingConfig.jobName }}-nats-server,
+        "no_advertise": true,
+        "port": 6222,
+        "routes": [
+          nats://{{ .Values.trainingConfig.jobName }}-nats-server-0.{{ .Values.trainingConfig.jobName }}-nats-server-headless:6222,
+          nats://{{ .Values.trainingConfig.jobName }}-nats-server-1.{{ .Values.trainingConfig.jobName }}-nats-server-headless:6222,
+          nats://{{ .Values.trainingConfig.jobName }}-nats-server-2.{{ .Values.trainingConfig.jobName }}-nats-server-headless:6222
+        ]
+      },
+      "write_deadline": "1200s",
+      "max_pending": 536870912,
+      "max_payload": 50331648,
+      "http_port": 8222,
+      "prof_port": 65432,
+      "jetstream": {
+        "enabled": true,
+        "max_buffered_msgs": 50000,
+        "max_buffered_size": 4096mib,
+        "max_memory_store": 185220464640
+      },
+      "lame_duck_duration": "30s",
+      "lame_duck_grace_period": "10s",
+      "pid_file": "/var/run/nats/nats.pid",
+      "port": 4222,
+      "server_name": $SERVER_NAME,
+      "debug": false
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: nats
+    app.kubernetes.io/instance: {{ .Values.trainingConfig.jobName }}-nats-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nats
+    app.kubernetes.io/version: 2.11.3
+    helm.sh/chart: nats-1.3.6
+  name: {{ .Values.trainingConfig.jobName }}-nats-server-config
+  namespace: {{ .Values.trainingConfig.namespace }}
+---
+# Source: storm-rl/templates/nats-server.yaml
+# Source: nats/templates/headless-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: nats
+    app.kubernetes.io/instance: {{ .Values.trainingConfig.jobName }}-nats-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nats
+    app.kubernetes.io/version: 2.11.3
+    helm.sh/chart: nats-1.3.6
+  name: {{ .Values.trainingConfig.jobName }}-nats-server-headless
+  namespace: {{ .Values.trainingConfig.namespace }}
+spec:
+  clusterIP: None
+  ports:
+  - appProtocol: tcp
+    name: nats
+    port: 4222
+    targetPort: nats
+  - appProtocol: tcp
+    name: cluster
+    port: 6222
+    targetPort: cluster
+  - appProtocol: http
+    name: monitor
+    port: 8222
+    targetPort: monitor
+  - appProtocol: http
+    name: prom
+    port: 9090
+    targetPort: prom
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/component: nats
+    app.kubernetes.io/instance: {{ .Values.trainingConfig.jobName }}-nats-server
+    app.kubernetes.io/name: nats
+---
+# Source: storm-rl/templates/nats-server.yaml
+# Source: nats/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: nats
+    app.kubernetes.io/instance: {{ .Values.trainingConfig.jobName }}-nats-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nats
+    app.kubernetes.io/version: 2.11.3
+    helm.sh/chart: nats-1.3.6
+  name: {{ .Values.trainingConfig.jobName }}-nats-server
+  namespace: {{ .Values.trainingConfig.namespace }}
+spec:
+  ports:
+  - appProtocol: tcp
+    name: nats
+    port: 4222
+    targetPort: nats
+  - appProtocol: http
+    name: monitor
+    port: 8222
+    targetPort: monitor
+  selector:
+    app.kubernetes.io/component: nats
+    app.kubernetes.io/instance: {{ .Values.trainingConfig.jobName }}-nats-server
+    app.kubernetes.io/name: nats
+---
+# Source: storm-rl/templates/nats-server.yaml
+# Source: nats/templates/stateful-set.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/component: nats
+    app.kubernetes.io/instance: {{ .Values.trainingConfig.jobName }}-nats-server
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nats
+    app.kubernetes.io/version: 2.11.3
+    helm.sh/chart: nats-1.3.6
+  name: {{ .Values.trainingConfig.jobName }}-nats-server
+  namespace: {{ .Values.trainingConfig.namespace }}
+spec:
+  podManagementPolicy: Parallel
+  replicas: {{ .Values.trainingConfig.natsServer.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: nats
+      app.kubernetes.io/instance: {{ .Values.trainingConfig.jobName }}-nats-server
+      app.kubernetes.io/name: nats
+  serviceName: {{ .Values.trainingConfig.jobName }}-nats-server-headless
+  template:
+    metadata:
+      annotations:
+        checksum/config: 61f16522df73022e31915d234861ca31f12037c572649694c7e94205d1c2ab64
+        prom_label: {{ .Values.trainingConfig.jobName }}
+        alias: {{ .Values.trainingConfig.alias }}
+        job_type: "stormrl"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+      labels:
+        run_id: {{ .Values.trainingConfig.jobName }}
+        workload-type: "cpu-only-{{ .Values.trainingConfig.jobName }}"
+        app.kubernetes.io/component: nats
+        app.kubernetes.io/instance: {{ .Values.trainingConfig.jobName }}-nats-server
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: nats
+        app.kubernetes.io/version: 2.11.3
+        helm.sh/chart: nats-1.3.6
+    spec:
+      serviceAccountName: {{ .Values.trainingConfig.serviceAccountName }}
+      tolerations:
+        {{- range .Values.trainingConfig.requiredTolerations }}
+        - key: {{ .key }}
+          operator: {{ .operator }}
+          value: {{ .value }}
+          effect: {{ .effect }}
+        {{- end }}
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: workload-type
+                  operator: In
+                  values: ["cpu-only-{{ .Values.trainingConfig.jobName }}"]
+              topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: workload-type
+                operator: In
+                values: ["gpu-intensive-{{ .Values.trainingConfig.jobName }}"]
+            topologyKey: kubernetes.io/hostname
+        {{- if (or $config.labelSelector.required $config.labelSelector.preferred) }}
+        nodeAffinity:
+          {{- if $config.labelSelector.required }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                {{- range $key, $values := $config.labelSelector.required }}
+                - key: {{ $key | quote }}
+                  operator: In
+                  values:
+                    {{- range $values }}
+                    - {{ . | quote }}
+                    {{- end}}
+                {{- end }}
+          {{- end }}
+          {{- if $config.labelSelector.preferred }}
+          {{- $index := 0 }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+            {{- range $key, $values := $config.labelSelector.preferred }}
+            - weight: {{ index $config.labelSelector.weights $index }}
+              preference:
+                matchExpressions:
+                  - key: {{ $key | quote }}
+                    operator: In
+                    values:
+                      {{- range $values }}
+                      - {{ . | quote }}
+                      {{- end }}
+            {{- $index = add $index 1 }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      containers:
+      - env:
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        image: {{ .Values.image.natsServerImage }}
+        resources:
+          {{- toYaml .Values.trainingConfig.natsServer.resources | nindent 10 }}
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz?js-enabled-only=true
+            port: monitor
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 5
+        name: nats
+        ports:
+        - containerPort: 4222
+          name: nats
+        - containerPort: 6222
+          name: cluster
+        - containerPort: 8222
+          name: monitor
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz?js-server-only=true
+            port: monitor
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        startupProbe:
+          failureThreshold: 90
+          httpGet:
+            path: /healthz
+            port: monitor
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /etc/nats-config
+          name: config
+        - mountPath: /var/run/nats
+          name: pid
+        - name: fsx-path-main
+          mountPath: /sagemaker/fsx/main
+        - mountPath: /dev/shm
+          name: dshm
+        - mountPath: /var/log/aws/clusters
+          name: logs
+        - mountPath: /sagemaker/fsx/output_artifacts
+          name: fsx-path-output-artifacts
+      - image: {{ .Values.image.natsReloaderImage }}
+        name: reloader
+        volumeMounts:
+        - mountPath: /var/run/nats
+          name: pid
+        - mountPath: /etc/nats-config
+          name: config
+      enableServiceLinks: false
+      shareProcessNamespace: true
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - configMap:
+          name: {{ .Values.trainingConfig.jobName }}-nats-server-config
+        name: config
+      - emptyDir: {}
+        name: pid
+      - name: fsx-path-main
+        hostPath:
+          path: /sagemaker/fsx/main
+          type: DirectoryOrCreate
+      - name: fsx-path-init
+        hostPath:
+          path: /sagemaker/fsx/init
+          type: DirectoryOrCreate
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      - name: logs
+        hostPath:
+          path: /var/log/aws/clusters
+          type: DirectoryOrCreate
+      - name: fsx-path-output-artifacts
+        hostPath:
+          path: /sagemaker/fsx/output_artifacts
+          type: DirectoryOrCreate

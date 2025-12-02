@@ -20,7 +20,7 @@ docker run --gpus 8 \
   --uts=host --ulimit stack=67108864 --ulimit memlock=-1 --ipc=host --net=host \
   --security-opt seccomp=unconfined  \
   "${device[@]}" \
-  -v {$workspace_dir}/launcher/nemo/nemo_framework_launcher/launcher_scripts:{$workspace_dir}/launcher/nemo/nemo_framework_launcher/launcher_scripts \
+  -v launcher/nemo/nemo_framework_launcher/launcher_scripts:launcher/nemo/nemo_framework_launcher/launcher_scripts \
   -v {$results_dir}:{$results_dir} \
   test_docker_cmd \
   "test_account.dkr.ecr.test_region.amazonaws.com/test_repo:test_tag" sleep infinity
