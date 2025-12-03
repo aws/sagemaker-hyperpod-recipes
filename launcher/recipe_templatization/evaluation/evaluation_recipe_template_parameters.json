@@ -1,0 +1,441 @@
+{
+  "templates": {
+    "open_source_deterministic_eval": {
+      "recipe_template": {
+        "run": {
+          "name": "{{name}}",
+          "base_model_name": "{{base_model_name}}",
+          "model_name_or_path": "{{model_name_or_path}}",
+          "replicas": "{{instance_count}}",
+          "data_s3_path": "{{data_s3_path}}"
+        },
+        "evaluation": {
+          "task": "{{task}}",
+          "strategy": "{{strategy}}",
+          "metric": "{{evaluation_metric}}",
+          "subtask": "{{subtask}}"
+        },
+        "output": {
+          "eval_results_dir": "{{output_path}}",
+          "eval_tensorboard_results_dir": "{{eval_tensorboard_results_dir}}",
+          "kms_key_id": "{{kms_key_id}}",
+          "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+          "mlflow_run_name": "{{mlflow_run_name}}",
+          "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+          "mlflow_run_id": "{{mlflow_run_id}}"
+        },
+        "inference": {
+          "max_new_tokens": "{{max_new_tokens}}",
+          "top_k": "{{top_k}}",
+          "top_p": "{{top_p}}",
+          "temperature": "{{temperature}}",
+          "max_model_len": "{{max_model_len}}"
+        },
+        "processor": {
+          "preset_reward_function": "{{preset_reward_function}}",
+          "lambda_arn": "{{lambda_arn}}",
+          "postprocessing": {
+            "enabled": "{{postprocessing}}"
+          },
+          "aggregation": "{{aggregation}}"
+        }
+      },
+      "recipe_override_parameters": {
+        "name": {
+          "type": "string",
+          "default": "open-source-eval-job",
+          "required": true
+        },
+        "base_model_name": {
+          "type": "string",
+          "default": "",
+          "required": true
+        },
+        "model_name_or_path": {
+          "type": "string",
+          "default": "",
+          "required": true
+        },
+        "data_s3_path": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "instance_count": {
+          "type": "integer",
+          "default": 1,
+          "required": true
+        },
+        "output_path": {
+          "type": "string",
+          "default": "",
+          "required": true
+        },
+        "eval_tensorboard_results_dir": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "mlflow_run_id": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "mlflow_experiment_name": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "mlflow_tracking_uri": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "mlflow_run_name": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "task": {
+          "type": "string",
+          "enum": [
+            "mmlu",
+            "mmlu_pro",
+            "bbh",
+            "gpqa",
+            "math",
+            "strong_reject",
+            "ifeval",
+            "gen_qa",
+            "inference_only"
+          ],
+          "default": "mmlu",
+          "required": true
+        },
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "zs_cot",
+            "gen_qa",
+            "zs",
+            "fs_cot"
+          ],
+          "default": "zs_cot",
+          "required": false
+        },
+        "kms_key_id": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "preset_reward_function": {
+          "type": "string",
+          "required": false,
+          "enum": [
+            "prime_code",
+            "prime_math"
+          ],
+          "default": ""
+        },
+        "evaluation_metric": {
+          "default": "",
+          "enum": [
+            "all",
+            "deflection",
+            "accuracy",
+            "exact_match"
+          ],
+          "required": false,
+          "type": "string"
+        },
+        "subtask": {
+          "type": "string",
+          "enum": [
+            "abstract_algebra",
+            "anatomy",
+            "astronomy",
+            "business_ethics",
+            "clinical_knowledge",
+            "college_biology",
+            "college_chemistry",
+            "college_computer_science",
+            "college_mathematics",
+            "college_medicine",
+            "college_physics",
+            "computer_security",
+            "conceptual_physics",
+            "econometrics",
+            "electrical_engineering",
+            "elementary_mathematics",
+            "formal_logic",
+            "global_facts",
+            "high_school_biology",
+            "high_school_chemistry",
+            "high_school_computer_science",
+            "high_school_european_history",
+            "high_school_geography",
+            "high_school_government_and_politics",
+            "high_school_macroeconomics",
+            "high_school_mathematics",
+            "high_school_microeconomics",
+            "high_school_physics",
+            "high_school_psychology",
+            "high_school_statistics",
+            "high_school_us_history",
+            "high_school_world_history",
+            "human_aging",
+            "human_sexuality",
+            "international_law",
+            "jurisprudence",
+            "logical_fallacies",
+            "machine_learning",
+            "management",
+            "marketing",
+            "medical_genetics",
+            "miscellaneous",
+            "moral_disputes",
+            "moral_scenarios",
+            "nutrition",
+            "philosophy",
+            "prehistory",
+            "professional_accounting",
+            "professional_law",
+            "professional_medicine",
+            "professional_psychology",
+            "public_relations",
+            "security_studies",
+            "sociology",
+            "us_foreign_policy",
+            "virology",
+            "world_religions",
+            "boolean_expressions",
+            "causal_judgement",
+            "date_understanding",
+            "disambiguation_qa",
+            "dyck_languages",
+            "formal_fallacies",
+            "geometric_shapes",
+            "hyperbaton",
+            "logical_deduction_five_objects",
+            "logical_deduction_seven_objects",
+            "logical_deduction_three_objects",
+            "movie_recommendation",
+            "multistep_arithmetic_two",
+            "navigate",
+            "object_counting",
+            "penguins_in_a_table",
+            "reasoning_about_colored_objects",
+            "ruin_names",
+            "salient_translation_error_detection",
+            "snarks",
+            "sports_understanding",
+            "temporal_sequences",
+            "tracking_shuffled_objects_five_objects",
+            "tracking_shuffled_objects_seven_objects",
+            "tracking_shuffled_objects_three_objects",
+            "web_of_lies",
+            "word_sorting",
+             "algebra",
+            "counting_and_probability",
+            "geometry",
+            "intermediate_algebra",
+            "number_theory",
+            "prealgebra",
+            "precalculus"
+          ],
+          "default": "",
+          "required": false
+        },
+        "max_new_tokens": {
+          "type": "integer",
+          "default": 8192,
+          "required": false
+        },
+        "top_k": {
+          "type": "integer",
+          "default": -1,
+          "required": false
+        },
+        "top_p": {
+          "type": "number",
+          "default": 1.0,
+          "required": false
+        },
+        "temperature": {
+          "type": "integer",
+          "default": 0,
+          "required": false
+        },
+        "max_model_len": {
+          "type": "integer",
+          "default": 12000,
+          "required": false
+        },
+        "lambda_arn": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "postprocessing": {
+          "type": "boolean",
+          "default": false,
+          "required": false
+        },
+        "aggregation": {
+          "type": "string",
+          "enum": [
+            "average",
+            "median",
+            "max",
+            "min",
+            "sum"
+          ],
+          "default": "",
+          "required": false
+        }
+      },
+      "recipe_metadata_helpers": {
+        "evaluation_types": {
+          "general_text_benchmark": "General Text Benchmark",
+          "general_multi_modal_benchmark": "General Multi-Modal Benchmark",
+          "llm_judge": "LLM Judge",
+          "bring_your_own_dataset": "Bring Your Own Dataset"
+        },
+        "preset_reward_function": {
+          "prime_code": "Code executions (prime_code)",
+          "prime_math": "Math answers (prime_math)"
+        },
+        "hardware_types": {
+          "gpu": "GPU"
+        },
+        "model_variants": {
+          "open-source": "Open Source Models"
+        }
+      }
+    },
+    "open_source_llmaj_eval": {
+      "recipe_template": {
+        "run": {
+          "name": "{{name}}",
+          "base_model_name": "{{base_model_name}}",
+          "judge_model_id": "{{judge_model_id}}",
+          "inference_data_s3_path": "{{inference_data_s3_path}}",
+          "base_model_inference_data_s3_path": "{{base_model_inference_data_s3_path}}"
+        },
+        "llm_as_judge": {
+          "metrics": "{{llmaj_metrics}}",
+          "custom_metrics": "{{custom_metrics}}"
+        },
+        "output": {
+          "eval_results_dir": "{{output_path}}",
+          "eval_tensorboard_results_dir": "{{eval_tensorboard_results_dir}}",
+          "kms_key_id": "{{kms_key_id}}",
+          "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+          "mlflow_run_name": "{{mlflow_run_name}}",
+          "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+          "mlflow_run_id": "{{mlflow_run_id}}"
+        }
+      },
+      "recipe_override_parameters": {
+        "name": {
+          "type": "string",
+          "default": "",
+          "required": true
+        },
+        "base_model_name": {
+          "type": "string",
+          "default": "",
+          "required": true
+        },
+        "judge_model_id": {
+          "type": "string",
+          "default": "",
+          "required": true
+        },
+        "inference_data_s3_path": {
+          "type": "string",
+          "default": "",
+          "required": true
+        },
+        "base_model_inference_data_s3_path": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "output_path": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "eval_tensorboard_results_dir": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "kms_key_id": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "mlflow_run_id": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "mlflow_experiment_name": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "mlflow_tracking_uri": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "mlflow_run_name": {
+          "type": "string",
+          "default": "",
+          "required": false
+        },
+        "llmaj_metrics": {
+          "type": "string",
+          "enum": [
+            "Correctness",
+            "Completeness",
+            "Faithfulness",
+            "Helpfulness",
+            "Coherence",
+            "Relevance",
+            "FollowingInstructions",
+            "ProfessionalStyleAndTone",
+            "Harmfulness",
+            "Stereotyping",
+            "Refusal",
+            "FaithfulnessRelevance",
+            "Evaluation",
+            "ChainOfThought",
+            "Summarization"
+          ],
+          "default": "Faithfulness",
+          "required": false
+        },
+        "custom_metrics": {
+          "type": "string",
+          "default": "",
+          "required": false
+        }
+      },
+      "recipe_metadata_helpers": {
+        "evaluation_types": {
+          "llm_judge": "LLM Judge"
+        },
+        "hardware_types": {
+          "cpu": "CPU"
+        },
+        "model_variants": {
+          "open-source": "Open Source Models"
+        }
+      }
+    }
+  }
+}

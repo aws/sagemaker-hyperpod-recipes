@@ -1,0 +1,21 @@
+image:
+  evaluationImage: ""
+
+evaluationConfig:
+  jobName: ""
+  devices: 8
+  replicas: 1
+  numEFADevices: 1
+
+  envVars: {}
+
+  # Optional K8s configurations
+  namespace: null
+  annotations: null
+  priorityClassName: null
+  serviceAccountName: null
+  customLabels: null
+
+  labelSelector:
+    required: {}
+    preferred: {}

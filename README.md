@@ -6,9 +6,11 @@ Amazon SageMaker HyperPod recipes help customers get started with training and f
 
 Please see [Amazon SageMaker HyperPod recipes documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-recipes.html) for full documentation.
 
-The recipes support Amazon SageMaker HyperPod (with Amazon EKS for workload orchestration) and Amazon SageMaker training jobs.
+The recipes support the following infrastructure (unless otherwise specified in documentation):
+- **Amazon SageMaker HyperPod** with Amazon EKS for workload orchestration
+- **Amazon SageMaker HyperPod** with Slurm for workload orchestration
+- **Amazon SageMaker training jobs (SMTJ)**
 
-This document provides recipes and guidance for training and fine-tuning models.
 
 ## Version History
 
@@ -16,219 +18,342 @@ This repository contains **v2.0.0** of Amazon SageMaker HyperPod recipes, which 
 
 **Looking for v1 recipes?** Please refer to the [v1 branch](../../tree/v1). We recommend using v2 recipes for new projects as they provide improved performance and additional features.
 
-## Model Support
+## Supported Models and Techniques
 
-### Pre-Training
-List of specific pre-training recipes used by the launch scripts.
+### Supported Models
 
-| Source | Model | Sequence length | Nodes | Instance | Accelerator | Recipe | Script |
-|--------|-------|-----------------|-------|----------|-------------|--------|--------|
-| Amazon | Nova Micro | 8192 | 8 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/training/nova/nova_1_0/nova_micro/CPT/nova_micro_1_0_p5x8_gpu_pretrain.yaml) | [link](launcher_scripts/nova/run_nova_micro_p5x8_gpu_pretrain.sh) |
-| Amazon | Nova Lite | 8192 | 16 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/training/nova/nova_1_0/nova_lite/CPT/nova_lite_1_0_p5x16_gpu_pretrain.yaml) | [link](launcher_scripts/nova/run_nova_lite_p5x16_gpu_pretrain.sh) |
-| Amazon | Nova Pro | 8192 | 24 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/training/nova/nova_1_0/nova_pro/CPT/nova_pro_1_0_p5x24_gpu_pretrain.yaml) | [link](launcher_scripts/nova/run_nova_pro_p5x24_gpu_pretrain.sh) |
+- **Amazon Nova**: Micro, Lite, Pro
+- **Llama**: 3.1, 3.2, 3.3 (1B - 90B), 4 Scout (17B)
+- **DeepSeek R1 Distilled**: Llama (8B, 70B), Qwen (1.5B, 7B, 14B, 32B)
+- **GPT-OSS**: 20B, 120B
+- **Qwen**: 2.5 (0.5B - 72B), 3 (0.6B - 32B)
 
-### Fine-Tuning
-List of specific fine-tuning recipes used by the launch scripts.
+### Supported Techniques
 
-| Model | Method | Sequence length | Nodes | Instance | Accelerator | Recipe | Script |
-|-------|--------|-----------------|-------|----------|-------------|--------|--------|
-| Nova Micro | Supervised Fine-Tuning (LoRA) | 65536 | 2 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_micro/SFT/nova_micro_1_0_p5_p4d_gpu_lora_sft.yaml) | [link](launcher_scripts/nova/run_nova_micro_p5_gpu_lora_sft.sh) |
-| Nova Micro | Supervised Fine-Tuning (Full) | 65536 | 2 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_micro/SFT/nova_micro_1_0_p5_p4d_gpu_sft.yaml) | [link](launcher_scripts/nova/run_nova_micro_p5_gpu_sft.sh) |
-| Nova Micro | Direct Preference Optimization (Full) | 32768 | 2 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_micro/DPO/nova_micro_1_0_p5_p4d_gpu_dpo.yaml) | [link](launcher_scripts/nova/run_nova_micro_p5_gpu_dpo.sh) |
-| Nova Micro | Direct Preference Optimization (LoRA) | 32768 | 2 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_micro/DPO/nova_micro_1_0_p5_p4d_gpu_lora_dpo.yaml) | [link](launcher_scripts/nova/run_nova_micro_p5_gpu_lora_dpo.sh) |
-| Nova Micro | Rewards Based Reinforcement Learning (PPO) | 8192 | 5 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_micro/PPO/nova_micro_1_0_p5_gpu_ppo.yaml) | [link](launcher_scripts/nova/run_nova_micro_p5_gpu_ppo.sh) |
-| Nova Lite | Supervised Fine-Tuning (LoRA) | 32768 | 4 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_lite/SFT/nova_lite_1_0_p5_p4d_gpu_lora_sft.yaml) | [link](launcher_scripts/nova/run_nova_lite_p5_gpu_lora_sft.sh) |
-| Nova Lite | Supervised Fine-Tuning (Full) | 65536 | 4 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_lite/SFT/nova_lite_1_0_p5_p4d_gpu_sft.yaml) | [link](launcher_scripts/nova/run_nova_lite_p5_gpu_sft.sh) |
-| Nova Lite | Direct Preference Optimization (Full) | 32768 | 4 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_lite/DPO/nova_lite_1_0_p5_p4d_gpu_dpo.yaml) | [link](launcher_scripts/nova/run_nova_lite_p5_gpu_dpo.sh) |
-| Nova Lite | Direct Preference Optimization (LoRA) | 32768 | 4 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_lite/DPO/nova_lite_1_0_p5_p4d_gpu_lora_dpo.yaml) | [link](launcher_scripts/nova/run_nova_lite_p5_gpu_lora_dpo.sh) |
-| Nova Lite | Rewards Based Reinforcement Learning (PPO) | 8192 | 6 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_lite/PPO/nova_lite_1_0_p5_gpu_ppo.yaml) | [link](launcher_scripts/nova/run_nova_lite_p5_gpu_ppo.sh) |
-| Nova Pro | Supervised Fine-Tuning (LoRA) | 65536 | 6 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_pro/SFT/nova_pro_1_0_p5_p4d_gpu_lora_sft.yaml) | [link](launcher_scripts/nova/run_nova_pro_p5_gpu_lora_sft.sh) |
-| Nova Pro | Supervised Fine-Tuning (Full) | 65536 | 6 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_pro/SFT/nova_pro_1_0_p5_gpu_sft.yaml) | [link](launcher_scripts/nova/run_nova_pro_p5_gpu_sft.sh) |
-| Nova Pro | Direct Preference Optimization (Full) | 32768 | 6 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_pro/DPO/nova_pro_1_0_p5_gpu_dpo.yaml) | [link](launcher_scripts/nova/run_nova_pro_p5_gpu_dpo.sh) |
-| Nova Pro | Direct Preference Optimization (LoRA) | 32768 | 6 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_pro/DPO/nova_pro_1_0_p5_p4d_gpu_lora_dpo.yaml) | [link](launcher_scripts/nova/run_nova_pro_p5_gpu_lora_dpo.sh) |
-| Nova Pro | Rewards Based Reinforcement Learning (PPO) | 8192 | 8 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_pro/PPO/nova_pro_1_0_p5_gpu_ppo.yaml) | [link](launcher_scripts/nova/run_nova_pro_p5_gpu_ppo.sh) |
-| Nova Pro | Model Distillation for Post-Training | - | 1 | ml.r5.24xlarge | - | [link](recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_pro/distill/nova_pro_1_0_r5_cpu_distill.yaml) | [link](launcher_scripts/nova/run_nova_pro_r5_cpu_distill.sh) |
+| Technique | Description | Variants | Model Support |
+|-----------|-------------|----------|---------------|
+| **Supervised Fine-Tuning (SFT)** | Fine-tune models on supervised datasets | • Full Fine-Tuning (FFT): Complete model parameter updates<br>• LoRA: Low-rank adaptation for parameter efficiency<br>• QLoRA: Quantized LoRA for reduced memory | All models |
+| **Direct Preference Optimization (DPO)** | Align models with human preferences without reward modeling | • Full Fine-Tuning (FFT)<br>• LoRA | All models |
+| **Reinforcement Learning from AI Feedback (RLAIF)** | Train models using AI-generated feedback | • Full Fine-Tuning (FFT)<br>• LoRA | All models |
+| **Reinforcement Learning with Verifiable Rewards (RLVR)** | RL training with verifiable reward signals | • Full Fine-Tuning (FFT)<br>• LoRA | All models |
+| **Reinforcement Fine-Tuning (RFT)** | Reinforcement learning fine-tuning | • Full Fine-Tuning (FFT)<br>• LoRA | Nova models only |
+| **Proximal Policy Optimization (PPO)** | Policy gradient RL algorithm | Standard | Nova models only |
+| **Pretraining** | Continued pre-training on domain-specific data | Full Fine-Tuning (FFT) | All models |
+
+### Supported Accelerators
+
+- NVIDIA H100 (ml.p5.48xlarge, ml.p5e.48xlarge, ml.p5en.48xlarge)
+- NVIDIA A100 (ml.p4d.24xlarge, ml.p4de.24xlarge)
+- NVIDIA A10G (ml.g5.48xlarge, ml.g5.12xlarge)
+
+### Advanced Training Frameworks
+
+#### LLMFT (LLM Fine-Tuning Framework)
+Advanced fine-tuning framework with optimized implementations for:
+- DeepSeek R1 Distilled models (Llama and Qwen variants)
+- GPT-OSS models (20B, 120B)
+- Llama models (3.1, 3.2, 3.3, 4)
+- Qwen models (2.5, 3)
+- Techniques: SFT (Full Fine-Tuning and LoRA), DPO (Full Fine-Tuning and LoRA)
+
+#### VERL (Versatile Reinforcement Learning)
+Reinforcement learning framework using the GRPO algorithm for:
+- Llama models (3.1, 3.2, 3.3)
+- Qwen models (2.5, 3)
+- DeepSeek R1 Distilled models
+- GPT-OSS models
+- Techniques: RLAIF and RLVR, both available with Full Fine-Tuning or LoRA
+
+#### Checkpointless Training
+
+Memory-efficient training that eliminates traditional checkpoint storage during training, significantly reducing memory overhead and storage requirements. Particularly beneficial for large-scale models where checkpoint sizes can be substantial.
+
+**Supported Models:**
+- Llama 3 70B (LoRA, Pretraining)
+- GPT-OSS 120B (Full Fine-Tuning, LoRA)
+
+**Key Benefits:**
+- Reduced memory footprint during training
+- Lower storage costs
+- Faster training iteration cycles
+- Ideal for large-scale model training
+
+**Available Recipes:**
+- [Llama 3 70B LoRA](recipes_collection/recipes/training/llama/checkpointless_llama3_70b_lora.yaml)
+- [Llama 3 70B Pretraining](recipes_collection/recipes/training/llama/checkpointless_llama3_70b_pretrain.yaml)
+- [GPT-OSS 120B Full Fine-Tuning](recipes_collection/recipes/training/gpt_oss/checkpointless_gpt_oss_120b_full_fine_tuning.yaml)
+- [GPT-OSS 120B LoRA](recipes_collection/recipes/training/gpt_oss/checkpointless_gpt_oss_120b_lora.yaml)
+
+#### Elastic Training
+
+Dynamic resource scaling that enables automatic adjustment of training resources based on cluster availability. Workloads can scale up or down to optimize resource utilization and reduce training costs.
+
+**Supported Models:**
+- SFT and DPO LLMFT models, such as [LLMFT Llama3.1 8B SFT](recipes_collection/recipes/fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_sft_lora.yaml)
+
+**Key Features:**
+- Automatic scaling based on resource availability
+- Optimized resource utilization
+- Cost-effective training through dynamic capacity adjustment
+- Seamless handling of node additions and removals
+- Fault tolerance with automatic recovery
+
+**Benefits:**
+- Reduced training costs through better resource utilization
+- Improved cluster efficiency
+- Flexible training that adapts to available resources
+- Minimized idle time during training
+
+**How to use:**
+
+With supported SFT/DPO recipes and [elastic training prerequisites](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-elastic-training.html), just add the following line to your launching script:
+```
+HYDRA_FULL_ERROR=1 python3 ${SAGEMAKER_TRAINING_LAUNCHER_DIR}/main.py \
+...
+recipes.elastic_policy.is_elastic=true \
+cluster.use_hyperpod_pytorch_job=true \
+cluster.queue_name=<queue_name> \
+...
+```
 
 ### Evaluation
-List of specific evaluation recipes used by the launch scripts.
+- Open-source deterministic evaluation
+- LLM-as-Judge evaluation
+- Nova-specific evaluation benchmarks
 
-| Model | Method | Sequence length | Nodes | Instance | Accelerator | Recipe | Script |
-|-------|--------|-----------------|-------|----------|-------------|--------|--------|
-| Nova Micro | General Text Benchmark Recipe | 8192 | 1 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/evaluation/nova/nova_1_0/nova_micro/nova_micro_1_0_p5_48xl_gpu_general_text_benchmark_eval.yaml) | [link](launcher_scripts/nova/run_nova_micro_p5_48xl_general_text_benchmark_eval.sh) |
-| Nova Micro | Bring your own dataset (gen_qa) benchmark Recipe | 8192 | 1 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/evaluation/nova/nova_1_0/nova_micro/nova_micro_1_0_p5_48xl_gpu_bring_your_own_dataset_eval.yaml) | [link](launcher_scripts/nova/run_nova_micro_p5_48xl_bring_your_own_dataset_eval.sh) |
-| Nova Micro | Nova LLM as a Judge Recipe | 8192 | 1 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/evaluation/nova/nova_1_0/nova_micro/nova_micro_1_0_p5_48xl_gpu_llm_judge_eval.yaml) | [link](launcher_scripts/nova/run_nova_micro_p5_48xl_llm_judge_eval.sh) |
-| Nova Lite | General Text Benchmark Recipe | 8192 | 1 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/evaluation/nova/nova_1_0/nova_lite/nova_lite_1_0_p5_48xl_gpu_general_text_benchmark_eval.yaml) | [link](launcher_scripts/nova/run_nova_lite_p5_48xl_general_text_benchmark_eval.sh) |
-| Nova Lite | Bring your own dataset (gen_qa) benchmark Recipe | 8192 | 1 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/evaluation/nova/nova_1_0/nova_lite/nova_lite_1_0_p5_48xl_gpu_bring_your_own_dataset_eval.yaml) | [link](launcher_scripts/nova/run_nova_lite_p5_48xl_bring_your_own_dataset_eval.sh) |
-| Nova Lite | Nova LLM as a Judge Recipe | 8192 | 1 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/evaluation/nova/nova_1_0/nova_lite/nova_lite_1_0_p5_48xl_gpu_llm_judge_eval.yaml) | [link](launcher_scripts/nova/run_nova_lite_p5_48xl_llm_judge_eval.sh) |
-| Nova Pro | General Text Benchmark Recipe | 8192 | 1 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/evaluation/nova/nova_1_0/nova_pro/nova_pro_1_0_p5_48xl_gpu_general_text_benchmark_eval.yaml) | [link](launcher_scripts/nova/run_nova_pro_p5_48xl_general_text_benchmark_eval.sh) |
-| Nova Pro | Bring your own dataset (gen_qa) benchmark Recipe | 8192 | 1 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/evaluation/nova/nova_1_0/nova_pro/nova_pro_1_0_p5_48xl_gpu_bring_your_own_dataset_eval.yaml) | [link](launcher_scripts/nova/run_nova_pro_p5_48xl_bring_your_own_dataset_eval.sh) |
-| Nova Pro | Nova LLM as a Judge Recipe | 8192 | 1 | ml.p5.48xlarge | GPU H100 | [link](recipes_collection/recipes/evaluation/nova/nova_1_0/nova_pro/nova_pro_1_0_p5_48xl_gpu_llm_judge_eval.yaml) | [link](launcher_scripts/nova/run_nova_pro_p5_48xl_llm_judge_eval.sh) |
+### Logging Support
+- [TensorBoard](https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.loggers.tensorboard.html)
+- [MLflow](https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.loggers.mlflow.html)
 
-## Supported Models
+## Installation
 
-- **Nova Micro** - Smallest model, optimized for efficiency
-- **Nova Lite** - Balanced performance and efficiency
-- **Nova Pro** - High-performance model for complex tasks
-- **Nova Premier** - Most capable model (distillation only)
+Amazon SageMaker HyperPod recipes should be installed on the head node of your HyperPod cluster or on your local machine with a virtual python environment.
 
-## Training Techniques
-
-### Supervised Fine-Tuning (SFT)
-Fine-tune models on labeled datasets to adapt them to specific tasks or domains.
-- **Full Fine-Tuning**: Update all model parameters
-- **LoRA (Low-Rank Adaptation)**: Parameter-efficient fine-tuning
-
-### Reasoning Fine-Tuning (RFT)
-Enhance model reasoning capabilities (v2.0 models).
-
-### Direct Preference Optimization (DPO)
-Align models with human preferences using preference pairs (v1.0 models).
-
-### Proximal Policy Optimization (PPO)
-Reinforcement learning-based fine-tuning (v1.0 models).
-
-### Continued Pre-Training (CPT)
-Continue pre-training on domain-specific data to adapt models to specialized knowledge areas.
-
-### Distillation
-Transfer knowledge from larger models to smaller ones (Pro and Premier).
-
-### Evaluation
-Assess model performance using standardized benchmarks and custom datasets.
-
-## Available Recipes
-
-### Nova Micro (v1.0)
-
-**Fine-Tuning:**
-- SFT (Full & LoRA)
-- DPO (Full & LoRA)
-- PPO
-
-**Pre-Training:**
-- CPT (Continued Pre-Training)
-
-### Nova Lite (v1.0 & v2.0)
-
-**Fine-Tuning:**
-- SFT (Full & LoRA)
-- DPO (Full & LoRA) - v1.0 only
-- PPO - v1.0 only
-- RFT (Full & LoRA) - v2.0 only
-
-**Pre-Training:**
-- CPT (Continued Pre-Training)
-
-**Evaluation:**
-- General Text Benchmarks
-- LLM Judge
-- Bring Your Own Dataset
-- RFT Evaluation
-
-### Nova Pro (v1.0)
-
-**Fine-Tuning:**
-- SFT (Full & LoRA)
-- DPO (Full & LoRA)
-- PPO
-
-**Pre-Training:**
-- CPT (Continued Pre-Training)
-
-**Distillation:**
-- CPU-based distillation
-
-**Evaluation:**
-- General Text Benchmarks
-- LLM Judge
-- Bring Your Own Dataset
-- RFT Evaluation
-
-### Nova Premier (v1.0)
-
-**Distillation:**
-- CPU-based distillation
-
-## Quick Start
-
-### Prerequisites
-
-1. A SageMaker HyperPod cluster or SageMaker Training Jobs setup
-2. Appropriate instance types (ml.p5.48xlarge, ml.p4d.24xlarge, or ml.g5/g6 instances)
-3. Access to model weights
-4. Training data prepared in the required format
-
-**Note:** To run Amazon Nova recipes on SageMaker HyperPod clusters orchestrated by Amazon EKS, you will need to create a Restricted Instance Group in your cluster. Refer to the [SageMaker HyperPod documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-eks-restricted-instance-groups.html) to learn more.
-
-### Running a Recipe
-
-1. **Choose a recipe** based on your model and technique:
-   ```bash
-   # List available recipes
-   ls recipes_collection/recipes/fine-tuning/nova/
-   ls recipes_collection/recipes/training/nova/
-   ```
-
-2. **Configure the recipe** by editing the YAML file:
-   ```bash
-   # Example: Edit Nova Lite SFT LoRA recipe
-   vim recipes_collection/recipes/fine-tuning/nova/nova_2_0/nova_lite/SFT/nova_lite_2_0_p5_gpu_lora_sft.yaml
-   ```
-
-3. **Launch the training job** using the corresponding launch script:
-   ```bash
-   # Example: Launch Nova Lite SFT LoRA training
-   bash launcher_scripts/nova/run_nova_lite_2_0_p5_gpu_lora_sft.sh
-   ```
-
-### Example Recipes
-
-**Nova Lite v2.0 SFT with LoRA:**
 ```bash
-bash launcher_scripts/nova/run_nova_lite_2_0_p5_gpu_lora_sft.sh
+git clone --recursive git@github.com:aws/sagemaker-hyperpod-recipes.git
+cd sagemaker-hyperpod-recipes
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
 ```
 
-**Nova Lite v2.0 RFT:**
-```bash
-bash launcher_scripts/nova/run_nova_lite_2_0_p5_lora_rft.sh
+## Usage Guide
+
+When using the SageMaker HyperPod recipes, you can either create your own training script or use the provided recipes which include popular publicly-available models. Based on your specific needs, you might need to modify the parameters defined in the recipes for pre-training or fine-tuning. Once your configurations are setup, you can run training on SageMaker HyperPod (with Amazon EKS for workload orchestration) or on SageMaker training jobs using the Amazon SageMaker Python SDK. Note that Amazon Nova model recipes are only compatible with SageMaker HyperPod with Amazon EKS and SageMaker training jobs.
+
+### Container Images
+
+The following container images are available for different recipe types:
+
+- **For LLMFT recipes**: `327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0`
+- **For VERL recipes (EKS)**: `327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks`
+- **For VERL recipes (SageMaker Training Jobs)**: `327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj`
+
+To use a container image for training, modify the `recipes_collection/config.yaml` file with your chosen container image:
+
+```yaml
+container: <your_container_image>
 ```
 
-**Nova Micro v1.0 DPO:**
+The launcher scripts have variables such as `TRAIN_DIR` which need to be set either by modifying the launcher script, or by setting environment variables. For example:
+
 ```bash
-bash launcher_scripts/nova/run_nova_micro_p5_gpu_dpo.sh
+EXP_DIR=<your_exp_dir> TRAIN_DIR=<your_train_data_dir> VAL_DIR=<your_val_data_dir> bash ./launcher_scripts/deepseek/run_llmft_deepseek_r1_distilled_llama_8b_seq4k_gpu_sft_lora.sh
 ```
 
-**Nova Pro v1.0 PPO:**
+### Running a recipe on a SageMaker HyperPod cluster orchestrated by Amazon EKS
+
+Prior to commencing training on your cluster, you are required to configure your local environment by adhering to the installation instructions. Additionally, you will need to install Kubectl and Helm on your local machine. Refer to the following documentation for installation of [Kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html) and [Helm](https://helm.sh/docs/intro/install/).
+
+Using the recipes involves updating `k8s.yaml`, `config.yaml`, and running the launch script.
+
+- In k8s.yaml, update persistent_volume_claims. It mounts the Amazon FSx claim to the /data directory of each computing pod
+    ```yaml
+    persistent_volume_claims:
+      - claimName: fsx-claim
+        mountPath: data
+    ```
+
+- Update your launcher script (e.g., `launcher_scripts/deepseek/run_llmft_deepseek_r1_distilled_llama_8b_seq4k_gpu_sft_lora.sh`)
+
+    - `your_container`: Use the LLMFT container image: `327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0`
+
+    - (Optional) You can provide the HuggingFace token if you need pre-trained weights from HuggingFace by setting the following key-value pair:
+    ```bash
+    recipes.model.hf_access_token=<your_hf_token>
+    ```
+
 ```bash
-bash launcher_scripts/nova/run_nova_pro_p5_gpu_ppo.sh
+#!/bin/bash
+#Users should setup their cluster type in /recipes_collection/config.yaml
+IMAGE="327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+SAGEMAKER_TRAINING_LAUNCHER_DIR=${SAGEMAKER_TRAINING_LAUNCHER_DIR:-"$(pwd)"}
+EXP_DIR="<your_exp_dir>" # Location to save experiment info including logging, checkpoints, etc
+TRAIN_DIR="<your_training_data_dir>" # Location of training dataset
+VAL_DIR="<your_val_data_dir>" # Location of validation dataset
+
+HYDRA_FULL_ERROR=1 python3 "${SAGEMAKER_TRAINING_LAUNCHER_DIR}/main.py" \
+    recipes=training/deepseek/llmft_deepseek_r1_distilled_llama_8b_seq4k_gpu_sft_lora \
+    base_results_dir="${SAGEMAKER_TRAINING_LAUNCHER_DIR}/results" \
+    recipes.run.name="llmft-deepseek-r1" \
+    recipes.exp_manager.exp_dir="$EXP_DIR" \
+    cluster=k8s \
+    cluster_type=k8s \
+    container="${IMAGE}" \
+    recipes.model.data.train_dir=$TRAIN_DIR \
+    recipes.model.data.val_dir=$VAL_DIR
 ```
 
-**Nova Lite Evaluation:**
+- Launch the training job
+    ```bash
+    bash launcher_scripts/deepseek/run_llmft_deepseek_r1_distilled_llama_8b_seq4k_gpu_sft_lora.sh
+    ```
+
+After you've submitted the training job, you can use the following command to verify if you submitted it successfully.
 ```bash
-bash launcher_scripts/nova/run_nova_lite_2_0_p5_48xl_general_text_benchmark_eval.sh
+kubectl get pods
 ```
+```
+NAME                                      READY   STATUS    RESTARTS   AGE
+llmft-deepseek-r1-<your-alias>-worker-0   0/1     Running   0          36s
+```
+
+If the `STATUS` is `PENDING` or `ContainerCreating`, run the following command to get more details.
+```bash
+kubectl describe pod <name-of-pod>
+```
+
+After the job `STATUS` changes to `Running`, you can examine the log by using the following command.
+```bash
+kubectl logs <name-of-pod>
+```
+
+The `STATUS` will turn to `Completed` when you run `kubectl get pods`.
+
+For more information about the k8s cluster configuration, see [Running a training job on HyperPod k8s](https://docs.aws.amazon.com/sagemaker/latest/dg/cluster-specific-configurations-run-training-job-hyperpod-k8s.html).
+
+To run Amazon Nova recipe on SageMaker HyperPod clusters orchestrated by Amazon EKS, you will need to create a Restricted Instance Group in your cluster. Refer to the following documentation to [learn more](https://docs.aws.amazon.com/sagemaker/latest/dg/nova-hp-cluster.html).
+
+### Running a recipe on a SageMaker HyperPod cluster orchestrated by Slurm
+
+> **Note:** Only LLMFT recipes are supported on Slurm clusters. VERL recipes are not supported on Slurm but are available on EKS and SageMaker training jobs.
+
+To run a recipe on a HyperPod cluster with Slurm, SSH into the head node and clone the HyperPod recipes repository onto a shared filesystem (FSx or NFS). Follow the installation instructions to set up a Python virtual environment with the required dependencies.
+
+#### Configuring the Recipe
+
+Update the `recipes_collection/config.yaml` file with the LLMFT container image:
+
+```yaml
+container: 327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0
+```
+
+#### Running the Training Job
+
+Set the required environment variables and launch the training script. For example, to run an LLMFT recipe:
+
+```bash
+EXP_DIR=<your_exp_dir> TRAIN_DIR=<your_train_data_dir> VAL_DIR=<your_val_data_dir> bash ./launcher_scripts/llama/run_hf_llama3_8b_seq8k_gpu_fine_tuning.sh
+```
+
+Or for a DeepSeek R1 Distilled model:
+
+```bash
+EXP_DIR=<your_exp_dir> TRAIN_DIR=<your_train_data_dir> VAL_DIR=<your_val_data_dir> bash ./launcher_scripts/deepseek/run_hf_deepseek_r1_llama_8b_seq8k_gpu_lora.sh
+```
+
+The launcher scripts will submit Slurm jobs to your cluster. You can monitor job status using standard Slurm commands:
+
+```bash
+squeue  # View job queue
+scontrol show job <job_id>  # View job details
+```
+
+### Running a recipe on SageMaker training jobs
+
+SageMaker training jobs automatically spin up a resilient distributed training cluster, monitors the infrastructure, and auto-recovers from faults to ensure a smooth training experience. You can leverage the SageMaker Python SDK to execute your recipes on SageMaker training jobs.
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip3 install --upgrade pip setuptools
+
+# install SageMaker SDK
+pip install --upgrade sagemaker
+```
+
+The following Python code-snippet demonstrates how to submit a recipe to run on a SageMaker training jobs by utilizing the `PyTorch` estimator from the SageMaker Python SDK.
+
+For example, to run the llama3-8b recipe on a SageMaker training jobs, you need to set `training_recipe` arg to indicate which recipe: this can be a recipe from one of the available ones, or a url or a local yaml file containing a modified recipe. Please also modify the local directory paths and hf access token either by providing `recipe_overrides` or by modifying the recipe yaml file directly (the url or local file).
+
+```python
+import os
+import sagemaker, boto3
+from sagemaker.debugger import TensorBoardOutputConfig
+from sagemaker.pytorch import PyTorch
+
+sagemaker_session = sagemaker.Session()
+role = sagemaker.get_execution_role()
+
+bucket = sagemaker_session.default_bucket()
+output = os.path.join(f"s3://{bucket}", "output")
+output_path = "<s3 url>"
+
+recipe_overrides = {
+    "run": {
+        "results_dir": "/opt/ml/model",
+    },
+    "exp_manager": {
+        "exp_dir": "",
+        "explicit_log_dir": "/opt/ml/output/tensorboard",
+        "checkpoint_dir": "/opt/ml/checkpoints",
+    },
+    "model": {
+        "data": {
+            "train_dir": "/opt/ml/input/data/train",
+            "val_dir": "/opt/ml/input/data/val",
+        },
+    },
+}
+
+tensorboard_output_config = TensorBoardOutputConfig(
+    s3_output_path=os.path.join(output, 'tensorboard'),
+    container_local_output_path=recipe_overrides["exp_manager"]["explicit_log_dir"]
+)
+
+estimator = PyTorch(
+    output_path=output_path,
+    base_job_name=f"llama-recipe",
+    role=role,
+    instance_type="ml.p5.48xlarge",
+    training_recipe="training/llama/llmft_llama3_8b_seq4k_gpu_sft_lora",
+    recipe_overrides=recipe_overrides,
+    sagemaker_session=sagemaker_session,
+    tensorboard_output_config=tensorboard_output_config,
+)
+
+estimator.fit(inputs={"train": "s3 or fsx input", "val": "s3 or fsx input"}, wait=True)
+```
+
+Running the above code creates a `PyTorch` estimator object with the specified training recipe and then trains the model using the `fit()` method. The new `training_recipe` parameter enables you to specify the recipe you want to use.
+
+To learn more about running Amazon Nova recipe on SageMaker training job, refer to [this documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/nova-model-training-job.html).
 
 ## Troubleshooting
 
-### Out of Memory (OOM) Errors
-- Use LoRA instead of full fine-tuning
+During training, if GPU memory usage approaches its limit, attempting to save sharded checkpoints to an S3 storage may result in a core dump. To address this issue, you may choose to:
 
-### Slow Training
-- Increase batch size if memory allows
-- Verify EFA (Elastic Fabric Adapter) is properly configured
-- Check network bandwidth between nodes
-- Ensure data loading is not a bottleneck
+* Reduce the overall memory consumption of the model training:
+  * Increase the number of compute nodes for the training process
+  * Decrease the batch size
+  * Increase the sharding degrees
+* Use FSx as the shared file system
 
-
-## Additional Resources
-
-- [SageMaker HyperPod Documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod.html)
-- [Model Documentation](https://docs.aws.amazon.com/nova/)
-- [Main Recipe Repository](README.md)
+By taking one of the above approaches, you can alleviate the memory pressure and prevent a core dump from occurring during checkpoint saving.
 
 ## Testing
 
-Follow the instructions on the "Installing" then use the following command to install the dependencies for testing:
+Follow the instructions on the "Installing" section then use the following command to install the dependencies for testing:
 
 ```bash
 pip install pytest
@@ -236,11 +361,9 @@ pip install pytest-cov
 ```
 
 ### Unit Tests
-
 To run the unit tests, navigate to the root directory and use the command `python -m pytest` plus any desired flags.
 
-The `pyproject.toml` file defines additional options that are always appended to the pytest command:
-
+The `pyproject.toml` file defines additional options that are always appended to the `pytest` command:
 ```toml
 [tool.pytest.ini_options]
 ...
@@ -264,8 +387,6 @@ We use pre-commit to unify our coding format, steps to setup are as follows:
 - Setup hooks from our pre-commit hook configs in `.pre-commit-config.yaml` using `pre-commit install`
 
 When you commit, pre-commit hooks will be applied. If for some reason you need to skip the check, you can run `git commit ... --no-verify` but make sure to include the reason to skip pre-commit in the commit message.
-
-For more information, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 

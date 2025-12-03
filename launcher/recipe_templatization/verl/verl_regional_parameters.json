@@ -1,0 +1,59 @@
+{
+    "_comment": "Container availability based on Verl recipes. Single container entry used for all Verl fine-tuning techniques with substring matching support.",
+    "verl": {
+        "k8s": {
+            "container_image": {
+                "beta": {
+                    "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
+                },
+                "gamma": {
+                    "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
+                },
+                "prod": {
+                    "ap-south-1": "423350936952.dkr.ecr.ap-south-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "us-east-2": "556809692997.dkr.ecr.us-east-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "eu-central-1": "391061375763.dkr.ecr.eu-central-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "eu-south-2": "330290781619.dkr.ecr.eu-south-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "eu-north-1": "963403601044.dkr.ecr.eu-north-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "eu-west-1": "942446708630.dkr.ecr.eu-west-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "eu-west-2": "016839105697.dkr.ecr.eu-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "us-west-1": "827510180725.dkr.ecr.us-west-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "sa-east-1": "311136344257.dkr.ecr.sa-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "ap-northeast-1": "356859066553.dkr.ecr.ap-northeast-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "ap-southeast-1": "885852567298.dkr.ecr.ap-southeast-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "ap-southeast-2": "304708117039.dkr.ecr.ap-southeast-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+                    "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
+                }
+            }
+        },
+        "sm_jobs": {
+            "container_image": {
+                "beta": {
+                    "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
+                },
+                "gamma": {
+                    "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
+                },
+                "prod": {
+                    "ap-south-1": "423350936952.dkr.ecr.ap-south-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "us-east-2": "556809692997.dkr.ecr.us-east-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "eu-central-1": "391061375763.dkr.ecr.eu-central-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "eu-south-2": "330290781619.dkr.ecr.eu-south-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "eu-north-1": "963403601044.dkr.ecr.eu-north-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "eu-west-1": "942446708630.dkr.ecr.eu-west-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "eu-west-2": "016839105697.dkr.ecr.eu-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "us-west-1": "827510180725.dkr.ecr.us-west-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "sa-east-1": "311136344257.dkr.ecr.sa-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "ap-northeast-1": "356859066553.dkr.ecr.ap-northeast-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "ap-southeast-1": "885852567298.dkr.ecr.ap-southeast-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "ap-southeast-2": "304708117039.dkr.ecr.ap-southeast-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+                    "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
+                }
+            }
+        }
+    }
+}

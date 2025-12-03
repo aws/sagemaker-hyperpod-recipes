@@ -1,0 +1,62 @@
+# # Config file with common config information for validation scripts
+# # Edit this file with your custom content for custom validations
+
+platform: "SMJOBS" # SLURM, K8 OR SMJOBS
+
+# Add the recipe file paths or folder paths which you'd like to test in the below list
+# Follow the same format as followed in launcher_scripts for the path where we start the
+# path from inside recipes_collection/recipes/
+recipe_list: ["fine-tuning/llama/llmft_llama3_2_1b_instruct_seq4k_gpu_sft.yaml"]
+
+# Set model path here. Key should be the same
+# as the model_name in the recipe file and value should be the local path
+# similar to the example below. The model folder itself should follow HF convention :- repo_owner/model_name
+models:
+  model_parent_folder: "/data/hp-recipe-validator/models/"
+
+# Key should be same as the job type in the recipe file name *_jobtype.yaml. Ex: *lora.yaml
+dataset_keys:
+  sft:
+    train_data_name: "tatqa_train"
+    train_data_dir: ""
+    val_data_name: "tatqa_val"
+    val_data_dir: ""
+  dpo:
+    train_data_name: "ultra-feedback-train"
+    train_data_dir: "/data/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_train_small.jsonl"
+    val_data_name: "ultra-feedback-val"
+    val_data_dir: "/data/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_val_small.jsonl"
+  multimodal:
+    train_data_name: "pokemon-train"
+    train_data_dir: "/data/hp-recipe-validator/datasets/pokemon/train"
+    val_data_name: "pokemon-val"
+    val_data_dir: "/data/hp-recipe-validator/datasets/pokemon/validation"
+  default:
+    train_data_name: "tatqa_train"
+    train_data_dir: "/data/hp-recipe-validator/datasets/tat_qa/zc_train_10k.jsonl"
+    val_data_name: "tatqa_val"
+    val_data_dir: "/data/hp-recipe-validator/datasets/tat_qa/zc_dev.jsonl"
+
+# Specify HuggingFace access token here if the models are gated
+hf:
+  access_token: ""
+
+# Key should be the recipe file name if you have a custom entry script
+entry_scripts:
+  default: "/app/src/amzn_awsllm_fine_tuning/train_hp.py"
+
+# Key should be the recipe file name if you have a custom container
+container_info:
+  default:
+    container_path: ""
+
+experiment_dir: "/opt/ml/model"
+
+git:
+  use_default: false
+
+# This is the name of a sleeper pod that we can use to copy stuff between the cluster and the local machine
+k8:
+  general_pod: "k8s-sleeper-faraday-0"
+
+base_results_dir: "./"

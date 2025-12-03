@@ -12,10 +12,14 @@
 # language governing permissions and limitations under the License.
 
 import logging
+import os
+from unittest.mock import patch
 
 from omegaconf import OmegaConf
 
+from hyperpod_recipes import list_recipes
 from launcher.nemo.constants import ROOT_DIR
+from main import main
 
 from .test_utils import (
     get_launcher_run_script_paths,
@@ -26,6 +30,11 @@ from .test_utils import (
 logger = logging.getLogger(__name__)
 
 RUN_SCRIPT_PATHS = get_launcher_run_script_paths()
+RECIPES_OMIT_VALIDATION = [  # FIXME: these recipes are currently fail dryrun and require a fix to re-enable
+    "training/llama/megatron_llama3_1_8b_nemo",
+    "fine-tuning/nova/nova_1_0/nova_pro/distill/nova_pro_1_0_r5_cpu_distill",
+    "fine-tuning/nova/nova_1_0/nova_premier/distill/nova_premier_1_0_r5_cpu_distill",
+]
 
 
 def test_config_for_run_script_exists():
@@ -72,3 +81,31 @@ def test_config_degree_validation():
         assert validate_distributed_degrees(
             shard_degree, tensor_model_parallel_degree, expert_model_parallel_degree, context_parallel_degree, num_nodes
         ), log_config_name(path.name)
+
+
+def test_dryrun_validation_for_all_recipes(subtests):
+    recipes = list_recipes()
+
+    for recipe in recipes:
+        if recipe.name in RECIPES_OMIT_VALIDATION:
+            continue  # FIXME: these recipes are currently fail dryrun and require a fix to re-enable
+
+        overrides = [
+            f"recipes={recipe.name}",
+            f"base_results_dir=dummy_dir/results",
+            f"dry_run=True",
+        ]
+        if (
+            recipe.name.startswith(("training/nova", "fine-tuning/nova", "evaluation/nova"))
+            or "checkpointless" in recipe.name
+        ):
+            overrides.append("cluster_type=k8s")
+
+        with subtests.test(msg=f"Dryrun for recipe {recipe.name}"):
+            # with initialize(config_path="../recipes_collection", version_base="1.2"):
+            #     cfg = compose(config_name="config", overrides=overrides)
+            cfg = make_hydra_cfg_instance("../recipes_collection", "config", overrides)
+            OmegaConf.set_struct(cfg, False)
+            print("cfg", cfg)
+            with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}):
+                main(cfg)

@@ -1,0 +1,131 @@
+display_name: "DeepSeek R1 Distill Qwen 1.5B Direct Preference Optimization Full Fine-Tuning on GPU"
+version: "1.0.0"
+instance_types: ['ml.p5.48xlarge']
+
+run:
+  name: deepseek-r1-distilled-qwen-1-dot-5b
+  model_type: llm_finetuning_aws
+  results_dir: ${base_results_dir}/${.name}
+  hf_access_token: null
+
+trainer:
+  devices: 8
+  num_nodes: 1
+
+training_config:
+  mlflow:
+    tracking_uri: ""
+    run_id: ""
+  force_rerun: false
+  model_config:
+    model_name_or_path: "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+    lora_checkpoint_file_path: null
+    multimodal: false
+    peft_config: null
+    model_save_name: SageMaker-FFT/DeepSeek-R1-Distill-Qwen-1.5B
+    chat_template_key: null
+    apply_chat_template: false
+    device_map: null
+    attn_implementation: sdpa
+    generation_cfg:
+      max_new_tokens: 2048
+      temperature: 0.6
+      top_p: 0.9
+      do_sample: true
+      num_return_sequences: 1
+      num_parallel_jobs: 0
+      tensor_parallel_size: 2
+  datasets:
+    save_intermediate_processing_steps: false
+    train_data:
+      name: ""
+      file_path: ""
+      limit: null
+    val_data:
+      name: ""
+      file_path: ""
+      limit: null
+    train_val_split_ratio: 0.9
+    train_val_split_seed: 42
+    preprocessor_cfgs:
+    - type: TrainingPOSampleConverter
+      key_map:
+        pst_completion: chosen
+        neg_completion: rejected
+      prompt_key: prompt
+    - type: ApplyChatTemplate
+    - type: SelectColumns
+      selected_columns:
+      - prompt
+      - chosen
+      - rejected
+    - type: TokenizeSampleDPO
+      max_prompt_length: 2048
+      max_completion_length: 2048
+      add_special_tokens: false
+  training_args:
+    override_training_dir: true
+    trainer_type: dpo
+    trainer_callbacks:
+    - _target_: metering_callback.MeteringCallback
+      output_path: "/opt/ml/metering"
+    ulysses_sequence_parallel_size: 1
+    log_run_time: false
+    log_gpu_memory: false
+    loss_type: sigmoid
+    reference_free: false
+    beta: 0.01
+    nll_loss_coef: 0.0
+    label_smoothing: 0.0
+    ref_offload: false
+    M: 1
+    sampling_method: mc
+    training_dir: ""
+    seed: 42
+    packing_samples: false
+    ring_attn_size: 1
+    ring_head_stride: 1
+    pretrain_mode: false
+    aux_loss_coef: 0
+    learning_rate: 0.0001
+    lr_warmup_ratio: 0.1
+    weight_decay: 0.0
+    adam_betas:
+    - 0.9
+    - 0.95
+    lr_scheduler: cosine
+    l2: 0.0
+    gradient_clipping: true
+    gradient_clipping_threshold: 1.0
+    grad_accum_dtype: null
+    gradient_checkpointing: true
+    gradient_checkpointing_use_reentrant: false
+    load_checkpoint: false
+    resume_checkpoint_path: ""
+    disable_ds_ckpt: true
+    disable_fast_tokenizer: false
+    micro_train_batch_size: 1
+    train_batch_size: 16
+    eval_steps: -1
+    save_steps: 0
+    save_hf_ckpt: true
+    max_epochs: 3
+    max_len: 4096
+    max_norm: 1.0
+    max_samples: 100000000.0
+    max_ckpt_mem: 100000000.0
+    max_ckpt_num: 3
+    logging_steps: 1
+    use_tensorboard: logs
+    use_wandb: null
+    strategy:
+      fsdp_config:
+        auto_wrap_policy: TRANSFORMER_BASED_WRAP
+        backward_prefetch: BACKWARD_PRE
+        cpu_ram_efficient_loading: true
+        sync_module_states: true
+        cpu_offload: false
+        forward_prefetch: false
+        sharding_strategy: FULL_SHARD
+        state_dict_type: SHARDED_STATE_DICT
+        use_orig_params: true

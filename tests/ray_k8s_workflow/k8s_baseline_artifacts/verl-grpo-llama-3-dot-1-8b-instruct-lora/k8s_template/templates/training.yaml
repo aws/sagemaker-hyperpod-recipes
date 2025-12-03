@@ -1,0 +1,144 @@
+apiVersion: ray.io/v1
+kind: RayJob
+metadata:
+  name: {{ .Values.trainingConfig.jobName }}
+  namespace: {{ .Values.trainingConfig.namespace }}
+spec:
+  shutdownAfterJobFinishes: {{ .Values.gc.shutdownAfterJobFinishes | default true }}
+  ttlSecondsAfterFinished: {{ .Values.gc.ttlSecondsAfterFinished | default 600 }}
+
+  # Verl driver: use container entrypoint directly
+  entrypoint: >-
+    python -u -m verl.trainer.main_ppo --config-path /config --config-name verl_config
+
+  rayClusterSpec:
+    rayVersion: {{ .Values.rayCluster.rayVersion | quote }}
+
+    headGroupSpec:
+      rayStartParams:
+        dashboard-host: "0.0.0.0"
+        dashboard-port: "8265"
+      template:
+        spec:
+          serviceAccountName: {{ .Values.trainingConfig.serviceAccountName | default "default" }}
+          {{- if .Values.trainingConfig.instanceType }}
+          nodeSelector:
+            node.kubernetes.io/instance-type: {{ .Values.trainingConfig.instanceType }}
+          {{- end }}
+          containers:
+          - name: ray-head
+            image: {{ .Values.image.trainingImage | quote }}
+            imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+            env:
+            - name: MLFLOW_TRACKING_URI
+              value: ""
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: TRAIN_FILES
+              value: {{ .Values.trainingConfig.trainDir | quote }}
+            - name: VAL_FILES
+              value: {{ .Values.trainingConfig.valDir | quote }}
+            volumeMounts:
+            - name: training-config
+              mountPath: /config
+              readOnly: true
+            {{- if .Values.trainingConfig.persistentVolumeClaims }}
+            {{- range .Values.trainingConfig.persistentVolumeClaims }}
+            {{- if . }}
+            - name: {{ .claimName }}
+              mountPath: /{{ .mountPath }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            resources:
+              requests:
+                cpu: {{ .Values.rayCluster.headNode.cpu | quote }}
+                memory: {{ .Values.rayCluster.headNode.memory | quote }}
+                nvidia.com/gpu: {{ .Values.rayCluster.headNode.gpu | quote }}
+              {{- $cpulim := .Values.rayCluster.headNode.cpuLimit }}
+              {{- $memlim := .Values.rayCluster.headNode.memoryLimit }}
+              {{- $gpucnt := .Values.rayCluster.headNode.gpu }}
+              {{- if or $cpulim $memlim $gpucnt }}
+              limits:
+                {{- if $cpulim }}
+                cpu: {{ $cpulim | quote }}
+                {{- end }}
+                {{- if $memlim }}
+                memory: {{ $memlim | quote }}
+                {{- end }}
+                {{- if $gpucnt }}
+                nvidia.com/gpu: {{ $gpucnt | quote }}
+                {{- end }}
+              {{- end }}
+          volumes:
+          - name: training-config
+            configMap:
+              name: training-config-{{ .Values.trainingConfig.jobName }}
+              defaultMode: 0755
+          {{- if .Values.trainingConfig.persistentVolumeClaims }}
+          {{- range .Values.trainingConfig.persistentVolumeClaims }}
+          {{- if . }}
+          - name: {{ .claimName }}
+            persistentVolumeClaim:
+              claimName: {{ .claimName }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+
+    workerGroupSpecs:
+    - groupName: workers
+      replicas: {{ .Values.rayCluster.workerNodes.replicas }}
+      rayStartParams: {}
+      template:
+        spec:
+          serviceAccountName: {{ .Values.trainingConfig.serviceAccountName | default "default" }}
+          {{- if .Values.trainingConfig.instanceType }}
+          nodeSelector:
+            node.kubernetes.io/instance-type: {{ .Values.trainingConfig.instanceType }}
+          {{- end }}
+          containers:
+          - name: ray-worker
+            image: {{ .Values.image.trainingImage | quote }}
+            imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+            env:
+            - name: MLFLOW_TRACKING_URI
+              value: ""
+            volumeMounts:
+            {{- if .Values.trainingConfig.persistentVolumeClaims }}
+            {{- range .Values.trainingConfig.persistentVolumeClaims }}
+            {{- if . }}
+            - name: {{ .claimName }}
+              mountPath: /{{ .mountPath }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            resources:
+              requests:
+                cpu: {{ .Values.rayCluster.workerNodes.cpu | quote }}
+                memory: {{ .Values.rayCluster.workerNodes.memory | quote }}
+                nvidia.com/gpu: {{ .Values.rayCluster.workerNodes.gpu | quote }}
+              {{- $cpulim := .Values.rayCluster.workerNodes.cpuLimit }}
+              {{- $memlim := .Values.rayCluster.workerNodes.memoryLimit }}
+              {{- $gpucnt := .Values.rayCluster.workerNodes.gpu }}
+              {{- if or $cpulim $memlim $gpucnt }}
+              limits:
+                {{- if $cpulim }}
+                cpu: {{ $cpulim | quote }}
+                {{- end }}
+                {{- if $memlim }}
+                memory: {{ $memlim | quote }}
+                {{- end }}
+                {{- if $gpucnt }}
+                nvidia.com/gpu: {{ $gpucnt | quote }}
+                {{- end }}
+              {{- end }}
+          volumes:
+          {{- if .Values.trainingConfig.persistentVolumeClaims }}
+          {{- range .Values.trainingConfig.persistentVolumeClaims }}
+          {{- if . }}
+          - name: {{ .claimName }}
+            persistentVolumeClaim:
+              claimName: {{ .claimName }}
+          {{- end }}
+          {{- end }}
+          {{- end }}

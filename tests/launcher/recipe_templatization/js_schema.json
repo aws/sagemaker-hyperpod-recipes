@@ -1,0 +1,101 @@
+   { "RecipeCollection": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Name": { "type": "string", "maxLength": 255},
+          "DisplayName": { "type": "string", "maxLength": 255},
+          "Type": {
+            "type": "string",
+            "enum": ["FineTuning", "Evaluation"]
+          },
+          "CustomizationTechnique": {
+            "type": "string",
+            "enum": ["SFT", "DPO", "RLAIF", "RLVR", "PPO", "CPT", "DISTILL"]
+          },
+          "EvaluationType": {
+            "type": "string",
+            "enum": ["DeterministicTextBenchmark", "DeterministicMultiModalBenchmark", "DeterministicEvaluation", "LLMAJEvaluation"]
+
+          },
+          "IsSubscriptionModel": {"type": "boolean"},
+          "Peft": {
+            "type": "string",
+            "enum": ["LORA", "QLORA"]
+          },
+          "SequenceLength": {
+            "type": "string",
+            "enum": ["1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K"]
+          },
+          "Hardware": { "type": "string", "enum": ["GPU", "TRAINIUM", "CPU"] },
+          "Versions": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "SmtjImageUri": {
+            "$ref": "../mutable/regex.json#/definitions/EcrUri"
+          },
+          "InstanceCount": { "type": "integer" },
+          "ServerlessMeteringType": {
+            "type": "string",
+            "enum": ["Token-based", "Hourly"]
+          },
+          "HostingConfigs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "InstanceType": { "$ref": "../mutable/api_parameters.json#/definitions/InstanceType" },
+                "Profile": { "type": "string" },
+                "EcrAddress": { "$ref": "../mutable/regex.json#/definitions/EcrUri" },
+                "Environment": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[A-Z_][A-Z0-9_]*$": { "type": "string" }
+                  },
+                  "additionalProperties": false
+                },
+                "ComputeResourceRequirements": {
+                  "type": "object",
+                  "properties": {
+                    "MinMemoryRequiredInMb": { "type": "integer", "minimum": 1 },
+                    "NumberOfCpuCoresRequired": { "type": "integer", "minimum": 1 },
+                    "NumberOfAcceleratorDevicesRequired": { "type": "integer", "minimum": 0 }
+                  },
+                  "required": ["MinMemoryRequiredInMb", "NumberOfCpuCoresRequired", "NumberOfAcceleratorDevicesRequired"],
+                  "additionalProperties": false
+                }
+              },
+              "required": ["InstanceType"],
+              "additionalProperties": false
+            }
+          },
+          "UseCases": {
+            "type": "array",
+            "items": {"type": "string" }
+          },
+          "BestFor": {
+            "type": "array",
+            "items": {"type": "string" }
+          },
+          "Description": {
+            "type": "string"
+          },
+          "SupportedInstanceTypes": {
+            "type": "array",
+            "items": { "$ref": "../mutable/api_parameters.json#/definitions/InstanceType" }
+          },
+          "RecipeFilePath": {
+            "type": "string"
+          },
+          "HpEksPayloadTemplateS3Uri": { "$ref": "../mutable/regex.json#/definitions/S3Uri" },
+          "HpEksOverrideParamsS3Uri":  { "$ref": "../mutable/regex.json#/definitions/S3Uri" },
+          "SmtjRecipeTemplateS3Uri":   { "$ref": "../mutable/regex.json#/definitions/S3Uri" },
+          "SmtjOverrideParamsS3Uri":   { "$ref": "../mutable/regex.json#/definitions/S3Uri" }
+        },
+        "uniqueItems": true,
+        "required": ["Name", "DisplayName", "Type", "Versions"],
+        "additionalProperties": false
+     }
+   }
+}

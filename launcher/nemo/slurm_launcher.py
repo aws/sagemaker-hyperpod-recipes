@@ -76,24 +76,24 @@ class SMSlurmLauncher(SlurmLauncher):
         self._update_parameters(job_name=job_name, **kwargs)
         if shutil.which("srun") is None and not NEMO_LAUNCHER_DEBUG and not self.slurm_create_submission_file_only:
             raise RuntimeError('Could not detect "srun", are you indeed on a slurm cluster?')
+        self.job_paths = SMJobPaths(folder=self.folder, job_name=self.job_name)
 
     def _make_train_script_file(self):
         """
         Create the custom train_script.sh
         Optional create launch_docker_container.sh to launch docker container on every node
         """
-        job_paths = SMJobPaths(folder=self.folder, job_name=self.job_name)
-        folder = job_paths.folder
+        folder = self.job_paths.folder
         folder.mkdir(parents=True, exist_ok=True)
-        train_script_file_path = job_paths.train_script_file
+        train_script_file_path = self.job_paths.train_script_file
         with train_script_file_path.open("w") as f:
             f.write(self.train_script_text)
         if self.launch_docker_container_text is not None:
-            launch_docker_container_file = job_paths.launch_docker_container_file
+            launch_docker_container_file = self.job_paths.launch_docker_container_file
             with launch_docker_container_file.open("w") as f:
                 f.write(self.launch_docker_container_text)
         if self.docker_exec_script_text is not None:
-            docker_exec_script_file = job_paths.docker_exec_script_file
+            docker_exec_script_file = self.job_paths.docker_exec_script_file
             with docker_exec_script_file.open("w") as f:
                 f.write(self.docker_exec_script_text)
 
@@ -103,7 +103,7 @@ class SMSlurmLauncher(SlurmLauncher):
 
         # Same as upstream, but exposing extra control for submission through slurm_create_submission_file_only
         submission_file_path = self._make_submission_file(command_groups)
-        logger.info(f"Job {self.job_name} submission file created at '{submission_file_path}'")
+        logger.info(f"Job {self.job_name} submission file created at {submission_file_path}")
         job_id = ""
         if not NEMO_LAUNCHER_DEBUG and not self.slurm_create_submission_file_only:
             job_id = self._submit_command(submission_file_path)
@@ -111,6 +111,7 @@ class SMSlurmLauncher(SlurmLauncher):
                 logger.info(f"Job {self.job_name} submitted with Job ID {job_id}")
                 with open(self.folder / "launcher.log", "w") as f:
                     f.write(f"Submitted batch job {job_id}")
+                logger.info(f"Submitted job's logfile path {str(self.job_paths.stdout).replace('%j', job_id)}")
         else:
             logger.info(f"To submit your job on Slurm, run `sbatch {submission_file_path}`")
 

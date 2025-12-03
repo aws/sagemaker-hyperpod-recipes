@@ -170,6 +170,7 @@ instanceWithRDMASupport = set(
     ]
 )
 
+# Mapping of instance types to their GPU/device counts (8 is the default)
 INSTANCE_TO_DEVICE_COUNT = {
     "g4dn.xlarge": 1,
     "g4dn.2xlarge": 1,

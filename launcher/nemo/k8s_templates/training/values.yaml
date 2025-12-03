@@ -85,3 +85,21 @@ trainingConfig:
 
   # The clean up policy after the job completes or fails.
   cleanPodPolicy: null
+
+  # Environment variables
+  envVars: null
+
+  # The elastic policy for scaling the job
+  elastic_policy:
+    is_elastic: false
+    min_nodes: -1
+    max_nodes: -1
+    replica_increment_step: null
+    use_graceful_shutdown: null
+    scaling_timeout: null
+    graceful_shutdown_timeout: null
+    faulty_timeout: null
+    replica_space: null
+
+  # Queue name for Kueue job scheduling
+  queue_name: null

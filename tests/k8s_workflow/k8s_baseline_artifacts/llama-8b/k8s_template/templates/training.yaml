@@ -1,6 +1,11 @@
 {{ $config := .Values.trainingConfig }}
+{{- if $config.useHyperPodPytorchJob }}
+apiVersion: sagemaker.amazonaws.com/v1
+kind: HyperPodPyTorchJob
+{{- else }}
 apiVersion: kubeflow.org/v1
 kind: PyTorchJob
+{{- end }}
 metadata:
   name: {{ $config.jobName }}
   namespace: {{ $config.namespace }}
@@ -12,12 +17,43 @@ metadata:
   {{- end }}
   labels:
     app: {{ $config.jobName }}
+    {{- if $config.queue_name }}
+    kueue.x-k8s.io/queue-name: {{ $config.queue_name }}
+    {{- end }}
     {{- if $config.customLabels }}
     {{- range $key, $value := $config.customLabels }}
     {{ $key | quote }}: {{ $value | quote }}
     {{- end}}
     {{- end }}
 spec:
+  {{- if $config.elastic_policy.is_elastic }}
+  elasticPolicy:
+    minReplicas: {{ $config.elastic_policy.min_nodes }}
+    maxReplicas: {{ $config.elastic_policy.max_nodes }}
+    replicaIncrementStep: {{ $config.elastic_policy.replica_increment_step }}
+    scalingTimeoutInSeconds: {{ $config.elastic_policy.scaling_timeout }}
+    gracefulShutdownTimeoutInSeconds: {{ $config.elastic_policy.graceful_shutdown_timeout }}
+    faultyScaleDownTimeoutInSeconds: {{ $config.elastic_policy.faulty_timeout }}
+    replicaDiscreteValues:
+    {{- range $config.elastic_policy.replica_space }}
+    - {{ . }}
+    {{- end }}
+  {{- end }}
+  {{- if $config.useHyperPodPytorchJob }}
+  nprocPerNode: "{{ $config.ntasksPerNode }}"
+  {{- if $config.cleanPodPolicy }}
+  runPolicy:
+    cleanPodPolicy: {{ $config.cleanPodPolicy }}
+  {{- end }}
+  replicaSpecs:
+    - name: '{{ $config.nodes }}-nodes'
+      replicas: {{ $config.nodes }}
+      {{- if $config.elastic_policy.is_elastic }}
+      maxReplicas: {{ $config.elastic_policy.max_nodes }}
+      {{- end }}
+      template:
+        {{- template "podTemplate" . }}
+  {{- else }}
   {{- if $config.cleanPodPolicy }}
   runPolicy:
     cleanPodPolicy: {{ $config.cleanPodPolicy }}
@@ -27,6 +63,11 @@ spec:
       replicas: {{ $config.nodes }}
       restartPolicy: {{ $config.restartPolicy }}
       template:
+        {{- template "podTemplate" . }}
+  {{- end }}
+
+{{- define "podTemplate" }}
+{{- $config := .Values.trainingConfig }}
         {{- if $config.customLabels }}
         metadata:
           labels:
@@ -35,6 +76,20 @@ spec:
             {{- end }}
         {{- end }}
         spec:
+          {{- if $config.hostNetwork }}
+          hostNetwork: {{ $config.hostNetwork }}
+          {{- end }}
+          {{- if $config.nodeSelector }}
+          nodeSelector:
+            {{- range $key, $value := $config.nodeSelector }}
+            {{ $key | quote }}: {{ $value | quote }}
+            {{- end }}
+          {{- else if $config.instanceType }}
+          nodeSelector:
+            beta.kubernetes.io/instance-type: ml.{{ $config.instanceType }}
+          {{- end }}
+{{- end }}
+
           {{- if $config.priorityClassName }}
           priorityClassName: {{ $config.priorityClassName }}
           {{- end}}
@@ -49,13 +104,47 @@ spec:
               - name: {{ $key }}
                 value: {{ $value | quote }}
               {{- end}}
+              # New environmental variables for the script
+              - name: GIT_REPO_URL
+                value: {{ $config.git.repo_url_or_path | quote }}
+              - name: GIT_BRANCH
+                value: {{ $config.git.branch | quote }}
+              - name: GIT_COMMIT
+                value: {{ $config.git.commit | quote }}
+              - name: GIT_UPDATE_ADAPTER
+                value: {{ $config.git.update_adapter | quote }}
+              - name: NODES
+                value: {{ $config.nodes | quote }}
+              - name: NTASKS_PER_NODE
+                value: {{ $config.ntasksPerNode | quote }}
+              {{- if not $config.queue_name }}
+              - name: JOB_NAME
+                value: {{ $config.jobName | quote }}
+              {{- end }}
+              - name: SCRIPT_PATH
+                value: {{ $config.scriptPath | quote }}
+              - name: SCRIPT_ARGS
+                value: {{ $config.scriptArgs | quote }}
+              - name: PRE_SCRIPT_COMMANDS
+                value: {{ join ";" $config.pre_script | quote }}
+              - name: POST_SCRIPT_COMMANDS
+                value: {{ join ";" $config.post_script | quote }}
+              {{- if $config.useHyperPodPytorchJob }}
+              - name: USE_HYPERPODRUN
+                value: "true"
+              {{- end }}
             command:
-            - /etc/config/train-script.sh
+            - /bin/bash
+            - -c
+            {{- if eq $config.device "trainium" }}
+            - "/opt/bin/scripts/train-script-trn.sh 2>&1 | tee /data/training.log"
+            {{- else }}
+            - "/opt/bin/scripts/train-script-gpu.sh 2>&1 | tee /data/training.log"
+            {{- end }}
             imagePullPolicy: {{ .Values.image.pullPolicy }}
             securityContext:
-              capabilities:
-                add: [ "IPC_LOCK" ]
-            {{- if or (eq $config.device "gpu") (eq $config.device "trainium") (gt (int $config.numEFADevices) 0 ) }}
+              privileged: true
+            {{- if or (eq $config.device "gpu") (eq $config.device "trainium") (gt (int $config.numEFADevices) 0 ) $config.hugepages $config.memory }}
             resources:
               requests:
                 {{- if eq $config.device "gpu" }}
@@ -67,6 +156,12 @@ spec:
                 {{- if gt (int $config.numEFADevices) 0 }}
                 vpc.amazonaws.com/efa: {{ $config.numEFADevices }}
                 {{- end }}
+                {{- if $config.hugepages }}
+                hugepages-2Mi: {{ $config.hugepages }}
+                {{- end }}
+                {{- if $config.memory }}
+                memory: {{ $config.memory }}
+                {{- end }}
               limits:
                 {{- if eq $config.device "gpu" }}
                 nvidia.com/gpu: {{ $config.ntasksPerNode }}
@@ -76,6 +171,9 @@ spec:
                 {{- end }}
                 {{- if gt (int $config.numEFADevices) 0 }}
                 vpc.amazonaws.com/efa: {{ $config.numEFADevices }}
+                {{- end }}
+                {{- if $config.hugepages }}
+                hugepages-2Mi: {{ $config.hugepages }}
                 {{- end }}
             {{- end }}
             volumeMounts:
@@ -95,8 +193,6 @@ spec:
             - mountPath: /config
               name: training-config
             {{- end }}
-            - mountPath: /etc/config
-              name: train-script
             - mountPath: /dev/shm
               name: shm
             - mountPath: /var/log/aws/clusters
@@ -167,15 +263,3 @@ spec:
             hostPath:
               path: /var/log/aws/clusters
               type: DirectoryOrCreate
-          - name: train-script
-            configMap:
-              defaultMode: 420
-              items:
-              - key: train-script.sh
-                mode: 365
-                path: train-script.sh
-              {{- if eq $config.device "trainium" }}
-              name: train-script-trn-{{ $config.jobName }}
-              {{- else }}
-              name: train-script-gpu-{{ $config.jobName }}
-              {{- end }}

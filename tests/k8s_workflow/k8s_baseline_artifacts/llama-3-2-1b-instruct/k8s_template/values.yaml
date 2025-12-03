@@ -1,0 +1,55 @@
+image:
+  trainingImage: test_container
+  pullPolicy: Always
+trainingConfig:
+  jobName: llama-3-2-1b-instruct
+  namespace: default
+  scriptPath: /app/src/train_hp.py
+  scriptArgs: --config-path=/config --config-name=config.yaml
+  customScript: null
+  annotations: null
+  customLabels: null
+  priority_class_name: null
+  device: gpu
+  numEFADevices: 32
+  numNeuronDevices: null
+  ntasksPerNode: 8
+  nodes: 1
+  restartPolicy: Never
+  wandbKey: nil
+  serviceAccountName: null
+  compile: 0
+  persistentVolumeClaims:
+  - claimName: fsx-claim
+    mountPath: /data
+  volumes: null
+  git:
+    repo_url_or_path: null
+    branch: null
+    commit: null
+    token: null
+    update_adapter: false
+  pre_script: []
+  post_script: []
+  labelSelector:
+    required: null
+    preferred: null
+    weights: null
+  cleanPodPolicy: null
+  envVars:
+    NCCL_DEBUG: WARN
+    SLURM_NTASKS_PER_NODE: 8
+    CUDA_VISIBLE_DEVICES: 0,1,2,3,4,5,6,7
+  elastic_policy:
+    is_elastic: false
+    min_nodes: -1
+    max_nodes: -1
+    replica_increment_step: null
+    use_graceful_shutdown: null
+    scaling_timeout: null
+    graceful_shutdown_timeout: null
+    faulty_timeout: null
+    replica_space: null
+  queue_name: null
+  useHyperPodPytorchJob: true
+  instanceType: p5.48xlarge

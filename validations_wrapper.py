@@ -17,7 +17,12 @@ from typing import Any, Callable, TypeVar, cast
 from omegaconf import DictConfig, OmegaConf
 from pydantic import ValidationError
 
+from launcher.config_validator.schema.llmft_schema_validation import (
+    LLMFTRecipeValidator,
+    LLMFTTrainerValidator,
+)
 from launcher.config_validator.schema.nova_schema_validation import NovaRecipeValidator
+from launcher.config_validator.schema.verl_schema_validation import VerlRecipeValidator
 from launcher.config_validator.type_validator import TypeValidator
 from launcher.config_validator.value_validator import ValueValidator
 
@@ -52,6 +57,17 @@ def validate_config(fn: _T) -> _T:
                     if not is_distillation:
                         # Validate Nova config only for non-distillation jobs
                         NovaRecipeValidator(**recipes_dict)
+                elif model_type == "verl":
+                    # Validate Verl config
+                    VerlRecipeValidator(**recipes_dict)
+                elif model_type.startswith("llm_finetuning_aws"):
+                    # Validate llmft config
+                    LLMFTRecipeValidator(**recipes_dict)
+                elif model_type.startswith("hf"):
+                    # For hf recipes, only validate the trainer section for now
+                    if "trainer" in recipes_dict:
+                        trainer_dict = recipes_dict.get("trainer", {})
+                        LLMFTTrainerValidator(**trainer_dict)
                 else:
                     # Default to skip validation
                     pass

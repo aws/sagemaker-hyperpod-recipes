@@ -6,3 +6,12 @@ metadata:
 data:
   config.yaml: |-
   {{ (.Files.Glob "config/*hydra.yaml").AsConfig | indent 4 }}
+{{- if $config.elastic_policy.is_elastic }}
+{{- range $path, $content := .Files.Glob "config/train_config_n*.yaml" }}
+    {{- $filename := base $path }}
+    {{- $nodeNum := $filename | regexFind "n[0-9]+" | trimPrefix "n" }}
+  config-n{{ $nodeNum }}.yaml: |-
+    {{ $filename }}: |
+  {{ $content | toString | indent 4 }}
+{{- end }}
+{{- end }}

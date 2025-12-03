@@ -5,6 +5,8 @@ import pytest
 
 os.environ["NEMO_LAUNCHER_DEBUG"] = "1"
 
+from unittest.mock import patch
+
 from omegaconf import OmegaConf
 
 from main import main
@@ -16,6 +18,7 @@ from tests.test_utils import (
     compare_artifacts,
     create_temp_directory,
     make_hydra_cfg_instance,
+    mock_load_hosting_config,
 )
 
 
@@ -127,3 +130,39 @@ def test_sm_jobs_workflow_multimodal():
 
     compare_sm_jobs_common_artifacts(artifacts_dir, "llama3-2-11b", "multimodal")
     is_requirements_file(artifacts_dir, "llama3-2-11b", "multimodal", True)
+
+
+@patch(
+    "launcher.recipe_templatization.base_recipe_template_processor.BaseRecipeTemplateProcessor.load_hosting_config",
+    side_effect=mock_load_hosting_config,
+)
+def test_sm_jobs_workflow_with_launch_json(mock_load_hosting):
+    logger.info("Testing sm_jobs workflow launch json")
+
+    artifacts_dir = create_temp_directory("test_sm_jobs_workflow_with_launch_json")
+    overrides = [
+        "recipes=fine-tuning/llama/llmft_llama3_2_1b_instruct_seq4k_gpu_sft_lora",
+        "cluster=sm_jobs",
+        "cluster_type=sm_jobs",
+        "instance_type=p5.48xlarge",
+        "base_results_dir={}".format(artifacts_dir),
+        "+cluster.sm_jobs_config.output_path=s3://test_path",
+        "+cluster.sm_jobs_config.tensorboard_config.output_path=s3://test_tensorboard_path",
+        "+cluster.sm_jobs_config.tensorboard_config.container_logs_path=/opt/ml/output/tensorboard",
+        "container=test_container",
+        "+env_vars.NEMO_LAUNCHER_DEBUG=1",
+        "git.use_default=false",
+        "git.entry_script=/app/src/train_hp.py",
+    ]
+
+    sample_sm_jobs_config = make_hydra_cfg_instance("../recipes_collection", "config", overrides)
+    OmegaConf.set_struct(sample_sm_jobs_config, False)
+    sample_sm_jobs_config.launch_json = True
+
+    logger.info("\nsample_sm_jobs_config\n")
+    logger.info(OmegaConf.to_yaml(sample_sm_jobs_config))
+    del sample_sm_jobs_config["hydra"]
+    main(sample_sm_jobs_config)
+
+    baseline_artifacts_dir = "/tests/sm_jobs_workflow/sm_jobs_baseline_artifacts/with_launch_json"
+    compare_artifacts(["/llama-3-2-1b-instruct/launch.json"], artifacts_dir, baseline_artifacts_dir)

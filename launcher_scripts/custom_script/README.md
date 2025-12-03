@@ -4,6 +4,7 @@ Custom config allows user to use launcher to run some custom jobs that does not 
 Here are some essential fields that user might want to override during for custom training
 - training_cfg: This field contains most configs about the training runs
     - entry_script: Path to the entry script of training/fine-tuning. This path can be one in the container mounts.
+    - entry_module: Entry module of training/fine-tuning. This module should be inside container
     - script_args: The args that will be used to run this script
     - run: All runtime configs
         - name: Current run name

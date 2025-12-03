@@ -44,3 +44,14 @@ trainingConfig:
     TORCH_NCCL_ASYNC_ERROR_HANDLING: '1'
     TORCH_DIST_INIT_BARRIER: '1'
     CUDA_DEVICE_MAX_CONNECTIONS: '1'
+  elastic_policy:
+    is_elastic: false
+    min_nodes: -1
+    max_nodes: -1
+    replica_increment_step: null
+    use_graceful_shutdown: null
+    scaling_timeout: null
+    graceful_shutdown_timeout: null
+    faulty_timeout: null
+    replica_space: null
+  queue_name: null

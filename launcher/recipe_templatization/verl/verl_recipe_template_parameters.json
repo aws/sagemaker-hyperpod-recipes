@@ -1,0 +1,886 @@
+{
+    "_comment": [
+        "VERL (Volcano Engine Reinforcement Learning for LLMs) Recipe Template Parameters Configuration",
+        "",
+        "This file defines template structure and parameters for VERL recipes using",
+        "reinforcement learning algorithms like GRPO and PPO for fine-tuning.",
+        "",
+        "Key Features:",
+        "1. TEMPLATE MATCHING: Supports verl_grpo and verl_ppo algorithm types",
+        "2. RL-SPECIFIC PARAMETERS: Includes reward model, critic, and actor configurations"
+    ],
+    "templates": {
+        "grpo_rlaif": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}"
+                    },
+                    "actor_rollout_ref": {
+                        "actor": {
+                            "optim": {
+                                "lr": "{{learning_rate}}"
+                            }
+                        },
+                        "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "n": "{{rollout}}"
+                        },
+                        "model": {
+                            "path": "{{model_name_or_path}}"
+                        }
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "train_batch_size": "{{global_batch_size}}"
+                    },
+                    "reward_model": {
+                        "reward_kwargs": {
+                            "kwargs": {
+                                "model_id": "{{judge_model_id}}",
+                                "llmj_prompt_template_path": "{{judge_prompt_template}}"
+                            }
+                        }
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1.0e-07,
+                    "max": 1.0e-03,
+                    "default": 1.0e-05
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 3
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [128, 256, 512, 1024],
+                    "default": 128
+                },
+                "max_prompt_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 512,
+                    "max": 16384,
+                    "default": 1024
+                },
+                "judge_model_id": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "judge_prompt_template": {
+                    "type": "string",
+                    "required": false,
+                    "enum": ["/opt/ml/code/verl/cot.jinja", "/opt/ml/code/verl/evaluate.jinja", "/opt/ml/code/verl/faithfulness.jinja", "/opt/ml/code/verl/summarize.jinja"],
+                    "default": "/opt/ml/code/verl/summarize.jinja"
+                },
+                "rollout": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [4, 5, 6, 8],
+                    "default": 8,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "verl-grpo-rlaif-deepseek-r1-distilled-llama-70b-lora": [8],
+                                "verl-grpo-rlaif-deepseek-r1-distilled-llama-8b-lora": [8],
+                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-1-dot-5b-lora": [8],
+                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-14b-lora": [8],
+                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-32b-lora": [8],
+                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-7b-lora": [8],
+                                "verl-grpo-rlaif-gpt-oss-120b-lora": [8],
+                                "verl-grpo-rlaif-gpt-oss-20b-lora": [8],
+                                "verl-grpo-rlaif-llama-3-dot-1-8b-instruct-lora": [8],
+                                "verl-grpo-rlaif-llama-3-dot-2-1b-instruct-lora": [8],
+                                "verl-grpo-rlaif-llama-3-dot-2-3b-instruct-lora": [8],
+                                "verl-grpo-rlaif-llama-3-dot-3-70b-instruct-lora": [8],
+                                "verl-grpo-rlaif-qwen-2-dot-5-14b-instruct-lora": [8],
+                                "verl-grpo-rlaif-qwen-2-dot-5-32b-instruct-lora": [8],
+                                "verl-grpo-rlaif-qwen-2-dot-5-72b-instruct-lora": [8],
+                                "verl-grpo-rlaif-qwen-2-dot-5-7b-instruct-lora": [8],
+                                "verl-grpo-rlaif-qwen-3-0-dot-6b-lora": [8],
+                                "verl-grpo-rlaif-qwen-3-1-dot-7b-lora": [8],
+                                "verl-grpo-rlaif-qwen-3-14b-lora": [8],
+                                "verl-grpo-rlaif-qwen-3-32b-lora": [8],
+                                "verl-grpo-rlaif-qwen-3-4b-lora": [8],
+                                "verl-grpo-rlaif-qwen-3-8b-lora": [8],
+                                "default": [8]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "verl-grpo-rlaif-deepseek-r1-distilled-llama-70b-lora": 8,
+                                "verl-grpo-rlaif-deepseek-r1-distilled-llama-8b-lora": 8,
+                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-1-dot-5b-lora": 8,
+                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-14b-lora": 8,
+                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-32b-lora": 8,
+                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-7b-lora": 8,
+                                "verl-grpo-rlaif-gpt-oss-120b-lora": 8,
+                                "verl-grpo-rlaif-gpt-oss-20b-lora": 8,
+                                "verl-grpo-rlaif-llama-3-dot-1-8b-instruct-lora": 8,
+                                "verl-grpo-rlaif-llama-3-dot-2-1b-instruct-lora": 8,
+                                "verl-grpo-rlaif-llama-3-dot-2-3b-instruct-lora": 8,
+                                "verl-grpo-rlaif-llama-3-dot-3-70b-instruct-lora": 8,
+                                "verl-grpo-rlaif-qwen-2-dot-5-14b-instruct-lora": 8,
+                                "verl-grpo-rlaif-qwen-2-dot-5-32b-instruct-lora": 8,
+                                "verl-grpo-rlaif-qwen-2-dot-5-72b-instruct-lora": 8,
+                                "verl-grpo-rlaif-qwen-2-dot-5-7b-instruct-lora": 8,
+                                "verl-grpo-rlaif-qwen-3-0-dot-6b-lora": 8,
+                                "verl-grpo-rlaif-qwen-3-1-dot-7b-lora": 8,
+                                "verl-grpo-rlaif-qwen-3-14b-lora": 8,
+                                "verl-grpo-rlaif-qwen-3-32b-lora": 8,
+                                "verl-grpo-rlaif-qwen-3-4b-lora": 8,
+                                "verl-grpo-rlaif-qwen-3-8b-lora": 8,
+                                "default": 8
+                            }
+                        }
+                    }
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "default": "default",
+                    "required": true,
+                    "type": "string"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "rl_algorithms": {
+                    "grpo": "GRPO"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                }
+            }
+        },
+        "grpo_rlvr": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}"
+                    },
+                    "actor_rollout_ref": {
+                        "actor": {
+                            "optim": {
+                                "lr": "{{learning_rate}}"
+                            }
+                        },
+                        "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "n": "{{rollout}}"
+                        },
+                        "model": {
+                            "path": "{{model_name_or_path}}"
+                        }
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "train_batch_size": "{{global_batch_size}}"
+                    },
+                    "custom_reward_function": {
+                        "name": "{{preset_reward_function}}",
+                        "lambda_arn": "{{reward_lambda_arn}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "namespace": {
+                    "default": "default",
+                    "required": true,
+                    "type": "string"
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "preset_reward_function": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["", "gsm8k", "prime_code", "prime_math"],
+                    "default": ""
+                },
+                "reward_lambda_arn":{
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1.0e-07,
+                    "max": 1.0e-03,
+                    "default": 1.0e-05
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 3
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [128, 256, 512, 1024],
+                    "default": 128,
+                    "conditional_constraints": {
+                    "enum": {
+                        "Name": {
+                            "verl-grpo-rlvr-llama-3-dot-2-1b-instruct-lora": [64, 128, 256, 512, 1024],
+                            "verl-grpo-rlvr-gpt-oss-120b-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-llama-3-dot-2-3b-instruct-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-deepseek-r1-distilled-llama-8b-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-deepseek-r1-distilled-llama-70b-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-1-dot-5b-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-14b-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-qwen-2-dot-5-14b-instruct-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-qwen-2-dot-5-72b-instruct-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-qwen-3-1-dot-7b-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-qwen-3-4b-lora": [256, 512, 1024],
+                            "verl-grpo-rlvr-qwen-3-14b-lora": [256, 512, 1024],
+                            "default": [128, 256, 512, 1024]
+                        }
+                    },
+                    "default": {
+                        "Name": {
+                            "verl-grpo-rlvr-llama-3-dot-2-1b-instruct-lora": 64,
+                            "verl-grpo-rlvr-gpt-oss-120b-lora": 1024,
+                            "verl-grpo-rlvr-llama-3-dot-2-3b-instruct-lora": 256,
+                            "verl-grpo-rlvr-deepseek-r1-distilled-llama-8b-lora": 256,
+                            "verl-grpo-rlvr-deepseek-r1-distilled-llama-70b-lora": 256,
+                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-1-dot-5b-lora": 256,
+                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-lora": 256,
+                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-14b-lora": 256,
+                            "verl-grpo-rlvr-qwen-2-dot-5-14b-instruct-lora": 256,
+                            "verl-grpo-rlvr-qwen-2-dot-5-72b-instruct-lora": 256,
+                            "verl-grpo-rlvr-qwen-3-1-dot-7b-lora": 256,
+                            "verl-grpo-rlvr-qwen-3-4b-lora": 256,
+                            "verl-grpo-rlvr-qwen-3-14b-lora": 256,
+                            "default": 128
+                        }
+                    }
+                }
+                },
+                "max_prompt_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 512,
+                    "max": 16384,
+                    "default": 1024
+                },
+
+                "rollout": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [4, 5, 6, 8],
+                    "default": 6,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "verl-grpo-rlvr-deepseek-r1-distilled-llama-70b-lora": [6],
+                                "verl-grpo-rlvr-deepseek-r1-distilled-llama-8b-lora": [6],
+                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-1-dot-5b-lora": [6],
+                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-14b-lora": [6],
+                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-32b-lora": [8],
+                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-lora": [6],
+                                "verl-grpo-rlvr-gpt-oss-120b-lora": [5],
+                                "verl-grpo-rlvr-gpt-oss-20b-lora": [8],
+                                "verl-grpo-rlvr-llama-3-dot-1-8b-instruct-lora": [8],
+                                "verl-grpo-rlvr-llama-3-dot-2-1b-instruct-lora": [8],
+                                "verl-grpo-rlvr-llama-3-dot-2-3b-instruct-lora": [6],
+                                "verl-grpo-rlvr-llama-3-dot-3-70b-instruct-lora": [8],
+                                "verl-grpo-rlvr-qwen-2-dot-5-14b-instruct-lora": [5],
+                                "verl-grpo-rlvr-qwen-2-dot-5-32b-instruct-lora": [8],
+                                "verl-grpo-rlvr-qwen-2-dot-5-72b-instruct-lora": [6],
+                                "verl-grpo-rlvr-qwen-2-dot-5-7b-instruct-lora": [8],
+                                "verl-grpo-rlvr-qwen-3-0-dot-6b-lora": [8],
+                                "verl-grpo-rlvr-qwen-3-1-dot-7b-lora": [6],
+                                "verl-grpo-rlvr-qwen-3-14b-lora": [6],
+                                "verl-grpo-rlvr-qwen-3-32b-lora": [8],
+                                "verl-grpo-rlvr-qwen-3-4b-lora": [6],
+                                "verl-grpo-rlvr-qwen-3-8b-lora": [8],
+                                "default": [6]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "verl-grpo-rlvr-deepseek-r1-distilled-llama-70b-lora": 6,
+                                "verl-grpo-rlvr-deepseek-r1-distilled-llama-8b-lora": 6,
+                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-1-dot-5b-lora": 6,
+                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-14b-lora": 6,
+                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-32b-lora": 8,
+                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-lora": 6,
+                                "verl-grpo-rlvr-gpt-oss-120b-lora": 5,
+                                "verl-grpo-rlvr-gpt-oss-20b-lora": 8,
+                                "verl-grpo-rlvr-llama-3-dot-1-8b-instruct-lora": 8,
+                                "verl-grpo-rlvr-llama-3-dot-2-1b-instruct-lora": 8,
+                                "verl-grpo-rlvr-llama-3-dot-2-3b-instruct-lora": 6,
+                                "verl-grpo-rlvr-llama-3-dot-3-70b-instruct-lora": 8,
+                                "verl-grpo-rlvr-qwen-2-dot-5-14b-instruct-lora": 5,
+                                "verl-grpo-rlvr-qwen-2-dot-5-32b-instruct-lora": 8,
+                                "verl-grpo-rlvr-qwen-2-dot-5-72b-instruct-lora": 6,
+                                "verl-grpo-rlvr-qwen-2-dot-5-7b-instruct-lora": 8,
+                                "verl-grpo-rlvr-qwen-3-0-dot-6b-lora": 8,
+                                "verl-grpo-rlvr-qwen-3-1-dot-7b-lora": 6,
+                                "verl-grpo-rlvr-qwen-3-14b-lora": 6,
+                                "verl-grpo-rlvr-qwen-3-32b-lora": 8,
+                                "verl-grpo-rlvr-qwen-3-4b-lora": 6,
+                                "verl-grpo-rlvr-qwen-3-8b-lora": 8,
+                                "default": 6
+                            }
+                        }
+                    }
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "rl_algorithms": {
+                    "grpo": "GRPO"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                },
+                "preset_reward_function": {
+                    "gsm8k": "Exact match (gsm8k)",
+                    "prime_code": "Code executions (prime_code)",
+                    "prime_math": "Math answers (prime_math)"
+                }
+            }
+        },
+        "grpo_rlaif_fft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}"
+                    },
+                    "actor_rollout_ref": {
+                        "actor": {
+                            "optim": {
+                                "lr": "{{learning_rate}}"
+                            }
+                        },
+                        "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "n": "{{rollout}}"
+                        },
+                        "model": {
+                            "path": "{{model_name_or_path}}"
+                        }
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "train_batch_size": "{{global_batch_size}}"
+                    },
+                    "reward_model": {
+                        "reward_kwargs": {
+                            "kwargs": {
+                                "model_id": "{{judge_model_id}}",
+                                "llmj_prompt_template_path": "{{judge_prompt_template}}"
+                            }
+                        }
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1.0e-07,
+                    "max": 1.0e-03,
+                    "default": 1.0e-05
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 3
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [128, 256, 512, 1024],
+                    "default": 128
+                },
+                "max_prompt_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 512,
+                    "max": 16384,
+                    "default": 1024
+                },
+                "judge_model_id": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "judge_prompt_template": {
+                    "type": "string",
+                    "required": false,
+                    "enum": ["/opt/ml/code/verl/cot.jinja", "/opt/ml/code/verl/evaluate.jinja", "/opt/ml/code/verl/faithfulness.jinja", "/opt/ml/code/verl/summarize.jinja"],
+                    "default": "/opt/ml/code/verl/summarize.jinja"
+                },
+                "rollout": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [4, 5, 6, 8],
+                    "default": 8,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "verl-deepseek-r1-distill-qwen-32b-fft": [8],
+                                "verl-grpo-gpt-oss-20b-fft": [8],
+                                "verl-grpo-llama-3-dot-1-8b-instruct-fft": [8],
+                                "verl-grpo-llama-3-dot-3-70b-instruct-fft": [8],
+                                "verl-grpo-qwen-2-dot-5-7b-instruct-fft": [8],
+                                "verl-grpo-qwen-2-dot-5-14b-instruct-fft": [8],
+                                "verl-grpo-qwen-2-dot-5-32b-instruct-fft": [8],
+                                "verl-grpo-qwen-3-0-dot-6b-fft": [8],
+                                "verl-grpo-qwen-3-8b-fft": [8],
+                                "verl-grpo-qwen-3-32b-fft": [8],
+                                "default": [8]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "verl-deepseek-r1-distill-qwen-32b-fft": 8,
+                                "verl-grpo-gpt-oss-20b-fft": 8,
+                                "verl-grpo-llama-3-dot-1-8b-instruct-fft": 8,
+                                "verl-grpo-llama-3-dot-3-70b-instruct-fft": 8,
+                                "verl-grpo-qwen-2-dot-5-7b-instruct-fft": 8,
+                                "verl-grpo-qwen-2-dot-5-14b-instruct-fft": 8,
+                                "verl-grpo-qwen-2-dot-5-32b-instruct-fft": 8,
+                                "verl-grpo-qwen-3-0-dot-6b-fft": 8,
+                                "verl-grpo-qwen-3-8b-fft": 8,
+                                "verl-grpo-qwen-3-32b-fft": 8,
+                                "default": 8
+                            }
+                        }
+                    }
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "default": "default",
+                    "required": true,
+                    "type": "string"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "rl_algorithms": {
+                    "grpo": "GRPO"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                }
+            }
+        },
+        "grpo_rlvr_fft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}"
+                    },
+                    "actor_rollout_ref": {
+                        "actor": {
+                            "optim": {
+                                "lr": "{{learning_rate}}"
+                            }
+                        },
+                        "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "n": "{{rollout}}"
+                        },
+                        "model": {
+                            "path": "{{model_name_or_path}}"
+                        }
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "train_batch_size": "{{global_batch_size}}"
+                    },
+                    "custom_reward_function": {
+                        "name": "{{preset_reward_function}}",
+                        "path": "{{reward_lambda_arn}}",
+                        "lambda_arn": "{{reward_lambda_arn}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "namespace": {
+                    "default": "default",
+                    "required": true,
+                    "type": "string"
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "preset_reward_function": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["", "gsm8k", "prime_code", "prime_math"],
+                    "default": ""
+                },
+                "reward_lambda_arn":{
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1.0e-07,
+                    "max": 1.0e-03,
+                    "default": 1.0e-05
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 3
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [64, 128, 256, 512, 1024],
+                    "default": 128
+                },
+                "max_prompt_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 512,
+                    "max": 16384,
+                    "default": 1024
+                },
+                "rollout": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [4, 5, 6, 8],
+                    "default": 6,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "verl-grpo-deepseek-r1-distilled-llama-8b-fft": [8],
+                                "verl-grpo-deepseek-r1-distilled-qwen-14b-fft": [8],
+                                "verl-grpo-deepseek-r1-distilled-qwen-32b-fft": [8],
+                                "verl-grpo-gpt-oss-20b-fft": [8],
+                                "verl-grpo-llama-3-dot-1-8b-fft": [8],
+                                "verl-grpo-llama-3-dot-2-1b-instruct-fft": [8],
+                                "verl-grpo-llama-3-dot-2-3b-instruct-fft": [8],
+                                "verl-grpo-qwen-2-dot-5-14b-fft": [8],
+                                "verl-grpo-qwen-2-dot-5-32b-instruct-fft": [8],
+                                "verl-grpo-qwen-2-dot-5-7b-instruct-fft": [8],
+                                "verl-grpo-qwen-3-0-dot-6b-fft": [8],
+                                "verl-grpo-qwen-3-14b-fft": [8],
+                                "verl-grpo-qwen-3-32b-fft": [8],
+                                "verl-grpo-qwen-3-4b-fft": [8],
+                                "verl-grpo-qwen-3-8b-fft": [8],
+                                "default": [8]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "verl-grpo-deepseek-r1-distilled-llama-8b-fft": 8,
+                                "verl-grpo-deepseek-r1-distilled-qwen-14b-fft": 8,
+                                "verl-grpo-deepseek-r1-distilled-qwen-32b-fft": 8,
+                                "verl-grpo-gpt-oss-20b-fft": 8,
+                                "verl-grpo-llama-3-dot-1-8b-fft": 8,
+                                "verl-grpo-llama-3-dot-2-1b-instruct-fft": 8,
+                                "verl-grpo-llama-3-dot-2-3b-instruct-fft": 8,
+                                "verl-grpo-qwen-2-dot-5-14b-fft": 8,
+                                "verl-grpo-qwen-2-dot-5-32b-instruct-fft": 8,
+                                "verl-grpo-qwen-2-dot-5-7b-instruct-fft": 8,
+                                "verl-grpo-qwen-3-0-dot-6b-fft": 8,
+                                "verl-grpo-qwen-3-14b-fft": 8,
+                                "verl-grpo-qwen-3-32b-fft": 8,
+                                "verl-grpo-qwen-3-4b-fft": 8,
+                                "verl-grpo-qwen-3-8b-fft": 8,
+                                "default": 8
+                            }
+                        }
+                    }
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "rl_algorithms": {
+                    "grpo": "GRPO"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                },
+                "preset_reward_function": {
+                    "gsm8k": "Exact match (gsm8k)",
+                    "prime_code": "Code executions (prime_code)",
+                    "prime_math": "Math answers (prime_math)"
+                }
+            }
+        }
+    }
+}

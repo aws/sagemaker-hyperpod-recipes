@@ -1,0 +1,47 @@
+mlflow:
+  tracking_uri: ''
+  run_id: ''
+data:
+  train_files: $HOME/data/gsm8k/train.parquet
+  val_files: $HOME/data/gsm8k/test.parquet
+  train_val_split_ratio: 0.9
+  split_seed: 42
+  train_batch_size: 256
+  max_prompt_length: 512
+  max_response_length: 256
+actor_rollout_ref:
+  model:
+    path: Qwen/Qwen2.5-0.5B-Instruct
+  actor:
+    optim:
+      lr: 1.0e-06
+    ppo_mini_batch_size: 64
+    ppo_micro_batch_size_per_gpu: 4
+  rollout:
+    name: vllm
+    log_prob_micro_batch_size_per_gpu: 8
+    tensor_model_parallel_size: 1
+    gpu_memory_utilization: 0.4
+  ref:
+    log_prob_micro_batch_size_per_gpu: 4
+critic:
+  optim:
+    lr: 1.0e-05
+  model:
+    path: Qwen/Qwen2.5-0.5B-Instruct
+  ppo_micro_batch_size_per_gpu: 4
+algorithm:
+  kl_ctrl:
+    kl_coef: 0.001
+  adv_estimator: gae
+trainer:
+  logger: console
+  val_before_train: false
+  n_gpus_per_node: 1
+  nnodes: 1
+  save_freq: 10
+  test_freq: 10
+  total_epochs: 15
+ray_init:
+  num_cpus: null
+  timeline_json_file: null

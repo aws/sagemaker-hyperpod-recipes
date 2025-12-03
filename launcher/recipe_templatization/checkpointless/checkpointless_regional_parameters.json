@@ -1,0 +1,13 @@
+{
+    "checkpointless_nemo": {
+        "k8s": {
+            "container_image": {
+                "prod": {
+                    "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-checkpointless-training:v1.0.0"
+                },
+                "gamma": {}
+            }
+        },
+        "sm_jobs": {}
+    }
+}

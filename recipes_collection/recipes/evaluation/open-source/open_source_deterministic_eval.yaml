@@ -1,0 +1,37 @@
+run:
+  name: "deterministic-model"
+  base_model_name: "" #Model id in Jumpstart
+  model_name_or_path: "" # can be S3 path or local path
+  replicas: 1
+  data_s3_path: "" # only provide for non SMTJ gen_qa tasks
+
+evaluation:
+  task: mmlu
+  strategy: zs_cot
+  metric: accuracy
+  subtask: ""
+
+output:
+  eval_results_dir: ""
+  eval_tensorboard_results_dir: ""
+  kms_key_id: ""
+  mlflow_tracking_uri: ""
+  mlflow_experiment_name: ""
+  mlflow_run_name: ""
+  mlflow_run_id: ""
+
+# Optional Inference configs
+inference:
+  max_new_tokens: 8192
+  top_k: -1
+  top_p: 1.0
+  temperature: 0
+  max_model_len: 12000
+
+#BYO metric/reward function, only applicable with deterministic metrics.
+processor:
+    preset_reward_function: ""
+    lambda_arn: ""
+    postprocessing:
+        enabled: false
+    aggregation: ""

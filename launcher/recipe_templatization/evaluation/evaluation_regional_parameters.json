@@ -1,0 +1,105 @@
+{
+  "recipe_container_mapping": {
+    "open_source_deterministic_eval": {
+      "container_image": {
+        "prod": {
+        "us-east-1": "763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "us-west-2": "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-west-1": "763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-central-1": "763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-southeast-2": "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-northeast-1": "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04"
+      },
+      "gamma": {
+        "us-east-1": "763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "us-west-2": "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-west-1": "763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-central-1": "763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-southeast-2": "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-northeast-1": "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04"
+      }
+    },
+      "smtj_container_image": {
+        "prod": {
+        "us-east-1": "763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "us-west-2": "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-west-1": "763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-central-1": "763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-southeast-2": "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-northeast-1": "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04"
+      },
+      "gamma": {
+        "us-east-1": "763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "us-west-2": "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-west-1": "763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-central-1": "763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-southeast-2": "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-northeast-1": "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04"
+      }
+    }
+    },
+    "open_source_llmaj_eval": {
+      "container_image": {
+        "prod": {
+        "us-east-1": "763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "us-west-2": "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-west-1": "763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-central-1": "763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-southeast-2": "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-northeast-1": "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04"
+      },
+    "gamma": {
+        "us-east-1": "763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "us-west-2": "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-west-1": "763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-central-1": "763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-southeast-2": "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-northeast-1": "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04"
+      }
+    },
+      "smtj_container_image": {
+        "prod": {
+        "us-east-1": "763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "us-west-2": "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-west-1": "763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-central-1": "763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-southeast-2": "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-northeast-1": "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04"
+      },
+      "gamma":{
+        "us-east-1": "763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "us-west-2": "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-west-1": "763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "eu-central-1": "763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-southeast-2": "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04",
+        "ap-northeast-1": "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:pytorch2.6.0-sagemaker-evaluation0.10.0-gpu-py312-cu126-ubuntu22.04"
+      }
+    }
+    }
+  },
+  "js_model_name_instance_mapping":{
+    "deepseek-llm-r1-distill-llama-70b": ["ml.g5.12xlarge","ml.g5.24xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "deepseek-llm-r1-distill-llama-8b":["ml.g5.12xlarge", "ml.g5.16xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "deepseek-llm-r1-distill-qwen-1-5b":["ml.g5.4xlarge","ml.g5.12xlarge","ml.g5.16xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "deepseek-llm-r1-distill-qwen-7b":["ml.g5.12xlarge","ml.g5.16xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "deepseek-llm-r1-distill-qwen-14b":["ml.g5.12xlarge","ml.g5.24xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "deepseek-llm-r1-distill-qwen-32b":["ml.g5.12xlarge","ml.g5.24xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "meta-textgeneration-llama-3-1-8b-instruct":["ml.g5.12xlarge","ml.g5.16xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "meta-textgeneration-llama-3-2-1b-instruct":["ml.g5.12xlarge","ml.g5.16xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "meta-textgeneration-llama-3-2-3b-instruct":["ml.g5.12xlarge","ml.g5.16xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "meta-textgeneration-llama-3-3-70b-instruct":["ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "meta-vlm-llama-4-scout-17b-16e-instruct":["ml.p5.48xlarge"],
+    "huggingface-llm-qwen2-5-14b-instruct":["ml.g5.12xlarge","ml.g5.24xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "huggingface-llm-qwen2-5-32b-instruct":["ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "huggingface-llm-qwen2-5-72b-instruct":["ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "huggingface-llm-qwen2-5-7b-instruct":["ml.g5.16xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "huggingface-reasoning-qwen3-06b":["ml.g5.16xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "huggingface-reasoning-qwen3-32b":["ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "huggingface-reasoning-qwen3-4b":["ml.g5.16xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "huggingface-reasoning-qwen3-8b":["ml.g5.12xlarge","ml.g5.24xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "huggingface-reasoning-qwen3-1-7b":["ml.g5.12xlarge","ml.g5.24xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "huggingface-reasoning-qwen3-14b":["ml.g5.12xlarge","ml.g5.24xlarge","ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "openai-reasoning-gpt-oss-20b":["ml.p4d.24xlarge","ml.p5.48xlarge"],
+    "openai-reasoning-gpt-oss-120b":["ml.p5.48xlarge"]
+  }
+}
