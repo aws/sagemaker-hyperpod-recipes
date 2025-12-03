@@ -24,6 +24,19 @@ SM_ADAPTER_MODEL_TYPE_TO_CODE_PATH = {
     "mixtral": "examples/mixtral/mixtral_pretrain.py",
 }
 
+HPCT_MODEL_TASK_TO_CODE_PATH = {
+    "llama_pretrain": "/opt/amazon/examples/llama3/llama3_70b_pretrain_checkpointless.py",
+    "llama_lora": "/opt/amazon/examples/llama3/llama3_70b_peft_checkpointless.py",
+    "gpt_oss_fine_tuning": "/opt/amazon/examples/gpt_oss/gpt_oss_120b_full_finetune_checkpointless.py",
+    "gpt_oss_lora": "/opt/amazon/examples/gpt_oss/gpt_oss_120b_peft_checkpointless.py",
+}
+
+HPCT_ENV_VARS = {
+    "HPCT_USE_ROOTLESS": "1",
+    "INPROCESS_RESTART": "1",
+    "INPROCESS_RESTART_TIMEOUT": "1800",
+}
+
 NEURONX_REPO_URI = "https://github.com/aws-neuron/neuronx-distributed-training.git"
 NEURONX_REPO_TAG = "main"
 NEURONX_CONF_PATH = "examples/conf"

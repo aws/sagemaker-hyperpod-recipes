@@ -1,0 +1,218 @@
+{
+  "metadata": {
+    "CustomizationTechnique": "RLVR",
+    "DisplayName": "Llama 3.1 8B GRPO RLVR Fine-Tuning",
+    "Hardware": "GPU",
+    "HostingConfigs": [
+      {
+        "ComputeResourceRequirements": {
+          "MinMemoryRequiredInMb": 1024000,
+          "NumberOfAcceleratorDevicesRequired": 8,
+          "NumberOfCpuCoresRequired": 100
+        },
+        "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+        "Environment": {
+          "OPTION_ASYNC_MODE": "true",
+          "OPTION_ENABLE_LORA": "true",
+          "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+          "OPTION_MAX_CPU_LORAS": "64",
+          "OPTION_MAX_LORAS": "8",
+          "OPTION_MAX_ROLLING_BATCH_SIZE": "1",
+          "OPTION_ROLLING_BATCH": "disable",
+          "OPTION_TENSOR_PARALLEL_DEGREE": "8",
+          "SAGEMAKER_ENABLE_LOAD_AWARE": "1",
+          "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "128"
+        },
+        "InstanceType": "ml.p5.48xlarge",
+        "Profile": "Default"
+      }
+    ],
+    "InstanceCount": 1,
+    "InstanceTypes": [
+      "ml.p5.48xlarge",
+      "ml.p4de.24xlarge"
+    ],
+    "Model_ID": "meta-textgeneration-llama-3-1-8b-instruct",
+    "Name": "verl-grpo-rlvr-llama-3-dot-1-8b-instruct-lora",
+    "OutputConfig": {
+      "SageMakerInferenceRecipeName": "default"
+    },
+    "Peft": "LoRA",
+    "RecipeFilePath": "recipes/fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-1-8b-instruct-lora.yaml",
+    "SequenceLength": "1K",
+    "ServerlessMeteringType": "Hourly",
+    "Type": "FineTuning",
+    "Versions": [
+      "1.0.0"
+    ]
+  },
+  "recipe_override_parameters": {
+    "data_path": {
+      "default": null,
+      "required": true,
+      "type": "string"
+    },
+    "global_batch_size": {
+      "default": 128,
+      "enum": [
+        128,
+        256,
+        512,
+        1024
+      ],
+      "required": true,
+      "type": "integer"
+    },
+    "learning_rate": {
+      "default": 1e-05,
+      "max": 0.001,
+      "min": 1e-07,
+      "required": true,
+      "type": "float"
+    },
+    "max_epochs": {
+      "default": 2,
+      "max": 30,
+      "min": 1,
+      "required": true,
+      "type": "integer"
+    },
+    "max_prompt_length": {
+      "default": 1024,
+      "max": 16384,
+      "min": 512,
+      "required": true,
+      "type": "integer"
+    },
+    "mlflow_run_id": {
+      "default": "",
+      "required": false,
+      "type": "string"
+    },
+    "mlflow_tracking_uri": {
+      "default": "",
+      "required": false,
+      "type": "string"
+    },
+    "model_name_or_path": {
+      "default": "meta-llama/Llama-3.1-8B-Instruct",
+      "required": true,
+      "type": "string"
+    },
+    "name": {
+      "default": "verl-grpo-llama-3-dot-1-8b-instruct-lora",
+      "required": true,
+      "type": "string"
+    },
+    "namespace": {
+      "default": "default",
+      "required": true,
+      "type": "string"
+    },
+    "output_path": {
+      "default": "/opt/ml/model",
+      "required": true,
+      "type": "string"
+    },
+    "preset_reward_function": {
+      "default": "",
+      "enum": [
+        "",
+        "gsm8k",
+        "prime_code",
+        "prime_math"
+      ],
+      "required": true,
+      "type": "string"
+    },
+    "results_directory": {
+      "default": "",
+      "required": true,
+      "type": "string"
+    },
+    "resume_from_path": {
+      "default": "",
+      "required": true,
+      "type": "string"
+    },
+    "reward_lambda_arn": {
+      "default": "",
+      "required": false,
+      "type": "string"
+    },
+    "rollout": {
+      "default": 8,
+      "enum": [
+        8
+      ],
+      "required": true,
+      "type": "integer"
+    },
+    "train_val_split_ratio": {
+      "default": 0.9,
+      "max": 1.0,
+      "min": 0.0,
+      "required": false,
+      "type": "float"
+    },
+    "validation_data_path": {
+      "default": null,
+      "required": true,
+      "type": "string"
+    }
+  },
+  "regional_parameters": {
+    "hp_eks_regional_ecr_uri": {
+      "beta": {
+        "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
+      },
+      "gamma": {
+        "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
+      },
+      "prod": {
+        "ap-northeast-1": "356859066553.dkr.ecr.ap-northeast-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "ap-south-1": "423350936952.dkr.ecr.ap-south-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "ap-southeast-1": "885852567298.dkr.ecr.ap-southeast-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "ap-southeast-2": "304708117039.dkr.ecr.ap-southeast-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "eu-central-1": "391061375763.dkr.ecr.eu-central-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "eu-north-1": "963403601044.dkr.ecr.eu-north-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "eu-south-2": "330290781619.dkr.ecr.eu-south-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "eu-west-1": "942446708630.dkr.ecr.eu-west-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "eu-west-2": "016839105697.dkr.ecr.eu-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "sa-east-1": "311136344257.dkr.ecr.sa-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "us-east-2": "556809692997.dkr.ecr.us-east-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "us-west-1": "827510180725.dkr.ecr.us-west-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks",
+        "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
+      }
+    },
+    "smtj_regional_ecr_uri": {
+      "beta": {
+        "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
+      },
+      "gamma": {
+        "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
+      },
+      "prod": {
+        "ap-northeast-1": "356859066553.dkr.ecr.ap-northeast-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "ap-south-1": "423350936952.dkr.ecr.ap-south-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "ap-southeast-1": "885852567298.dkr.ecr.ap-southeast-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "ap-southeast-2": "304708117039.dkr.ecr.ap-southeast-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "eu-central-1": "391061375763.dkr.ecr.eu-central-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "eu-north-1": "963403601044.dkr.ecr.eu-north-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "eu-south-2": "330290781619.dkr.ecr.eu-south-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "eu-west-1": "942446708630.dkr.ecr.eu-west-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "eu-west-2": "016839105697.dkr.ecr.eu-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "sa-east-1": "311136344257.dkr.ecr.sa-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "us-east-2": "556809692997.dkr.ecr.us-east-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "us-west-1": "827510180725.dkr.ecr.us-west-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj",
+        "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
+      }
+    }
+  },
+  "training-config.yaml": "---\n# Source: sagemaker-ray-verl-training/templates/training-config.yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: training-config-{{name}}\ndata:\n  config.yaml: |-\n    verl-grpo-llama-3-dot-1-8b-instruct-lora_hydra.yaml: |\n      display_name: Llama 3.1 8B GRPO RLVR Fine-Tuning\n      version: 1.0.0\n      instance_types:\n      - ml.p5.48xlarge\n      - ml.p4de.24xlarge\n      run:\n        name: '{{name}}'\n        results_dir: '{{results_directory}}'\n        model_type: verl\n      trainer:\n        devices: 8\n        num_nodes: 1\n      ray_cluster:\n        head_node:\n          cpu: '16'\n          memory: 32Gi\n          cpuLimit: null\n          memoryLimit: null\n          gpu: '0'\n        worker_nodes:\n          replicas: 1\n          cpu: '48'\n          memory: 144Gi\n          cpuLimit: null\n          memoryLimit: null\n          gpu: '8'\n      training_config:\n        mlflow:\n          tracking_uri: '{{mlflow_tracking_uri}}'\n          run_id: '{{mlflow_run_id}}'\n        actor_rollout_ref:\n          actor:\n            _target_: verl.workers.config.FSDPActorConfig\n            strategy: fsdp2\n            ppo_mini_batch_size: 32\n            ppo_micro_batch_size: null\n            ppo_micro_batch_size_per_gpu: 2\n            use_dynamic_bsz: true\n            ppo_max_token_len_per_gpu: 24576\n            clip_ratio: 0.2\n            clip_ratio_low: 0.2\n            clip_ratio_high: 0.2\n            policy_loss:\n              _target_: verl.workers.config.PolicyLossConfig\n              loss_mode: vanilla\n              clip_cov_ratio: 0.0002\n              clip_cov_lb: 1.0\n              clip_cov_ub: 5.0\n              kl_cov_ratio: 0.0002\n              ppo_kl_coef: 0.1\n            clip_ratio_c: 3.0\n            loss_agg_mode: token-mean\n            entropy_coeff: 0\n            entropy_advantage: false\n            entropy_advantage_alpha: 0.4\n            entropy_advantage_kappa: 2\n            use_kl_loss: true\n            use_torch_compile: true\n            kl_loss_coef: 0.001\n            kl_loss_type: low_var_kl\n            ppo_epochs: 1\n            shuffle: false\n            checkpoint:\n              _target_: verl.trainer.config.CheckpointConfig\n              save_contents:\n              - model\n              - optimizer\n              - extra\n              load_contents:\n              - model\n              - optimizer\n              - extra\n              async_save: false\n            optim:\n              lr: '{{learning_rate}}'\n              lr_warmup_steps_ratio: 0.0\n              total_training_steps: -1\n              weight_decay: 0.01\n              lr_warmup_steps: -1\n              _target_: verl.workers.config.FSDPOptimizerConfig\n              min_lr_ratio: 0.0\n              num_cycles: 0.5\n              warmup_style: constant\n            use_fused_kernels: false\n            grad_clip: 1.0\n            ulysses_sequence_parallel_size: 1\n            entropy_from_logits_with_chunking: false\n            entropy_checkpointing: false\n            fsdp_config:\n              _target_: verl.workers.config.FSDPEngineConfig\n              wrap_policy:\n                min_num_params: 0\n              param_offload: false\n              optimizer_offload: false\n              offload_policy: false\n              reshard_after_forward: true\n              fsdp_size: -1\n              forward_prefetch: false\n              model_dtype: bfloat16\n            use_remove_padding: true\n          ref:\n            strategy: fsdp2\n            use_torch_compile: true\n            log_prob_micro_batch_size: null\n            log_prob_micro_batch_size_per_gpu: 8\n            log_prob_use_dynamic_bsz: true\n            log_prob_max_token_len_per_gpu: 24576\n            fsdp_config:\n              _target_: verl.workers.config.FSDPEngineConfig\n              wrap_policy:\n                min_num_params: 0\n              param_offload: true\n              reshard_after_forward: true\n              forward_prefetch: false\n              model_dtype: bfloat16\n            ulysses_sequence_parallel_size: 1\n            entropy_from_logits_with_chunking: false\n            entropy_checkpointing: false\n          rollout:\n            name: vllm\n            mode: sync\n            temperature: 1.0\n            top_k: -1\n            top_p: 1\n            prompt_length: '{{max_prompt_length}}'\n            response_length: 1024\n            dtype: bfloat16\n            gpu_memory_utilization: 0.6\n            ignore_eos: false\n            enforce_eager: false\n            free_cache_engine: true\n            tensor_model_parallel_size: 2\n            max_num_batched_tokens: 8192\n            max_model_len: null\n            max_num_seqs: 1024\n            log_prob_micro_batch_size: null\n            log_prob_micro_batch_size_per_gpu: 8\n            log_prob_use_dynamic_bsz: true\n            log_prob_max_token_len_per_gpu: 24576\n            disable_log_stats: true\n            do_sample: true\n            'n': '{{rollout}}'\n            multi_stage_wake_up: false\n            engine_kwargs:\n              vllm:\n                swap_space: null\n                disable_mm_preprocessor_cache: false\n              sglang:\n                attention_backend: null\n            val_kwargs:\n              top_k: -1\n              top_p: 1.0\n              temperature: 0\n              'n': 1\n              do_sample: false\n            multi_turn:\n              enable: false\n              max_assistant_turns: null\n              tool_config_path: null\n              max_user_turns: null\n              max_parallel_calls: 1\n              max_tool_response_length: 256\n              tool_response_truncate_side: middle\n              interaction_config_path: null\n              use_inference_chat_template: false\n              tokenization_sanity_check_mode: strict\n              format: hermes\n            calculate_log_probs: false\n            agent:\n              num_workers: 8\n              agent_loop_config_path: null\n              custom_async_server:\n                path: null\n                name: null\n            update_weights_bucket_megabytes: 512\n            trace:\n              backend: mlflow\n              token2text: false\n            enable_chunked_prefill: true\n            load_format: safetensors\n            layered_summon: true\n            merge_lora_for_inference: false\n          hybrid_engine: true\n          model:\n            path: '{{model_name_or_path}}'\n            custom_chat_template: null\n            use_shm: false\n            external_lib: null\n            override_config: {}\n            attn_implementation: null\n            enable_gradient_checkpointing: true\n            enable_activation_offload: false\n            use_remove_padding: true\n            lora_rank: 32\n            lora_alpha: 64\n            target_modules: all-linear\n            exclude_modules: null\n            use_liger: false\n            use_fused_kernels: false\n            fused_kernel_options:\n              impl_backend: torch\n            trust_remote_code: false\n            is_saving_checkpoint_in_lora: true\n          profiler:\n            _target_: verl.utils.profiler.ProfilerConfig\n            discrete: false\n            all_ranks: false\n            ranks: []\n        trainer:\n          npu_profile:\n            options:\n              save_path: ./profiler_data\n              roles:\n              - all\n              level: level1\n              with_memory: false\n              record_shapes: false\n              with_npu: true\n              with_cpu: true\n              with_module: false\n              with_stack: false\n              analysis: true\n          balance_batch: true\n          total_epochs: '{{max_epochs}}'\n          total_training_steps: null\n          profile_steps: null\n          controller_nsight_options:\n            trace: cuda,nvtx,cublas,ucx\n            cuda-memory-usage: 'true'\n            cuda-graph-trace: graph\n          worker_nsight_options:\n            trace: cuda,nvtx,cublas,ucx\n            cuda-memory-usage: 'true'\n            cuda-graph-trace: graph\n            capture-range: cudaProfilerApi\n            capture-range-end: null\n            kill: none\n          project_name: grpo_example_gsm8k\n          experiment_name: llama3_1_8b_grpo_lora\n          logger:\n          - console\n          - mlflow\n          log_val_generations: 0\n          rollout_data_dir: null\n          validation_data_dir: null\n          nnodes: 1\n          n_gpus_per_node: 8\n          save_freq: 20\n          esi_redundant_time: 0\n          resume_mode: resume_path\n          resume_from_path: '{{resume_from_path}}'\n          val_before_train: true\n          val_only: false\n          test_freq: 5\n          critic_warmup: 0\n          default_hdfs_dir: null\n          del_local_ckpt_after_load: false\n          default_local_dir: '{{output_path}}'\n          max_actor_ckpt_to_keep: null\n          max_critic_ckpt_to_keep: null\n          ray_wait_register_center_timeout: 300\n          device: cuda\n          use_custom_rollouts: false\n          custom_rollout:\n            path: None\n            name: None\n          use_legacy_worker_impl: auto\n          merge_lora_on_final_save: true\n        data:\n          tokenizer: null\n          use_shm: false\n          train_files: '{{data_path}}'\n          val_files: '{{validation_data_path}}'\n          train_val_split_ratio: '{{train_val_split_ratio}}'\n          split_seed: 42\n          prompt_key: prompt\n          reward_fn_key: data_source\n          max_prompt_length: 1024\n          max_response_length: 1024\n          train_batch_size: '{{global_batch_size}}'\n          val_batch_size: 256\n          return_raw_input_ids: false\n          return_raw_chat: false\n          return_full_prompt: false\n          shuffle: false\n          dataloader_num_workers: 8\n          validation_shuffle: false\n          filter_overlong_prompts: true\n          filter_overlong_prompts_workers: 1\n          truncation: error\n          image_key: images\n          video_key: videos\n          trust_remote_code: false\n          custom_cls:\n            path: null\n            name: null\n          return_multi_modal_inputs: true\n          sampler:\n            class_path: null\n            class_name: null\n          datagen:\n            path: null\n            name: null\n        critic:\n          _target_: verl.workers.config.FSDPCriticConfig\n          rollout_n: 5\n          strategy: fsdp\n          enable: null\n          optim:\n            lr: 1.0e-05\n            lr_warmup_steps_ratio: 0.0\n            total_training_steps: -1\n            weight_decay: 0.01\n            lr_warmup_steps: -1\n            _target_: verl.workers.config.FSDPOptimizerConfig\n            min_lr_ratio: null\n            warmup_style: constant\n          model:\n            path: deepseek-ai/deepseek-llm-7b-chat\n            tokenizer_path: meta-llama/Llama-3.1-8B-Instruct\n            override_config: {}\n            external_lib: null\n            trust_remote_code: false\n            _target_: verl.workers.config.FSDPCriticModelCfg\n            use_shm: false\n            enable_gradient_checkpointing: true\n            enable_activation_offload: false\n            use_remove_padding: false\n            fsdp_config:\n              _target_: verl.workers.config.FSDPEngineConfig\n              param_offload: false\n              optimizer_offload: false\n              offload_policy: false\n              reshard_after_forward: true\n              wrap_policy:\n                min_num_params: 0\n              fsdp_size: -1\n              forward_prefetch: false\n            lora_rank: 0\n            lora_alpha: 16\n            target_modules: all-linear\n          ppo_mini_batch_size: 256\n          ppo_micro_batch_size: null\n          ppo_micro_batch_size_per_gpu: null\n          use_dynamic_bsz: true\n          ppo_max_token_len_per_gpu: 24576\n          forward_max_token_len_per_gpu: 32768\n          ppo_epochs: 1\n          shuffle: false\n          cliprange_value: 0.5\n          loss_agg_mode: token-mean\n          checkpoint:\n            _target_: verl.trainer.config.CheckpointConfig\n            save_contents:\n            - model\n            - optimizer\n            - extra\n            load_contents:\n            - model\n            - optimizer\n            - extra\n            async_save: false\n          profiler:\n            _target_: verl.utils.profiler.ProfilerConfig\n            discrete: false\n            all_ranks: false\n            ranks: []\n          forward_micro_batch_size: null\n          forward_micro_batch_size_per_gpu: null\n          ulysses_sequence_parallel_size: 1\n          grad_clip: 1.0\n        reward_model:\n          enable: false\n          strategy: fsdp\n          model:\n            input_tokenizer: meta-llama/Llama-3.1-8B-Instruct\n            path: sfairXC/FsfairX-LLaMA3-RM-v0.1/\n            external_lib: null\n            trust_remote_code: false\n            use_shm: false\n            use_remove_padding: false\n            use_fused_kernels: false\n            fsdp_config:\n              _target_: verl.workers.config.FSDPEngineConfig\n              wrap_policy:\n                min_num_params: 0\n              param_offload: false\n              reshard_after_forward: true\n              fsdp_size: -1\n              forward_prefetch: false\n          micro_batch_size: null\n          micro_batch_size_per_gpu: null\n          max_length: null\n          use_dynamic_bsz: true\n          forward_max_token_len_per_gpu: 32768\n          reward_manager: prime\n          launch_reward_fn_async: true\n          sandbox_fusion:\n            url: null\n            max_concurrent: 64\n            memory_limit_mb: 1024\n          profiler:\n            _target_: verl.utils.profiler.ProfilerConfig\n            discrete: false\n            all_ranks: false\n            ranks: []\n          ulysses_sequence_parallel_size: 1\n        custom_reward_function:\n          lambda_arn: '{{reward_lambda_arn}}'\n          path: ''\n          name: '{{preset_reward_function}}'\n        algorithm:\n          _target_: verl.trainer.config.AlgoConfig\n          gamma: 1.0\n          lam: 1.0\n          adv_estimator: grpo\n          norm_adv_by_std_in_grpo: true\n          use_kl_in_reward: false\n          kl_penalty: kl\n          kl_ctrl:\n            _target_: verl.trainer.config.KLControlConfig\n            type: fixed\n            kl_coef: 0.001\n            horizon: 10000\n            target_kl: 0.1\n          use_pf_ppo: false\n          pf_ppo:\n            reweight_method: pow\n            weight_pow: 2.0\n        ray_init:\n          num_cpus: null\n          timeline_json_file: null\n  verl_config.yaml: |-\n    mlflow:\n      tracking_uri: '{{mlflow_tracking_uri}}'\n      run_id: '{{mlflow_run_id}}'\n    actor_rollout_ref:\n      actor:\n        _target_: verl.workers.config.FSDPActorConfig\n        strategy: fsdp2\n        ppo_mini_batch_size: 32\n        ppo_micro_batch_size: null\n        ppo_micro_batch_size_per_gpu: 2\n        use_dynamic_bsz: true\n        ppo_max_token_len_per_gpu: 24576\n        clip_ratio: 0.2\n        clip_ratio_low: 0.2\n        clip_ratio_high: 0.2\n        policy_loss:\n          _target_: verl.workers.config.PolicyLossConfig\n          loss_mode: vanilla\n          clip_cov_ratio: 0.0002\n          clip_cov_lb: 1.0\n          clip_cov_ub: 5.0\n          kl_cov_ratio: 0.0002\n          ppo_kl_coef: 0.1\n        clip_ratio_c: 3.0\n        loss_agg_mode: token-mean\n        entropy_coeff: 0\n        entropy_advantage: false\n        entropy_advantage_alpha: 0.4\n        entropy_advantage_kappa: 2\n        use_kl_loss: true\n        use_torch_compile: true\n        kl_loss_coef: 0.001\n        kl_loss_type: low_var_kl\n        ppo_epochs: 1\n        shuffle: false\n        checkpoint:\n          _target_: verl.trainer.config.CheckpointConfig\n          save_contents:\n          - model\n          - optimizer\n          - extra\n          load_contents:\n          - model\n          - optimizer\n          - extra\n          async_save: false\n        optim:\n          lr: '{{learning_rate}}'\n          lr_warmup_steps_ratio: 0.0\n          total_training_steps: -1\n          weight_decay: 0.01\n          lr_warmup_steps: -1\n          _target_: verl.workers.config.FSDPOptimizerConfig\n          min_lr_ratio: 0.0\n          num_cycles: 0.5\n          warmup_style: constant\n        use_fused_kernels: false\n        grad_clip: 1.0\n        ulysses_sequence_parallel_size: 1\n        entropy_from_logits_with_chunking: false\n        entropy_checkpointing: false\n        fsdp_config:\n          _target_: verl.workers.config.FSDPEngineConfig\n          wrap_policy:\n            min_num_params: 0\n          param_offload: false\n          optimizer_offload: false\n          offload_policy: false\n          reshard_after_forward: true\n          fsdp_size: -1\n          forward_prefetch: false\n          model_dtype: bfloat16\n        use_remove_padding: true\n      ref:\n        strategy: fsdp2\n        use_torch_compile: true\n        log_prob_micro_batch_size: null\n        log_prob_micro_batch_size_per_gpu: 8\n        log_prob_use_dynamic_bsz: true\n        log_prob_max_token_len_per_gpu: 24576\n        fsdp_config:\n          _target_: verl.workers.config.FSDPEngineConfig\n          wrap_policy:\n            min_num_params: 0\n          param_offload: true\n          reshard_after_forward: true\n          forward_prefetch: false\n          model_dtype: bfloat16\n        ulysses_sequence_parallel_size: 1\n        entropy_from_logits_with_chunking: false\n        entropy_checkpointing: false\n      rollout:\n        name: vllm\n        mode: sync\n        temperature: 1.0\n        top_k: -1\n        top_p: 1\n        prompt_length: '{{max_prompt_length}}'\n        response_length: 1024\n        dtype: bfloat16\n        gpu_memory_utilization: 0.6\n        ignore_eos: false\n        enforce_eager: false\n        free_cache_engine: true\n        tensor_model_parallel_size: 2\n        max_num_batched_tokens: 8192\n        max_model_len: null\n        max_num_seqs: 1024\n        log_prob_micro_batch_size: null\n        log_prob_micro_batch_size_per_gpu: 8\n        log_prob_use_dynamic_bsz: true\n        log_prob_max_token_len_per_gpu: 24576\n        disable_log_stats: true\n        do_sample: true\n        'n': '{{rollout}}'\n        multi_stage_wake_up: false\n        engine_kwargs:\n          vllm:\n            swap_space: null\n            disable_mm_preprocessor_cache: false\n          sglang:\n            attention_backend: null\n        val_kwargs:\n          top_k: -1\n          top_p: 1.0\n          temperature: 0\n          'n': 1\n          do_sample: false\n        multi_turn:\n          enable: false\n          max_assistant_turns: null\n          tool_config_path: null\n          max_user_turns: null\n          max_parallel_calls: 1\n          max_tool_response_length: 256\n          tool_response_truncate_side: middle\n          interaction_config_path: null\n          use_inference_chat_template: false\n          tokenization_sanity_check_mode: strict\n          format: hermes\n        calculate_log_probs: false\n        agent:\n          num_workers: 8\n          agent_loop_config_path: null\n          custom_async_server:\n            path: null\n            name: null\n        update_weights_bucket_megabytes: 512\n        trace:\n          backend: mlflow\n          token2text: false\n        enable_chunked_prefill: true\n        load_format: safetensors\n        layered_summon: true\n        merge_lora_for_inference: false\n      hybrid_engine: true\n      model:\n        path: '{{model_name_or_path}}'\n        custom_chat_template: null\n        use_shm: false\n        external_lib: null\n        override_config: {}\n        attn_implementation: null\n        enable_gradient_checkpointing: true\n        enable_activation_offload: false\n        use_remove_padding: true\n        lora_rank: 32\n        lora_alpha: 64\n        target_modules: all-linear\n        exclude_modules: null\n        use_liger: false\n        use_fused_kernels: false\n        fused_kernel_options:\n          impl_backend: torch\n        trust_remote_code: false\n        is_saving_checkpoint_in_lora: true\n      profiler:\n        _target_: verl.utils.profiler.ProfilerConfig\n        discrete: false\n        all_ranks: false\n        ranks: []\n    trainer:\n      npu_profile:\n        options:\n          save_path: ./profiler_data\n          roles:\n          - all\n          level: level1\n          with_memory: false\n          record_shapes: false\n          with_npu: true\n          with_cpu: true\n          with_module: false\n          with_stack: false\n          analysis: true\n      balance_batch: true\n      total_epochs: '{{max_epochs}}'\n      total_training_steps: null\n      profile_steps: null\n      controller_nsight_options:\n        trace: cuda,nvtx,cublas,ucx\n        cuda-memory-usage: 'true'\n        cuda-graph-trace: graph\n      worker_nsight_options:\n        trace: cuda,nvtx,cublas,ucx\n        cuda-memory-usage: 'true'\n        cuda-graph-trace: graph\n        capture-range: cudaProfilerApi\n        capture-range-end: null\n        kill: none\n      project_name: grpo_example_gsm8k\n      experiment_name: llama3_1_8b_grpo_lora\n      logger:\n      - console\n      - mlflow\n      log_val_generations: 0\n      rollout_data_dir: null\n      validation_data_dir: null\n      nnodes: 1\n      n_gpus_per_node: 8\n      save_freq: 20\n      esi_redundant_time: 0\n      resume_mode: resume_path\n      resume_from_path: '{{resume_from_path}}'\n      val_before_train: true\n      val_only: false\n      test_freq: 5\n      critic_warmup: 0\n      default_hdfs_dir: null\n      del_local_ckpt_after_load: false\n      default_local_dir: '{{output_path}}'\n      max_actor_ckpt_to_keep: null\n      max_critic_ckpt_to_keep: null\n      ray_wait_register_center_timeout: 300\n      device: cuda\n      use_custom_rollouts: false\n      custom_rollout:\n        path: None\n        name: None\n      use_legacy_worker_impl: auto\n      merge_lora_on_final_save: true\n    data:\n      tokenizer: null\n      use_shm: false\n      train_files: '{{data_path}}'\n      val_files: '{{validation_data_path}}'\n      train_val_split_ratio: '{{train_val_split_ratio}}'\n      split_seed: 42\n      prompt_key: prompt\n      reward_fn_key: data_source\n      max_prompt_length: 1024\n      max_response_length: 1024\n      train_batch_size: '{{global_batch_size}}'\n      val_batch_size: 256\n      return_raw_input_ids: false\n      return_raw_chat: false\n      return_full_prompt: false\n      shuffle: false\n      dataloader_num_workers: 8\n      validation_shuffle: false\n      filter_overlong_prompts: true\n      filter_overlong_prompts_workers: 1\n      truncation: error\n      image_key: images\n      video_key: videos\n      trust_remote_code: false\n      custom_cls:\n        path: null\n        name: null\n      return_multi_modal_inputs: true\n      sampler:\n        class_path: null\n        class_name: null\n      datagen:\n        path: null\n        name: null\n    critic:\n      _target_: verl.workers.config.FSDPCriticConfig\n      rollout_n: 5\n      strategy: fsdp\n      enable: null\n      optim:\n        lr: 1.0e-05\n        lr_warmup_steps_ratio: 0.0\n        total_training_steps: -1\n        weight_decay: 0.01\n        lr_warmup_steps: -1\n        _target_: verl.workers.config.FSDPOptimizerConfig\n        min_lr_ratio: null\n        warmup_style: constant\n      model:\n        path: deepseek-ai/deepseek-llm-7b-chat\n        tokenizer_path: meta-llama/Llama-3.1-8B-Instruct\n        override_config: {}\n        external_lib: null\n        trust_remote_code: false\n        _target_: verl.workers.config.FSDPCriticModelCfg\n        use_shm: false\n        enable_gradient_checkpointing: true\n        enable_activation_offload: false\n        use_remove_padding: false\n        fsdp_config:\n          _target_: verl.workers.config.FSDPEngineConfig\n          param_offload: false\n          optimizer_offload: false\n          offload_policy: false\n          reshard_after_forward: true\n          wrap_policy:\n            min_num_params: 0\n          fsdp_size: -1\n          forward_prefetch: false\n        lora_rank: 0\n        lora_alpha: 16\n        target_modules: all-linear\n      ppo_mini_batch_size: 256\n      ppo_micro_batch_size: null\n      ppo_micro_batch_size_per_gpu: null\n      use_dynamic_bsz: true\n      ppo_max_token_len_per_gpu: 24576\n      forward_max_token_len_per_gpu: 32768\n      ppo_epochs: 1\n      shuffle: false\n      cliprange_value: 0.5\n      loss_agg_mode: token-mean\n      checkpoint:\n        _target_: verl.trainer.config.CheckpointConfig\n        save_contents:\n        - model\n        - optimizer\n        - extra\n        load_contents:\n        - model\n        - optimizer\n        - extra\n        async_save: false\n      profiler:\n        _target_: verl.utils.profiler.ProfilerConfig\n        discrete: false\n        all_ranks: false\n        ranks: []\n      forward_micro_batch_size: null\n      forward_micro_batch_size_per_gpu: null\n      ulysses_sequence_parallel_size: 1\n      grad_clip: 1.0\n    reward_model:\n      enable: false\n      strategy: fsdp\n      model:\n        input_tokenizer: meta-llama/Llama-3.1-8B-Instruct\n        path: sfairXC/FsfairX-LLaMA3-RM-v0.1/\n        external_lib: null\n        trust_remote_code: false\n        use_shm: false\n        use_remove_padding: false\n        use_fused_kernels: false\n        fsdp_config:\n          _target_: verl.workers.config.FSDPEngineConfig\n          wrap_policy:\n            min_num_params: 0\n          param_offload: false\n          reshard_after_forward: true\n          fsdp_size: -1\n          forward_prefetch: false\n      micro_batch_size: null\n      micro_batch_size_per_gpu: null\n      max_length: null\n      use_dynamic_bsz: true\n      forward_max_token_len_per_gpu: 32768\n      reward_manager: prime\n      launch_reward_fn_async: true\n      sandbox_fusion:\n        url: null\n        max_concurrent: 64\n        memory_limit_mb: 1024\n      profiler:\n        _target_: verl.utils.profiler.ProfilerConfig\n        discrete: false\n        all_ranks: false\n        ranks: []\n      ulysses_sequence_parallel_size: 1\n    custom_reward_function:\n      lambda_arn: '{{reward_lambda_arn}}'\n      path: ''\n      name: '{{preset_reward_function}}'\n    algorithm:\n      _target_: verl.trainer.config.AlgoConfig\n      gamma: 1.0\n      lam: 1.0\n      adv_estimator: grpo\n      norm_adv_by_std_in_grpo: true\n      use_kl_in_reward: false\n      kl_penalty: kl\n      kl_ctrl:\n        _target_: verl.trainer.config.KLControlConfig\n        type: fixed\n        kl_coef: 0.001\n        horizon: 10000\n        target_kl: 0.1\n      use_pf_ppo: false\n      pf_ppo:\n        reweight_method: pow\n        weight_pow: 2.0\n    ray_init:\n      num_cpus: null\n      timeline_json_file: null\n",
+  "training.yaml": "---\n# Source: sagemaker-ray-verl-training/templates/training.yaml\napiVersion: ray.io/v1\nkind: RayJob\nmetadata:\n  name: {{name}}\n  namespace: {{namespace}}\nspec:\n  shutdownAfterJobFinishes: true\n  ttlSecondsAfterFinished: 600\n\n  # Verl driver: use container entrypoint directly\n  entrypoint: >-\n    python -u -m verl.trainer.main_ppo --config-path /config --config-name verl_config\n\n  rayClusterSpec:\n    rayVersion: \"2.46.0\"\n\n    headGroupSpec:\n      rayStartParams:\n        dashboard-host: \"0.0.0.0\"\n        dashboard-port: \"8265\"\n      template:\n        spec:\n          serviceAccountName: default\n          nodeSelector:\n            node.kubernetes.io/instance-type: ml.p4de.24xlarge\n          containers:\n          - name: ray-head\n            image: \"{{container_image}}\"\n            imagePullPolicy: Always\n            env:\n            - name: MLFLOW_TRACKING_URI\n              value: \"\"\n            - name: PYTHONUNBUFFERED\n              value: \"1\"\n            - name: TRAIN_FILES\n              value: \"{{data_path}}\"\n            - name: VAL_FILES\n              value: \"{{validation_data_path}}\"\n            volumeMounts:\n            - name: training-config\n              mountPath: /config\n              readOnly: true\n            - name: fsx-claim\n              mountPath: //data\n            resources:\n              requests:\n                cpu: \"16\"\n                memory: \"32Gi\"\n                nvidia.com/gpu: \"0\"\n              limits:\n                nvidia.com/gpu: \"0\"\n          volumes:\n          - name: training-config\n            configMap:\n              name: training-config-{{name}}\n              defaultMode: 0755\n          - name: fsx-claim\n            persistentVolumeClaim:\n              claimName: fsx-claim\n\n    workerGroupSpecs:\n    - groupName: workers\n      replicas: 1\n      rayStartParams: {}\n      template:\n        spec:\n          serviceAccountName: default\n          nodeSelector:\n            node.kubernetes.io/instance-type: ml.p4de.24xlarge\n          containers:\n          - name: ray-worker\n            image: \"{{container_image}}\"\n            imagePullPolicy: Always\n            env:\n            - name: MLFLOW_TRACKING_URI\n              value: \"\"\n            volumeMounts:\n            - name: fsx-claim\n              mountPath: //data\n            resources:\n              requests:\n                cpu: \"48\"\n                memory: \"144Gi\"\n                nvidia.com/gpu: \"8\"\n              limits:\n                nvidia.com/gpu: \"8\"\n          volumes:\n          - name: fsx-claim\n            persistentVolumeClaim:\n              claimName: fsx-claim\n"
+}

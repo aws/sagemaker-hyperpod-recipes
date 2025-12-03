@@ -8,5 +8,8 @@
         "recipes_collection/recipes/evaluation/nova/nova_1_0/nova_micro/nova_micro_1_0_p5_48xl_gpu_rft_eval.yaml",
         "recipes_collection/recipes/evaluation/nova/nova_1_0/nova_pro/nova_pro_1_0_p5_48xl_gpu_rft_eval.yaml",
         "recipes_collection/recipes/evaluation/nova/nova_2_0/nova_lite/nova_lite_2_0_p5_48xl_gpu_rubric_llm_judge_eval.yaml"
+    ],
+    "verl": [
+        "recipes_collection/recipes/fine-tuning/test/ppo/Qwen/verl-ppo-qwen-2-dot-5-0-dot-5b.yaml"
     ]
 }

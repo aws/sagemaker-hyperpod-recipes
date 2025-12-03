@@ -1,0 +1,160 @@
+display_name: "HyperPod Checkpointless Training GPT OSS 120B LoRA on GPU, 2K sequence length"
+version: "1.0.0"
+instance_types: ["ml.p5.48xlarge", "ml.p5e.48xlarge"]
+
+run:
+  name: openai-gpt-oss-120b
+  results_dir: ${base_results_dir}/${.name}
+  time_limit: "6-00:00:00"
+  model_type: hyperpod_checkpointless_nemo
+
+pre_script: "sysctl -w net.ipv4.ip_local_port_range='20000 65535'; export LD_LIBRARY_PATH='/opt/aws-ofi-nccl/lib:$LD_LIBRARY_PATH'; ln -sf /opt/aws-ofi-nccl/lib/libnccl-net-ofi.so /opt/aws-ofi-nccl/lib/libnccl-net-aws-ofi.so"
+
+trainer:
+  accelerator: gpu
+  devices: 8
+  num_nodes: 2
+  max_steps: 1000
+  limit_val_batches: null
+  limit_test_batches: null
+  val_check_interval: 5000
+  num_sanity_val_steps: 0
+  log_every_n_steps: 1
+  accumulate_grad_batches: 1
+  use_distributed_sampler: False
+  reload_dataloaders_every_n_epochs: 1
+
+resources:
+  hugepages: 5120Mi
+  memory: 32000Mi
+
+exp_manager:
+  exp_dir: null
+  name: experiment
+
+strategy:
+  tensor_model_parallel_size: 1
+  pipeline_model_parallel_size: 1
+  expert_model_parallel_size: 8
+  context_parallel_size: 1
+  num_distributed_optimizer_instances: 2
+  ckpt_torch_dist_multiproc: 2
+  ckpt_parallel_load: True
+
+ddp:
+  grad_reduce_in_fp32: True
+  overlap_grad_reduce: True
+  overlap_param_gather: True
+  check_for_nan_in_grad: True
+  average_in_collective: True
+  suggested_communication_unit_size: 1000000000
+
+plugins:
+  _target_: nemo.lightning.pytorch.plugins.MegatronMixedPrecision
+  precision: 'bf16-mixed'
+
+callbacks:
+  - _target_: nemo.utils.exp_manager.TimingCallback
+  - _target_: nemo.lightning.pytorch.callbacks.GarbageCollectionCallback
+    gc_interval_train: 5
+    gc_interval_val: 5
+  - _target_: nemo.lightning.pytorch.callbacks.megatron_comm_overlap.MegatronCommOverlapCallback
+    tp_comm_overlap: False
+  - _target_: hyperpod_checkpointless_training.nemo_plugins.fault_injection.HPFaultInjectionCallback
+    test_fault_config:
+      fault_type: "ipr"
+      fault_prob_after_bwd: 0
+      fault_prob_between_lock: 0
+      fault_prob_during_fwd: 0
+      fault_prob_during_bwd: 0
+      fault_prob_random: 0
+      fault_ranks: [8]
+      steps_before_fault: 3
+  - _target_: hyperpod_checkpointless_training.nemo_plugins.callbacks.CheckpointlessCallback
+    enable_inprocess: true
+    enable_checkpointless: true
+    enable_checksum: false
+    clean_tensor_hook: true
+    clean_lightning_module: true
+  - _target_: hyperpod_checkpointless_training.nemo_plugins.datamodule_epoch_callback.DataModuleEpochCallback
+
+data:
+  seq_length: 2048
+  micro_batch_size: 1
+  global_batch_size: 16
+
+model:
+  config:
+    num_layers: 36
+    num_moe_experts: 128
+    add_bias_linear: False
+    window_size: null
+    deterministic_mode: False
+
+log_dir: null
+
+log:
+  _target_: nemo.lightning.nemo_logger.NeMoLogger
+  name: 'gpt_oss_120b_finetune_checkpointless'
+  log_dir: ${recipes.log_dir}
+  ckpt:
+    _target_: nemo.lightning.pytorch.callbacks.model_checkpoint.ModelCheckpoint
+    monitor: 'step'
+    mode: 'max'
+    save_last: True
+    save_top_k: 3
+    every_n_train_steps: &checkpoint_frequency 20
+    dirpath: ${recipes.log_dir}
+    filename: '{model_name}-{step}-{consumed_samples}'
+    save_weights_only: False
+    save_optim_on_train_end: True
+  tensorboard:
+    _target_: lightning.pytorch.loggers.TensorBoardLogger
+    save_dir: 'tb_logs'
+    name: 'gpt_oss_120b_finetune_checkpointless'
+  wandb: null
+
+optim:
+  config:
+    _target_: megatron.core.optimizer.OptimizerConfig
+    optimizer: 'adam'
+    lr: 1e-4
+    weight_decay: 0.1
+    fp16: False
+    bf16: True
+    adam_beta1: 0.9
+    adam_beta2: 0.98
+    adam_eps: 1e-05
+    use_distributed_optimizer: True
+    clip_grad: 1.0
+  lr_scheduler:
+    _target_: nemo.lightning.pytorch.optim.CosineAnnealingScheduler
+    warmup_steps: 50
+    constant_steps: 0
+    min_lr: 0
+
+resume:
+  _target_: hyperpod_checkpointless_training.nemo_plugins.resume.CheckpointlessAutoResume
+  restore_config:
+    _target_: nemo.lightning.RestoreConfig
+    path: null
+    load_artifacts: false
+  resume_from_directory: ${recipes.log.ckpt.dirpath}
+  resume_if_exists: true
+  resume_past_end: true
+  resume_ignore_no_checkpoint: true
+
+dataset:
+  dataset_path: null
+  num_workers: 1
+  partition: "train"
+  pin_memory: false
+  shuffle: false
+  drop_last: true
+  keep_in_memory: false
+
+mmap:
+  cache_dir: "/dev/shm/pdl_cache"
+  prefetch_length: 10
+  lookback_length: 10
+  checkpoint_frequency: *checkpoint_frequency

@@ -1,0 +1,70 @@
+image:
+  trainingImage: test_container
+  pullPolicy: Always
+trainingConfig:
+  jobName: verl-grpo-llama-3-dot-1-8b-instruct-lora
+  namespace: default
+  serviceAccountName: default
+  trainDir: '{{data_path}}'
+  valDir: '{{validation_data_path}}'
+  scriptPath: null
+  scriptArgs: --config-path=/config --config-name=config.yaml
+  customScript: null
+  annotations: null
+  customLabels: null
+  priorityClassName: null
+  device: gpu
+  numEFADevices: 4
+  numNeuronDevices: null
+  ntasksPerNode: 0
+  nodes: null
+  restartPolicy: Never
+  cleanPodPolicy: null
+  compile: 0
+  envVars:
+    NCCL_DEBUG: WARN
+    SLURM_NTASKS_PER_NODE: 8
+    CUDA_VISIBLE_DEVICES: 0,1,2,3,4,5,6,7
+  persistentVolumeClaims:
+  - claimName: fsx-claim
+    mountPath: /data
+  volumes: null
+  pre_script: []
+  post_script: []
+  labelSelector:
+    required: null
+    preferred: null
+    weights: null
+  git:
+    repo_url_or_path: null
+    branch: null
+    commit: null
+    entry_script: null
+    token: null
+    update_adapter: false
+  useHyperPodPytorchJob: true
+  instanceType: ml.p4de.24xlarge
+rlConfig:
+  trainingType: grpo
+  verlArgs: null
+rayCluster:
+  rayVersion: 2.46.0
+  logging:
+    level: INFO
+  headNode:
+    cpu: '16'
+    memory: 32Gi
+    cpuLimit: null
+    memoryLimit: null
+    gpu: '0'
+  workerNodes:
+    replicas: '1'
+    cpu: '48'
+    memory: 144Gi
+    cpuLimit: null
+    memoryLimit: null
+    gpu: '8'
+    rayStartParams: {}
+gc:
+  shutdownAfterJobFinishes: true
+  ttlSecondsAfterFinished: 600

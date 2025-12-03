@@ -1,0 +1,269 @@
+{
+    "_comment": [
+        "Checkpointless Recipe Template Parameters Configuration",
+        "Templates for checkpointless training recipes using NeMo framework"
+    ],
+    "templates": {
+        "checkpointless_fine_tuning": {
+            "recipe_template": {
+                "instance_types": "{{instance_types}}",
+                "run": {
+                    "name": "{{model_name}}",
+                    "results_dir": "{{results_directory}}",
+                    "time_limit": "{{time_limit}}"
+                },
+                "trainer": {
+                    "num_nodes": "{{num_nodes}}",
+                    "max_steps": "{{max_steps}}",
+                    "val_check_interval": "{{val_check_interval}}",
+                    "log_every_n_steps": "{{log_every_n_steps}}"
+                },
+                "data": {
+                    "seq_length": "{{sequence_length}}",
+                    "global_batch_size": "{{global_batch_size}}"
+                },
+                "dataset": {
+                    "dataset_path": "{{dataset_path}}"
+                },
+                "log_dir": "{{log_directory}}",
+                "optim": {
+                    "config": {
+                        "lr": "{{learning_rate}}"
+                    }
+                },
+                "cluster": {
+                    "instance_count": "{{instance_count}}",
+                    "namespace": "{{namespace}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "model_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "log_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "time_limit": {
+                    "type": "string",
+                    "required": true,
+                    "default": "6-00:00:00"
+                },
+                "num_nodes": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 128,
+                    "default": 2
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1000,
+                    "max": 10000000,
+                    "default": 1168251
+                },
+                "val_check_interval": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 100,
+                    "max": 10000,
+                    "default": 2000
+                },
+                "log_every_n_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 1000,
+                    "default": 10
+                },
+                "sequence_length": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [1024, 2048, 4096, 8192, 16384, 32768],
+                    "default": 2048
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [2, 4, 8, 16, 32, 64],
+                    "default": 2
+                },
+                "dataset_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-6,
+                    "max": 1e-3,
+                    "default": 0.0001
+                },
+                "instance_types": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["ml.p5.48xlarge", "ml.p5e.48xlarge"],
+                    "default": ""
+                },
+                "instance_count": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 128,
+                    "default": 1
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "fine_tuning": "FineTuning"
+                }
+            }
+        },
+        "checkpointless_pretrain": {
+            "recipe_template": {
+                "instance_types": "{{instance_types}}",
+                "run": {
+                    "name": "{{model_name}}",
+                    "results_dir": "{{results_directory}}",
+                    "time_limit": "{{time_limit}}"
+                },
+                "trainer": {
+                    "num_nodes": "{{num_nodes}}",
+                    "max_steps": "{{max_steps}}",
+                    "val_check_interval": "{{val_check_interval}}",
+                    "log_every_n_steps": "{{log_every_n_steps}}"
+                },
+                "data": {
+                    "seq_length": "{{sequence_length}}",
+                    "global_batch_size": "{{global_batch_size}}"
+                },
+                "dataset": {
+                    "dataset_path": "{{dataset_path}}"
+                },
+                "log_dir": "{{log_directory}}",
+                "optim": {
+                    "config": {
+                        "lr": "{{learning_rate}}"
+                    }
+                },
+                "cluster": {
+                    "instance_type": "{{instance_type}}",
+                    "instance_count": "{{instance_count}}",
+                    "namespace": "{{namespace}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "model_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llama-70b"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "log_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "time_limit": {
+                    "type": "string",
+                    "required": true,
+                    "default": "6-00:00:00"
+                },
+                "num_nodes": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 128,
+                    "default": 2
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1000,
+                    "max": 10000000,
+                    "default": 1000000
+                },
+                "val_check_interval": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 100,
+                    "max": 10000,
+                    "default": 2000
+                },
+                "log_every_n_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 1000,
+                    "default": 10
+                },
+                "sequence_length": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [1024, 2048, 4096, 8192, 16384, 32768],
+                    "default": 2048
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [2, 4, 8, 16, 32, 64],
+                    "default": 2
+                },
+                "dataset_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-6,
+                    "max": 1e-3,
+                    "default": 0.0001
+                },
+                "instance_types": {
+                    "type": "string",
+                    "required": true,
+                    "enum": ["ml.p5.48xlarge", "ml.p5e.48xlarge"],
+                    "default": ""
+                },
+                "instance_count": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 128,
+                    "default": 1
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                }
+            },
+            "recipe_metadata_helpers": {
+                "training_types": {
+                    "pretrain": "PreTraining"
+                }
+            }
+        }
+    }
+}

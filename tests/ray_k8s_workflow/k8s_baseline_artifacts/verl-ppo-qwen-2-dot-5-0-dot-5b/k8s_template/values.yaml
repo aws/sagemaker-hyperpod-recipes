@@ -1,0 +1,70 @@
+image:
+  trainingImage: test_container
+  pullPolicy: Always
+trainingConfig:
+  jobName: verl-ppo-qwen-2-dot-5-0-dot-5b
+  namespace: default
+  serviceAccountName: default
+  trainDir: $HOME/data/gsm8k/train.parquet
+  valDir: $HOME/data/gsm8k/test.parquet
+  scriptPath: null
+  scriptArgs: --config-path=/config --config-name=config.yaml
+  customScript: null
+  annotations: null
+  customLabels: null
+  priorityClassName: null
+  device: gpu
+  numEFADevices: 4
+  numNeuronDevices: null
+  ntasksPerNode: 0
+  nodes: null
+  restartPolicy: Never
+  cleanPodPolicy: null
+  compile: 0
+  envVars:
+    NCCL_DEBUG: WARN
+    NEMO_LAUNCHER_DEBUG: 1
+    SLURM_NTASKS_PER_NODE: 1
+    CUDA_VISIBLE_DEVICES: '0'
+  persistentVolumeClaims:
+  - null
+  volumes: null
+  pre_script: []
+  post_script: []
+  labelSelector:
+    required: null
+    preferred: null
+    weights: null
+  git:
+    repo_url_or_path: https://test_token@github.com/aws/sagemaker-hyperpod-training-adapter-for-nemo.git
+    branch: test_branch
+    commit: test_commit
+    entry_script: null
+    token: null
+    update_adapter: false
+  useHyperPodPytorchJob: true
+  instanceType: ml.p4de.24xlarge
+rlConfig:
+  trainingType: gae
+  verlArgs: null
+rayCluster:
+  rayVersion: 2.46.0
+  logging:
+    level: INFO
+  headNode:
+    cpu: '48'
+    memory: 48Gi
+    cpuLimit: null
+    memoryLimit: null
+    gpu: '1'
+  workerNodes:
+    replicas: '1'
+    cpu: '16'
+    memory: 32Gi
+    cpuLimit: null
+    memoryLimit: null
+    gpu: '4'
+    rayStartParams: {}
+gc:
+  shutdownAfterJobFinishes: true
+  ttlSecondsAfterFinished: 600

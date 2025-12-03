@@ -11,13 +11,18 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+import shutil
 from pathlib import Path
 from typing import Dict, List
 
+import omegaconf
+from nemo_launcher.utils.job_utils import JobPaths
 from omegaconf import OmegaConf
 
 from ..accelerator_devices import get_num_accelerator_devices
 from .constants import (
+    HPCT_ENV_VARS,
+    HPCT_MODEL_TASK_TO_CODE_PATH,
     NEMO_REPO,
     NEMO_REPO_TAG,
     NEURONX_CONF_PATH,
@@ -37,22 +42,110 @@ class SMTrainingGPURecipe(SMTraining):
 
     @property
     def _default_repo(self):
-        return SM_ADAPTER_REPO
+        use_default = self.cfg.get("git", {}).get("use_default", True)
+        return SM_ADAPTER_REPO if use_default else None
 
     @property
     def _entry_script_path(self) -> Path:
+        # Use Git entry_script config if available
+        cfg_git_entry_script = self.cfg.get("git", {}).get("entry_script", None)
+        if cfg_git_entry_script != None:
+            return cfg_git_entry_script
+
         # [TODO] Handle generate the script path from github
         choice_model_type, _ = self.get_stage_config_choice()
         choice_model_type = choice_model_type.split("/")[1]
         # predefined model
         if choice_model_type in SM_ADAPTER_MODEL_TYPE_TO_CODE_PATH:
             return Path(SM_ADAPTER_MODEL_TYPE_TO_CODE_PATH[choice_model_type])
+
         # custom model
         return Path("examples/custom_model/custom_pretrain.py")
+
+    @property
+    def _entry_module(self):
+        if self.cfg.get("entry_module", None):
+            return self.cfg.entry_module
+        return None
 
     def get_stage_config_choice(self):
         # [TODO] check if need to override
         return super().get_stage_config_choice()
+
+
+class SMTrainingGPURecipeElastic(SMTrainingGPURecipe):
+    """
+    Stage used to run elastic training jobs
+    """
+
+    @staticmethod
+    def save_stage_hydra_config(stage_cfg: OmegaConf, job_path: JobPaths, cfg: OmegaConf) -> Path:
+        default_cfg_path = SMTrainingGPURecipe.save_stage_hydra_config(stage_cfg, job_path, cfg)
+
+        remove_keys = {"scale_config", "elastic_policy"}
+        basic_config = {key: value for key, value in stage_cfg.items() if key not in remove_keys}
+        basic_config = OmegaConf.create(basic_config)
+
+        scale_configs = stage_cfg.get("scale_config", {})
+        scale_space = scale_configs.keys()
+
+        for nnodes in scale_space:
+            new_stage_cfg = OmegaConf.merge(basic_config, scale_configs[nnodes])
+            cfg_save_path = job_path.folder / f"train_config_n{nnodes}.yaml"
+            omegaconf.OmegaConf.save(new_stage_cfg, cfg_save_path)
+
+        return default_cfg_path
+
+    def _copy_k8s_helm_chart(self, template_root: str, job_path: JobPaths):
+        super()._copy_k8s_helm_chart(template_root, job_path)
+
+        train_config_paths = job_path.folder.glob("train_config_n*.yaml")
+        hydra_config_path = Path(job_path.folder / "k8s_template" / "config")
+        for path in train_config_paths:
+            shutil.copy(path, hydra_config_path)
+
+    def generate_default_k8s_value_template(self, template_root, cluster_parameters, stage_cfg_path=None):
+        values_template = super().generate_default_k8s_value_template(template_root, cluster_parameters, stage_cfg_path)
+
+        elastic_policy = self.cfg.training.elastic_policy
+        scale_config = self.cfg.training.get("scale_config", None)
+
+        values_template.trainingConfig.elastic_policy.is_elastic = elastic_policy.is_elastic
+        values_template.trainingConfig.elastic_policy.min_nodes = elastic_policy.min_nodes
+        values_template.trainingConfig.elastic_policy.max_nodes = elastic_policy.max_nodes
+
+        if scale_config:
+            scale_space = list(scale_config.keys())
+            values_template.trainingConfig.elastic_policy.replica_space = scale_space
+        else:
+            assert (
+                elastic_policy.get("replica_increment_step", None) is not None
+            ), "Either scale_config or replica_increment_step need to be defined"
+            values_template.trainingConfig.elastic_policy.replica_increment_step = elastic_policy.replica_increment_step
+
+        use_graceful_shutdown = elastic_policy.get("use_graceful_shutdown", True)
+        values_template.trainingConfig.elastic_policy.use_graceful_shutdown = use_graceful_shutdown
+        if use_graceful_shutdown:
+            values_template.trainingConfig.envVars.HYPERPOD_SIGNAL_COORDINATION = "distributed"
+
+        if elastic_policy.get("scaling_timeout", None) is not None:
+            values_template.trainingConfig.elastic_policy.scaling_timeout = elastic_policy.scaling_timeout
+        if elastic_policy.get("graceful_shutdown_timeout", None) is not None:
+            values_template.trainingConfig.elastic_policy.graceful_shutdown_timeout = (
+                elastic_policy.graceful_shutdown_timeout
+            )
+        if elastic_policy.get("faulty_timeout", None) is not None:
+            values_template.trainingConfig.elastic_policy.faulty_timeout = elastic_policy.faulty_timeout
+
+        return values_template
+
+    def get_script_args_str(self, stage_cfg_path: Path) -> str:
+        """
+        Based on https://github.com/NVIDIA/NeMo-Framework-Launcher/blob/23.11/launcher_scripts/nemo_launcher/core/stages.py#L608
+        """
+        if self.cluster == "k8s":
+            return f"--config-path=/config"
+        return f"--config-path={stage_cfg_path.parents[0]} --config-name={stage_cfg_path.name}"
 
 
 class NeMoTraining(SMTraining):
@@ -78,6 +171,12 @@ class NeMoTraining(SMTraining):
         choice_model_type = choice_model_type.split("/")[1]
         code_path = self._get_nemo_code_path(choice_model_type)
         return Path(code_path)
+
+    @property
+    def _entry_module(self):
+        if self.cfg.get("entry_module", None):
+            return self.cfg.entry_module
+        return None
 
 
 class SMTrainingTrainiumRecipe(SMTraining):
@@ -159,3 +258,60 @@ class SMTrainingTrainiumRecipe(SMTraining):
         if int(nodes) > 1:
             env_vars = set_multinode_envs(env_vars, self.instance_type)
         return env_vars
+
+
+class SMTrainingHPCTRecipe(SMTraining):
+    """
+    Stage used to run HyperPod Checkpoint-less Training recipes
+    """
+
+    def __init__(self, cfg):
+        super().__init__(cfg)
+        cluster_type = cfg.get("cluster_type")
+        if cluster_type != "k8s":
+            raise ValueError(
+                f"HyperPod checkpointless training recipes only support K8s cluster type, got: {cluster_type}"
+            )
+
+    @property
+    def _default_repo(self):
+        return None  # No repo needed, scripts are in container
+
+    @property
+    def _entry_module(self):
+        return None
+
+    @property
+    def _entry_script_path(self) -> Path:
+        training_config = self.cfg.get("training_config")
+
+        # Extract model name from path: training/llama/... -> llama
+        path_parts = training_config.split("/")
+        model_name = path_parts[1]
+        if "fine_tuning" in training_config.lower():
+            task = "fine_tuning"
+        elif "lora" in training_config.lower():
+            task = "lora"
+        elif "pretrain" in training_config.lower():
+            task = "pretrain"
+        else:
+            raise ValueError(f"Cannot determine task type from training config: {training_config}")
+
+        model_task_key = f"{model_name}_{task}"
+
+        if model_task_key not in HPCT_MODEL_TASK_TO_CODE_PATH:
+            supported_types = list(HPCT_MODEL_TASK_TO_CODE_PATH.keys())
+            raise ValueError(
+                f"HyperPod checkpointless model-task combination '{model_task_key}' is not supported. "
+                f"Supported types: {supported_types}"
+            )
+
+        entry_script_path = HPCT_MODEL_TASK_TO_CODE_PATH[model_task_key]
+        return Path(entry_script_path)
+
+    def get_env_vars(self) -> Dict:
+        """
+        Set up HCT-specific environment variables
+        Handle all logic without calling parent to avoid conflicts
+        """
+        return HPCT_ENV_VARS.copy()

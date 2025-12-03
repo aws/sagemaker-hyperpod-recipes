@@ -1,0 +1,113 @@
+display_name: "Llama 3.1 8B Supervised Fine-Tuning on GPU, 4K sequence length"
+version: "1.0.0"
+instance_types: ['ml.p4de.24xlarge', 'ml.p4d.24xlarge', 'ml.p5.48xlarge', 'ml.g5.48xlarge']
+
+run:
+  name: llama-3-1-8b-instruct
+  model_type: llm_finetuning_aws
+  results_dir: ${base_results_dir}/${.name}
+  hf_access_token: null
+
+trainer:
+  devices: 8
+  num_nodes: 1
+
+
+training_config:
+    mlflow:
+      tracking_uri: ""
+      run_id: ""
+    force_rerun: true
+    model_config:
+      model_name_or_path: "meta-llama/Llama-3.1-8B-Instruct"
+      lora_checkpoint_file_path: null
+      multimodal: false
+      peft_config: null
+      model_save_name: ""
+      chat_template_key: llama--meta-llama-3.1-8b-instruct
+      apply_chat_template: false
+      device_map: null
+      attn_implementation: sdpa
+      generation_cfg:
+        max_new_tokens: 2048
+        temperature: 0.6
+        top_p: 0.9
+        do_sample: true
+        num_return_sequences: 1
+        num_parallel_jobs: 0
+    datasets:
+      data_dir: null
+      save_intermediate_processing_steps: false
+      train_data:
+        name: tatqa_train
+        file_path: ''
+        limit: null
+      val_data:
+        name: tatqa_val
+        file_path: ''
+        limit: null
+      train_val_split_ratio: 0.9
+      train_val_split_seed: 42
+      preprocessor_cfgs:
+      - type: TrainingSFTSampleConverter
+      - type: Seq2SeqTokensProcessor
+        chat_template_name: llama_3_2_seq_instruct.jinja
+        ignore_prompt_labels: true
+      - type: DropColumns
+        column_names:
+        - messages
+    training_args:
+      override_training_dir: true
+      trainer_type: sft
+      trainer_callbacks:
+      - _target_: metering_callback.MeteringCallback
+        output_path: "/opt/ml/metering"
+      training_dir: ""
+      seed: 42
+      packing_samples: false
+      ring_attn_size: 1
+      ring_head_stride: 1
+      pretrain_mode: false
+      aux_loss_coef: 0
+      learning_rate: 0.0001
+      lr_warmup_ratio: 0.1
+      weight_decay: 0.0
+      adam_betas:
+      - 0.9
+      - 0.95
+      lr_scheduler: cosine
+      l2: 0.0
+      gradient_clipping: true
+      gradient_clipping_threshold: 1.0
+      grad_accum_dtype: null
+      gradient_checkpointing: true
+      gradient_checkpointing_use_reentrant: false
+      load_checkpoint: false
+      resume_checkpoint_path: ""
+      disable_ds_ckpt: true
+      disable_fast_tokenizer: false
+      micro_train_batch_size: 1
+      train_batch_size: 16
+      eval_steps: 0
+      save_steps: 0
+      save_hf_ckpt: true
+      max_epochs: 1
+      max_len: 4096
+      max_norm: 1.0
+      max_samples: 100000000.0
+      max_ckpt_mem: 100000000.0
+      max_ckpt_num: 3
+      logging_steps: 1
+      use_tensorboard: logs
+      use_wandb: null
+      strategy:
+        fsdp_config:
+          auto_wrap_policy: TRANSFORMER_BASED_WRAP
+          backward_prefetch: BACKWARD_PRE
+          cpu_ram_efficient_loading: true
+          sync_module_states: true
+          cpu_offload: false
+          forward_prefetch: false
+          sharding_strategy: FULL_SHARD
+          state_dict_type: SHARDED_STATE_DICT
+          use_orig_params: true

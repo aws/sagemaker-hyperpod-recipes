@@ -1,0 +1,927 @@
+{
+    "_comment": [
+        "LLMFT (Large Language Model Fine-Tuning) Recipe Template Parameters Configuration - Unified",
+        "",
+        "This file defines unique templates for each LLMFT recipe type instead of Required/Optional sub-templates.",
+        "Template Types:",
+        "Fine-tuning: llmft_sft_lora, llmft_dpo, llmft_fine_tuning",
+        "",
+        "HOW TO ADD A NEW TEMPLATE:",
+        "",
+        "1. ANALYZE THE RECIPE FILE:",
+        "   - Examine the actual YAML recipe file",
+        "   - Identify ALL parameters that need to be overridden with {{variable}} template syntax",
+        "   - Note the structure and nesting of parameters in the YAML",
+        "",
+        "2. CREATE THE TEMPLATE STRUCTURE:",
+        "   - Template name should follow pattern: llmft_{recipe_type}",
+        "   - Template name should also be a substring in the recipe filename",
+        "   - Must include three main sections: recipe_template, recipe_override_parameters, recipe_metadata_helpers",
+        "",
+        "3. RECIPE_TEMPLATE SECTION:",
+        "   - Mirror the exact YAML structure from the recipe file",
+        "   - Replace actual values with {{variable_name}} template variables",
+        "   - Only include sections that contain parametrizable values",
+        "   - Maintain proper nesting and hierarchy",
+        "",
+        "4. RECIPE_OVERRIDE_PARAMETERS SECTION:",
+        "   - Define each parameter with: type, required, default",
+        "   - Add constraints in scenarios where multiple recipe files using the same template have different value-sets for a parameter",
+        "     Example: Batch sizes can differ based on hardware type (GPU vs TRN). Therefore needs constraint resolution.",
+        "     Look at examples in the llmft templates for hardware-based constraints",
+        "   - Look at constraint resolution patterns section below for conventions.",
+        "",
+        "5. RECIPE_METADATA_HELPERS SECTION:",
+        "   - Just a section for you to add any information for a template which can help you in computing the metadata for a recipe file",
+        "",
+        "6. PARAMETER NAMING CONVENTIONS:",
+        "   - Use snake_case for parameter names",
+        "   - Match exactly with template variables in recipe_template",
+        "",
+        "7. CONSTRAINT RESOLUTION PATTERNS:",
+        "   - conditional_constraints section should follow the following pattern",
+        "     conditional_constraints:{field_to_be_overriden: {metadata_field_to_be_used_as_condition:{constraint_field:constraint_value}}}",
+        "     Ex: For batch size:-  conditional_constraints:{enum:{Hardware:{GPU:[8,16,32,64], TRN:[16,32,64,128]}}}",
+        "   - Only use a recipe metadata field as the constraint_field else you will have to override the base_recipe_template_processor's '_resolve_constraints_using_metadata()'",
+        "",
+        "EXAMPLE MINIMAL TEMPLATE STRUCTURE:",
+        "{",
+        "  'llmft_new_recipe': {",
+        "    'recipe_template': { /* YAML structure with {{variables}} */ },",
+        "    'recipe_override_parameters': { /* parameter definitions */ },",
+        "    'recipe_metadata_helpers': { /* For metadata generation support */ }",
+        "  }",
+        "}",
+        ""
+    ],
+    "templates": {
+        "llmft_sft_lora": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "model_config": {
+                        "model_name_or_path": "{{model_name_or_path}}"
+                    },
+                    "datasets": {
+                        "train_data": {
+                            "name": "{{training_data_name}}",
+                            "file_path": "{{data_path}}"
+                        },
+                        "val_data": {
+                            "name": "{{validation_data_name}}",
+                            "file_path": "{{validation_data_path}}"
+                        },
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "training_args": {
+                        "max_epochs": "{{max_epochs}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "training_dir": "{{output_path}}",
+                        "resume_checkpoint_path": "{{resume_from_path}}",
+                        "learning_rate": "{{learning_rate}}",
+                        "lr_warmup_ratio": "{{lr_warmup_ratio}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llmft-sft-lora-job"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "training_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 5,
+                    "conditional_constraints": {
+                        "default": {
+                            "CustomizationTechnique": {
+                                "SFT": 5,
+                                "default": 5
+                            }
+                        }
+                    }
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [8, 16, 32, 64, 128],
+                    "default": 8,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Hardware": {
+                                "GPU": [8, 16, 32, 64],
+                                "TRN": [16, 32, 64, 128],
+                                "default": [8, 16, 32, 64]
+                            }
+                        },
+                        "default": {
+                            "Hardware": {
+                                "GPU": 8,
+                                "TRN": 16,
+                                "default": 8
+                            }
+                        }
+                    }
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 5.0e-07,
+                    "max": 1.0e-04,
+                    "default": 1.0e-04
+                },
+                "lr_warmup_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "default"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "sft": "SFT"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"]
+                }
+            }
+        },
+        "llmft_dpo": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "model_config": {
+                        "model_name_or_path": "{{model_name_or_path}}"
+                    },
+                    "datasets": {
+                        "train_data": {
+                            "name": "{{training_data_name}}",
+                            "file_path": "{{data_path}}"
+                        },
+                        "val_data": {
+                            "name": "{{validation_data_name}}",
+                            "file_path": "{{validation_data_path}}"
+                        },
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "training_args": {
+                        "beta": "{{adam_beta}}",
+                        "max_epochs": "{{max_epochs}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "training_dir": "{{output_path}}",
+                        "resume_checkpoint_path": "{{resume_from_path}}",
+                        "learning_rate": "{{learning_rate}}",
+                        "lr_warmup_ratio": "{{lr_warmup_ratio}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llmft-dpo-job"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "training_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 3,
+                    "conditional_constraints": {
+                        "default": {
+                            "CustomizationTechnique": {
+                                "DPO": 3,
+                                "default": 3
+                            }
+                        }
+                    }
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [16, 32, 64, 128],
+                    "default": 16,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Hardware": {
+                                "GPU": [16, 32, 64],
+                                "TRN": [16, 32, 64, 128],
+                                "default": [16, 32, 64]
+                            }
+                        },
+                        "default": {
+                            "Hardware": {
+                                "GPU": 16,
+                                "TRN": 16,
+                                "default": 16
+                            }
+                        }
+                    }
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 5.0e-07,
+                    "max": 1.0e-04,
+                    "default": 1.0e-04
+                },
+                "lr_warmup_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
+                },
+                "adam_beta": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.001,
+                    "max": 0.1,
+                    "default": 0.01
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "default"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "dpo": "DPO"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"]
+                }
+            }
+        },
+        "llmft_fine_tuning": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "model_config": {
+                        "model_name_or_path": "{{model_name_or_path}}"
+                    },
+                    "datasets": {
+                        "train_data": {
+                            "name": "{{training_data_name}}",
+                            "file_path": "{{data_path}}"
+                        },
+                        "val_data": {
+                            "name": "{{validation_data_name}}",
+                            "file_path": "{{validation_data_path}}"
+                        },
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "training_args": {
+                        "max_epochs": "{{max_epochs}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "training_dir": "{{output_path}}",
+                        "resume_checkpoint_path": "{{resume_from_path}}",
+                        "learning_rate": "{{learning_rate}}",
+                        "lr_warmup_ratio": "{{lr_warmup_ratio}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llmft-fine-tuning-job"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "training_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 1,
+                    "conditional_constraints": {
+                        "default": {
+                            "CustomizationTechnique": {
+                                "SFT": 1,
+                                "default": 1
+                            }
+                        }
+                    }
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [16, 32, 64, 128],
+                    "default": 16,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Hardware": {
+                                "GPU": [16, 32, 64],
+                                "TRN": [16, 32, 64, 128],
+                                "default": [16, 32, 64]
+                            }
+                        },
+                        "default": {
+                            "Hardware": {
+                                "GPU": 16,
+                                "TRN": 16,
+                                "default": 16
+                            }
+                        }
+                    }
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 5.0e-07,
+                    "max": 1.0e-04,
+                    "default": 1.0e-04
+                },
+                "lr_warmup_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "default"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "sft": "SFT"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"]
+                }
+            }
+        },
+        "llmft_sft_fft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "model_config": {
+                        "model_name_or_path": "{{model_name_or_path}}",
+                        "generation_cfg": {
+                            "max_new_tokens": "{{max_response_length}}"
+                        }
+                    },
+                    "datasets": {
+                        "train_data": {
+                            "name": "{{training_data_name}}",
+                            "file_path": "{{data_path}}"
+                        },
+                        "val_data": {
+                            "name": "{{validation_data_name}}",
+                            "file_path": "{{validation_data_path}}"
+                        },
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "training_args": {
+                        "max_epochs": "{{max_epochs}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "training_dir": "{{output_path}}",
+                        "resume_checkpoint_path": "{{resume_from_path}}",
+                        "learning_rate": "{{learning_rate}}",
+                        "lr_warmup_ratio": "{{lr_warmup_ratio}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llmft-sft-lora-job"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "training_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 5,
+                    "conditional_constraints": {
+                        "default": {
+                            "CustomizationTechnique": {
+                                "SFT": 5,
+                                "default": 5
+                            }
+                        }
+                    }
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [8, 16, 32, 64, 128],
+                    "default": 8,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Hardware": {
+                                "GPU": [8, 16, 32, 64],
+                                "TRN": [16, 32, 64, 128],
+                                "default": [8, 16, 32, 64]
+                            }
+                        },
+                        "default": {
+                            "Hardware": {
+                                "GPU": 8,
+                                "TRN": 16,
+                                "default": 8
+                            }
+                        }
+                    }
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 5.0e-07,
+                    "max": 1.0e-04,
+                    "default": 1.0e-04
+                },
+                "lr_warmup_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 100,
+                    "max": 200000,
+                    "default": 2048
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "default"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "sft": "SFT"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"]
+                }
+            }
+        },
+        "llmft_dpo_fft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "model_config": {
+                        "model_name_or_path": "{{model_name_or_path}}",
+                        "generation_cfg": {
+                            "max_new_tokens": "{{max_response_length}}"
+                        }
+                    },
+                    "datasets": {
+                        "train_data": {
+                            "name": "{{training_data_name}}",
+                            "file_path": "{{data_path}}"
+                        },
+                        "val_data": {
+                            "name": "{{validation_data_name}}",
+                            "file_path": "{{validation_data_path}}"
+                        },
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "training_args": {
+                        "beta": "{{adam_beta}}",
+                        "max_epochs": "{{max_epochs}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "training_dir": "{{output_path}}",
+                        "resume_checkpoint_path": "{{resume_from_path}}",
+                        "learning_rate": "{{learning_rate}}",
+                        "lr_warmup_ratio": "{{lr_warmup_ratio}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llmft-dpo-job"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "training_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 3,
+                    "conditional_constraints": {
+                        "default": {
+                            "CustomizationTechnique": {
+                                "DPO": 3,
+                                "default": 3
+                            }
+                        }
+                    }
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [16, 32, 64, 128],
+                    "default": 16,
+                    "conditional_constraints": {
+                        "enum": {
+                            "Hardware": {
+                                "GPU": [16, 32, 64],
+                                "TRN": [16, 32, 64, 128],
+                                "default": [16, 32, 64]
+                            }
+                        },
+                        "default": {
+                            "Hardware": {
+                                "GPU": 16,
+                                "TRN": 16,
+                                "default": 16
+                            }
+                        }
+                    }
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 5.0e-07,
+                    "max": 1.0e-04,
+                    "default": 1.0e-04
+                },
+                "lr_warmup_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
+                },
+                "adam_beta": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.001,
+                    "max": 0.1,
+                    "default": 0.01
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 100,
+                    "max": 200000,
+                    "default": 2048
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "default"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "dpo": "DPO"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"]
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,21 @@
+run:
+  name: "llmaj-model"
+  base_model_name: ""
+  judge_model_id: ""
+  inference_data_s3_path: ""
+  base_model_inference_data_s3_path: "" # Optional, except for WinRate.
+
+# In current model this will only be used for BR eval call.
+# this will run on its own CPU instance, so we will need inference inputs.
+llm_as_judge:
+  metrics: ""
+  custom_metrics: ""
+
+output:
+  eval_results_dir: ""
+  eval_tensorboard_results_dir: ""
+  kms_key_id: ""
+  mlflow_tracking_uri: ""
+  mlflow_experiment_name: ""
+  mlflow_run_name: ""
+  mlflow_run_id: ""

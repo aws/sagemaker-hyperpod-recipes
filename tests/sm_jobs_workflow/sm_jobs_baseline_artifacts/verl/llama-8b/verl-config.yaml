@@ -1,0 +1,15 @@
+actor_rollout_ref:
+  model: test_actor_model
+trainer:
+  devices: 8
+  num_nodes: 1
+data:
+  dataset_path: /test/data
+critic:
+  model: test_critic_model
+reward_model:
+  model: test_reward_model
+algorithm:
+  name: grpo
+ray_init:
+  address: auto

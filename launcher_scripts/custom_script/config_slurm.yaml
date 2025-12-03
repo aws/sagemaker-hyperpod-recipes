@@ -17,6 +17,7 @@ git:
 training_cfg:
 
   entry_script: null # Path to the entry script of training/fine-tuning. This path should be inside container or relative path in git repo
+  entry_module: null # Entry module of training/fine-tuning. This module should be inside container
   # script_args:
   #   - "--some_args" : "debug"
   #   - "--some_other_args" : 1
@@ -27,7 +28,6 @@ training_cfg:
 
 cluster:
   #Example slurm cluster
-
   cluster_type: slurm
   instance_type: p5.48xlarge
   cluster_config:
@@ -36,10 +36,10 @@ cluster:
     slurm_create_submission_file_only: False # Setting to True if just want to create submission file
     srun_args:
       # - "--no-container-mount-home"
+  container_mounts: # List of additional paths to mount to container. They will be mounted to same path.
+    - null
 
 base_results_dir: null  # Location to store the results, checkpoints and logs.
-container_mounts: # List of additional paths to mount to container. They will be mounted to same path.
-  - null
 container: null # container to use
 slurm_docker_cfg: # Will only be used with docker on slurm
   docker_args:

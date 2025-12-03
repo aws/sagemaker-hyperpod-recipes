@@ -13,22 +13,35 @@
 # Portions taken from https://github.com/NVIDIA/NeMo-Framework-Launcher, Copyright Nvidia Corporation
 
 
+import json
 import logging
+import re
 import shutil
+import subprocess
 from ast import literal_eval
 from pathlib import Path
 from typing import Dict, List
 
 import omegaconf
+from hydra.core.hydra_config import HydraConfig
 from nemo_launcher.core.stages import Training, _hydra_interpolation
 from nemo_launcher.utils.job_utils import JobPaths
-from omegaconf import OmegaConf
+from omegaconf import OmegaConf, open_dict
 
 from ..accelerator_devices import get_num_accelerator_devices
 from ..efa import (
     efa_supported_instance,
     instanceWithMultipleEFAs,
     instanceWithRDMASupport,
+)
+from ..recipe_templatization.checkpointless.checkpointless_recipe_template_processor import (
+    CheckpointlessRecipeTemplateProcessor,
+)
+from ..recipe_templatization.llmft.llmft_recipe_template_processor import (
+    LLMFTRecipeTemplateProcessor,
+)
+from ..recipe_templatization.verl.verl_recipe_template_processor import (
+    VerlRecipeTemplateProcessor,
 )
 from ..telemetry import Telemetry
 from .constants import ROOT_DIR
@@ -47,11 +60,27 @@ CONTAINER_NAME = "sm_training_launcher"
 TRANSFORMERS_VERSION_FOR_MULTIMODAL = "4.45.2"
 
 
+# Get the original recipe path
+def get_recipe_file_path():
+    hydra_cfg = HydraConfig.get()
+    recipe_path = None
+
+    # Check if recipes override was used
+    if hydra_cfg.overrides.task and len(hydra_cfg.overrides.task) > 0 and "recipes" in hydra_cfg.overrides.task[0]:
+        recipe_path = hydra_cfg.overrides.task[0].split("=")[1]
+        return recipe_path
+
+    # If no recipes override found, return None (for custom training)
+    return None
+
+
 def set_multinode_envs(env_vars, instance_type):
     # https://github.com/aws/aws-ofi-nccl/blob/master/doc/efa-env-var.md
     if get_num_efa_devices(instance_type) > 0:
         env_vars["FI_PROVIDER"] = "efa"
-    env_vars["NCCL_SOCKET_IFNAME"] = "^lo,docker0,veth_def_agent"
+    if "NCCL_SOCKET_IFNAME" not in env_vars:
+        env_vars["NCCL_SOCKET_IFNAME"] = "^lo,docker0,veth_def_agent"
+
     env_vars["NCCL_IGNORE_DISABLED_P2P"] = "1"
     env_vars["TORCH_NCCL_ASYNC_ERROR_HANDLING"] = "1"
     env_vars["TORCH_DIST_INIT_BARRIER"] = "1"
@@ -78,6 +107,20 @@ def get_instance_type(cfg):
         instance_type = instance_type[3:]
 
     return instance_type.lower()
+
+
+def get_device_type(cfg):
+    instance_type = get_instance_type(cfg)
+
+    # p and g instances are GPU instances
+    if instance_type.startswith(("p", "g")):
+        device_type = "gpu"
+    elif instance_type.startswith("trn"):
+        device_type = "trainium"
+    else:
+        device_type = "cpu"
+
+    return device_type
 
 
 def get_num_efa_devices(instance_type):
@@ -110,7 +153,8 @@ def get_num_nodes(stage_cfg):
     run_cfg = stage_cfg.get("run")
     nodes = run_cfg.get("nodes")
     if nodes is None:
-        nodes = stage_cfg.get("trainer").get("num_nodes")
+        trainer_cfg = stage_cfg.get("trainer", {})
+        nodes = trainer_cfg.get("num_nodes") or trainer_cfg.get("nnodes")
     return nodes
 
 
@@ -135,11 +179,15 @@ class SMTraining(Training):
 
     def __init__(self, cfg):
         super().__init__(cfg)
+
         # Use GPU device for default flow for NeMo runs
         self.device = "gpu"
         self.instance_type = get_instance_type(cfg)
         self.num_efa_devices = get_num_efa_devices(self.instance_type)
         self.telemetry = Telemetry()
+        self._launch_json = OmegaConf.select(cfg, "launch_json", default=False)
+        if self._launch_json and self.cluster != "k8s" and self.cluster != "sm_jobs":
+            raise RuntimeError("`launch_json` is only supported for cluster type 'k8s' and 'sm_jobs'.")
 
     @property
     def _default_repo(self):
@@ -165,10 +213,17 @@ class SMTraining(Training):
         """
         Create the training command with torchrun, script and args
         """
-        script_path = str(self._entry_script_path)
+        entry_point = ""
+        if hasattr(self, "_entry_module") and self._entry_module:
+            entry_point += f"-m {self._entry_module}"
+        elif self._entry_script_path:
+            entry_point += str(self._entry_script_path)
+        else:
+            raise ValueError("Must set entry_script or entry_module")
+
         torchrun_cmd = self._make_torchrun_string()
         script_args_str = self.get_script_args_str(stage_cfg_path)
-        command = [torchrun_cmd, script_path, script_args_str]
+        command = [torchrun_cmd, entry_point, script_args_str]
         command_string = " \\\n  ".join(command)
         return command_string
 
@@ -376,13 +431,12 @@ class SMTraining(Training):
             if self.cfg.get("git", None) is not None:
                 if self.cfg.git.get("repo_url_or_path", None) is not None:
                     repo_url_or_path = str(self.cfg.git.get("repo_url_or_path"))
-                assert repo_url_or_path is not None, "`repo_url_or_path` must be defined when setting git config"
                 if self.cfg.git.get("token", None) is not None:
                     repo_url_or_path = self.insert_git_token(repo_url_or_path, self.cfg.git.token)
                 if self.cfg.git.get("branch", None) is not None:
                     branch = self.cfg.git.branch
 
-            if not self._use_local_repo():
+            if repo_url_or_path and not self._use_local_repo():
                 # Remote repo, clone the repo url
                 script_text.extend(
                     [
@@ -402,8 +456,9 @@ class SMTraining(Training):
                     ]
                 )
             else:
-                # simply cd to the directory for local repo
-                script_text.append(f"cd {repo_url_or_path}")
+                if repo_url_or_path:
+                    # simply cd to the directory for local repo
+                    script_text.append(f"cd {repo_url_or_path}")
 
             if branch is not None:
                 script_text.append(f"git checkout {branch}")
@@ -438,7 +493,10 @@ class SMTraining(Training):
                 script_text.append(transformers_upgrade_cmd)
 
         script_text.append("")
-        script_text.append(self._make_custom_call_string(stage_cfg_path))
+        if not self._is_ray_job():
+            script_text.append(self._make_custom_call_string(stage_cfg_path))
+        else:
+            script_text.append("# Ray job execution handled by Ray cluster templates")
         return "\n".join(script_text)
 
     @staticmethod
@@ -490,7 +548,16 @@ class SMTraining(Training):
         OmegaConf.save(config=self.cfg.cluster.get("sm_jobs_config"), f=sm_jobs_config_path)
         script_src = Path(ROOT_DIR) / "template" / "sm_jobs.py"
         script_dst = Path(job_folder) / "launch.py"
+
+        # Generate VERL config file if this is a Ray job
+        # For SMTJ: Creates verl-config.yaml in job root (accessible at /opt/ml/code/verl-config.yaml)
+        # Contains only VERL-specific configs, filters out platform-specific sections
+        if self._is_ray_job():
+            self._generate_verl_config_for_sagemaker(Path(job_folder))
+
+        # Always copy the standard launch script
         shutil.copy(script_src, script_dst)
+
         # FIXME: Remove transformers requirement when container is updated to include the version
         # required to run multi-modal.
         if OmegaConf.select(self.cfg, "recipes.model.multi_modal", default=False):
@@ -505,6 +572,7 @@ class SMTraining(Training):
         instance_type = self.cfg.get("instance_type")
         if instance_type is None:
             raise ValueError("Expected instance_type to be set with sm_jobs cluster type")
+
         sm_jobs_config = self.cfg.cluster.get("sm_jobs_config")
         if sm_jobs_config is None:
             raise ValueError("Expected sm_jobs_config to be set with sm_jobs cluster type")
@@ -513,6 +581,54 @@ class SMTraining(Training):
         command = f"python launch.py --job_name {self.job_name} --instance_type {instance_type}"
         command_groups = [["pushd $(dirname -- $0)", command, "popd"]]
         return command_groups
+
+    def make_smtj_launch_json(self, job_folder, recipe_template_processor, stage_cfg_path, recipe_file_path):
+        """
+        Create launch.json file containing the argument values for creating
+        a SageMaker PyTorch estimator.
+        """
+        sm_jobs_config = OmegaConf.load(Path(job_folder) / "sm_jobs_config.yaml")
+
+        # Convert overrides / additional kwargs
+        additional_estimator_kwargs = sm_jobs_config.get("additional_estimator_kwargs", {})
+
+        # Read the YAML file and convert it to a properly formatted YAML string
+        with open(stage_cfg_path, "r") as f:
+            recipe_yaml_content = f.read()
+
+        launch_json = {
+            "training_recipe.yaml": recipe_yaml_content,
+            "output_path": sm_jobs_config.get("output_path"),
+            "launch_overrides": sm_jobs_config.get("recipe_overrides"),
+            **additional_estimator_kwargs,
+        }
+        additional_data = recipe_template_processor.get_additional_data(recipe_file_path)
+
+        # Check if container is available for this platform
+        if additional_data is None:
+            logger.error("Recipe templatization failed because additional_data was returned as None")
+            return
+
+        (
+            launch_json["metadata"],
+            launch_json["recipe_override_parameters"],
+            launch_json["regional_parameters"],
+        ) = additional_data
+
+        # Fields to drop for smtj
+        override_params_to_be_deleted_in_smtj = ["instance_type", "namespace", "instance_count", "replicas"]
+        for key in override_params_to_be_deleted_in_smtj:
+            if key in launch_json["recipe_override_parameters"]:
+                del launch_json["recipe_override_parameters"][key]
+
+        tensorboard_config = sm_jobs_config.get("tensorboard_config")
+        if tensorboard_config:
+            launch_json["tensorboard_config"] = OmegaConf.to_container(tensorboard_config, resolve=True)
+
+        launch_json_path = Path(job_folder) / "launch.json"
+        with open(launch_json_path, "w") as f:
+            json.dump(launch_json, f, indent=2, sort_keys=True)
+            f.write("\n")
 
     def run(self) -> str:
         """
@@ -525,9 +641,49 @@ class SMTraining(Training):
         # Identify if launching a trainium job
         is_trainium = self.__class__.__name__ == "SMTrainingTrainiumRecipe"
 
+        # Get recipe file path
+        recipe_file_path = get_recipe_file_path()
+
+        # Used for templatizing recipes when launch_json is enabled
+        recipe_template_processor = None
+        if recipe_file_path is not None:
+            # Check if this is a Verl or LLMFT recipe
+            model_type = OmegaConf.select(self.cfg, "recipes.run.model_type")
+            match model_type:
+                case "verl":
+                    recipe_template_processor = VerlRecipeTemplateProcessor(self.cfg, platform=self.cfg.cluster_type)
+                case "llm_finetuning_aws" | "hf":
+                    recipe_template_processor = LLMFTRecipeTemplateProcessor(self.cfg, platform=self.cfg.cluster_type)
+                case "hyperpod_checkpointless_nemo":
+                    recipe_template_processor = CheckpointlessRecipeTemplateProcessor(
+                        self.cfg, platform=self.cfg.cluster_type
+                    )
+                case _:
+                    raise ValueError(f"Unsupported model type: {model_type}")
+
         is_custom = self.cfg.get("training_cfg") is not None
+        templatized_recipe = None
         if not is_custom:
-            stage_cfg_path = SMTraining.save_stage_hydra_config(self.stage_cfg, job_path, self.cfg)
+            if self._launch_json and recipe_template_processor is not None:
+                recipe_file_path = get_recipe_file_path()
+                # cfg.recipes and cfg.training are duplicates. For recipe templatization
+                # removing cfg.training from cfg
+                if self.cfg.get("training", None) != None:
+                    training = self.cfg["training"]
+                    with open_dict(self.cfg):
+                        del self.cfg["training"]
+                        # The process_recipe method needs to work on the actual recipe data
+                        # We need to temporarily update the staging_cfg in the processor
+                        recipe_template_processor.staging_cfg = self.cfg.recipes
+                        templatized_recipe = recipe_template_processor.process_recipe(
+                            recipe_file_path=recipe_file_path,
+                        )
+                        # Update self.cfg.recipes with the templatized result
+                        self.cfg.recipes = templatized_recipe
+                        self.cfg.training = training  # Restore the training reference
+                stage_cfg_path = self.save_stage_hydra_config(self.cfg.recipes, job_path, self.cfg)
+            else:
+                stage_cfg_path = self.save_stage_hydra_config(self.stage_cfg, job_path, self.cfg)
         else:
             stage_cfg_path = job_path.config_file
 
@@ -537,6 +693,12 @@ class SMTraining(Training):
             cluster_parameters = {"job_name": self.job_name}
             self.create_sm_jobs_script(job_path.folder)
             command_groups = self.make_sm_jobs_command()
+            if self._launch_json:
+                if recipe_template_processor is not None:
+                    self.make_smtj_launch_json(
+                        job_path.folder, recipe_template_processor, stage_cfg_path, recipe_file_path
+                    )
+                return
         else:
             # Make cluster parameters
             cluster_parameters = self._make_cluster_parameters(self.cluster)
@@ -566,6 +728,10 @@ class SMTraining(Training):
                 sentinel_template_root = ""
                 self._make_k8s_spec_file(sentinel_template_root, cluster_parameters, job_path, stage_cfg_path)
                 self._copy_k8s_helm_chart(sentinel_template_root, job_path)
+                if self._launch_json:
+                    if recipe_template_processor is not None:
+                        self._create_launch_json(job_path, recipe_template_processor, recipe_file_path)
+                    return
 
                 # k8s does not need command groups
                 command_groups = None
@@ -711,6 +877,14 @@ class SMTraining(Training):
             values_template.trainingConfig.customLabels = literal_eval(cluster_parameters["custom_labels"])
         if cluster_parameters.get("label_selector", None) is not None:
             values_template.trainingConfig.labelSelector = cluster_parameters["label_selector"]
+        if cluster_parameters.get("queue_name", None) is not None:
+            values_template.trainingConfig.queue_name = cluster_parameters["queue_name"]
+
+        # Resource configs
+        if OmegaConf.select(self.cfg, "recipes.resources.hugepages"):
+            values_template.trainingConfig.hugepages = self.cfg.recipes.resources.hugepages
+        if OmegaConf.select(self.cfg, "recipes.resources.memory"):
+            values_template.trainingConfig.memory = self.cfg.recipes.resources.memory
         values_template.trainingConfig.compile = OmegaConf.select(self.cfg, "recipes.run.compile", default=0)
         if self._default_repo is not None:
             values_template.trainingConfig.git.repo_url_or_path = self._default_repo
@@ -737,10 +911,131 @@ class SMTraining(Training):
 
         values_template.trainingConfig.device = self.device
         values_template.trainingConfig.scriptArgs = self.get_script_args_str(stage_cfg_path)
+        # Only add HyperPod fields if the flag is explicitly set to True
+        use_hyperpod_pytorch_job = OmegaConf.select(self.cfg, "cluster.use_hyperpod_pytorch_job", default=None)
+        if use_hyperpod_pytorch_job:
+            values_template.trainingConfig.useHyperPodPytorchJob = True
+            values_template.trainingConfig.instanceType = self.instance_type
 
         values_template.trainingConfig.pre_script = self.stage_cfg.get("pre_script", [])
         values_template.trainingConfig.post_script = self.stage_cfg.get("post_script", [])
         return values_template
+
+    def _update_ray_specific_values(self, values_template):
+        """
+        Update Ray-specific k8s values from config files
+        Maps values from config.yaml, k8s.yaml, and recipe files to Ray template
+        """
+        # Map trainer config (from recipe training_config)
+        trainer_cfg = OmegaConf.select(self.cfg, "recipes.training_config.trainer")
+
+        if trainer_cfg:
+            if trainer_cfg.get("num_nodes"):
+                # Ray uses head + workers, so worker replicas = total nodes - 1
+                values_template.rayCluster.workerNodes.replicas = max(0, trainer_cfg.num_nodes - 1)
+            elif trainer_cfg.get("nnodes"):
+                values_template.rayCluster.workerNodes.replicas = max(0, trainer_cfg.nnodes - 1)
+
+            if trainer_cfg.get("n_gpus_per_node"):
+                values_template.rayCluster.workerNodes.gpu = str(trainer_cfg.n_gpus_per_node)
+
+        # Map data directories (from recipe training_config)
+        data_cfg = OmegaConf.select(self.cfg, "recipes.training_config.data")
+
+        if data_cfg:
+            if data_cfg.get("train_files"):
+                values_template.trainingConfig.trainDir = data_cfg.train_files
+            if data_cfg.get("val_files"):
+                values_template.trainingConfig.valDir = data_cfg.val_files
+
+        # Map training type from algorithm config (from recipe training_config)
+        algorithm_cfg = OmegaConf.select(self.cfg, "recipes.training_config.algorithm")
+
+        if algorithm_cfg and algorithm_cfg.get("adv_estimator"):
+            values_template.rlConfig.trainingType = algorithm_cfg.adv_estimator
+
+        # Map Ray cluster resource config (from recipe if available)
+        if OmegaConf.select(self.cfg, "recipes.ray_cluster"):
+            ray_cfg = self.cfg.recipes.ray_cluster
+            if ray_cfg.get("head_node"):
+                for key in ["cpu", "memory", "gpu"]:
+                    if ray_cfg.head_node.get(key):
+                        setattr(values_template.rayCluster.headNode, key, str(ray_cfg.head_node[key]))
+
+            if ray_cfg.get("worker_nodes"):
+                for key in ["replicas", "cpu", "memory", "gpu"]:
+                    if ray_cfg.worker_nodes.get(key):
+                        setattr(values_template.rayCluster.workerNodes, key, str(ray_cfg.worker_nodes[key]))
+
+        if (
+            not hasattr(values_template.trainingConfig, "instanceType")
+            or values_template.trainingConfig.instanceType is None
+        ):
+            instance_type = self.cfg.get("instance_type")
+            if instance_type is None:
+                instance_type = self.cfg.cluster.instance_type
+
+            if instance_type and not instance_type.startswith("ml."):
+                instance_type = f"ml.{instance_type}"
+
+            values_template.trainingConfig.instanceType = instance_type
+        elif not values_template.trainingConfig.instanceType.startswith("ml."):
+            values_template.trainingConfig.instanceType = f"ml.{values_template.trainingConfig.instanceType}"
+
+        # Note: Verl Config file will be written in write_value_template method
+
+        return values_template
+
+    def _generate_verl_config_base(self):
+        """
+        Extract VERL config from the training_config section.
+
+        This method processes the recipe configuration to generate VERL-specific config
+        by extracting the training_config section and applying user overrides.
+
+        VERL-specific configs under training_config:
+        - actor_rollout_ref: Actor, reference model, and rollout configurations
+        - critic: Critic model configuration for value estimation
+        - reward_model: Reward model configuration for RLHF
+        - algorithm: RL algorithm configuration (GRPO, PPO, etc.)
+        - trainer: Training loop configuration
+        - data: Dataset and data loading configuration
+        - ray_init: Ray initialization parameters
+        - custom_reward_function: Custom reward function configuration
+
+        Platform configs (at recipe root level, excluded from VERL config):
+        - run: Platform-specific run configuration
+        - ray_cluster: K8s-specific Ray cluster specs
+        - exp_dir: Platform-specific experiment directory paths
+        - sagemaker: SMTJ-specific SageMaker configuration
+
+        Returns:
+            Dict: Processed VERL configuration ready for serialization
+        """
+        recipe_cfg = self.cfg.get("recipes", {})
+
+        # Extract training_config section which contains all VERL configs
+        verl_config = recipe_cfg.get("training_config", {})
+
+        # Merge user overrides from rlConfig.verlArgs if present
+        # This allows users to override any VERL config at runtime
+        rl_config = self.cfg.get("rlConfig", {})
+        verl_args_overrides = rl_config.get("verlArgs", {})
+        if verl_args_overrides:
+            verl_config = OmegaConf.merge(verl_config, verl_args_overrides)
+
+        return verl_config
+
+    def _generate_verl_config(self, job_path):
+        """Generate VERL config file for K8s Ray jobs"""
+        verl_config = self._generate_verl_config_base()
+
+        # Write config file to k8s_template directory
+        config_path = Path(job_path) / "k8s_template" / "verl_config.yaml"
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(config_path, "w") as f:
+            OmegaConf.save(verl_config, f)
 
     def write_value_template(self, values_template, job_path):
         """
@@ -753,10 +1048,19 @@ class SMTraining(Training):
         conf = OmegaConf.create(values_template)
         OmegaConf.save(conf, k8s_template_file)
 
+        # Generate VERL config file for Ray jobs
+        # For K8s: Creates verl_config.yaml in k8s_template/ (mounted via ConfigMap)
+        # Contains only VERL-specific configs, filters out platform-specific sections
+        if self._is_ray_job():
+            self._generate_verl_config(k8s_template_path)
+
     def update_stage_specific_k8s_values(self, values_template):
         """
         Update the k8s configs that is related to the current stage
         """
+        if self._is_ray_job():
+            return self._update_ray_specific_values(values_template)
+
         values_template.trainingConfig.ntasksPerNode = self.stage_cfg.trainer.devices
         values_template.trainingConfig.nodes = self.stage_cfg.trainer.num_nodes
         choice_model_type, _ = self.get_stage_config_choice()
@@ -764,7 +1068,12 @@ class SMTraining(Training):
             # Override with entry script provided by the customer
             values_template.trainingConfig.scriptPath = self.cfg.git.entry_script
         else:
-            values_template.trainingConfig.scriptPath = str(self._entry_script_path)
+            if self._entry_module:
+                values_template.trainingConfig.scriptPath = f"-m {self._entry_module}"
+            elif self._entry_script_path:
+                values_template.trainingConfig.scriptPath = str(self._entry_script_path)
+            else:
+                raise ValueError("Must set entry_script or entry_module")
 
         if OmegaConf.select(self.cfg, "recipes.model.multi_modal", default=False):
             transformers_upgrade_cmd = "pip install transformers==4.45.2"
@@ -781,6 +1090,139 @@ class SMTraining(Training):
 
         return values_template
 
+    def _create_launch_json(
+        self, job_path: JobPaths, recipe_template_processor: LLMFTRecipeTemplateProcessor, recipe_file_path
+    ):
+        """
+        Run `helm template [NAME] [CHART]` and dumps the output into a launch.json file
+        containing the content of the launch artifacts.
+        Example structure of launch.json:
+        {
+            "template_file_1.yaml": "<CONTENT OF template_file_1.yaml>",
+            "template_file_2.yaml": "<CONTENT OF template_file_2.yaml>"
+        }
+        """
+        # Render templates into a temp dir
+        templates_path = Path(job_path.folder / "k8s_template")
+        render_dir = Path(job_path.folder / "k8s_template" / "rendered_templates")
+        render_dir.mkdir(parents=True, exist_ok=True)
+
+        logger.info("chart_path: " + str(templates_path))
+        # Run helm template and capture output
+        cmd = [
+            "helm",
+            "template",
+            self.stage_cfg.run.name,
+            str(templates_path),
+            "--output-dir",
+            str(render_dir),
+        ]
+        subprocess.run(cmd, check=True)
+
+        # Walk rendered files and dump into JSON
+        launch_json = {}
+        for path in sorted(render_dir.rglob("*.yaml"), key=lambda p: p.name):
+            content = path.read_text()
+
+            # Replace following references in content. String replace is followed here instead of templatization because
+            # for these values the helm rendering process fails if we have templates
+            job_name_with_hyphens = self.job_name.replace("_", "-")
+            content = content.replace(f"name: {self.job_name}", "name: {{name}}")
+            content = content.replace(f"name: {job_name_with_hyphens}", "name: {{name}}")
+            content = content.replace(f"training-config-{self.job_name}", "training-config-{{name}}")
+            content = content.replace(f"training-config-{job_name_with_hyphens}", "training-config-{{name}}")
+            content = content.replace(f"app: {self.job_name}", "app: {{name}}")
+            content = content.replace(f"app: {job_name_with_hyphens}", "app: {{name}}")
+            content = content.replace(f"value: {self.job_name}", "value: {{name}}")
+            content = content.replace(f"value: {job_name_with_hyphens}", "value: {{name}}")
+
+            if self.cfg.cluster.get("namespace"):
+                namespace_value = self.cfg.cluster["namespace"]
+                content = content.replace(f"namespace: {namespace_value}", "namespace: {{namespace}}")
+
+            # Replace container image references with parameterized values
+            container_image = self.cfg.get("container", "test_container")
+            if container_image:
+                content = content.replace(f"image: {container_image}", "image: {{container_image}}")
+                content = content.replace(f"{container_image}", "{{container_image}}")
+
+            # Replace instance type references with template variable
+            instance_type = self.cfg.get("instance_type", "")
+            if instance_type:
+                content = content.replace(f'value: "{instance_type}"', 'value: "{{instance_type}}"')
+                content = content.replace(f'instance-type: "{instance_type}"', 'instance-type: "{{instance_type}}"')
+                # Also replace instance type in node affinity values
+                content = content.replace(f'- "{instance_type}"', '- "{{instance_type}}"')
+
+            # Replace K8s node selector instance type pattern using regex
+            # This replaces ANY value after beta.kubernetes.io/instance-type: with {{instance_type}}
+            # The \S+ pattern matches non-whitespace characters and automatically stops at newline
+            content = re.sub(
+                r"beta\.kubernetes\.io/instance-type:\s*\S+",
+                "beta.kubernetes.io/instance-type: {{instance_type}}",
+                content,
+            )
+
+            # Replace placeholder values with template variables when launch_json is enabled
+            if self._launch_json:
+                content = content.replace('value: "PLACEHOLDER_INSTANCE_TYPE"', 'value: "{{instance_type}}"')
+                content = content.replace('- "PLACEHOLDER_INSTANCE_TYPE"', '- "{{instance_type}}"')
+
+            launch_json[path.name] = content
+            launch_json["training-config.yaml"] = launch_json["training-config.yaml"].replace(
+                f"training-config-{self.job_name}", "training-config-{{name}}"
+            )
+
+        # following train scripts are moved inside the container. Removing them from launch_json
+        if "train-script-gpu.yaml" in launch_json:
+            del launch_json["train-script-gpu.yaml"]
+        if "train-script-trn.yaml" in launch_json:
+            del launch_json["train-script-trn.yaml"]
+
+        additional_data = recipe_template_processor.get_additional_data(recipe_file_path)
+
+        # Check if container is available for this platform
+        if additional_data is None:
+            logger.error("Recipe templatization failed because additional_data was returned as None")
+            return
+
+        (
+            launch_json["metadata"],
+            launch_json["recipe_override_parameters"],
+            launch_json["regional_parameters"],
+        ) = additional_data
+
+        # Exclude instance_type overridable for verl templates
+        # ToDo: Cleanup conditionals like this
+        if "verl-" not in launch_json["metadata"]["Name"]:
+            launch_json["recipe_override_parameters"]["instance_type"] = {
+                "type": "string",
+                "required": False,
+                "enum": launch_json["metadata"]["InstanceTypes"],
+                "default": launch_json["metadata"]["InstanceTypes"][0],
+            }
+
+        launch_path = templates_path / "launch.json"
+        with open(launch_path, "w") as f:
+            json.dump(launch_json, f, indent=2, sort_keys=True)
+            f.write("\n")
+
+        logger.info(f"Helm templates dumped into {launch_path}")
+
+    def _is_ray_job(self):
+        """
+        Detect if this is a Ray job that should use Ray templates.
+        Ray can be used for non-RL and RL through a mechanism other than Ray.
+        """
+        # Check for VERL model type (uses Ray)
+        model_type = OmegaConf.select(self.cfg, "recipes.run.model_type")
+        verl_model = model_type is not None and str(model_type).lower() == "verl"
+
+        # Check for Ray cluster configuration
+        ray_cluster = OmegaConf.select(self.cfg, "recipes.ray_cluster") is not None
+
+        return verl_model and ray_cluster
+
     # @override - available in Python 3.12 - `template_root` is required by parent implementation
     def _make_k8s_spec_file(
         self, template_root: str, cluster_parameters: Dict, job_path: JobPaths, stage_cfg_path=None
@@ -792,31 +1234,25 @@ class SMTraining(Training):
         - Update stage specific k8s configs
         - Write k8s configs to disk as value.yaml, which will be consumed by helm
         """
-        #  Need to override the template_root to use our templates
-        # [TODO] Currently hard-code it to do the stage as training
-        template_root: Path = ROOT_DIR / "launcher/nemo/k8s_templates/training"
+        #  Select template based on job type - Ray for RL jobs, training for others
+        if self._is_ray_job():
+            template_root: Path = ROOT_DIR / "launcher/nemo/k8s_templates/ray"
+        else:
+            template_root: Path = ROOT_DIR / "launcher/nemo/k8s_templates/training"
+
         values_template = self.generate_default_k8s_value_template(template_root, cluster_parameters, stage_cfg_path)
         values_template = self.update_stage_specific_k8s_values(values_template)
         self.write_value_template(values_template, job_path)
 
-    def _copy_k8s_helm_helper_configs(self, src_training_dir: Path, job_path: JobPaths):
-        """
-        Copy helper Helm files into results directory
-        """
-        # copy the Trainium and GPU config files
-        gpu_config = "train-script-gpu.yaml"
-        trn_config = "train-script-trn.yaml"
-        templates_path = Path(job_path.folder / "k8s_template" / "templates")
-        shutil.copy2(str(src_training_dir / gpu_config), str(templates_path / gpu_config))
-        shutil.copy2(str(src_training_dir / trn_config), str(templates_path / trn_config))
-
     # @override - available in Python 3.12 - `template_root` is required by parent implementation
     def _copy_k8s_helm_chart(self, template_root: str, job_path: JobPaths):
-        #  Need to override the template_root to use our templates
-        # [TODO] Currently hard-code it to do the stage as training
-        src_training_dir = ROOT_DIR / "launcher/nemo/k8s_templates/training"
-        super()._copy_k8s_helm_chart(str(src_training_dir), job_path)
-        self._copy_k8s_helm_helper_configs(src_training_dir, job_path)
+        #  Select template directory based on job type - Ray for RL jobs, training for others
+        if self._is_ray_job():
+            src_template_dir = ROOT_DIR / "launcher/nemo/k8s_templates/ray"
+        else:
+            src_template_dir = ROOT_DIR / "launcher/nemo/k8s_templates/training"
+
+        super()._copy_k8s_helm_chart(str(src_template_dir), job_path)
 
     def get_env_vars(self) -> Dict:
         """
@@ -837,6 +1273,27 @@ class SMTraining(Training):
             env_vars = set_multinode_envs(env_vars, self.instance_type)
         return env_vars
 
+    def _generate_verl_config_for_sagemaker(self, job_path: Path) -> None:
+        """
+        Generate VERL config file for SageMaker Ray training jobs.
+
+        For SMTJ, the config file is written to the job root directory as 'verl-config.yaml'
+        so it gets packaged with the training job and is accessible in the container at
+        /opt/ml/code/verl-config.yaml.
+        """
+        verl_config = self._generate_verl_config_base()
+
+        # Write config file to SageMaker container path
+        config_path = Path(job_path) / "verl-config.yaml"
+
+        # Ensure the directory exists
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(config_path, "w") as f:
+            OmegaConf.save(verl_config, f)
+
+        logger.info(f"Generated VERL config file at {config_path}")
+
 
 class SMCustomTraining(SMTraining):
     """
@@ -845,7 +1302,17 @@ class SMCustomTraining(SMTraining):
 
     @property
     def _entry_script_path(self) -> Path:
-        return Path(self.stage_cfg.entry_script)
+        if self.stage_cfg.entry_script:
+            return Path(self.stage_cfg.entry_script)
+        else:
+            return None
+
+    @property
+    def _entry_module(self) -> str:
+        if self.stage_cfg.get("entry_module", None):
+            return self.stage_cfg.entry_module
+        else:
+            return None
 
     def setup_stage_vars(self, cfg):
         """Setup the stage vars, i.e. stage name and stage cfg"""
@@ -889,7 +1356,6 @@ class SMCustomTraining(SMTraining):
 
         shutil.copy2(template_file, training_path)
         shutil.copy2(chart_file, chart_path)
-        self._copy_k8s_helm_helper_configs(src_training_dir, job_path)
 
     def _make_cluster_parameters(self, cluster: str) -> Dict:
         """

@@ -1,0 +1,106 @@
+image:
+  # training image
+  trainingImage: cfg.container
+  # image pulling policy
+  pullPolicy: IfNotPresent
+
+trainingConfig:
+  # current job name
+  jobName: "nil"
+  # namespace to launch job
+  namespace: "default"
+  # name of service account associated with the namespace
+  serviceAccountName: "default"
+
+  # data directories
+  trainDir: null
+  valDir: null
+
+  # script path
+  scriptPath: null
+  # script args
+  scriptArgs: null
+  # specify whether to use custom scripts
+  customScript: null
+
+  # list of custom annotations apply to jobs
+  annotations: null
+  # list of custom labels apply to jobs and pods
+  customLabels: null
+  # Kueue scheduler priority class name
+  priorityClassName: null
+
+  # device type, can be "gpu", "trainium" and "nil", "nil" means cpu
+  device: "nil"
+  # number of EFA devices if the instance type support EFA
+  numEFADevices: 0
+  # number of Neuron devices if job is for Trainium
+  numNeuronDevices: null
+  # number of process per node
+  ntasksPerNode: 0
+  # number of nodes to run
+  nodes: null
+
+  # restart policy
+  restartPolicy: Never
+  # The clean up policy after the job completes or fails
+  cleanPodPolicy: null
+
+  # relevant for Trainium chips, either 0 or 1
+  compile: 0
+
+  # Environment variables from config
+  envVars: null
+  # persistent volume, usually used to mount FSx
+  persistentVolumeClaims: null
+  # temp volume, usually used to mount temp file in the host
+  volumes: null
+
+  # Commands to run before training
+  pre_script: []
+  # Commands to run after training
+  post_script: []
+
+  # select preferred and required labels for nodes
+  labelSelector:
+    required: null # select nodes with required labels
+    preferred: null # select nodes with priority which has preferred labels
+    weights: null # list of weights for the preferred labels
+
+  # Git configuration
+  git:
+    repo_url_or_path: null
+    branch: null
+    commit: null
+    entry_script: null
+    token: null
+    update_adapter: false
+
+rlConfig:
+  # VERL training type: "ppo" or "grpo"
+  trainingType: "ppo"
+  # VERL arguments will be dynamically generated from recipe config
+  verlArgs: null
+
+rayCluster:
+  rayVersion: "2.46.0"
+  logging:
+    level: "INFO"
+  headNode:
+    cpu: "16"
+    memory: "32Gi"
+    cpuLimit: null
+    memoryLimit: null
+    gpu: "1"
+  workerNodes:
+    replicas: 2
+    cpu: "16"
+    memory: "48Gi"
+    cpuLimit: null
+    memoryLimit: null
+    gpu: "4"
+    rayStartParams: {}
+
+gc:
+  shutdownAfterJobFinishes: true
+  ttlSecondsAfterFinished: 600

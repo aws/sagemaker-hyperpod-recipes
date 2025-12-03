@@ -42,6 +42,7 @@ volumes: null
 # persistent volumes, usually used to mount FSx
 persistent_volume_claims:
   - null
+
   # This claim should be created before running. Example:
   # - claimName: fsx-claim
   #   mountPath: data
@@ -68,3 +69,9 @@ label_selector: null
 
 # The clean up policy after the job completes or fails.
 cleanPodPolicy: null
+
+# Use HyperPodPytorchJob instead of KubeFlow PyTorchJob (cluster-specific setting)
+use_hyperpod_pytorch_job: true  # Remove this to return to using KubeFlow PyTorchJob
+
+# Queue name for scheduling jobs using Kueue
+queue_name: null

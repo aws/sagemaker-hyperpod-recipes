@@ -1,0 +1,62 @@
+apiVersion: kubeflow.org/v1
+kind: PyTorchJob
+metadata:
+  name: {{ .Values.evaluationConfig.jobName }}
+  {{- if .Values.evaluationConfig.namespace }}
+  namespace: {{ .Values.evaluationConfig.namespace }}
+  {{- end }}
+  {{- if .Values.evaluationConfig.annotations }}
+  annotations:
+    {{- toYaml .Values.evaluationConfig.annotations | nindent 4 }}
+  {{- end }}
+  labels:
+    app: {{ .Values.evaluationConfig.jobName }}
+    {{- if .Values.evaluationConfig.customLabels }}
+    {{- toYaml .Values.evaluationConfig.customLabels | nindent 4 }}
+    {{- end }}
+spec:
+  pytorchReplicaSpecs:
+    Worker:
+      replicas: {{ .Values.evaluationConfig.replicas }}
+      restartPolicy: OnFailure
+      template:
+        metadata:
+          labels:
+            app: {{ .Values.evaluationConfig.jobName }}
+            {{- if .Values.evaluationConfig.customLabels }}
+            {{- toYaml .Values.evaluationConfig.customLabels | nindent 12 }}
+            {{- end }}
+        spec:
+          {{- if .Values.evaluationConfig.serviceAccountName }}
+          serviceAccountName: {{ .Values.evaluationConfig.serviceAccountName }}
+          {{- end }}
+          {{- if .Values.evaluationConfig.priorityClassName }}
+          priorityClassName: {{ .Values.evaluationConfig.priorityClassName }}
+          {{- end }}
+          containers:
+          - name: pytorch
+            image: {{ .Values.image.evaluationImage }}
+            env:
+            {{- range $key, $value := .Values.evaluationConfig.envVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            - name: CONFIG_FILE_PATH
+              value: "/app/configuration/recipe.yaml"
+            volumeMounts:
+            - name: recipe-volume
+              mountPath: /app/configuration/recipe.yaml
+              subPath: recipe.yaml
+            - name: data
+              mountPath: /data
+          nodeSelector:
+            {{- range $key, $values := .Values.evaluationConfig.labelSelector.required }}
+            {{ $key }}: {{ index $values 0 }}
+            {{- end }}
+          volumes:
+          - name: recipe-volume
+            configMap:
+              name: evaluation-config-{{ .Values.evaluationConfig.jobName }}
+          - name: data
+            persistentVolumeClaim:
+              claimName: fsx-claim

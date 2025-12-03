@@ -1,0 +1,219 @@
+{
+  "metadata": {
+    "CustomizationTechnique": "SFT",
+    "DisplayName": "Llama 3.2 1B Simple Fine Tuning with Lora on GPU, 4K sequence length",
+    "Hardware": "GPU",
+    "HostingConfigs": [
+      {
+        "ComputeResourceRequirements": {
+          "MinMemoryRequiredInMb": 1024000,
+          "NumberOfAcceleratorDevicesRequired": 8,
+          "NumberOfCpuCoresRequired": 100
+        },
+        "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+        "Environment": {
+          "OPTION_ASYNC_MODE": "true",
+          "OPTION_ENABLE_LORA": "true",
+          "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+          "OPTION_MAX_CPU_LORAS": "64",
+          "OPTION_MAX_LORAS": "8",
+          "OPTION_MAX_ROLLING_BATCH_SIZE": "1",
+          "OPTION_ROLLING_BATCH": "disable",
+          "OPTION_TENSOR_PARALLEL_DEGREE": "8",
+          "SAGEMAKER_ENABLE_LOAD_AWARE": "1",
+          "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "128"
+        },
+        "InstanceType": "ml.p5.48xlarge",
+        "Profile": "Default"
+      }
+    ],
+    "InstanceCount": 1,
+    "InstanceTypes": [
+      "ml.p4de.24xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5.48xlarge",
+      "ml.g5.48xlarge",
+      "ml.g5.12xlarge"
+    ],
+    "Model_ID": "meta-textgeneration-llama-3-2-1b-instruct",
+    "Name": "llmft_llama3_2_1b_instruct_seq4k_gpu_sft_lora",
+    "OutputConfig": {
+      "SageMakerInferenceRecipeName": "default"
+    },
+    "Peft": "LoRA",
+    "RecipeFilePath": "recipes/fine-tuning/llama/llmft_llama3_2_1b_instruct_seq4k_gpu_sft_lora.yaml",
+    "SequenceLength": "4K",
+    "ServerlessMeteringType": "Token-based",
+    "Type": "FineTuning",
+    "Versions": [
+      "1.0.0"
+    ]
+  },
+  "recipe_override_parameters": {
+    "data_path": {
+      "default": "",
+      "required": true,
+      "type": "string"
+    },
+    "global_batch_size": {
+      "default": 8,
+      "enum": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "required": true,
+      "type": "integer"
+    },
+    "instance_type": {
+      "default": "ml.p4de.24xlarge",
+      "enum": [
+        "ml.p4de.24xlarge",
+        "ml.p4d.24xlarge",
+        "ml.p5.48xlarge",
+        "ml.g5.48xlarge",
+        "ml.g5.12xlarge"
+      ],
+      "required": false,
+      "type": "string"
+    },
+    "learning_rate": {
+      "default": 0.0001,
+      "max": 0.0001,
+      "min": 5e-07,
+      "required": true,
+      "type": "float"
+    },
+    "lr_warmup_ratio": {
+      "default": 0.1,
+      "max": 1,
+      "min": 0,
+      "required": true,
+      "type": "float"
+    },
+    "max_epochs": {
+      "default": 5,
+      "max": 30,
+      "min": 1,
+      "required": true,
+      "type": "integer"
+    },
+    "mlflow_run_id": {
+      "default": "",
+      "required": false,
+      "type": "string"
+    },
+    "mlflow_tracking_uri": {
+      "default": "",
+      "required": false,
+      "type": "string"
+    },
+    "model_name_or_path": {
+      "default": "meta-llama/Llama-3.2-1B-Instruct",
+      "required": true,
+      "type": "string"
+    },
+    "name": {
+      "default": "llama-3-2-1b-instruct",
+      "required": true,
+      "type": "string"
+    },
+    "namespace": {
+      "default": "default",
+      "required": true,
+      "type": "string"
+    },
+    "output_path": {
+      "default": "",
+      "required": true,
+      "type": "string"
+    },
+    "results_directory": {
+      "default": "",
+      "required": true,
+      "type": "string"
+    },
+    "resume_from_path": {
+      "default": "",
+      "required": true,
+      "type": "string"
+    },
+    "train_val_split_ratio": {
+      "default": 0.9,
+      "max": 1.0,
+      "min": 0.0,
+      "required": false,
+      "type": "float"
+    },
+    "training_data_name": {
+      "default": "",
+      "required": true,
+      "type": "string"
+    },
+    "validation_data_name": {
+      "default": "",
+      "required": true,
+      "type": "string"
+    },
+    "validation_data_path": {
+      "default": "",
+      "required": true,
+      "type": "string"
+    }
+  },
+  "regional_parameters": {
+    "hp_eks_regional_ecr_uri": {
+      "beta": {
+        "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+      },
+      "gamma": {
+        "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+      },
+      "prod": {
+        "ap-northeast-1": "356859066553.dkr.ecr.ap-northeast-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "ap-south-1": "423350936952.dkr.ecr.ap-south-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "ap-southeast-1": "885852567298.dkr.ecr.ap-southeast-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "ap-southeast-2": "304708117039.dkr.ecr.ap-southeast-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "eu-central-1": "391061375763.dkr.ecr.eu-central-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "eu-north-1": "963403601044.dkr.ecr.eu-north-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "eu-south-2": "330290781619.dkr.ecr.eu-south-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "eu-west-1": "942446708630.dkr.ecr.eu-west-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "eu-west-2": "016839105697.dkr.ecr.eu-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "sa-east-1": "311136344257.dkr.ecr.sa-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "us-east-2": "556809692997.dkr.ecr.us-east-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "us-west-1": "827510180725.dkr.ecr.us-west-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+      }
+    },
+    "smtj_regional_ecr_uri": {
+      "beta": {
+        "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+      },
+      "gamma": {
+        "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+      },
+      "prod": {
+        "ap-northeast-1": "356859066553.dkr.ecr.ap-northeast-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "ap-south-1": "423350936952.dkr.ecr.ap-south-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "ap-southeast-1": "885852567298.dkr.ecr.ap-southeast-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "ap-southeast-2": "304708117039.dkr.ecr.ap-southeast-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "eu-central-1": "391061375763.dkr.ecr.eu-central-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "eu-north-1": "963403601044.dkr.ecr.eu-north-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "eu-south-2": "330290781619.dkr.ecr.eu-south-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "eu-west-1": "942446708630.dkr.ecr.eu-west-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "eu-west-2": "016839105697.dkr.ecr.eu-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "sa-east-1": "311136344257.dkr.ecr.sa-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "us-east-2": "556809692997.dkr.ecr.us-east-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "us-west-1": "827510180725.dkr.ecr.us-west-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+        "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+      }
+    }
+  },
+  "training-config.yaml": "---\n# Source: sagemaker-training/templates/training-config.yaml\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: training-config-{{name}}\ndata:\n  config.yaml: |-\n      llama-3-2-1b-instruct_hydra.yaml: |\n      display_name: Llama 3.2 1B Simple Fine Tuning with Lora on GPU, 4K sequence length\n      version: 1.0.0\n      instance_types:\n      - ml.p4de.24xlarge\n      - ml.p4d.24xlarge\n      - ml.p5.48xlarge\n      - ml.g5.48xlarge\n      - ml.g5.12xlarge\n      run:\n        name: '{{name}}'\n        model_type: llm_finetuning_aws\n        results_dir: '{{results_directory}}'\n        hf_access_token: null\n      trainer:\n        devices: 8\n        num_nodes: 1\n      training_config:\n        mlflow:\n          tracking_uri: '{{mlflow_tracking_uri}}'\n          run_id: '{{mlflow_run_id}}'\n        force_rerun: false\n        model_config:\n          model_name_or_path: '{{model_name_or_path}}'\n          lora_checkpoint_file_path: null\n          multimodal: false\n          peft_config:\n            peft_type: lora\n            target_modules: all-linear\n            r: 16\n            lora_alpha: 32\n            lora_dropout: 0.05\n            bias: none\n            task_type: CAUSAL_LM\n            use_dora: false\n          model_save_name: SageMaker/llama-3.2-1B-Instruct-Lora\n          chat_template_key: llama--meta-llama-3.2-1b-instruct\n          apply_chat_template: false\n          device_map: null\n          attn_implementation: sdpa\n          generation_cfg:\n            max_new_tokens: 2048\n            temperature: 0.6\n            top_p: 0.9\n            do_sample: true\n            num_return_sequences: 1\n            num_parallel_jobs: 1\n        datasets:\n          data_dir: null\n          save_intermediate_processing_steps: false\n          train_data:\n            name: '{{training_data_name}}'\n            file_path: '{{data_path}}'\n            limit: null\n          val_data:\n            name: '{{validation_data_name}}'\n            file_path: '{{validation_data_path}}'\n            limit: null\n          train_val_split_ratio: '{{train_val_split_ratio}}'\n          train_val_split_seed: 42\n          preprocessor_cfgs:\n          - type: TrainingSFTSampleConverter\n          - type: Seq2SeqTokensProcessor\n            chat_template_name: llama_3_2_seq_instruct.jinja\n            ignore_prompt_labels: true\n          - type: DropColumns\n            column_names:\n            - messages\n        training_args:\n          override_training_dir: true\n          trainer_type: sft\n          trainer_callbacks:\n          - _target_: metering_callback.MeteringCallback\n            output_path: /opt/ml/metering\n          training_dir: '{{output_path}}'\n          seed: 42\n          packing_samples: false\n          ring_attn_size: 1\n          ring_head_stride: 1\n          pretrain_mode: false\n          aux_loss_coef: 0\n          learning_rate: '{{learning_rate}}'\n          lr_warmup_ratio: '{{lr_warmup_ratio}}'\n          weight_decay: 0.0\n          adam_betas:\n          - 0.9\n          - 0.95\n          lr_scheduler: cosine\n          l2: 0.0\n          gradient_clipping: true\n          gradient_clipping_threshold: 1.0\n          grad_accum_dtype: null\n          gradient_checkpointing: true\n          gradient_checkpointing_use_reentrant: false\n          load_checkpoint: false\n          resume_checkpoint_path: '{{resume_from_path}}'\n          disable_ds_ckpt: true\n          disable_fast_tokenizer: false\n          micro_train_batch_size: 1\n          train_batch_size: '{{global_batch_size}}'\n          eval_steps: 0\n          save_steps: 0\n          save_hf_ckpt: true\n          merge_weights: true\n          max_epochs: '{{max_epochs}}'\n          max_len: 4096\n          max_norm: 1.0\n          max_samples: 100000000.0\n          max_ckpt_mem: 100000000.0\n          max_ckpt_num: 3\n          logging_steps: 1\n          use_tensorboard: logs\n          use_wandb: null\n          strategy:\n            fsdp_config:\n              auto_wrap_policy: TRANSFORMER_BASED_WRAP\n              backward_prefetch: BACKWARD_PRE\n              cpu_ram_efficient_loading: true\n              cpu_offload: false\n              forward_prefetch: false\n              sharding_strategy: HYBRID_SHARD\n              state_dict_type: SHARDED_STATE_DICT\n              sync_module_states: true\n              use_orig_params: true\n      elastic_policy:\n        is_elastic: false\n        min_nodes: 1\n        max_nodes: 16\n        use_graceful_shutdown: true\n        scaling_timeout: 600\n        graceful_shutdown_timeout: 600\n      scale_config:\n        1:\n          trainer:\n            num_nodes: 1\n          training_config:\n            training_args:\n              train_batch_size: 128\n              micro_train_batch_size: 8\n              learning_rate: 0.0004\n        2:\n          trainer:\n            num_nodes: 2\n          training_config:\n            training_args:\n              train_batch_size: 128\n              micro_train_batch_size: 8\n              learning_rate: 0.0004\n        3:\n          trainer:\n            num_nodes: 3\n          training_config:\n            training_args:\n              train_batch_size: 128\n              learning_rate: 0.0004\n              uneven_batch:\n                use_uneven_batch: true\n                num_dp_groups_with_small_batch_size: 16\n                small_local_batch_size: 5\n                large_local_batch_size: 6\n        4:\n          trainer:\n            num_nodes: 4\n          training_config:\n            training_args:\n              train_batch_size: 128\n              micro_train_batch_size: 4\n              learning_rate: 0.0004\n        6:\n          trainer:\n            num_nodes: 6\n          training_config:\n            training_args:\n              train_batch_size: 128\n              learning_rate: 0.0004\n              uneven_batch:\n                use_uneven_batch: true\n                num_dp_groups_with_small_batch_size: 16\n                small_local_batch_size: 2\n                large_local_batch_size: 3\n        8:\n          trainer:\n            num_nodes: 8\n          training_config:\n            training_args:\n              train_batch_size: 128\n              micro_train_batch_size: 2\n              learning_rate: 0.0004\n        16:\n          trainer:\n            num_nodes: 16\n          training_config:\n            training_args:\n              train_batch_size: 128\n              learning_rate: 0.0004\n",
+  "training.yaml": "---\n# Source: sagemaker-training/templates/training.yaml\napiVersion: sagemaker.amazonaws.com/v1\nkind: HyperPodPyTorchJob\nmetadata:\n  name: {{name}}\n  namespace: {{namespace}}\n  labels:\n    app: {{name}}\nspec:\n  nprocPerNode: \"8\"\n  replicaSpecs:\n    - name: '1-nodes'\n      replicas: 1\n      template:\n        spec:\n          nodeSelector:\n            beta.kubernetes.io/instance-type: {{instance_type}}\n          containers:\n          - name: pytorch\n            image: {{container_image}}\n            env:\n              - name: CUDA_VISIBLE_DEVICES\n                value: \"0,1,2,3,4,5,6,7\"\n              - name: NCCL_DEBUG\n                value: \"WARN\"\n              - name: SLURM_NTASKS_PER_NODE\n                value: \"8\"\n              # New environmental variables for the script\n              - name: GIT_REPO_URL\n                value: \n              - name: GIT_BRANCH\n                value: \n              - name: GIT_COMMIT\n                value: \n              - name: GIT_UPDATE_ADAPTER\n                value: \"false\"\n              - name: NODES\n                value: \"1\"\n              - name: NTASKS_PER_NODE\n                value: \"8\"\n              - name: JOB_NAME\n                value: \"llama-3-2-1b-instruct\"\n              - name: SCRIPT_PATH\n                value: \"/app/src/train_hp.py\"\n              - name: SCRIPT_ARGS\n                value: \"--config-path=/config --config-name=config.yaml\"\n              - name: PRE_SCRIPT_COMMANDS\n                value: \"\"\n              - name: POST_SCRIPT_COMMANDS\n                value: \"\"\n              - name: USE_HYPERPODRUN\n                value: \"true\"\n            command:\n            - /bin/bash\n            - -c\n            - \"/opt/bin/scripts/train-script-gpu.sh 2>&1 | tee /data/training.log\"\n            imagePullPolicy: Always\n            securityContext:\n              privileged: true\n            resources:\n              requests:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n              limits:\n                nvidia.com/gpu: 8\n                vpc.amazonaws.com/efa: 32\n            volumeMounts:\n            - mountPath: /data\n              name: fsx-claim-volume\n            - mountPath: /config\n              name: training-config\n            - mountPath: /dev/shm\n              name: shm\n            - mountPath: /var/log/aws/clusters\n              name: aws-clusters-logs\n              readOnly: true\n\n          volumes:\n          - name: fsx-claim-volume\n            persistentVolumeClaim:\n              claimName: fsx-claim\n          - configMap:\n              name: training-config-{{name}}\n            name: training-config\n          - name: shm\n            hostPath:\n              path: /dev/shm\n              type: Directory\n          - name: aws-clusters-logs\n            hostPath:\n              path: /var/log/aws/clusters\n              type: DirectoryOrCreate\n"
+}

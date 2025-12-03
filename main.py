@@ -47,15 +47,20 @@ from launcher.accelerator_devices import (
     get_num_accelerator_devices,
     get_num_cores_per_accelerator,
 )
+from launcher.evaluation.launchers import SMEvaluationK8SLauncher
+from launcher.evaluation.sm_jobs_launcher import SMEvaluationJobsLauncher
 from launcher.nemo.recipe_stages import (
     NeMoTraining,
     SMTrainingGPURecipe,
+    SMTrainingGPURecipeElastic,
+    SMTrainingHPCTRecipe,
     SMTrainingTrainiumRecipe,
 )
 from launcher.nemo.stages import (
     SMCustomTrainingCPU,
     SMCustomTrainingGPU,
     SMCustomTrainingTrainium,
+    get_device_type,
     get_instance_type,
 )
 from launcher.nova.launchers import (
@@ -110,20 +115,28 @@ def get_training_stage(cfg):
     """
     Get the right training stage based on the device type and if it is custom training
     """
-    instance_type = get_instance_type(cfg)
     is_custom = cfg.get("training_cfg") is not None
+    device_type = get_device_type(cfg)
 
-    # p and g instances are GPU instances
-    if instance_type.startswith(("p", "g")):
-        device_type = "gpu"
-    elif instance_type.startswith("trn"):
-        device_type = "trainium"
+    is_elastic = omegaconf.OmegaConf.select(cfg, "training.elastic_policy.is_elastic", default=False)
+    model_type = omegaconf.OmegaConf.select(cfg, "recipes.run.model_type", default=None)
+
+    if cfg.get("cluster_type") is None:
+        assert cfg.get("cluster") is not None
+        cluster_type = cfg.cluster.cluster_type
     else:
-        device_type = "cpu"
+        cluster_type = cfg.cluster_type
 
     if not is_custom:
         if device_type == "gpu":
-            return SMTrainingGPURecipe
+            if is_elastic:
+                if cluster_type != "k8s":
+                    raise ValueError("Elastic training is only supported on K8S clusters")
+                return SMTrainingGPURecipeElastic
+            else:
+                if model_type == "hyperpod_checkpointless_nemo":
+                    return SMTrainingHPCTRecipe
+                return SMTrainingGPURecipe
         if device_type == "trainium":
             return SMTrainingTrainiumRecipe
         raise ValueError("Recipe only can be run on GPU or Trainium instances")
@@ -224,7 +237,12 @@ def preprocess_config(cfg) -> Tuple[bool, bool]:
 
         with omegaconf.open_dict(cfg):
             cfg.training = cfg.recipes  # Point cfg.training to cfg.recipes to avoid conflict in nemo stages
-        if "hf" in model_type:
+
+            # To align with https://github.com/NVIDIA/NeMo-Framework-Launcher/blob/23.11/launcher_scripts/nemo_launcher/core/stages.py#L313C54-L313C72
+            if cfg.training.get("model", None) == None:
+                cfg.training.model = {"ub_tp_comm_overlap": False}
+
+        if model_type in ["hf", "llm_finetuning_aws", "verl", "hyperpod_checkpointless_nemo"]:
             return False, True
 
     return False, False
@@ -296,11 +314,58 @@ def get_nova_launcher(cfg) -> NovaK8SLauncher:
     return SMNovaK8SLauncherSFT(cfg)
 
 
+def is_evaluation_recipe(cfg) -> bool:
+    """
+    Check if the current recipe is an evaluation recipe.
+
+    Args:
+        cfg: Configuration object containing recipe information.
+
+    Returns:
+        bool: True if it's an evaluation recipe, False otherwise.
+    """
+    # Check if recipe parameter exists
+    if cfg.get("recipes") is None:
+        return False
+
+    # Check if evaluation config exists (deterministic)
+    if cfg.recipes.get("evaluation") is not None:
+        # check if model_type is nova
+        model_type = omegaconf.OmegaConf.select(cfg, "recipes.run.model_type", default=None)
+        if model_type and model_type.startswith("amazon.nova"):
+            return False
+        return True
+
+    # Check if llm_as_judge config exists (LLM-as-a-Judge)
+    if cfg.recipes.get("llm_as_judge") is not None and cfg.recipes.get("run", {}).get("judge_model_id") is not None:
+        return True
+
+    return False
+
+
 @hydra.main(config_path="recipes_collection", config_name="config", version_base="1.2")
 @validate_config
 def main(cfg):
     # Check if model exists and download if it doesn't
     download_model(cfg)
+
+    # check if it's an evaluation recipe FIRST, before preprocess_config
+    if is_evaluation_recipe(cfg):
+        # if not in a unit-test environment de-dupe consecutive runs by appending random hash to end of job name
+        if "pytest" not in sys.modules and "name" in cfg.recipes.run:
+            cfg.recipes.run.name = valid_run_name(cfg.recipes.run.get("name", None))
+
+        # Choose launcher based on cluster type
+        if cfg.cluster_type == "sm_jobs":
+            launcher = SMEvaluationJobsLauncher(cfg)
+        else:
+            launcher = SMEvaluationK8SLauncher(cfg)
+
+        if cfg.dry_run:
+            print("[DRY_RUN] Skipping launcher run.")
+        else:
+            launcher.run()
+        return
 
     # check if model_type is nova
     model_type = omegaconf.OmegaConf.select(cfg, "recipes.run.model_type", default=None)
@@ -317,7 +382,10 @@ def main(cfg):
         ):
             raise ValueError("Recipe only can not provide persistent volume claims")
         launcher = get_nova_launcher(cfg)
-        launcher.run()
+        if cfg.dry_run:
+            print("[DRY_RUN] Skipping launcher run.")
+        else:
+            launcher.run()
         return
 
     has_custom_script, has_sm_recipe = preprocess_config(cfg)
@@ -348,15 +416,18 @@ def main(cfg):
                 cfg[stage_name]["run"]["dependency"] = dependency
 
             stage = stage_class(cfg)
-            job_id = stage.run()
+            if cfg.dry_run:
+                print("[DRY_RUN] Skipping launcher run.")
+            else:
+                job_id = stage.run()
 
-            job_path = stage.get_job_path()
-            command = " \\\n  ".join(sys.argv)
-            with open(job_path.folder / "launcher_cmd.log", "w") as f:
-                f.write(command)
+                job_path = stage.get_job_path()
+                command = " \\\n  ".join(sys.argv)
+                with open(job_path.folder / "launcher_cmd.log", "w") as f:
+                    f.write(command)
 
-            if job_id:
-                dependency = f"afterany:{job_id}"
+                if job_id:
+                    dependency = f"afterany:{job_id}"
 
 
 if __name__ == "__main__":
