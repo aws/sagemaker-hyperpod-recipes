@@ -83,7 +83,7 @@ git:
 k8:
   general_pod: "k8s-sleeper-faraday-0"
 
-base_results_dir: "/opt/ml/model"
+base_results_dir: "./results"
 
 # Add any additional run specific launch_config/overrides you would like to include in the call to main.py
 additional_launch_config:
