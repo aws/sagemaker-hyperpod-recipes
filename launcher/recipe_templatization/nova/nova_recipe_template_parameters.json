@@ -1294,13 +1294,6 @@
                     "type": "string",
                     "required": false,
                     "default": ""
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192
                 }
             },
             "recipe_metadata_helpers": {
@@ -1371,8 +1364,8 @@
                     "type": "integer",
                     "required": false,
                     "min": 0,
-                    "max": 100000,
-                    "default": 8196
+                    "max": 32768,
+                    "default": 32768
                 },
                 "namespace": {
                     "type": "string",
@@ -1465,13 +1458,6 @@
                     "type": "string",
                     "required": true,
                     "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192
                 }
             },
             "recipe_metadata_helpers": {
@@ -1541,8 +1527,8 @@
                     "type": "integer",
                     "required": false,
                     "min": 0,
-                    "max": 100000,
-                    "default": 8196
+                    "max": 32768,
+                    "default": 32768
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -1618,13 +1604,6 @@
                     "type": "string",
                     "required": true,
                     "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192
                 }
             },
             "recipe_metadata_helpers": {
@@ -1725,13 +1704,6 @@
                     "type": "string",
                     "required": true,
                     "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 200000,
-                    "default": 2048
                 }
             },
             "recipe_metadata_helpers": {
@@ -1808,8 +1780,8 @@
                     "type": "integer",
                     "required": false,
                     "min": 0,
-                    "max": 100000,
-                    "default": 8196
+                    "max": 32768,
+                    "default": 32768
                 },
                 "lambda_arn": {
                     "type": "string",
@@ -1843,13 +1815,6 @@
                     "type": "string",
                     "required": true,
                     "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 200000,
-                    "default": 2048
                 }
             },
             "recipe_metadata_helpers": {

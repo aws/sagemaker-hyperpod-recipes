@@ -16,7 +16,7 @@ evaluation:
 
 # Optional Inference configs
 inference:
-  max_new_tokens: 8196
+  max_new_tokens: 32768
   top_k: -1
   top_p: 1.0
   temperature: 0

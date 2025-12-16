@@ -2,15 +2,15 @@ import os
 
 import boto3
 
-from launcher.nova.constants.init_container_constants import (
+from .constants.init_container_constants import (
     INIT_CONTAINER_IMAGE_URI,
     INIT_CONTAINER_REGION_ACCOUNT_MAP,
 )
-from launcher.nova.constants.ppo_container_constants import (
+from .constants.ppo_container_constants import (
     ACTOR_GENERATION_CONTAINER_IMAGE,
     ACTOR_GENERATION_REGION_ACCOUNT_MAP,
 )
-from launcher.nova.constants.rft_container_constants import (
+from .constants.rft_container_constants import (
     RFT_GENERATION_CONTAINER_IMAGE,
     RFT_NATS_RELOADER_CONTAINER_IMAGE,
     RFT_NATS_SERVER_CONTAINER_IMAGE,

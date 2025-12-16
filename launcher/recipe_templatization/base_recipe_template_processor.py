@@ -11,7 +11,7 @@ from typing import Optional
 import yaml
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
-from launcher.nemo.constants import ROOT_DIR
+from ..nemo.constants import ROOT_DIR
 
 logger = logging.getLogger(__name__)
 

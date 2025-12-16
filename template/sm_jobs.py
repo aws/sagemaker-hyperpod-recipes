@@ -87,6 +87,9 @@ def main():
     additional_estimator_kwargs = sm_jobs_config.get("additional_estimator_kwargs", omegaconf.DictConfig(dict()))
     additional_estimator_kwargs = OmegaConf.to_container(additional_estimator_kwargs)
 
+    environment = sm_jobs_config.get("environment", omegaconf.DictConfig(dict()))
+    environment = OmegaConf.to_container(environment)
+
     tensorboard_config = sm_jobs_config.get("tensorboard_config")
     if tensorboard_config:
         tb_output_path = tensorboard_config.get("output_path")
@@ -110,6 +113,7 @@ def main():
         output_path=output_path,
         role=role,
         sagemaker_session=sagemaker_session,
+        environment=environment,
         **additional_estimator_kwargs,
     )
 
