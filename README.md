@@ -89,7 +89,7 @@ Memory-efficient training that eliminates traditional checkpoint storage during 
 Dynamic resource scaling that enables automatic adjustment of training resources based on cluster availability. Workloads can scale up or down to optimize resource utilization and reduce training costs.
 
 **Supported Models:**
-- LLMFT models with elastic scaling capabilities
+- SFT and DPO LLMFT models, such as [LLMFT Llama3.1 8B SFT](recipes_collection/recipes/fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_sft_lora.yaml)
 
 **Key Features:**
 - Automatic scaling based on resource availability
@@ -103,6 +103,18 @@ Dynamic resource scaling that enables automatic adjustment of training resources
 - Improved cluster efficiency
 - Flexible training that adapts to available resources
 - Minimized idle time during training
+
+**How to use:**
+
+With supported SFT/DPO recipes and [elastic training prerequisites](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod-elastic-training.html), just add the following line to your launching script:
+```
+HYDRA_FULL_ERROR=1 python3 ${SAGEMAKER_TRAINING_LAUNCHER_DIR}/main.py \
+...
+recipes.elastic_policy.is_elastic=true \
+cluster.use_hyperpod_pytorch_job=true \
+cluster.queue_name=<queue_name> \
+...
+```
 
 ### Evaluation
 - Open-source deterministic evaluation
