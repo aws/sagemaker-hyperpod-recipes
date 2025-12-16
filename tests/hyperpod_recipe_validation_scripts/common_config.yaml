@@ -6,48 +6,72 @@ platform: "SMJOBS" # SLURM, K8 OR SMJOBS
 # Add the recipe file paths or folder paths which you'd like to test in the below list
 # Follow the same format as followed in launcher_scripts for the path where we start the
 # path from inside recipes_collection/recipes/
-recipe_list: ["fine-tuning/llama/llmft_llama3_2_1b_instruct_seq4k_gpu_sft.yaml"]
+# recipe_list: ["fine-tuning/llama/llmft_llama3_2_1b_instruct_seq4k_gpu_sft.yaml"]
+recipe_list: ["fine-tuning/deepseek/llmft_deepseek_r1_distilled_qwen_32b_seq4k_gpu_dpo.yaml"]
+
+# Instance type override - if specified, will override the default instance_type in recipes_collection/config.yaml
+instance_type: "ml.p4de.24xlarge"  # Optional: p5.48xlarge, p4d.24xlarge, etc.
 
 # Set model path here. Key should be the same
 # as the model_name in the recipe file and value should be the local path
 # similar to the example below. The model folder itself should follow HF convention :- repo_owner/model_name
 models:
-  model_parent_folder: "/data/hp-recipe-validator/models/"
+  verl:
+    model_parent_folder: ""
+  default:
+    model_parent_folder: ""
 
 # Key should be same as the job type in the recipe file name *_jobtype.yaml. Ex: *lora.yaml
 dataset_keys:
-  sft:
+  vision:
+    train_data_name: "pokemon-train"
+    train_data_dir: ""
+    val_data_name: "pokemon-val"
+    val_data_dir: ""
+  ppo:
+    train_data_name: "gsm8k_train"
+    train_data_dir: ""
+    val_data_name: "gsm8k_val"
+    val_data_dir: ""
+  grpo:
+    train_data_name: "gsm8k_train"
+    train_data_dir: ""
+    val_data_name: "gsm8k_val"
+    val_data_dir: ""
+  verl-smjobs:
+    train_data_name: "gsm8k_train"
+    train_data_dir: ""
+    val_data_name: "gsm8k_val"
+    val_data_dir: ""
+  verl-smjobs-panda:
+    train_data_name: "panda_train"
+    train_data_dir: ""
+    val_data_name: "panda_val"
+    val_data_dir: ""
+  lora:
     train_data_name: "tatqa_train"
     train_data_dir: ""
     val_data_name: "tatqa_val"
     val_data_dir: ""
   dpo:
     train_data_name: "ultra-feedback-train"
-    train_data_dir: "/data/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_train_small.jsonl"
+    train_data_dir: ""
     val_data_name: "ultra-feedback-val"
-    val_data_dir: "/data/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_val_small.jsonl"
-  multimodal:
-    train_data_name: "pokemon-train"
-    train_data_dir: "/data/hp-recipe-validator/datasets/pokemon/train"
-    val_data_name: "pokemon-val"
-    val_data_dir: "/data/hp-recipe-validator/datasets/pokemon/validation"
-  default:
-    train_data_name: "tatqa_train"
-    train_data_dir: "/data/hp-recipe-validator/datasets/tat_qa/zc_train_10k.jsonl"
-    val_data_name: "tatqa_val"
-    val_data_dir: "/data/hp-recipe-validator/datasets/tat_qa/zc_dev.jsonl"
+    val_data_dir: ""
 
 # Specify HuggingFace access token here if the models are gated
 hf:
   access_token: ""
 
-# Key should be the recipe file name if you have a custom entry script
-entry_scripts:
-  default: "/app/src/amzn_awsllm_fine_tuning/train_hp.py"
+entry_module: amzn_awsllm_fine_tuning.train_hp
 
 # Key should be the recipe file name if you have a custom container
 container_info:
   default:
+    container_path: ""
+  verl:
+    container_path: ""
+  verl_smjobs:
     container_path: ""
 
 experiment_dir: "/opt/ml/model"
@@ -59,4 +83,20 @@ git:
 k8:
   general_pod: "k8s-sleeper-faraday-0"
 
-base_results_dir: "./"
+base_results_dir: "./results"
+
+# Add any additional run specific launch_config/overrides you would like to include in the call to main.py
+additional_launch_config:
+  'lora':
+    'ListConfig':
+      recipes.training_config.datasets.preprocessor_cfgs:
+        type: PadProcessor
+        input_id_keys: '[input_ids]'
+        mask_keys: '[attention_masks]'
+        label_keys: '[labels]'
+        target_length: 4096
+
+
+s3:
+  models: ""
+  validation_output_folder: ""

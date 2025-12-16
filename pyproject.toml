@@ -1,3 +1,55 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aws-hp-launcher"
+version = "0.1.0"
+description = "AWS HyperPod Launcher for distributed training"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Amazon Web Services"},
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "hydra-core==1.3.2",
+    "omegaconf>=2.2,<2.3",
+    "pynvml==11.4.1",
+    "requests==2.26.0",
+    "tqdm==4.62.3",
+    "zstandard==0.15.2",
+    "tensorboard==2.12.0",
+    "boto3==1.35.66",
+    "PyYAML>=6.0",
+    "pydantic>=2.0.0",
+    "sagemaker>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/aws/sagemaker-hyperpod-recipes"
+Repository = "https://github.com/aws/sagemaker-hyperpod-recipes"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["launcher"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"launcher/nemo/nemo_framework_launcher/launcher_scripts/nemo_launcher" = "nemo_launcher"
+
 [tool.pytest.ini_options]
 minversion = 7.0
 # durations=0 will display all tests execution time, sorted in ascending order starting from from the slowest one.

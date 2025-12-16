@@ -11,5 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-from . import evaluation, llmft, nova, verl
-from .base_recipe_template_processor import *
+from .init_container_constants import *
+from .ppo_container_constants import *
+from .rft_container_constants import *

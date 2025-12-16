@@ -17,27 +17,27 @@ instance_type: "ml.p4de.24xlarge"  # Optional: p5.48xlarge, p4d.24xlarge, etc.
 # similar to the example below. The model folder itself should follow HF convention :- repo_owner/model_name
 models:
   verl:
-    model_parent_folder: "/data/hf_pretrained_models/"
+    model_parent_folder: ""
   default:
-    model_parent_folder: "/data/hp-recipe-validator/models/"
+    model_parent_folder: ""
 
 # Key should be same as the job type in the recipe file name *_jobtype.yaml. Ex: *lora.yaml
 dataset_keys:
   vision:
     train_data_name: "pokemon-train"
-    train_data_dir: "/data/hp-recipe-validator/datasets/pokemon/train"
+    train_data_dir: ""
     val_data_name: "pokemon-val"
-    val_data_dir: "/data/hp-recipe-validator/datasets/pokemon/validation"
+    val_data_dir: ""
   ppo:
     train_data_name: "gsm8k_train"
-    train_data_dir: "/data/datasets/gsm8k/train.parquet"
+    train_data_dir: ""
     val_data_name: "gsm8k_val"
-    val_data_dir: "/data/datasets/gsm8k/test.parquet"
+    val_data_dir: ""
   grpo:
     train_data_name: "gsm8k_train"
-    train_data_dir: "/data/datasets/gsm8k/train.parquet"
+    train_data_dir: ""
     val_data_name: "gsm8k_val"
-    val_data_dir: "/data/datasets/gsm8k/test.parquet"
+    val_data_dir: ""
   verl-smjobs:
     train_data_name: "gsm8k_train"
     train_data_dir: ""
@@ -50,14 +50,14 @@ dataset_keys:
     val_data_dir: ""
   lora:
     train_data_name: "tatqa_train"
-    train_data_dir: "/data/hp-recipe-validator/datasets/tat_qa/zc_train_10k.jsonl"
+    train_data_dir: ""
     val_data_name: "tatqa_val"
-    val_data_dir: "/data/hp-recipe-validator/datasets/tat_qa/zc_dev.jsonl"
+    val_data_dir: ""
   dpo:
     train_data_name: "ultra-feedback-train"
-    train_data_dir: "/data/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_train.jsonl"
+    train_data_dir: ""
     val_data_name: "ultra-feedback-val"
-    val_data_dir: "/data/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_val.jsonl"
+    val_data_dir: ""
 
 # Specify HuggingFace access token here if the models are gated
 hf:
@@ -74,7 +74,7 @@ container_info:
   verl_smjobs:
     container_path: ""
 
-experiment_dir: "./results/"
+experiment_dir: "/opt/ml/model"
 
 git:
   use_default: false

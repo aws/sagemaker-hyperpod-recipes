@@ -16,7 +16,7 @@ from typing import Any
 
 from omegaconf import DictConfig, OmegaConf
 
-from launcher.config_validator.value_validator import get_argument
+from .value_validator import get_argument
 
 
 class TypeValidator:

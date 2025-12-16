@@ -20,8 +20,8 @@ from launcher.nemo.constants import ROOT_DIR
 logger = logging.getLogger(__name__)
 
 
-def test_readme_table_links():
-    readme_path = ROOT_DIR / "README.md"
+def test_recipe_table_links():
+    table_path = ROOT_DIR / "docs/RECIPES.md"
     log_line = lambda line: logger.info(f"\nFailing line:\n{line}")
 
     def pluck_path_strings(line: str):
@@ -37,7 +37,7 @@ def test_readme_table_links():
 
         return paths_str
 
-    with open(readme_path, "r") as fd:
+    with open(table_path, "r") as fd:
         for line in fd:
             """
             Example:

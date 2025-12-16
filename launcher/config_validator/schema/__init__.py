@@ -11,5 +11,10 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-from . import evaluation, llmft, nova, verl
-from .base_recipe_template_processor import *
+# Import submodules for intuitive access
+from . import (
+    base,
+    llmft_schema_validation,
+    nova_schema_validation,
+    verl_schema_validation,
+)

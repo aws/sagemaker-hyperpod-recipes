@@ -555,6 +555,16 @@ class SMNovaK8SLauncherSFT(NovaK8SLauncher):
             logger.info(f"Launcher successfully generated: {self._template_dir}")
 
     def _save_hydra_config(self):
+        # IMPORTANT: resolve all interpolations in recipes before _interpolate_hydra,
+        # because _interpolate_hydra mutates the tree and can break oc.select paths
+        # like ${oc.select:training_config.max_steps}, causing them to become null.
+        # For now, placing it under the not self._launch_json condition to be safe
+        # and ensure it does not impact the JS or the user experience.
+        if not self._launch_json:
+            recipes_conf = OmegaConf.create(self.cfg.recipes)
+            OmegaConf.resolve(recipes_conf)
+            self.cfg.recipes = recipes_conf
+
         self._interpolate_hydra()
         config_path = Path(self._output_dir_k8s_folder / "config")
         config_path.mkdir(parents=True, exist_ok=True)
