@@ -256,6 +256,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        {{- range $key, $value := $config.envVars }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end}}
         image: {{ .Values.image.natsServerImage }}
         resources:
           {{- toYaml .Values.trainingConfig.natsServer.resources | nindent 10 }}

@@ -122,6 +122,11 @@ spec:
             - containerPort: 6379
           resources:
             {{- toYaml .Values.trainingConfig.redis.resources | nindent 12 }}
+          env:
+            {{- range $key, $value := $config.envVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end}}
           {{- if .Values.trainingConfig.podSecurityContext }}
           securityContext:
             {{- toYaml .Values.trainingConfig.podSecurityContext | nindent 12 }}

@@ -108,8 +108,10 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
-                - name: INSTANCE_TYPE
-                  value: {{ $config.training.instanceType | quote }}
+                {{- range $key, $value := $config.envVars }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end}}
               volumeMounts:
                 - name: fsx-path-main
                   mountPath: /sagemaker/fsx/main
@@ -233,8 +235,10 @@ spec:
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
-                - name: INSTANCE_TYPE
-                  value: {{ $config.training.instanceType | quote }}
+                {{- range $key, $value := $config.envVars }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end}}
               volumeMounts:
                 - name: fsx-path-main
                   mountPath: /sagemaker/fsx/main

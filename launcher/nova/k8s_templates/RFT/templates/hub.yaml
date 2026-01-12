@@ -143,9 +143,11 @@ spec:
             {{- toYaml .Values.trainingConfig.hub.resources | nindent 12 }}
           env:
             - name: NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
+              value: {{ .Values.trainingConfig.namespace }}
+            {{- range $key, $value := $config.envVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end}}
           securityContext: {}
           volumeMounts:
             - name: fsx-path-main
@@ -296,6 +298,11 @@ spec:
             name: logs
           - mountPath: /sagemaker/fsx/output_artifacts
             name: fsx-path-output-artifacts
+        env:
+          {{- range $key, $value := $config.envVars }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end}}
       volumes:
         - name: fsx-path-main
           hostPath:
