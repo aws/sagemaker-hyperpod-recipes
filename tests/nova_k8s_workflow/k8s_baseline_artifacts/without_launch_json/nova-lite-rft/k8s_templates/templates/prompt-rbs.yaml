@@ -165,6 +165,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             {{- toYaml .Values.trainingConfig.prompter.resources | nindent 12 }}
+          env:
+            {{- range $key, $value := $config.envVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end}}
           volumeMounts:
             - name: fsx-path-main
               mountPath: /sagemaker/fsx/main
@@ -176,7 +181,6 @@ spec:
               name: logs
             - mountPath: /sagemaker/fsx/output_artifacts
               name: fsx-path-output-artifacts
-
       volumes:
         - name: fsx-path-main
           hostPath:
@@ -318,6 +322,11 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             {{- toYaml .Values.trainingConfig.rbs.resources | nindent 12 }}
+          env:
+            {{- range $key, $value := $config.envVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end}}
           volumeMounts:
             - name: fsx-path-main
               mountPath: /sagemaker/fsx/main
