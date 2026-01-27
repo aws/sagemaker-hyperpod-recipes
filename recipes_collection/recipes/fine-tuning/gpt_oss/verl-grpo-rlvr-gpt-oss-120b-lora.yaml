@@ -1,8 +1,8 @@
 # VERL GRPO Training Recipe for GPT-OSS 120B with LoRA
 # Based on AWS Bedrock VERL training configuration
 display_name: "GPT OSS 120B GRPO RLVR Fine-Tuning with LoRA"
-version: "1.0.0"
-instance_types: ["ml.p5e.48xlarge"]
+version: "1.1.0"
+instance_types: ["ml.p5e.48xlarge", "ml.p5en.48xlarge"]
 
 run:
   name: verl-grpo-gpt-oss-120b-lora
@@ -37,7 +37,7 @@ training_config:
     actor:
       _target_: verl.workers.config.FSDPActorConfig
       strategy: fsdp2
-      ppo_mini_batch_size: 256
+      ppo_mini_batch_size: 32
       ppo_micro_batch_size: null
       ppo_micro_batch_size_per_gpu: null
       use_dynamic_bsz: true
@@ -101,6 +101,7 @@ training_config:
         reshard_after_forward: true
         fsdp_size: -1
         forward_prefetch: false
+        model_dtype: bfloat16
       use_remove_padding: true
     ref:
       strategy: fsdp2
@@ -116,6 +117,7 @@ training_config:
         param_offload: true
         reshard_after_forward: true
         forward_prefetch: false
+        model_dtype: bfloat16
       ulysses_sequence_parallel_size: 1
       entropy_from_logits_with_chunking: true
       entropy_checkpointing: false
@@ -142,7 +144,7 @@ training_config:
       log_prob_max_token_len_per_gpu: 32768
       disable_log_stats: true
       do_sample: true
-      'n': 5
+      'n': 8
       multi_stage_wake_up: false
       engine_kwargs:
         vllm:
@@ -194,8 +196,8 @@ training_config:
       enable_gradient_checkpointing: true
       enable_activation_offload: false
       use_remove_padding: true
-      lora_rank: 16
-      lora_alpha: 32
+      lora_rank: 32
+      lora_alpha: 64
       is_saving_checkpoint_in_lora: false
       target_modules: all-linear
       exclude_modules: null
@@ -292,6 +294,8 @@ training_config:
     shuffle: true
     dataloader_num_workers: 8
     validation_shuffle: false
+    chat_template_kwargs:
+      reasoning_effort: medium
     filter_overlong_prompts: true
     filter_overlong_prompts_workers: 1
     truncation: error

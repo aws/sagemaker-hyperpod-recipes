@@ -31,9 +31,13 @@ coverage_html_report/
 mypg/
 .idea/
 recipes_collection/recipes/fine-tuning/sft/
+.kiro/
 
 # Test artifacts
 launch_json_test_report.json
 launch_json_test.log
 templatized*
 failed*
+throughput_results*
+
+debug_serverless/

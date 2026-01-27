@@ -1,7 +1,7 @@
 # VERL GRPO Training Recipe for Deepseek R1 Distilled Llama 70B with RLAIF
 # Based on AWS Bedrock VERL training configuration
 display_name: "Deepseek R1 Distilled Qwen 32B GRPO RLAIF Fine-Tuning with LoRA"
-version: "1.0.0"
+version: "1.1.0"
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge", "ml.p4d.24xlarge"]
 
 run:
@@ -287,6 +287,7 @@ training_config:
     shuffle: false
     dataloader_num_workers: 8
     validation_shuffle: false
+    chat_template_kwargs: {}
     filter_overlong_prompts: true
     filter_overlong_prompts_workers: 1
     truncation: error

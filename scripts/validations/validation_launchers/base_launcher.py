@@ -1,4 +1,5 @@
 import logging
+import os
 import subprocess
 import traceback
 from abc import ABC
@@ -36,35 +37,50 @@ class BaseLauncher(ABC):
         self.logger.handlers.clear()
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.INFO)
+        self.logger.propagate = False  # Prevent duplicate logging
 
         if self.config.platform == "SMJOBS":
-            self.sagemaker_session = sagemaker.Session()
-            self.sagemaker_client = self.sagemaker_session.boto_session.client("sagemaker")
-            self.logs_client = boto3.Session().client("logs")
+            # Check if we need to assume a role for SageMaker operations
+            assume_role_arn = os.environ.get("HP_MODEL_CUSTOMIZATION_ASSUME_ROLE_ARN")
+
+            if assume_role_arn:
+                self.logger.info(f"Assuming role for SageMaker operations: {assume_role_arn}")
+                # Assume the role
+                sts_client = boto3.client("sts")
+                assumed_role = sts_client.assume_role(
+                    RoleArn=assume_role_arn, RoleSessionName="sagemaker-validation-session"
+                )
+
+                # Create boto3 session with assumed role credentials
+                credentials = assumed_role["Credentials"]
+                boto_session = boto3.Session(
+                    aws_access_key_id=credentials["AccessKeyId"],
+                    aws_secret_access_key=credentials["SecretAccessKey"],
+                    aws_session_token=credentials["SessionToken"],
+                )
+
+                self.sagemaker_session = sagemaker.Session(boto_session=boto_session)
+                self.sagemaker_client = boto_session.client("sagemaker")
+                self.logs_client = boto_session.client("logs")
+            else:
+                # Use default credentials
+                self.sagemaker_session = sagemaker.Session()
+                self.sagemaker_client = self.sagemaker_session.boto_session.client("sagemaker")
+                self.logs_client = boto3.Session().client("logs")
 
     def launch_model_group(self, model_name, recipes):
-        """Launch jobs sequentially until first success, then remaining jobs in parallel"""
+        """Launch all jobs in parallel"""
 
         logging.info(f"Processing model group: {model_name} with {len(recipes)} recipes")
 
-        # Launch jobs sequentially until first success
-        first_success_idx = -1
-        for i, recipe in enumerate(recipes):
-            logging.info(f"Launching job {i+1}/{len(recipes)} for model {model_name}: {recipe}")
-            if self.launch_job(recipe):
-                first_success_idx = i
-                logging.info(f"First successful job for model {model_name}: {recipe}")
-                break
+        if not recipes:
+            logging.warning(f"No recipes to launch for model {model_name}")
+            return
 
-        # Launch remaining jobs in parallel if we had a success
-        if first_success_idx >= 0:
-            remaining_recipes = recipes[first_success_idx + 1 :]
-            if remaining_recipes:
-                logging.info(f"Launching {len(remaining_recipes)} remaining jobs for model {model_name} in parallel")
-                with ThreadPoolExecutor() as executor:
-                    executor.map(self.launch_job, remaining_recipes)
-        else:
-            logging.error(f"No successful jobs found for model {model_name}")
+        # Launch all jobs in parallel
+        logging.info(f"Launching all {len(recipes)} jobs for model {model_name} in parallel")
+        with ThreadPoolExecutor(max_workers=min(len(recipes), 10)) as executor:
+            executor.map(self.launch_job, recipes)
 
     def launch_job(self, input_file_path: str) -> bool:
         """Main job launch workflow - template method"""
@@ -108,7 +124,9 @@ class BaseLauncher(ABC):
     def _execute_command(self, command: list):
         """Execute launch command"""
         try:
-            process = subprocess.run(command, capture_output=True, text=True, check=True)
+            # Join command list into string and use shell=True to handle special chars in Hydra overrides
+            cmd_str = " ".join(command)
+            process = subprocess.run(cmd_str, capture_output=True, text=True, check=True, shell=True)
             return process
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Error executing command: {e.stderr}")
@@ -119,6 +137,19 @@ class BaseLauncher(ABC):
         epoch_count = logs.lower().count("epoch=")
         error_count = logs.lower().count("error:")
         return epoch_count >= threshold and error_count == 0
+
+    def _should_compute_throughput(self, recipe):
+        """Check if throughput should be computed for this recipe based on config keywords.
+
+        Recipes matching any keyword in keywords_to_compute_throughput_for will have throughput computed.
+        Recipes not matching will be marked as success if training job completes without computing throughput.
+        """
+        keywords = getattr(self.config, "keywords_to_compute_throughput_for", [])
+        if not keywords:
+            return True  # Default to computing throughput if no keywords configured
+
+        recipe_lower = recipe.lower()
+        return any(keyword.lower() in recipe_lower for keyword in keywords)
 
     def calculate_throughput_from_logs(self, logs, job_name, job_success_status=None, input_filename=None):
         """Parse throughput from dictionary pattern in logs and store in job recorder"""
@@ -141,12 +172,9 @@ class BaseLauncher(ABC):
                     throughput_data = self._parse_throughput_dict(dict_str)
 
                     if throughput_data:
-                        # Store throughput data in job recorder instead of writing CSV immediately
-                        self._store_throughput_data(throughput_data, job_name, job_success_status, input_filename)
-
                         # Return throughput value or "invalid" based on status
                         status = throughput_data.get("status", "").lower()
-                        if status == "invalid":
+                        if "invalid" in status:
                             self.logger.info(f"Job {job_name} has invalid status, returning 'invalid'")
                             return "invalid"
 

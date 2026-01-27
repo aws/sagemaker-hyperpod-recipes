@@ -1,7 +1,7 @@
 # VERL GRPO Training Recipe for Llama 3.3 70B Instruct Lora with RLVR
 # Based on AWS Bedrock VERL training configuration
 display_name: "Llama 3.3 70B Instruct GRPO RLVR Fine-Tuning"
-version: "1.0.0"
+version: "1.1.0"
 instance_types: ["ml.p5.48xlarge"]
 
 run:

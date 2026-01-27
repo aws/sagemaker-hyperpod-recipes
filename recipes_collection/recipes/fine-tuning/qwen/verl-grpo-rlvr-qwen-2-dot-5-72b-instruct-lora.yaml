@@ -1,7 +1,7 @@
 # VERL GRPO Training Recipe for Qwen/Qwen2.5-72B-Instruct with LoRA
 # Based on AWS Bedrock VERL training configuration
 display_name: "Qwen 2.5 72B GRPO RLVR Fine-Tuning with LoRA"
-version: "1.0.0"
+version: "1.1.0"
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
 
 run:
@@ -11,7 +11,7 @@ run:
 
 trainer:
   devices: 8
-  num_nodes: 2
+  num_nodes: 1
 
 ray_cluster:
   head_node:
@@ -21,7 +21,7 @@ ray_cluster:
     memoryLimit: null
     gpu: "0"
   worker_nodes:
-    replicas: 2
+    replicas: 1
     cpu: "48"
     memory: 144Gi
     cpuLimit: null
@@ -36,10 +36,10 @@ training_config:
     actor:
       _target_: verl.workers.config.FSDPActorConfig
       strategy: fsdp2
-      ppo_mini_batch_size: 256
+      ppo_mini_batch_size: 32
       ppo_micro_batch_size: null
-      ppo_micro_batch_size_per_gpu: 16
-      use_dynamic_bsz: false
+      ppo_micro_batch_size_per_gpu: 2
+      use_dynamic_bsz: true
       ppo_max_token_len_per_gpu: 16384
       clip_ratio: 0.2
       clip_ratio_low: 0.2
@@ -76,7 +76,7 @@ training_config:
         - extra
         async_save: false
       optim:
-        lr: 3.0e-05
+        lr: 1.0e-05
         lr_warmup_steps_ratio: 0.0
         total_training_steps: -1
         weight_decay: 0.01
@@ -95,26 +95,28 @@ training_config:
         wrap_policy:
           min_num_params: 0
         param_offload: false
-        optimizer_offload: true
+        optimizer_offload: false
         offload_policy: false
         reshard_after_forward: true
         fsdp_size: -1
         forward_prefetch: false
+        model_dtype: bfloat16
       use_remove_padding: true
     ref:
       strategy: fsdp
       use_torch_compile: true
       log_prob_micro_batch_size: null
       log_prob_micro_batch_size_per_gpu: 16
-      log_prob_use_dynamic_bsz: false
+      log_prob_use_dynamic_bsz: true
       log_prob_max_token_len_per_gpu: 16384
       fsdp_config:
         _target_: verl.workers.config.FSDPEngineConfig
         wrap_policy:
           min_num_params: 0
-        param_offload: false
+        param_offload: true
         reshard_after_forward: true
         forward_prefetch: false
+        model_dtype: bfloat16
       ulysses_sequence_parallel_size: 1
       entropy_from_logits_with_chunking: false
       entropy_checkpointing: false
@@ -124,24 +126,24 @@ training_config:
       temperature: 1.0
       top_k: -1
       top_p: 1
-      prompt_length: 1024
+      prompt_length: 512
       response_length: 1024
       dtype: bfloat16
       gpu_memory_utilization: 0.6
       ignore_eos: false
-      enforce_eager: true
+      enforce_eager: false
       free_cache_engine: true
-      tensor_model_parallel_size: 8
+      tensor_model_parallel_size: 4
       max_num_batched_tokens: 8192
       max_model_len: null
       max_num_seqs: 1024
       log_prob_micro_batch_size: null
       log_prob_micro_batch_size_per_gpu: 16
-      log_prob_use_dynamic_bsz: false
+      log_prob_use_dynamic_bsz: true
       log_prob_max_token_len_per_gpu: 16384
       disable_log_stats: true
       do_sample: true
-      'n': 6
+      'n': 8
       multi_stage_wake_up: false
       engine_kwargs:
         vllm:
@@ -180,8 +182,8 @@ training_config:
         token2text: false
       enable_chunked_prefill: false
       load_format: safetensors
-      layered_summon: true
-      merge_lora_for_inference: true
+      layered_summon: false
+      merge_lora_for_inference: false
     hybrid_engine: true
     model:
       path: Qwen/Qwen2.5-72B-Instruct
@@ -193,7 +195,7 @@ training_config:
       enable_activation_offload: false
       use_remove_padding: true
       lora_rank: 32
-      lora_alpha: 32
+      lora_alpha: 64
       target_modules: all-linear
       exclude_modules: null
       use_liger: false
@@ -222,7 +224,7 @@ training_config:
         with_stack: false
         analysis: true
     balance_batch: true
-    total_epochs: 1
+    total_epochs: 2
     total_training_steps: null
     profile_steps: null
     controller_nsight_options:
@@ -237,14 +239,14 @@ training_config:
       capture-range-end: null
       kill: none
     project_name: rlvr_grpo_gsm8k
-    experiment_name: qwen2.5-72b-instruct-lora_grpo-20251014.000230
+    experiment_name: qwen2.5-72b-instruct-lora_grpo-20251113.215857
     logger:
     - console
     - mlflow
     log_val_generations: 0
     rollout_data_dir: null
     validation_data_dir: null
-    nnodes: 2
+    nnodes: 1
     n_gpus_per_node: 8
     save_freq: 20
     esi_redundant_time: 0
@@ -276,9 +278,9 @@ training_config:
     split_seed: 42
     prompt_key: prompt
     reward_fn_key: data_source
-    max_prompt_length: 1024
+    max_prompt_length: 512
     max_response_length: 1024
-    train_batch_size: 256
+    train_batch_size: 128
     val_batch_size: 256
     return_raw_input_ids: false
     return_raw_chat: false
@@ -286,6 +288,7 @@ training_config:
     shuffle: false
     dataloader_num_workers: 8
     validation_shuffle: false
+    chat_template_kwargs: {}
     filter_overlong_prompts: true
     filter_overlong_prompts_workers: 1
     truncation: error
@@ -343,7 +346,7 @@ training_config:
     ppo_mini_batch_size: 256
     ppo_micro_batch_size: null
     ppo_micro_batch_size_per_gpu: null
-    use_dynamic_bsz: false
+    use_dynamic_bsz: true
     ppo_max_token_len_per_gpu: 32768
     forward_max_token_len_per_gpu: 32768
     ppo_epochs: 1
@@ -392,7 +395,7 @@ training_config:
     micro_batch_size: null
     micro_batch_size_per_gpu: null
     max_length: null
-    use_dynamic_bsz: false
+    use_dynamic_bsz: true
     forward_max_token_len_per_gpu: 32768
     reward_manager: prime
     launch_reward_fn_async: true

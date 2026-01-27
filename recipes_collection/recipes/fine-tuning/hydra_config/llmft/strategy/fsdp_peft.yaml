@@ -1,0 +1,11 @@
+# @package recipes.training_config.training_args.strategy
+fsdp_config:
+  auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  backward_prefetch: BACKWARD_PRE
+  cpu_ram_efficient_loading: true
+  cpu_offload: false
+  forward_prefetch: false
+  sharding_strategy: HYBRID_SHARD
+  state_dict_type: SHARDED_STATE_DICT
+  sync_module_states: true
+  use_orig_params: true

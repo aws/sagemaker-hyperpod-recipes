@@ -35,6 +35,9 @@ def test_configuration_files():
         if not path.is_file():
             continue
 
+        if "hydra_config" in str(path):
+            continue
+
         # Hydra requires relative path definition
         file_path: str = "../" + str(path.relative_to(ROOT_DIR).parent)
         config = make_hydra_cfg_instance(file_path, path.name)

@@ -13,6 +13,8 @@ hydra:
   run:
     dir: .
   output_subdir: null
+  searchpath:
+    - file://recipes_collection/recipes/fine-tuning
 
 debug: False
 dry_run: false

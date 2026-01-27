@@ -2,14 +2,17 @@
 
 # Original Copyright (c), NVIDIA CORPORATION. Modifications © Amazon.com
 
-#Users should setup their cluster type in /recipes_collection/config.yaml
+# AUTO-GENERATED SCRIPT - DO NOT EDIT MANUALLY
+# See scripts/launcher_scripts_generator/README.md for customization instructions.
+
+# Users should setup their cluster type in /recipes_collection/config.yaml
 
 SAGEMAKER_TRAINING_LAUNCHER_DIR=${SAGEMAKER_TRAINING_LAUNCHER_DIR:-"$(pwd)"}
 
 TRAIN_DIR=${TRAIN_DIR} # Location of training dataset
-VAL_DIR=${VAL_DIR} # Location of talidation dataset
+VAL_DIR=${VAL_DIR} # Location of validation dataset
 
-EXP_DIR=${EXP_DIR} # Location to save experiment info including logging, checkpoints, ect
+EXP_DIR=${EXP_DIR} # Location to save experiment info including logging, checkpoints, etc.
 
 
 HYDRA_FULL_ERROR=1 python3 ${SAGEMAKER_TRAINING_LAUNCHER_DIR}/main.py \

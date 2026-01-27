@@ -111,9 +111,8 @@ if __name__ == "__main__":
     parser.add_argument("--lambda-name", required=True, help="Lambda function name")
     args = parser.parse_args()
 
-    # Configure the inbuilt retry behavior
-    config = Config(retries=dict(max_attempts=3, mode="standard"), read_timeout=960)  # 16 minutes
-
+    # Disable retries completely
+    config = Config(retries={"max_attempts": 1, "mode": "standard"}, read_timeout=960)  # 16 minutes
     lambda_client = boto3.client("lambda", region_name=region, config=config)
     recipe_metadata = args.metadata
 

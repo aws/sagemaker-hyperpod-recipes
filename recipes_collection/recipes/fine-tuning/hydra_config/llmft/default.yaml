@@ -1,0 +1,16 @@
+# @package recipes
+run:
+  name: ???  # Required - must be set by each recipe
+  results_dir: ${base_results_dir}/${.name}
+  model_type: llm_finetuning_aws
+  hf_access_token: null
+
+trainer:
+  devices: 8
+  num_nodes: 1
+
+training_config:
+  mlflow:
+    tracking_uri: ""
+    run_id: ""
+  force_rerun: false

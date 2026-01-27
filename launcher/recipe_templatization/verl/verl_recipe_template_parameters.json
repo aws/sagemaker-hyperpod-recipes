@@ -711,7 +711,6 @@
                     },
                     "custom_reward_function": {
                         "name": "{{preset_reward_function}}",
-                        "path": "{{reward_lambda_arn}}",
                         "lambda_arn": "{{reward_lambda_arn}}"
                     },
                     "mlflow": {

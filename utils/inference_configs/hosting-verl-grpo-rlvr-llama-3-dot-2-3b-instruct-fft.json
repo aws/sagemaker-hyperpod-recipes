@@ -1,0 +1,37 @@
+[
+  {
+    "InstanceType": "ml.g6e.48xlarge",
+    "Profile": "Default",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+    "Environment": {
+      "OPTION_TENSOR_PARALLEL_DEGREE": "8",
+      "OPTION_ROLLING_BATCH": "disable",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "8",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1024000,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  },
+  {
+    "InstanceType": "ml.p5.48xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+    "Environment": {
+      "OPTION_TENSOR_PARALLEL_DEGREE": "8",
+      "OPTION_ROLLING_BATCH": "disable",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "8",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1539316,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  }
+]

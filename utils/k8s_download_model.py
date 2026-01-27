@@ -1,54 +1,70 @@
 #!/usr/bin/env python3
 """
-Script to run on K8s pod to download HuggingFace models
-Usage: python3 k8s_download_model.py <model_name> <save_path> [hf_token]
+Script to run on K8s pod to download models from S3 JumpStart cache
+Usage: python3 k8s_download_model.py <jumpstart_model_id> <save_path>
 """
 
 import logging
 import os
+import subprocess
 import sys
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
+S3_COMMAND_TEMPLATE = (
+    "aws sagemaker describe-hub-content "
+    "--hub-name SageMakerPublicHub "
+    "--hub-content-name {model_id} "
+    "--hub-content-type Model "
+    "--query HubContentDocument "
+    "--output text | jq -r .{field}"
+)
 
-def get_huggingface_hub():
+
+# S3 bucket configuration
+def get_s3_bucket(jumpstart_model_id):
     try:
-        import huggingface_hub
+        cmd = S3_COMMAND_TEMPLATE.format(model_id=jumpstart_model_id, field="TrainingArtifactUri")
+        result = subprocess.check_output(cmd, shell=True, text=True).strip()
+        print("Result of training artifact: " + result)
 
-        return huggingface_hub
-    except ImportError:
-        logging.error("huggingface_hub not installed. Please install huggingface_hub")
+        # if trainingArtifactUri is null or ends in .tar.gz fall back to hostingArtifactUri
+        if "s3" not in result or result.endswith(".tar.gz"):
+            cmd = S3_COMMAND_TEMPLATE.format(model_id=jumpstart_model_id, field="HostingArtifactUri")
+            result = subprocess.check_output(cmd, shell=True, text=True).strip()
+            print("Result of hosting artifact: " + result)
+
+        return result
+
+    except subprocess.CalledProcessError as e:
+        print("Model id {jumpstart_model_id} s3 path was unable to be found")
+        print("Error: " + e)
+        return None
 
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: python3 k8s_download_model.py <model_name> <save_path> [hf_token]")
+        print("Usage: python3 k8s_download_model.py <jumpstart_model_id> <save_path>")
         sys.exit(1)
 
-    model_name = sys.argv[1]
+    jumpstart_model_id = sys.argv[1]
     save_path = sys.argv[2]
-    hf_token = sys.argv[3]
 
-    # Install huggingface_hub if needed
-    hf_hub = get_huggingface_hub()
-
+    s3_source = get_s3_bucket(jumpstart_model_id)
     os.makedirs(save_path, exist_ok=True)
 
-    print(f"Downloading model: {model_name}")
+    print(f"Downloading model from S3: {s3_source}")
     print(f"Save path: {save_path}")
 
     try:
-        path = hf_hub.snapshot_download(
-            repo_id=model_name,
-            repo_type="model",
-            revision=None,
-            local_dir=save_path,
-            local_dir_use_symlinks=False,
-            token=hf_token,
-        )
-        print(f"Successfully downloaded model to: {path}")
+        cmd = ["aws", "s3", "sync", s3_source, save_path, "--no-progress"]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print(f"Successfully downloaded model to: {save_path}")
+
     except Exception as e:
-        print(f"Error downloading model: {e}")
+        print(f"Error downloading model from S3: {e}")
+        if e.stderr:
+            print(f"Error output: {e.stderr}")
         sys.exit(1)
 
 

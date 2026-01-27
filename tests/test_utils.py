@@ -162,8 +162,11 @@ def compare_files(file1_path, file2_path):
 
 def compose_hydra_cfg(config_path: str, config_name: str, overrides: List[Any] = []) -> DictConfig:
     """Init and compose a hydra config"""
+    hydra_config_path = ROOT_DIR / "recipes_collection" / "recipes" / "fine-tuning"
+    search_path_override = f"hydra.searchpath=[file://{hydra_config_path}]"
+    combined_overrides = [search_path_override] + overrides
     with initialize(version_base=None, config_path=config_path):
-        return compose(config_name=config_name, overrides=overrides, return_hydra_config=True)
+        return compose(config_name=config_name, overrides=combined_overrides, return_hydra_config=True)
 
 
 def make_hydra_cfg_instance(config_path: str, config_name: str, overrides=[]) -> DictConfig:

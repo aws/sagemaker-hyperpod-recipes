@@ -151,7 +151,7 @@ actor_rollout_ref:
       token2text: false
     enable_chunked_prefill: true
     load_format: safetensors
-    layered_summon: true
+    layered_summon: false
     merge_lora_for_inference: false
   hybrid_engine: true
   model:
@@ -248,7 +248,7 @@ data:
   split_seed: 42
   prompt_key: prompt
   reward_fn_key: data_source
-  max_prompt_length: 1024
+  max_prompt_length: 512
   max_response_length: 1024
   train_batch_size: '{{global_batch_size}}'
   val_batch_size: 256
@@ -301,7 +301,7 @@ critic:
     use_remove_padding: false
     fsdp_config:
       _target_: verl.workers.config.FSDPEngineConfig
-      param_offload: false
+      param_offload: true
       optimizer_offload: false
       offload_policy: false
       reshard_after_forward: true

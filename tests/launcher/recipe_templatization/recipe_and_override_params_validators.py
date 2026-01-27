@@ -81,7 +81,10 @@ def validate_recipe_fields_presence_in_training_yaml(
     # Nova PPO: Replica counts and top-level sections don't appear as keys in training-config.yaml
     # - Replica counts: meta-configuration for K8s job creation
     # - PPO sections: become separate ConfigMaps, content is merged into unified training_config
+    # Hydra: defaults directive is processed during composition and not in final output
     nova_ppo_exception_fields = {
+        # Hydra defaults directive - processed during composition, not in output
+        "defaults",
         # Replica count meta-fields
         "actor_train_replicas",
         "rm_replicas",

@@ -1,63 +1,177 @@
 # # Config file with common config information for validation scripts
 # # Edit this file with your custom content for custom validations
 
-platform: "SMJOBS" # SLURM, K8 OR SMJOBS
+platform: "SERVERLESS" # SLURM, K8, SMJOBS, OR SERVERLESS
 
 # Add the recipe file paths or folder paths which you'd like to test in the below list
 # Follow the same format as followed in launcher_scripts for the path where we start the
 # path from inside recipes_collection/recipes/
 # recipe_list: ["fine-tuning/llama/llmft_llama3_2_1b_instruct_seq4k_gpu_sft.yaml"]
-recipe_list: ["fine-tuning/deepseek/llmft_deepseek_r1_distilled_qwen_32b_seq4k_gpu_dpo.yaml"]
+recipe_list: []
 
-# Instance type override - if specified, will override the default instance_type in recipes_collection/config.yaml
-instance_type: "ml.p4de.24xlarge"  # Optional: p5.48xlarge, p4d.24xlarge, etc.
+# Instance types to test - validation will run for each instance type in this list
+# Each instance type will be tested with the same recipe list via multithreading
+# Empty to begin with so it can default to the recipe config's instance types
+instance_type_list:
+  # - "ml.p4d.24xlarge"
+  # - "ml.p4de.24xlarge"
+  # - "ml.p5.48xlarge"
+  # - "ml.g5.48xlarge"
 
-# Set model path here. Key should be the same
-# as the model_name in the recipe file and value should be the local path
-# similar to the example below. The model folder itself should follow HF convention :- repo_owner/model_name
+# ============================================================================
+# RECIPE TYPE CONFIGURATION (Add new recipe types here without code changes)
+# ============================================================================
+# This section defines all recipe types and their detection logic.
+# To add a new recipe type, simply add a new entry here with:
+#   - detection_keywords: List of keywords to identify this recipe type in filenames
+#                         A recipe matches if ANY keyword is found in the filename
+#   - model_config_key: Key to use in the 'models' section
+#   - container_key: Key to use in the 'container_info' section
+#   - recipe_structure: Either 'verl' or 'llmft' - defines how to read recipe files
+#                       and construct launch commands
+#
+# IMPORTANT: Order matters! Recipe types are checked from top to bottom.
+#            Place more specific types first (e.g., 'verl' before 'lora').
+#            The first matching recipe type is used.
+recipe_type_config:
+  verl:
+    detection_keywords: ["verl"]
+    model_config_key: "verl"
+    container_key: "verl"
+    recipe_structure: "verl"
+  vision:
+    detection_keywords: ["vision"]
+    model_config_key: "default"
+    container_key: "llmft"
+    recipe_structure: "llmft"
+  dpo:
+    detection_keywords: ["dpo"]
+    model_config_key: "default"
+    container_key: "llmft"
+    recipe_structure: "llmft"
+  sft:
+    detection_keywords: ["lora", "sft", "fft"]  # Common LLMFT patterns
+    model_config_key: "default"
+    container_key: "llmft"
+    recipe_structure: "llmft"
+
+# Set model path here. Key should match the 'model_config_key' in recipe_type_config
+# Value should be the local path. The model folder itself should follow HF convention: repo_owner/model_name
 models:
   verl:
-    model_parent_folder: ""
+    k8: "/data/hf_pretrained_models/"
+    smjobs: "s3://hyperpod-recipes-validation-artifacts/model_files/huggingface_model_files"
+    # FSx paths - used when smjobs.use_fsx is true
+    smjobs_fsx:
+      model_parent_folder: "/opt/ml/input/data/training/hp-recipe-validator/models"
   default:
-    model_parent_folder: ""
+    k8: "/data/hp-recipe-validator/models/"
+    smjobs: "s3://hyperpod-recipes-validation-artifacts/model_files/huggingface_model_files"
+    # FSx paths - used when smjobs.use_fsx is true
+    smjobs_fsx:
+      model_parent_folder: "/opt/ml/input/data/training/hp-recipe-validator/models"
 
-# Key should be same as the job type in the recipe file name *_jobtype.yaml. Ex: *lora.yaml
-dataset_keys:
+datasets:
+  pokemon:
+    k8:
+      train_data_name: "pokemon-train"
+      train_data_dir: "/data/hp-recipe-validator/datasets/pokemon/train"
+      val_data_name: "pokemon-val"
+      val_data_dir: "/data/hp-recipe-validator/datasets/pokemon/validation"
+    smjobs:
+      train_data_name: "pokemon-train"
+      train_data_dir: "s3://hyperpod-recipes-validation-artifacts/datasets/pokemon/train"
+      val_data_name: "pokemon-val"
+      val_data_dir: "s3://hyperpod-recipes-validation-artifacts/datasets/pokemon/validation"
+    # FSx paths - used when smjobs.use_fsx is true
+    smjobs_fsx:
+      train_data_name: "pokemon-train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/pokemon/train"
+      # llama 90b vision
+      # train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/pokemon_sample_100/train"
+      val_data_name: "pokemon-val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/pokemon/validation"
+      # llama 90b vision
+      # val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/pokemon_sample_100/validation"
+  gsm8k:
+    k8:
+      train_data_name: "gsm8k_train"
+      train_data_dir: "/data/datasets/gsm8k/train.parquet"
+      val_data_name: "gsm8k_val"
+      val_data_dir: "/data/datasets/gsm8k/test.parquet"
+    smjobs:
+      train_data_name: "gsm8k_train"
+      train_data_dir: "s3://hyperpod-recipes-validation-artifacts/datasets/gsm8k/train.parquet"
+      val_data_name: "gsm8k_val"
+      val_data_dir: "s3://hyperpod-recipes-validation-artifacts/datasets/gsm8k/test.parquet"
+    # FSx paths - used when smjobs.use_fsx is true
+    smjobs_fsx:
+      train_data_name: "gsm8k_train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/gsm8k/train.parquet"
+      val_data_name: "gsm8k_val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/gsm8k/test.parquet"
+  panda:
+    smjobs:
+      train_data_name: "panda_train"
+      train_data_dir: "s3://hyperpod-recipes-validation-artifacts/datasets/panda/train_with_question.jsonl"
+      val_data_name: "panda_val"
+      val_data_dir: "s3://hyperpod-recipes-validation-artifacts/datasets/panda/val_test_with_question.jsonl"
+    # FSx paths - used when smjobs.use_fsx is true
+    smjobs_fsx:
+      train_data_name: "panda_train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/PandaLMSmall/train_with_question.jsonl"
+      val_data_name: "panda_val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/PandaLMSmall/val_test_with_question.jsonl"
+  tatqa:
+    k8:
+      train_data_name: "tatqa_train"
+      train_data_dir: "/data/hp-recipe-validator/datasets/tat_qa/zc_train_10k.jsonl"
+      val_data_name: "tatqa_val"
+      val_data_dir: "/data/hp-recipe-validator/datasets/tat_qa/zc_dev.jsonl"
+    smjobs:
+      train_data_name: "tatqa_train"
+      train_data_dir: "s3://hyperpod-recipes-validation-artifacts/datasets/tatqa/zc_train_10k.jsonl"
+      val_data_name: "tatqa_val"
+      val_data_dir: "s3://hyperpod-recipes-validation-artifacts/datasets/tatqa/zc_dev.jsonl"
+    # FSx paths - used when smjobs.use_fsx is true
+    smjobs_fsx:
+      train_data_name: "tatqa_train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/tatqa/zc_train_10k.jsonl"
+      val_data_name: "tatqa_val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/tatqa/zc_dev.jsonl"
+  ultra_feedback:
+    k8:
+      train_data_name: "ultra-feedback-train"
+      train_data_dir: "/data/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_train.jsonl"
+      val_data_name: "ultra-feedback-val"
+      val_data_dir: "/data/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_val.jsonl"
+    smjobs:
+      train_data_name: "ultra-feedback-train"
+      train_data_dir: "s3://hyperpod-recipes-validation-artifacts/datasets/ultra_feedback/preference_dataset_train.jsonl"
+      val_data_name: "ultra-feedback-val"
+      val_data_dir: "s3://hyperpod-recipes-validation-artifacts/datasets/ultra_feedback/preference_dataset_val.jsonl"
+    # FSx paths - used when smjobs.use_fsx is true
+    smjobs_fsx:
+      train_data_name: "ultra-feedback-train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_train.jsonl"
+      val_data_name: "ultra-feedback-val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_val.jsonl"
+
+# Contains the datasets available based on recipe type and platform. Add new entries to the `datasets` field and update here
+# for usage in validation runs
+recipe_dataset_mapping:
   vision:
-    train_data_name: "pokemon-train"
-    train_data_dir: ""
-    val_data_name: "pokemon-val"
-    val_data_dir: ""
-  ppo:
-    train_data_name: "gsm8k_train"
-    train_data_dir: ""
-    val_data_name: "gsm8k_val"
-    val_data_dir: ""
-  grpo:
-    train_data_name: "gsm8k_train"
-    train_data_dir: ""
-    val_data_name: "gsm8k_val"
-    val_data_dir: ""
-  verl-smjobs:
-    train_data_name: "gsm8k_train"
-    train_data_dir: ""
-    val_data_name: "gsm8k_val"
-    val_data_dir: ""
-  verl-smjobs-panda:
-    train_data_name: "panda_train"
-    train_data_dir: ""
-    val_data_name: "panda_val"
-    val_data_dir: ""
-  lora:
-    train_data_name: "tatqa_train"
-    train_data_dir: ""
-    val_data_name: "tatqa_val"
-    val_data_dir: ""
+    k8: ["pokemon"]
+    smjobs: ["pokemon"]
+  verl:
+    k8: ["gsm8k"]
+    smjobs: ["panda", "gsm8k"]
+  sft:
+    k8: ["tatqa"]
+    smjobs: ["tatqa"]
   dpo:
-    train_data_name: "ultra-feedback-train"
-    train_data_dir: ""
-    val_data_name: "ultra-feedback-val"
-    val_data_dir: ""
+    k8: ["ultra_feedback"]
+    smjobs: ["ultra_feedback"]
 
 # Specify HuggingFace access token here if the models are gated
 hf:
@@ -65,16 +179,16 @@ hf:
 
 entry_module: amzn_awsllm_fine_tuning.train_hp
 
-# Key should be the recipe file name if you have a custom container
+# Key should match the 'container_key' in recipe_type_config
 container_info:
-  default:
-    container_path: ""
+  llmft:
+    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+    smjobs: "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+    # llama 90b vision
+    # smjobs: "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0-llama"
   verl:
-    container_path: ""
-  verl_smjobs:
-    container_path: ""
-
-experiment_dir: "/opt/ml/model"
+    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
+    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
 
 git:
   use_default: false
@@ -83,20 +197,253 @@ git:
 k8:
   general_pod: "k8s-sleeper-faraday-0"
 
-base_results_dir: "./results"
+# Keywords to determine which recipes should have throughput computed
+# Recipes matching these keywords will have throughput calculated and reported
+# Recipes not matching will be marked success if training job completes successfully
+keywords_to_compute_throughput_for:
+  - "llmft"
+
+# SM Jobs output configuration
+# NOTE: The output_path below is used as the BASE path for output artifacts.
+# The actual output path is constructed dynamically based on:
+#   - jumpstart_model_id: Looked up from launcher/recipe_templatization/jumpstart_model-id_map.json
+#                         using the recipe's run.name field as the key
+#   - training_type: Detected from recipe filename (SFT, DPO, RLVR, or RLAIF)
+#
+# Final output path structure:
+#   <output_path>/<jumpstart_model_id>/<training_type>/
+#
+# Example:
+#   Base path: s3://hyperpod-recipes-validation-artifacts/validation_run
+#   Recipe: llmft_llama3_2_1b_instruct_seq4k_gpu_sft_lora.yaml (run.name = "llama-3-2-1b-instruct")
+#   Result: s3://hyperpod-recipes-validation-artifacts/validation_run/meta-textgeneration-llama-3-2-1b-instruct/SFT/
+#
+# This creates a folder structure like:
+#   /meta-textgeneration-llama-3-1-8b-instruct
+#      ├──────SFT/
+#      ├──────DPO/
+#      ├──────RLVR/
+#      └──────RLAIF/
+#   /meta-textgeneration-llama-3-2-1b-instruct
+#      ├──────SFT/
+#      ├──────DPO/
+#      ├──────RLVR/
+#      └──────RLAIF/
+smjobs:
+  output_path: "s3://hyperpod-recipes-validation-artifacts/validation_run"
+  # Set use_fsx to true to use FSx Lustre instead of S3 for inputs
+  use_fsx: true
+  # FSx Lustre configuration - required when use_fsx is true
+  file_system:
+    id: "fs-079b3411789c02c3f"
+    type: "FSxLustre"
+    directory_path: "/olyr5bev"
+  # VPC configuration - required for FSx access
+  vpc:
+    subnets: ["subnet-0193afce112b25931"]
+    security_group_ids: ["sg-0cd8958d241530753"]
+
+# ============================================================================
+# SERVERLESS VALIDATION MAPPINGS
+# ============================================================================
+# These mappings are used by the serverless launcher for model customization jobs
+
+# Dataset ARN mappings by customization technique
+serverless_dataset_mapping:
+  SFT: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-sft/0.0.1"
+  # SFT for Vision models: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-vision-sft/0.0.1"
+  DPO: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-dpo"
+  RLVR: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-rlvr"
+  RLAIF: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-rlaif"
+
+# Evaluator ARN mappings by customization technique
+serverless_evaluator_mapping:
+  RLVR: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/JsonDoc/gsm-8k-evaluator/0.0.3"
+  RLAIF: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/JsonDoc/mc-reward-prompt-evaluator/0.0.1"
+
+# MLflow ARN mappings by customization technique
+serverless_mlflow_mapping:
+  SFT: "arn:aws:sagemaker:us-west-2:855988369404:mlflow-tracking-server/mlflow-rubikdev-tracking-server-pdx"
+  DPO: "arn:aws:sagemaker:us-west-2:855988369404:mlflow-tracking-server/mlflow-rubikdev-tracking-server-pdx"
+  RLVR: "arn:aws:sagemaker:us-west-2:855988369404:mlflow-tracking-server/mlflow-rubikdev-tracking-server-pdx"
+  RLAIF: "arn:aws:sagemaker:us-west-2:855988369404:mlflow-tracking-server/mlflow-rubikdev-tracking-server-pdx"
 
 # Add any additional run specific launch_config/overrides you would like to include in the call to main.py
-additional_launch_config:
-  'lora':
-    'ListConfig':
-      recipes.training_config.datasets.preprocessor_cfgs:
-        type: PadProcessor
-        input_id_keys: '[input_ids]'
-        mask_keys: '[attention_masks]'
-        label_keys: '[labels]'
-        target_length: 4096
+# Keys can be either:
+#   - A single keyword (e.g., 'lora')
+#   - Multiple keywords separated by '+' for AND logic (e.g., 'sft+lora' means filename must contain BOTH 'sft' AND 'lora')
+# ALL keywords must match for the config to be applied
+additional_launch_config: null
+  # 'llmft+sft+lora':  # Only applies to SFT lora recipes (not DPO lora, not FFT, etc.)
+  #   'ListConfig':
+  #     recipes.training_config.datasets.preprocessor_cfgs:
+  #       type: PadProcessor
+  #       input_id_keys: '[input_ids]'
+  #       mask_keys: '[attention_masks]'
+  #       label_keys: '[labels]'
+  #       target_length: 4096
+  # 'llmft+sft+fft':  # Only applies to SFT lora recipes (not DPO lora, not FFT, etc.)
+  #   'ListConfig':
+  #     recipes.training_config.datasets.preprocessor_cfgs:
+  #       type: PadProcessor
+  #       input_id_keys: '[input_ids]'
+  #       mask_keys: '[attention_masks]'
+  #       label_keys: '[labels]'
+  #       target_length: 4096
 
+# ============================================================================
+# RECIPE STRUCTURE CONFIGURATION (Recipe-structure-specific launch commands)
+# ============================================================================
+# Defines how to interact with each recipe structure type.
+# Recipe-structure-specific commands are defined here, while platform-common
+# commands remain in code.
+serverless_config:
+  endpoint: "https://api.sagemaker.beta.us-west-2.ml-platform.aws.a2z.com" # "https://api.sagemaker.gamma.us-east-1.ml-platform.aws.a2z.com"
+  region: "us-west-2"
+  role_arn: "arn:aws:iam::855988369404:role/MCServerlessExecutionRole"
+  s3_output_path: "s3://mc-rubik-serverless-output/model-customization-algo/"
+  max_runtime_seconds: 10000
+  mlflow_arn: "arn:aws:sagemaker:us-west-2:855988369404:mlflow-tracking-server/mlflow-rubikdev-tracking-server-pdx"
+  model_package_group_arn: "arn:aws:sagemaker:us-west-2:855988369404:model-package-group/MyModelPackageGroup" # "arn:aws:sagemaker:us-west-2:855988369404:model-package-group/mcrubikserverlessmpg"
+  # Hub configuration for model ARN construction
+  hub_name: "TestPrivateHub"
+  hub_account_id: "855988369404"
+  model_version: ""
+  # Default hyper-parameters for serverless jobs
+  default_hyper_parameters:
+    max_epochs: "1"
+    judge_model_id: "bedrock/openai.gpt-oss-120b-1:0"
+  # CloudWatch configuration for log validation
+  cloudwatch_log_group: "/aws/sagemaker/TrainingJobs"
 
-s3:
-  models: ""
-  validation_output_folder: ""
+recipe_structure_config:
+  verl:
+    # Path to model name within recipe YAML (dot notation)
+    model_path_in_recipe: "training_config.actor_rollout_ref.model.path"
+
+    # Launch command templates (support {variable} substitution)
+    launch_commands:
+      common:  # Commands added for all platforms
+        - "recipes.training_config.data.train_files='{train_data_dir}'"
+        - "recipes.training_config.data.val_files='{val_data_dir}'"
+        - "recipes.training_config.actor_rollout_ref.model.path='{local_model_name_or_path}'"
+        - "recipes.training_config.trainer.default_local_dir='/opt/ml/model'"
+        - "++recipes.training_config.critic.model.path=/data/hf_pretrained_models/deepseek-llm-7b-chat"
+        - "++recipes.training_config.critic.model.tokenizer_path='{local_model_name_or_path}'"
+        - "++recipes.training_config.reward_model.model.path=/data/hf_pretrained_models/FsfairX-LLaMA3-RM-v0.1"
+        - "++recipes.training_config.reward_model.model.input_tokenizer='{local_model_name_or_path}'"
+        - "container='{container_path}'"
+
+      k8:  # K8-specific commands
+        - "+cluster.ray.enabled=true"
+        - "cluster.namespace=ray-training"
+        - "+cluster.persistent_volume_claims.0.claimName=fsx-pvc-aps1"
+
+      smjobs:  # SM Jobs-specific commands (S3 mode)
+        - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
+        - "++cluster.sm_jobs_config.inputs.file_system=null"
+        - "cluster.sm_jobs_config.output_path={s3_output_path}"
+        - "cluster.sm_jobs_config.tensorboard_config=''"
+        - "cluster.sm_jobs_config.wait=False"
+        - "cluster.sm_jobs_config.additional_estimator_kwargs.max_run=86400"
+
+      smjobs_fsx:  # SM Jobs FSx-specific commands (FSx mode)
+        - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
+        - "++cluster.sm_jobs_config.inputs.s3=null"
+        - "cluster.sm_jobs_config.output_path={s3_output_path}"
+        - "cluster.sm_jobs_config.tensorboard_config=''"
+        - "cluster.sm_jobs_config.wait=False"
+        - "cluster.sm_jobs_config.additional_estimator_kwargs.max_run=86400"
+
+    # SM Jobs-specific overrides (path remapping for /opt/ml/input/data) - S3 mode
+    smjobs_overrides:
+      inputs.s3.{model_name}: "{model_s3_path}"
+      recipe_overrides.training_config.data.train_files: "{train_data_dir}"
+      recipe_overrides.training_config.data.val_files: "{val_data_dir}"
+      recipe_overrides.training_config.actor_rollout_ref.model.path: "/opt/ml/input/data/{model_name}"
+      recipe_overrides.training_config.critic.model.path: "/opt/ml/input/data/models/deepseek-ai/deepseek-llm-7b-chat"
+      recipe_overrides.training_config.critic.model.tokenizer_path: "/opt/ml/input/data/models/{model_name}"
+      recipe_overrides.training_config.reward_model.model.path: "/opt/ml/input/data/models/sfairXC/FsfairX-LLaMA3-RM-v0.1"
+      recipe_overrides.training_config.reward_model.model.input_tokenizer: "/opt/ml/input/data/{model_name}"
+      recipe_overrides.training_config.custom_reward_function.lambda_arn: ""
+
+    # SM Jobs FSx-specific overrides - uses FSx paths from smjobs_fsx config keys
+    # {local_model_name_or_path}, {train_data_dir}, {val_data_dir}, {model_parent_folder} are populated
+    # from smjobs_fsx sections when use_fsx is true
+    smjobs_fsx_overrides:
+      recipe_overrides.run.results_dir: "/opt/ml/model"
+      recipe_overrides.training_config.data.train_files: "{train_data_dir}"
+      recipe_overrides.training_config.data.val_files: "{val_data_dir}"
+      recipe_overrides.training_config.actor_rollout_ref.model.path: "{local_model_name_or_path}"
+      recipe_overrides.training_config.critic.model.path: "{model_parent_folder}/deepseek-ai/deepseek-llm-7b-chat"
+      recipe_overrides.training_config.critic.model.tokenizer_path: "{local_model_name_or_path}"
+      recipe_overrides.training_config.reward_model.model.path: "{model_parent_folder}/sfairX/FsfairX-LLaMA3-RM-v0.1"
+      recipe_overrides.training_config.reward_model.model.input_tokenizer: "{local_model_name_or_path}"
+      recipe_overrides.training_config.custom_reward_function.lambda_arn: ""
+
+  llmft:
+    # Path to model name within recipe YAML (dot notation)
+    model_path_in_recipe: "training_config.model_config.model_name_or_path"
+
+    # Launch command templates (support {variable} substitution)
+    launch_commands:
+      common:  # Commands added for all platforms
+        - "recipes.training_config.training_args.training_dir=/opt/ml/model"
+        - "recipes.run.hf_access_token='{hf_access_token}'"
+        - "recipes.training_config.model_config.model_name_or_path='{local_model_name_or_path}'"
+        - "recipes.training_config.datasets.train_data.name='{train_data_name}'"
+        - "recipes.training_config.datasets.train_data.file_path='{train_data_dir}'"
+        - "recipes.training_config.datasets.train_data.limit=150"
+        - "recipes.training_config.datasets.val_data.name='{val_data_name}'"
+        - "recipes.training_config.datasets.val_data.file_path='{val_data_dir}'"
+        - "recipes.training_config.datasets.val_data.limit=50"
+        - "recipes.training_config.training_args.max_epochs=1"
+        - "container='{container_path}'"
+        - "+entry_module='{entry_module}'"
+        - "recipes.training_config.datasets.save_intermediate_processing_steps=true"
+
+      k8:  # K8-specific commands
+        - "+cluster.persistent_volume_claims.0.claimName=fsx-claim"
+
+      smjobs:  # SM Jobs-specific commands (S3 mode)
+        - "+model.model_type=llm_finetuning_aws"
+        - "cluster.sm_jobs_config.inputs.file_system=''"
+        - "cluster.sm_jobs_config.output_path={s3_output_path}"
+        - "cluster.sm_jobs_config.tensorboard_config=''"
+        - "cluster.sm_jobs_config.wait=False"
+        - "cluster.sm_jobs_config.additional_estimator_kwargs.max_run=30000"
+
+      smjobs_fsx:  # SM Jobs FSx-specific commands (FSx mode)
+        - "+model.model_type=llm_finetuning_aws"
+        - "++cluster.sm_jobs_config.inputs.s3=null"
+        - "cluster.sm_jobs_config.output_path={s3_output_path}"
+        - "cluster.sm_jobs_config.tensorboard_config=''"
+        - "cluster.sm_jobs_config.wait=False"
+        - "cluster.sm_jobs_config.additional_estimator_kwargs.max_run=30000"
+
+    # SM Jobs-specific overrides (path remapping for /opt/ml/input/data) - S3 mode
+    smjobs_overrides:
+      inputs.s3.train: "{train_data_dir}"
+      inputs.s3.validation: "{val_data_dir}"
+      inputs.s3.{model_name}: "{model_s3_path}"
+      recipe_overrides.run.results_dir: "/opt/ml/model"
+      recipe_overrides.training_config.datasets.train_data.name: "{train_data_name}"
+      recipe_overrides.training_config.datasets.train_data.file_path: "/opt/ml/input/data/train"
+      recipe_overrides.training_config.datasets.val_data.name: "{val_data_name}"
+      recipe_overrides.training_config.datasets.val_data.file_path: "/opt/ml/input/data/validation"
+      recipe_overrides.training_config.model_config.model_name_or_path: "/opt/ml/input/data/{model_name}"
+      additional_estimator_kwargs.image_uri: "{container_path}"
+
+    # SM Jobs FSx-specific overrides - uses FSx paths from smjobs_fsx config keys
+    # {local_model_name_or_path}, {train_data_dir}, {val_data_dir} are populated
+    # from smjobs_fsx sections when use_fsx is true
+    smjobs_fsx_overrides:
+      recipe_overrides.run.results_dir: "/opt/ml/model"
+      recipe_overrides.training_config.datasets.train_data.name: "{train_data_name}"
+      recipe_overrides.training_config.datasets.train_data.file_path: "{train_data_dir}"
+      recipe_overrides.training_config.datasets.val_data.name: "{val_data_name}"
+      recipe_overrides.training_config.datasets.val_data.file_path: "{val_data_dir}"
+      recipe_overrides.training_config.model_config.model_name_or_path: "{local_model_name_or_path}"
+      additional_estimator_kwargs.image_uri: "{container_path}"

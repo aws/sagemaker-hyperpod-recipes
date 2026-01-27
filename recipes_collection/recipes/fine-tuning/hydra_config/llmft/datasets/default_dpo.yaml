@@ -1,0 +1,32 @@
+# @package recipes.training_config.datasets
+save_intermediate_processing_steps: false
+
+train_data:
+  name: ""
+  file_path: ""
+  limit: null
+
+val_data:
+  name: ""
+  file_path: ""
+  limit: null
+
+train_val_split_ratio: 0.9
+train_val_split_seed: 42
+
+preprocessor_cfgs:
+  - type: TrainingPOSampleConverter
+    key_map:
+      chosen: chosen
+      rejected: rejected
+    prompt_key: prompt
+  - type: ApplyChatTemplate
+  - type: SelectColumns
+    selected_columns:
+      - prompt
+      - chosen
+      - rejected
+  - type: TokenizeSampleDPO
+    max_prompt_length: 2048
+    max_completion_length: 2048
+    add_special_tokens: false
