@@ -11,9 +11,19 @@ def list_recipes() -> List[Recipe]:
     if not os.path.exists(RECIPES_DIR):
         raise FileNotFoundError(f"Recipes directory not found: {RECIPES_DIR}")
 
+    # Skip __pycache__ and hydra_config directories
+    # hydra_config contains Hydra composition components, not standalone recipes
+    skip_dirs = {"__pycache__", "hydra_config"}
+
     recipes = []
-    for root, _, files in os.walk(RECIPES_DIR):
+    for root, dirs, files in os.walk(RECIPES_DIR):
+        # Prune directories we don't want to traverse
+        dirs[:] = [d for d in dirs if d not in skip_dirs]
+
         for f in files:
+            # Only include .yaml files
+            if not f.endswith(".yaml"):
+                continue
             abs_path = os.path.join(root, f)
             recipes.append(Recipe(abs_path))
     return recipes

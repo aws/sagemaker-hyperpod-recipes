@@ -1,6 +1,6 @@
 # VERL GRPO Training Recipe for Qwen2.5-7B-Instruct with RLVR
 display_name: "Qwen 2.5 7B GRPO RLVR Fine-Tuning"
-version: "1.0.0"
+version: "1.1.0"
 instance_types: ["ml.p5.48xlarge"]
 
 run:

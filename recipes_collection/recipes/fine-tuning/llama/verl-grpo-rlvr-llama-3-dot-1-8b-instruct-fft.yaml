@@ -1,6 +1,6 @@
 # VERL GRPO Training Recipe for Llama 3.1 8B with RLVR
 display_name: "Llama 3.1 8B GRPO RLVR Fine-Tuning"
-version: "1.0.0"
+version: "1.1.0"
 instance_types: ["ml.p5.48xlarge"]
 
 run:

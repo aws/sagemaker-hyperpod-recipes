@@ -1,0 +1,52 @@
+# @package recipes.training_config.training_args
+trainer_type: sft
+trainer_callbacks:
+  - _target_: metering_callback.MeteringCallback
+    output_path: "/opt/ml/metering"
+
+override_training_dir: true
+training_dir: ""
+seed: 42
+packing_samples: false
+ring_attn_size: 1
+ring_head_stride: 1
+pretrain_mode: false
+aux_loss_coef: 0
+
+learning_rate: 0.0001
+lr_warmup_ratio: 0.1
+weight_decay: 0.0
+adam_betas:
+  - 0.9
+  - 0.95
+lr_scheduler: cosine
+l2: 0.0
+
+gradient_clipping: true
+gradient_clipping_threshold: 1.0
+grad_accum_dtype: null
+gradient_checkpointing: true
+gradient_checkpointing_use_reentrant: false
+
+load_checkpoint: false
+resume_checkpoint_path: ""
+disable_ds_ckpt: true
+disable_fast_tokenizer: false
+
+micro_train_batch_size: 1
+train_batch_size: 8
+
+eval_steps: 0
+save_steps: 0
+save_hf_ckpt: true
+
+max_epochs: 5
+max_len: 4096
+max_norm: 1.0
+max_samples: 100000000.0
+max_ckpt_mem: 100000000.0
+max_ckpt_num: 3
+
+logging_steps: 1
+use_tensorboard: logs
+use_wandb: null

@@ -1,7 +1,7 @@
 # VERL GRPO Training Recipe for Deepseek R1 Distilled Qwen 7B with RLAIF
 # Based on AWS Bedrock VERL training configuration
 display_name: "Deepseek R1 Distilled Qwen 7B GRPO RLAIF Fine-Tuning with LoRA"
-version: "1.0.0"
+version: "1.1.0"
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge", "ml.p4d.24xlarge"]
 
 run:
@@ -39,8 +39,8 @@ training_config:
       ppo_mini_batch_size: 32
       ppo_micro_batch_size: null
       ppo_micro_batch_size_per_gpu: 2
-      use_dynamic_bsz: false
-      ppo_max_token_len_per_gpu: 16384
+      use_dynamic_bsz: true
+      ppo_max_token_len_per_gpu: 24576
       clip_ratio: 0.2
       clip_ratio_low: 0.2
       clip_ratio_high: 0.2
@@ -100,15 +100,15 @@ training_config:
         reshard_after_forward: true
         fsdp_size: -1
         forward_prefetch: false
-        model_dtype: null
+        model_dtype: bfloat16
       use_remove_padding: true
     ref:
       strategy: fsdp2
       use_torch_compile: true
       log_prob_micro_batch_size: null
       log_prob_micro_batch_size_per_gpu: 16
-      log_prob_use_dynamic_bsz: false
-      log_prob_max_token_len_per_gpu: 16384
+      log_prob_use_dynamic_bsz: true
+      log_prob_max_token_len_per_gpu: 24576
       fsdp_config:
         _target_: verl.workers.config.FSDPEngineConfig
         wrap_policy:
@@ -116,7 +116,7 @@ training_config:
         param_offload: true
         reshard_after_forward: true
         forward_prefetch: false
-        model_dtype: null
+        model_dtype: bfloat16
       ulysses_sequence_parallel_size: 1
       entropy_from_logits_with_chunking: false
       entropy_checkpointing: false
@@ -131,16 +131,16 @@ training_config:
       dtype: bfloat16
       gpu_memory_utilization: 0.6
       ignore_eos: false
-      enforce_eager: true
+      enforce_eager: false
       free_cache_engine: true
-      tensor_model_parallel_size: 1
+      tensor_model_parallel_size: 2
       max_num_batched_tokens: 8192
       max_model_len: null
       max_num_seqs: 1024
       log_prob_micro_batch_size: null
       log_prob_micro_batch_size_per_gpu: 16
-      log_prob_use_dynamic_bsz: false
-      log_prob_max_token_len_per_gpu: 16384
+      log_prob_use_dynamic_bsz: true
+      log_prob_max_token_len_per_gpu: 24576
       disable_log_stats: true
       do_sample: true
       'n': 8
@@ -183,7 +183,7 @@ training_config:
       enable_chunked_prefill: true
       load_format: safetensors
       layered_summon: false
-      merge_lora_for_inference: true
+      merge_lora_for_inference: false
     hybrid_engine: true
     model:
       path: deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
@@ -194,8 +194,8 @@ training_config:
       enable_gradient_checkpointing: true
       enable_activation_offload: false
       use_remove_padding: true
-      lora_rank: 128
-      lora_alpha: 256
+      lora_rank: 32
+      lora_alpha: 64
       target_modules: all-linear
       exclude_modules: null
       use_liger: false
@@ -280,7 +280,7 @@ training_config:
     reward_fn_key: data_source
     max_prompt_length: 1024
     max_response_length: 4096
-    train_batch_size: 256
+    train_batch_size: 128
     val_batch_size: null
     return_raw_input_ids: false
     return_raw_chat: false
@@ -288,6 +288,7 @@ training_config:
     shuffle: false
     dataloader_num_workers: 8
     validation_shuffle: false
+    chat_template_kwargs: {}
     filter_overlong_prompts: true
     filter_overlong_prompts_workers: 1
     truncation: error

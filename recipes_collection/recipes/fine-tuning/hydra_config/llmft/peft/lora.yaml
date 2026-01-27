@@ -1,0 +1,13 @@
+# @package recipes.training_config
+model_config:
+  peft_config:
+    peft_type: lora
+    target_modules: all-linear
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    bias: none
+    task_type: CAUSAL_LM
+    use_dora: false
+training_args:
+  merge_weights: true

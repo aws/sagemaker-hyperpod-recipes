@@ -1,7 +1,7 @@
 # VERL GRPO Training Recipe for Qwen 2.5 14B Instruct with RLAIF
 # Based on AWS Bedrock VERL training configuration
 display_name: "Qwen 2.5 14B GRPO RLAIF Fine-Tuning"
-version: "1.0.0"
+version: "1.1.0"
 instance_types: ["ml.p5.48xlarge"]
 
 run:

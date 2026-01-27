@@ -1,0 +1,15 @@
+# @package recipes.training_config.model_config
+model_name_or_path: Qwen/Qwen3-0.6B
+lora_checkpoint_file_path: null
+multimodal: false
+chat_template_key: null
+apply_chat_template: false
+device_map: null
+attn_implementation: sdpa
+generation_cfg:
+  max_new_tokens: 2048
+  temperature: 0.6
+  top_p: 0.9
+  do_sample: True
+  num_return_sequences: 1
+  num_parallel_jobs: 1

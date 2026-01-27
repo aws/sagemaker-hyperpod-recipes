@@ -9,8 +9,10 @@
 # Example run command :- python scripts/validations/run_validation.py --fileList fine-tuning/llama/filename
 
 import argparse
+import copy
 import logging
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 # Add parent directories to path for imports
@@ -21,14 +23,18 @@ from scripts.validations.job_recorder import JobRecorder
 from scripts.validations.validation_launchers import (
     K8sValidationLauncher,
     SageMakerJobsValidationLauncher,
+    ServerlessValidationLauncher,
     SlurmValidationLauncher,
 )
 from scripts.validations.validation_launchers.launcher_utils import (
-    COMMON_CONFIG,
+    COMMON_CONFIG_PATH,
     build_argument_parser,
     cleanup,
     get_input_recipes,
+    get_instance_types_from_recipe,
+    get_recipes_by_regex,
     group_recipes_by_model,
+    parse_instance_types,
     start_execution,
     validate_platform_auth,
 )
@@ -36,8 +42,25 @@ from scripts.validations.validation_launchers.launcher_utils import (
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
-def run_validation(cfg, fileList=None, save_model_files=True):
-    jobRecorder = JobRecorder()
+def run_validation(cfg, fileList=None, save_model_files=True, instance_type=None):
+    """
+    Run validation for a specific instance type.
+
+    Args:
+        cfg: Configuration object
+        fileList: List of recipe files to validate
+        save_model_files: Whether to keep model files after validation
+        instance_type: Optional instance type override (if None, uses cfg.instance_type)
+    """
+    # Set instance_type in config if provided
+    if instance_type:
+        cfg.instance_type = instance_type
+        logging.info(f"Running validation with instance type: {instance_type}")
+
+    # Create JobRecorder with instance_type and platform set
+    current_instance_type = instance_type or getattr(cfg, "instance_type", None)
+    current_platform = getattr(cfg, "platform", None)
+    jobRecorder = JobRecorder(instance_type=current_instance_type, platform=current_platform)
 
     # Verify environment
     if not validate_platform_auth(cfg):
@@ -62,6 +85,8 @@ def run_validation(cfg, fileList=None, save_model_files=True):
             launcher = SlurmValidationLauncher(jobRecorder, cfg)
         case "SMJOBS":
             launcher = SageMakerJobsValidationLauncher(jobRecorder, cfg)
+        case "SERVERLESS":
+            launcher = ServerlessValidationLauncher(jobRecorder, cfg)
     start_execution(model_groups, launcher)
 
     # Cleans resources no longer needed like model files etc
@@ -71,14 +96,178 @@ def run_validation(cfg, fileList=None, save_model_files=True):
     return jobRecorder
 
 
+# Default mock instance type for serverless platform (instance type is not used but required for config)
+SERVERLESS_MOCK_INSTANCE_TYPE = "serverless_mock_instance_type"
+
+
+def run_validation_for_all_instance_types(cfg, fileList=None, save_model_files=True):
+    """
+    Run validation for each instance type in instance_type_list concurrently.
+
+    Uses ThreadPoolExecutor to submit jobs to different instance types in parallel.
+    Each instance type gets its own copy of the config to avoid conflicts.
+
+    For SERVERLESS platform, instance types are not used, so we run validation only once
+    with a mock instance type to avoid triggering multiple duplicate jobs.
+
+    Args:
+        cfg: Configuration object
+        fileList: List of recipe files to validate
+        save_model_files: Whether to keep model files after validation
+
+    Returns:
+        dict: Dictionary mapping instance_type -> JobRecorder
+    """
+    # For SERVERLESS platform, instance types don't matter
+    # Run validation only once with a mock instance type
+    if cfg.platform == "SERVERLESS":
+        logging.info(
+            f"SERVERLESS platform detected - instance types are not used. "
+            f"Running validation once with mock instance type: {SERVERLESS_MOCK_INSTANCE_TYPE}"
+        )
+        cfg_copy = copy.deepcopy(cfg)
+        job_recorder = run_validation(cfg_copy, fileList, save_model_files, SERVERLESS_MOCK_INSTANCE_TYPE)
+        return {SERVERLESS_MOCK_INSTANCE_TYPE: job_recorder}
+
+    # Get instance type list from config
+    instance_type_list = list(cfg.instance_type_list) if hasattr(cfg, "instance_type_list") else []
+
+    if not instance_type_list:
+        logging.error("No instance types configured in instance_type_list")
+        return {}
+
+    logging.info(f"Running validation for {len(instance_type_list)} instance type(s) in parallel: {instance_type_list}")
+
+    all_results = {}
+
+    # Use ThreadPoolExecutor to run validations concurrently
+    with ThreadPoolExecutor(max_workers=len(instance_type_list)) as executor:
+        # Submit all instance type validations
+        future_to_instance = {}
+        for instance_type in instance_type_list:
+            # Create a deep copy of config for each thread to avoid conflicts
+            cfg_copy = copy.deepcopy(cfg)
+            logging.info(f"Submitting validation job for instance type: {instance_type}")
+            future = executor.submit(run_validation, cfg_copy, fileList, save_model_files, instance_type)
+            future_to_instance[future] = instance_type
+
+        # Collect results as they complete
+        for future in as_completed(future_to_instance):
+            instance_type = future_to_instance[future]
+            try:
+                job_recorder = future.result()
+                all_results[instance_type] = job_recorder
+                logging.info(f"Completed validation for instance type: {instance_type}")
+            except Exception as e:
+                logging.error(f"Validation failed for instance type {instance_type}: {e}")
+                all_results[instance_type] = None
+
+    return all_results
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Script for validating hyperpod recipes")
     parser = build_argument_parser(parser)
     args = parser.parse_args()
-    cfg = OmegaConf.load(args.config) if args.config != None else OmegaConf.load(COMMON_CONFIG)
-    jobRecorder = run_validation(cfg, args.fileList)
-    # Output job results
-    jobRecorder.print_results()
+    cfg = OmegaConf.load(args.config) if args.config != None else OmegaConf.load(COMMON_CONFIG_PATH)
+
+    # Determine file list - CLI args take priority over config
+    # Priority: fileList CLI arg > regex CLI arg > config recipe_list
+    file_list = None
+    if args.fileList:
+        # Handle comma-separated values (from GitHub Actions) or space-separated (from CLI)
+        # nargs="+" gives us a list, but each element might contain comma-separated values
+        file_list = []
+        for item in args.fileList:
+            # Split by comma and strip whitespace
+            file_list.extend([f.strip() for f in item.split(",") if f.strip()])
+        logging.info(f"Using file list from CLI --fileList: {file_list}")
+    elif args.regex:
+        file_list = get_recipes_by_regex(args.regex)
+        if not file_list:
+            logging.error(f"No recipes found matching regex '{args.regex}'")
+            sys.exit(1)
+        logging.info(f"Using file list from CLI --regex: {len(file_list)} recipes matched")
+    elif hasattr(cfg, "recipe_list") and cfg.recipe_list:
+        file_list = list(cfg.recipe_list)
+        logging.info(f"Using file list from config recipe_list: {file_list}")
+    else:
+        logging.error("No recipes specified. Use --fileList, --regex, or set recipe_list in config.")
+        sys.exit(1)
+
+    # Determine instance types
+    # Priority: CLI args > recipe's instance_types field > config instance_type_list
+    cli_instance_types = None
+    logging.debug(f" args.instance_types raw value: '{args.instance_types}' (type: {type(args.instance_types)})")
+    if args.instance_types:
+        cli_instance_types = parse_instance_types(args.instance_types)
+        logging.debug(f" Parsed CLI instance types: {cli_instance_types}")
+        if cli_instance_types:
+            logging.info(f"Using instance types from CLI --instance_types: {cli_instance_types}")
+        else:
+            logging.warning(f"Could not parse instance_types from CLI: '{args.instance_types}'.")
+            cli_instance_types = None
+
+    # Get default instance types from config
+    default_instance_types = (
+        list(cfg.instance_type_list) if hasattr(cfg, "instance_type_list") and cfg.instance_type_list else []
+    )
+
+    # Run validation for each recipe with its own instance types
+    all_results = {}
+    for recipe_file in file_list:
+        # Determine instance types for this recipe
+        if cli_instance_types:
+            # CLI args take priority - use same instance types for all recipes
+            recipe_instance_types = cli_instance_types
+            logging.info(f"Recipe '{recipe_file}': Using instance types from CLI: {recipe_instance_types}")
+        else:
+            # Try to get instance types from the recipe file itself
+            recipe_instance_types = get_instance_types_from_recipe(recipe_file)
+            # Use default instance types from common config
+            if default_instance_types:
+                recipe_instance_types = default_instance_types
+                logging.info(
+                    f"Recipe '{recipe_file}': Using default instance types from config: {recipe_instance_types}"
+                )
+            elif recipe_instance_types:
+                logging.info(f"Recipe '{recipe_file}': Using instance types from recipe file: {recipe_instance_types}")
+            else:
+                # No instance types available at all - fail
+                logging.error(
+                    f"Recipe '{recipe_file}': No instance types available. "
+                    "Specify via --instance_types, in the recipe's instance_types field, "
+                    "or in config's instance_type_list."
+                )
+                sys.exit(1)
+
+        # Set instance types in config for this recipe
+        cfg_copy = copy.deepcopy(cfg)
+        cfg_copy.instance_type_list = recipe_instance_types
+
+        # Run validation for this recipe with its instance types
+        recipe_results = run_validation_for_all_instance_types(cfg_copy, [recipe_file], args.save_model_files)
+
+        # Merge results
+        for instance_type, job_recorder in recipe_results.items():
+            if instance_type not in all_results:
+                all_results[instance_type] = job_recorder
+            elif job_recorder:
+                # Merge job records if we have multiple recipes for the same instance type
+                if all_results[instance_type]:
+                    all_results[instance_type].jobs.update(job_recorder.jobs)
+                else:
+                    all_results[instance_type] = job_recorder
+
+    # Print summary of all runs
+    logging.info(f"\n{'='*60}")
+    logging.info("VALIDATION SUMMARY")
+    logging.info(f"{'='*60}")
+    for instance_type, job_recorder in all_results.items():
+        if job_recorder:
+            logging.info(f"\nResults for instance type: {instance_type}")
+            job_recorder.print_results()
+
     # Cleans resources no longer needed like model files etc
     if not args.save_model_files:
         cleanup(cfg.models.model_parent_folder)

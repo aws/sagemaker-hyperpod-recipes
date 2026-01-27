@@ -1244,7 +1244,10 @@
                     "subtask": "{{subtask}}"
                 },
                 "inference": {
-                    "max_new_tokens": "{{max_new_tokens}}"
+                    "max_new_tokens": "{{max_new_tokens}}",
+                    "top_k": "{{top_k}}",
+                    "top_p": "{{top_p}}",
+                    "temperature": "{{temperature}}"
                 }
             },
             "recipe_override_parameters": {
@@ -1284,6 +1287,25 @@
                     "min": 0,
                     "max": 100000,
                     "default": 8196
+                },
+                "top_k": {
+                    "type": "integer",
+                    "required": false,
+                    "default": -1
+                },
+                "top_p": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 1.0
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.0
                 },
                 "namespace": {
                     "type": "string",
@@ -1326,7 +1348,10 @@
                     "subtask": "{{subtask}}"
                 },
                 "inference": {
-                    "max_new_tokens": "{{max_new_tokens}}"
+                    "max_new_tokens": "{{max_new_tokens}}",
+                    "top_k": "{{top_k}}",
+                    "top_p": "{{top_p}}",
+                    "temperature": "{{temperature}}"
                 }
             },
             "recipe_override_parameters": {
@@ -1366,6 +1391,25 @@
                     "min": 0,
                     "max": 32768,
                     "default": 32768
+                },
+                "top_k": {
+                    "type": "integer",
+                    "required": false,
+                    "default": -1
+                },
+                "top_p": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 1.0
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.0
                 },
                 "namespace": {
                     "type": "string",
@@ -1408,7 +1452,10 @@
                     "subtask": "{{subtask}}"
                 },
                 "inference": {
-                    "max_new_tokens": "{{max_new_tokens}}"
+                    "max_new_tokens": "{{max_new_tokens}}",
+                    "top_k": "{{top_k}}",
+                    "top_p": "{{top_p}}",
+                    "temperature": "{{temperature}}"
                 }
             },
             "recipe_override_parameters": {
@@ -1448,6 +1495,25 @@
                     "min": 0,
                     "max": 100000,
                     "default": 8196
+                },
+                "top_k": {
+                    "type": "integer",
+                    "required": false,
+                    "default": -1
+                },
+                "top_p": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 1.0
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.0
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -1489,7 +1555,10 @@
                     "subtask": "{{subtask}}"
                 },
                 "inference": {
-                    "max_new_tokens": "{{max_new_tokens}}"
+                    "max_new_tokens": "{{max_new_tokens}}",
+                    "top_k": "{{top_k}}",
+                    "top_p": "{{top_p}}",
+                    "temperature": "{{temperature}}"
                 }
             },
             "recipe_override_parameters": {
@@ -1530,6 +1599,25 @@
                     "max": 32768,
                     "default": 32768
                 },
+                "top_k": {
+                    "type": "integer",
+                    "required": false,
+                    "default": -1
+                },
+                "top_p": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 1.0
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.0
+                },
                 "model_name_or_path": {
                     "type": "string",
                     "required": false,
@@ -1567,6 +1655,12 @@
                     "task": "{{task}}",
                     "strategy": "{{strategy}}",
                     "metric": "{{metric}}"
+                },
+                "inference": {
+                    "max_new_tokens": "{{max_new_tokens}}",
+                    "top_k": "{{top_k}}",
+                    "top_p": "{{top_p}}",
+                    "temperature": "{{temperature}}"
                 }
             },
             "recipe_override_parameters": {
@@ -1594,6 +1688,32 @@
                     "type": "string",
                     "required": true,
                     "default": ""
+                },
+                "max_new_tokens": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 8196
+                },
+                "top_k": {
+                    "type": "integer",
+                    "required": false,
+                    "default": -1
+                },
+                "top_p": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 1.0
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.0
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -1636,7 +1756,10 @@
                     "metric": "{{metric}}"
                 },
                 "inference": {
-                    "max_new_tokens": "{{max_new_tokens}}"
+                    "max_new_tokens": "{{max_new_tokens}}",
+                    "top_k": "{{top_k}}",
+                    "top_p": "{{top_p}}",
+                    "temperature": "{{temperature}}"
                 },
                 "processor": {
                     "lambda_arn": "{{lambda_arn}}",
@@ -1680,6 +1803,25 @@
                     "min": 0,
                     "max": 100000,
                     "default": 8196
+                },
+                "top_k": {
+                    "type": "integer",
+                    "required": false,
+                    "default": -1
+                },
+                "top_p": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 1.0
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.0
                 },
                 "lambda_arn": {
                     "type": "string",
@@ -1736,13 +1878,15 @@
                     "metric": "{{metric}}"
                 },
                 "inference": {
-                    "max_new_tokens": "{{max_new_tokens}}"
+                    "max_new_tokens": "{{max_new_tokens}}",
+                    "top_k": "{{top_k}}",
+                    "top_p": "{{top_p}}",
+                    "temperature": "{{temperature}}"
                 },
                 "processor": {
                     "lambda_arn": "{{lambda_arn}}",
                     "lambda_type": "{{lambda_type}}",
                     "preset_reward_function": "{{preset_reward_function}}"
-
                 }
             },
             "recipe_override_parameters": {
@@ -1782,6 +1926,25 @@
                     "min": 0,
                     "max": 32768,
                     "default": 32768
+                },
+                "top_k": {
+                    "type": "integer",
+                    "required": false,
+                    "default": -1
+                },
+                "top_p": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 1.0
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.0
                 },
                 "lambda_arn": {
                     "type": "string",

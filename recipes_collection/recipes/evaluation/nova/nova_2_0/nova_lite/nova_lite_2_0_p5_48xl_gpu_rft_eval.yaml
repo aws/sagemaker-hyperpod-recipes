@@ -21,7 +21,7 @@ inference:
   top_p: 1.0
   temperature: 0
   top_logprobs: 0 # Change to a value between (0,20] to enable
-  reasoning_effort: null  # Enable reasoning, options are low, medium, high
+  reasoning_effort: null  # Enable reasoning, options are low/high
 
 # =============================================================================
 # Bring Your Own Reinforcement Learning Environment

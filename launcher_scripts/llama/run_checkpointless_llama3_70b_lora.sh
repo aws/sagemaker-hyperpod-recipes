@@ -2,9 +2,13 @@
 
 # Original Copyright (c), NVIDIA CORPORATION. Modifications © Amazon.com
 
-#Users should setup their cluster type in /recipes_collection/config.yaml
+# AUTO-GENERATED SCRIPT - DO NOT EDIT MANUALLY
+# See scripts/launcher_scripts_generator/README.md for customization instructions.
+
+# Users should setup their cluster type in /recipes_collection/config.yaml
 
 SAGEMAKER_TRAINING_LAUNCHER_DIR=${SAGEMAKER_TRAINING_LAUNCHER_DIR:-"$(pwd)"}
+
 TRAIN_DIR="${TRAIN_DIR}"
 VAL_DIR="${VAL_DIR}"
 EXP_DIR="${EXP_DIR}"
@@ -13,7 +17,7 @@ CONTAINER_MOUNT="/data"
 CONTAINER="${CONTAINER}"
 MODEL_NAME_OR_PATH="${MODEL_NAME_OR_PATH}"
 
-HYDRA_FULL_ERROR=1 python3 "${SAGEMAKER_TRAINING_LAUNCHER_DIR}/main.py" \
+HYDRA_FULL_ERROR=1 python3 ${SAGEMAKER_TRAINING_LAUNCHER_DIR}/main.py \
     recipes=fine-tuning/llama/checkpointless_llama3_70b_lora \
     recipes.dataset.dataset_path="${TRAIN_DIR}" \
     recipes.exp_manager.exp_dir="${EXP_DIR}" \

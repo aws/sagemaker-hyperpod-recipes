@@ -1,0 +1,237 @@
+# =============================================================================
+# Launcher Script Generator Configuration
+# =============================================================================
+#
+# This config file is the SINGLE SOURCE OF TRUTH for launcher script generation.
+# Detection is based on a SINGLE FIELD: run.model_type from the recipe YAML.
+#
+# Model type values found in recipes:
+#   - llm_finetuning_aws     → llmft template
+#   - verl                   → verl template
+#   - hyperpod_checkpointless_nemo → checkpointless template
+#   - amazon.nova-*          → nova template (any value starting with amazon.nova)
+#   - falcon                 → falcon template
+#   - hf                     → hf_custom template (huggingface custom models)
+#
+# QUICK START - Adding a new template:
+# 1. Add entry under templates with model_type pattern and script template
+# 2. Run: python -m scripts.launcher_scripts_generator.generate_launcher_scripts
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Global Settings
+# -----------------------------------------------------------------------------
+settings:
+  recipes_dir: recipes_collection/recipes
+  output_dir: launcher_scripts
+
+  # Launcher scripts directories to preserve (not auto-cleaned)
+  preserved_dirs:
+    - custom_script
+
+  # Recipe directories to exclude from launcher script generation
+  excluded_recipe_dirs:
+    - fine-tuning/hydra_config
+
+  # Manually maintained scripts (not auto-generated)
+  # Format: recipe_path -> script_path (relative to output_dir)
+  manually_maintained:
+    "evaluation/open-source/open_source_deterministic_eval": "evaluation/run_open_source_deterministic_eval.sh"
+    "evaluation/open-source/open_source_llmaj_eval": "evaluation/run_open_source_llmaj_eval.sh"
+    "training/llama/checkpointless_llama3_70b_pretrain": "llama/run_checkpointless_llama3_70b_pretrain.sh"
+
+# -----------------------------------------------------------------------------
+# Shared Header
+# -----------------------------------------------------------------------------
+header: |
+  #!/bin/bash
+
+  # Original Copyright (c), NVIDIA CORPORATION. Modifications © Amazon.com
+
+  # AUTO-GENERATED SCRIPT - DO NOT EDIT MANUALLY
+  # See scripts/launcher_scripts_generator/README.md for customization instructions.
+
+  # Users should setup their cluster type in /recipes_collection/config.yaml
+
+  SAGEMAKER_TRAINING_LAUNCHER_DIR=${{SAGEMAKER_TRAINING_LAUNCHER_DIR:-"$(pwd)"}}
+
+# -----------------------------------------------------------------------------
+# Templates
+# -----------------------------------------------------------------------------
+# Each template is selected based on the run.model_type field in the recipe.
+#
+# Available placeholders:
+#   {recipe_path}     - Path to recipe file (e.g., fine-tuning/llama/recipe_name)
+#   {recipe_name}     - Recipe filename (e.g., recipe_name)
+#   {run_name}        - Run name (from recipe config or recipe_name with hyphens)
+#   {model_save_name} - Model name (from recipe config or derived)
+# -----------------------------------------------------------------------------
+
+templates:
+
+  # ---------------------------------------------------------------------------
+  # LLMFT - LLM fine-tuning (SFT, DPO, etc.)
+  # Triggered by: run.model_type = "llm_finetuning_aws"
+  # ---------------------------------------------------------------------------
+  llm_finetuning_aws: |
+    TRAIN_DATA_NAME="${{TRAIN_DATA_NAME}}"
+    TRAIN_DIR="${{TRAIN_DIR}}" # Location of training dataset
+    VAL_DATA_NAME="${{VAL_DATA_NAME}}"
+    VAL_DIR="${{VAL_DIR}}" # Location of validation dataset
+
+    EXP_DIR="${{EXP_DIR}}" # Location to save experiment info including logging, checkpoints, etc.
+
+    MODEL_NAME_OR_PATH="${{MODEL_NAME_OR_PATH}}"
+
+    MODEL_SAVE_NAME="{model_save_name}"
+
+    CONTAINER_MOUNT="${{CONTAINER_MOUNT}}"
+
+    CONTAINER="${{CONTAINER}}"
+
+    ENTRY_MODULE="amzn_awsllm_fine_tuning.train_hp"
+
+    HYDRA_FULL_ERROR=1 python3 ${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/main.py \
+        recipes={recipe_path} \
+        base_results_dir=${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/results \
+        recipes.training_config.model_config.model_name_or_path=$MODEL_NAME_OR_PATH \
+        recipes.training_config.model_config.model_save_name=$MODEL_SAVE_NAME \
+        recipes.training_config.training_args.training_dir=$EXP_DIR \
+        recipes.training_config.datasets.train_data.name=$TRAIN_DATA_NAME \
+        recipes.training_config.datasets.train_data.file_path=$TRAIN_DIR \
+        recipes.training_config.datasets.val_data.name=$VAL_DATA_NAME \
+        recipes.training_config.datasets.val_data.file_path=$VAL_DIR \
+        container=$CONTAINER \
+        +cluster.container_mounts.0=$CONTAINER_MOUNT \
+        git.entry_module=$ENTRY_MODULE \
+        git.use_default=false \
+
+  # ---------------------------------------------------------------------------
+  # VERL - Reinforcement learning with VERL framework
+  # Triggered by: run.model_type = "verl"
+  # ---------------------------------------------------------------------------
+  verl: |
+    # Data paths
+    TRAIN_DATA=${{TRAIN_DATA}}
+    VAL_DATA=${{VAL_DATA}}
+
+    # Model paths
+    ACTOR_MODEL_PATH=${{ACTOR_MODEL_PATH}}
+    CRITIC_MODEL_PATH=${{CRITIC_MODEL_PATH}}
+    REWARD_MODEL_PATH=${{REWARD_MODEL_PATH}}
+
+    # Output and experiment directory
+    EXP_DIR=${{EXP_DIR}}
+
+    # Cluster config
+    CONTAINER_MOUNT=${{CONTAINER_MOUNT}}
+    CONTAINER=${{CONTAINER}}
+    NAMESPACE=${{NAMESPACE}}
+
+    # Set run name for training job
+    RUN_NAME="{run_name}"
+
+    HYDRA_FULL_ERROR=1 python3 ${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/main.py \
+        recipes={recipe_path} \
+        base_results_dir="${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/results" \
+        run.name="${{RUN_NAME}}" \
+        cluster=k8s \
+        cluster_type=k8s \
+        cluster.namespace=${{NAMESPACE}} \
+        container="${{CONTAINER}}" \
+        ++recipes.training_config.trainer.default_local_dir="${{EXP_DIR}}" \
+        ++recipes.training_config.data.train_files="${{TRAIN_DATA}}" \
+        ++recipes.training_config.data.val_files="${{VAL_DATA}}" \
+        ++recipes.training_config.actor_rollout_ref.model.path="${{ACTOR_MODEL_PATH}}" \
+        ++recipes.training_config.critic.model.path="${{CRITIC_MODEL_PATH}}" \
+        ++recipes.training_config.critic.model.tokenizer_path="${{ACTOR_MODEL_PATH}}" \
+        ++recipes.training_config.reward_model.model.path="${{REWARD_MODEL_PATH}}" \
+        ++recipes.training_config.reward_model.model.input_tokenizer="${{ACTOR_MODEL_PATH}}" \
+        "$@"
+
+  # ---------------------------------------------------------------------------
+  # Checkpointless NeMo - Pre-training or fine-tuning with NeMo framework
+  # Triggered by: run.model_type = "hyperpod_checkpointless_nemo"
+  # ---------------------------------------------------------------------------
+  hyperpod_checkpointless_nemo: |
+    TRAIN_DIR="${{TRAIN_DIR}}"
+    VAL_DIR="${{VAL_DIR}}"
+    EXP_DIR="${{EXP_DIR}}"
+    LOG_DIR="${{LOG_DIR}}"
+    CONTAINER_MOUNT="/data"
+    CONTAINER="${{CONTAINER}}"
+    MODEL_NAME_OR_PATH="${{MODEL_NAME_OR_PATH}}"
+
+    HYDRA_FULL_ERROR=1 python3 ${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/main.py \
+        recipes={recipe_path} \
+        recipes.dataset.dataset_path="${{TRAIN_DIR}}" \
+        recipes.exp_manager.exp_dir="${{EXP_DIR}}" \
+        recipes.log_dir="${{LOG_DIR}}" \
+        recipes.resume.restore_config.path="${{MODEL_NAME_OR_PATH}}" \
+        base_results_dir="${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/results" \
+        git.use_default=false \
+        cluster=k8s \
+        cluster_type=k8s \
+        container="${{CONTAINER}}" \
+        +cluster.hostNetwork=true \
+        +cluster.persistent_volume_claims.0.claimName=fsx-claim \
+        +cluster.persistent_volume_claims.0.mountPath="${{CONTAINER_MOUNT}}" \
+
+  # ---------------------------------------------------------------------------
+  # Nova - Amazon Nova model training
+  # Triggered by: run.model_type starts with "amazon.nova"
+  # ---------------------------------------------------------------------------
+  nova: |
+    HYDRA_FULL_ERROR=1 python3 ${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/main.py \
+        recipes={recipe_path} \
+        base_results_dir=${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/results
+
+  # ---------------------------------------------------------------------------
+  # Falcon - Custom HuggingFace model training
+  # Triggered by: run.model_type = "falcon"
+  # ---------------------------------------------------------------------------
+  falcon: |
+    TRAIN_DIR=${{TRAIN_DIR}} # Location of training dataset
+    VAL_DIR=${{VAL_DIR}} # Location of validation dataset
+
+    EXP_DIR=${{EXP_DIR}} # Location to save experiment info including logging, checkpoints, etc.
+
+
+    HYDRA_FULL_ERROR=1 python3 ${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/main.py \
+    recipes={recipe_path} \
+    base_results_dir=${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/results \
+    recipes.run.name="hf-falcon" \
+    recipes.exp_manager.exp_dir=$EXP_DIR \
+    recipes.trainer.num_nodes=4 \
+    recipes.model.train_batch_size=2 \
+    recipes.model.data.train_dir=$TRAIN_DIR \
+    recipes.model.data.val_dir=$VAL_DIR \
+
+  # ---------------------------------------------------------------------------
+  # HF Custom - Generic HuggingFace model training (e.g., Falcon)
+  # Triggered by: run.model_type = "hf"
+  # ---------------------------------------------------------------------------
+  hf: |
+    TRAIN_DIR=${{TRAIN_DIR}} # Location of training dataset
+    VAL_DIR=${{VAL_DIR}} # Location of validation dataset
+
+    EXP_DIR=${{EXP_DIR}} # Location to save experiment info including logging, checkpoints, etc.
+
+
+    HYDRA_FULL_ERROR=1 python3 ${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/main.py \
+    recipes={recipe_path} \
+    base_results_dir=${{SAGEMAKER_TRAINING_LAUNCHER_DIR}}/results \
+    recipes.run.name="hf-{recipe_name}" \
+    recipes.exp_manager.exp_dir=$EXP_DIR \
+    recipes.trainer.num_nodes=4 \
+    recipes.model.train_batch_size=2 \
+    recipes.model.data.train_dir=$TRAIN_DIR \
+    recipes.model.data.val_dir=$VAL_DIR \
+
+# -----------------------------------------------------------------------------
+# Default Template
+# -----------------------------------------------------------------------------
+# Used when model_type is not recognized or missing
+# -----------------------------------------------------------------------------
+default_template: llm_finetuning_aws

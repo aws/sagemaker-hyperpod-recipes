@@ -1,7 +1,7 @@
 # VERL GRPO Training Recipe for meta-llama/Llama-3.1-8B-Instruct with LoRA
 # Based on AWS Bedrock VERL training configuration
 display_name: "Llama 3.1 8B GRPO RLVR Fine-Tuning"
-version: "1.0.0"
+version: "1.1.0"
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
 
 run:
@@ -77,7 +77,7 @@ training_config:
         - extra
         async_save: false
       optim:
-        lr: 1e-05
+        lr: 1.0e-05
         lr_warmup_steps_ratio: 0.0
         total_training_steps: -1
         weight_decay: 0.01
@@ -127,7 +127,7 @@ training_config:
       temperature: 1.0
       top_k: -1
       top_p: 1
-      prompt_length: 1024
+      prompt_length: 512
       response_length: 1024
       dtype: bfloat16
       gpu_memory_utilization: 0.6
@@ -183,7 +183,7 @@ training_config:
         token2text: false
       enable_chunked_prefill: true
       load_format: safetensors
-      layered_summon: true
+      layered_summon: false
       merge_lora_for_inference: false
     hybrid_engine: true
     model:
@@ -280,7 +280,7 @@ training_config:
     split_seed: 42
     prompt_key: prompt
     reward_fn_key: data_source
-    max_prompt_length: 1024
+    max_prompt_length: 512
     max_response_length: 1024
     train_batch_size: 128
     val_batch_size: 256
@@ -333,7 +333,7 @@ training_config:
       use_remove_padding: false
       fsdp_config:
         _target_: verl.workers.config.FSDPEngineConfig
-        param_offload: false
+        param_offload: true
         optimizer_offload: false
         offload_policy: false
         reshard_after_forward: true

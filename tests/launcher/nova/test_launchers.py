@@ -784,7 +784,9 @@ class TestSMNovaK8SLauncherRFT(unittest.TestCase):
 
         with patch("builtins.open", mock_open()), patch(
             "omegaconf.OmegaConf.load", return_value=template_content
-        ), patch.object(launcher, "_get_env_vars", return_value={}), patch.object(
+        ), patch("launcher.nova.launchers.get_recipe_file_path", return_value="path"), patch.object(
+            launcher, "_get_env_vars", return_value={}
+        ), patch.object(
             launcher, "_map_rft_replica_config"
         ), patch.object(
             launcher, "_map_resource_config"

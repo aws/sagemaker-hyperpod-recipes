@@ -35,6 +35,9 @@ dependencies = [
     "PyYAML>=6.0",
     "pydantic>=2.0.0",
     "sagemaker>=2.0.0",
+    "pytest-xdist",
+    "pytest-cov",
+    "pytest-subtests",
 ]
 
 [project.urls]
@@ -58,11 +61,11 @@ addopts = [
     "--cache-clear",
     "--quiet",
     "--durations=0",
+    "-n=auto",
     "--cov=launcher/",
     "--cov=hyperpod_recipes/",
     # uncomment this line to see a detailed HTML test coverage report instead of the usual summary table output to stdout.
-    # "--cov-report=html",
-    "tests/",
+    # "--cov-report=html"
 ]
 testpaths = ["tests"]
 norecursedirs = [".eggs", ".pytest_cache", "*.egg-info", ".git", "build"]

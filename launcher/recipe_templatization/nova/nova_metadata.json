@@ -33,7 +33,7 @@
       "ml.g6.24xlarge",
       "ml.g6.48xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_lite_1_0_p5_48xl_gpu_general_multi_modal_benchmark_eval": {
     "display_name": "Nova Lite General Multi-Modal Benchmark Evaluation on P5",
@@ -45,7 +45,7 @@
       "ml.g6.24xlarge",
       "ml.g6.48xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_lite_1_0_p5_48xl_gpu_general_text_benchmark_eval": {
     "display_name": "Nova Lite General Text Benchmark Evaluation on P5",
@@ -57,7 +57,7 @@
       "ml.g6.24xlarge",
       "ml.g6.48xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_lite_1_0_p5_48xl_gpu_llm_judge_eval": {
     "display_name": "Nova Lite LLM Judge Evaluation on P5",
@@ -69,7 +69,7 @@
       "ml.g6.24xlarge",
       "ml.g6.48xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_lite_1_0_p5_48xl_gpu_rft_eval": {
     "display_name": "Nova Lite RFT Evaluation on P5",
@@ -81,7 +81,7 @@
       "ml.g6.24xlarge",
       "ml.g6.48xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_lite_1_0_p5_gpu_ppo": {
     "display_name": "Nova Lite PPO on GPU",
@@ -131,7 +131,7 @@
       "ml.p5.48xlarge",
       "ml.p4d.24xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_lite_2_0_p5_48xl_gpu_general_multi_modal_benchmark_eval": {
     "display_name": "Nova Lite 2.0 General Multi-Modal Benchmark Evaluation on P5",
@@ -139,7 +139,7 @@
       "ml.p5.48xlarge",
       "ml.p4d.24xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_lite_2_0_p5_48xl_gpu_general_text_benchmark_eval": {
     "display_name": "Nova Lite 2.0 General Text Benchmark Evaluation on P5",
@@ -147,7 +147,7 @@
       "ml.p5.48xlarge",
       "ml.p4d.24xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_lite_2_0_p5_48xl_gpu_rft_eval": {
     "display_name": "Nova Lite 2.0 RFT Evaluation on P5",
@@ -155,7 +155,7 @@
       "ml.p5.48xlarge",
       "ml.p4d.24xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_lite_2_0_p5_48xl_gpu_rubric_llm_judge_eval": {
     "display_name": "Nova Lite 2.0 Rubric LLM Judge Evaluation on P5",
@@ -163,7 +163,7 @@
       "ml.p5.48xlarge",
       "ml.p4d.24xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_lite_2_0_p5_gpu_lora_rft": {
     "display_name": "Nova Lite RLVR Training (PEFT)",
@@ -269,7 +269,7 @@
       "ml.g6.12xlarge",
       "ml.g6.24xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_micro_1_0_p5_48xl_gpu_general_text_benchmark_eval": {
     "display_name": "Nova Micro General Text Benchmark Evaluation on P5",
@@ -280,7 +280,7 @@
       "ml.g6.12xlarge",
       "ml.g6.24xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_micro_1_0_p5_48xl_gpu_llm_judge_eval": {
     "display_name": "Nova Micro LLM Judge Evaluation on P5",
@@ -291,7 +291,7 @@
       "ml.g6.12xlarge",
       "ml.g6.24xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_micro_1_0_p5_48xl_gpu_rft_eval": {
     "display_name": "Nova Micro RFT Evaluation on P5",
@@ -302,7 +302,7 @@
       "ml.g6.12xlarge",
       "ml.g6.24xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_micro_1_0_p5_gpu_ppo": {
     "display_name": "Nova Micro PPO on GPU",
@@ -358,35 +358,35 @@
     "instance_types": [
       "ml.p5.48xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_pro_1_0_p5_48xl_gpu_rft_eval": {
     "display_name": "Nova Pro RFT Evaluation on P5",
     "instance_types": [
       "ml.p5.48xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_pro_1_0_p5_48xl_gpu_general_multi_modal_benchmark_eval": {
     "display_name": "Nova Pro General Multi-Modal Benchmark Evaluation on P5",
     "instance_types": [
       "ml.p5.48xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_pro_1_0_p5_48xl_gpu_general_text_benchmark_eval": {
     "display_name": "Nova Pro General Text Benchmark Evaluation on P5",
     "instance_types": [
       "ml.p5.48xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_pro_1_0_p5_48xl_gpu_llm_judge_eval": {
     "display_name": "Nova Pro LLM Judge Evaluation on P5",
     "instance_types": [
       "ml.p5.48xlarge"
     ],
-    "version": "1.0.0"
+    "version": "2.1.2"
   },
   "nova_pro_1_0_p5_gpu_dpo": {
     "display_name": "Nova Pro DPO on GPU",

@@ -1,26 +1,24 @@
+defaults:
+  - /hydra_config/llmft/default
+  - /hydra_config/llmft/model_config/llama-4-scout-17b-16e-instruct
+  - /hydra_config/llmft/peft/lora
+  - /hydra_config/llmft/algorithm/sft
+  - /hydra_config/llmft/datasets/default_sft
+  - /hydra_config/llmft/strategy/fsdp_peft
+  - _self_
+
 display_name: "Llama 4 Scout 17B 16E Supervised Fine-Tuning with LoRA on GPU, 4K sequence length"
-version: "1.0.0"
-instance_types: ["ml.p5.48xlarge","ml.p5e.48xlarge"]
+version: "1.1.0"
+instance_types: ['ml.p5.48xlarge', 'ml.p5e.48xlarge']
 
 run:
   name: llama-4-17b-16e-instruct
-  model_type: llm_finetuning_aws
-  results_dir: ${base_results_dir}/${.name}
-  hf_access_token: null
-
-trainer:
-  devices: 8
-  num_nodes: 1
-
 
 training_config:
-  mlflow:
-    tracking_uri: ""
-    run_id: ""
   force_rerun: true
   model_config:
     model_name_or_path: "meta-llama/Llama-4-Scout-17B-16E-Instruct"
-    lora_checkpoint_file_path: null
+    model_save_name: Meta-Llama-4-Scout-17B-16E-Instruct
     peft_config:
       peft_type: lora
       target_modules: all-linear
@@ -31,146 +29,67 @@ training_config:
       task_type: CAUSAL_LM
       use_dora: false
       exclude_modules:
-      - model.layers.0.feed_forward.router
-      - model.layers.1.feed_forward.router
-      - model.layers.2.feed_forward.router
-      - model.layers.3.feed_forward.router
-      - model.layers.4.feed_forward.router
-      - model.layers.5.feed_forward.router
-      - model.layers.6.feed_forward.router
-      - model.layers.7.feed_forward.router
-      - model.layers.8.feed_forward.router
-      - model.layers.9.feed_forward.router
-      - model.layers.10.feed_forward.router
-      - model.layers.11.feed_forward.router
-      - model.layers.12.feed_forward.router
-      - model.layers.13.feed_forward.router
-      - model.layers.14.feed_forward.router
-      - model.layers.15.feed_forward.router
-      - model.layers.16.feed_forward.router
-      - model.layers.17.feed_forward.router
-      - model.layers.18.feed_forward.router
-      - model.layers.19.feed_forward.router
-      - model.layers.20.feed_forward.router
-      - model.layers.21.feed_forward.router
-      - model.layers.22.feed_forward.router
-      - model.layers.23.feed_forward.router
-      - model.layers.24.feed_forward.router
-      - model.layers.25.feed_forward.router
-      - model.layers.26.feed_forward.router
-      - model.layers.27.feed_forward.router
-      - model.layers.28.feed_forward.router
-      - model.layers.29.feed_forward.router
-      - model.layers.30.feed_forward.router
-      - model.layers.31.feed_forward.router
-      - model.layers.32.feed_forward.router
-      - model.layers.33.feed_forward.router
-      - model.layers.34.feed_forward.router
-      - model.layers.35.feed_forward.router
-      - model.layers.36.feed_forward.router
-      - model.layers.37.feed_forward.router
-      - model.layers.38.feed_forward.router
-      - model.layers.39.feed_forward.router
-      - model.layers.40.feed_forward.router
-      - model.layers.41.feed_forward.router
-      - model.layers.42.feed_forward.router
-      - model.layers.43.feed_forward.router
-      - model.layers.44.feed_forward.router
-      - model.layers.45.feed_forward.router
-      - model.layers.46.feed_forward.router
-      - model.layers.47.feed_forward.router
-    model_save_name: Meta-Llama-4-Scout-17B-16E-Instruct
-    device_map: null
-    attn_implementation: sdpa
-    multimodal: false
-    generation_cfg:
-      max_new_tokens: 2048
-      temperature: 0.6
-      top_p: 0.9
-      do_sample: true
-      num_return_sequences: 1
-      num_parallel_jobs: 1
+        - model.layers.0.feed_forward.router
+        - model.layers.1.feed_forward.router
+        - model.layers.2.feed_forward.router
+        - model.layers.3.feed_forward.router
+        - model.layers.4.feed_forward.router
+        - model.layers.5.feed_forward.router
+        - model.layers.6.feed_forward.router
+        - model.layers.7.feed_forward.router
+        - model.layers.8.feed_forward.router
+        - model.layers.9.feed_forward.router
+        - model.layers.10.feed_forward.router
+        - model.layers.11.feed_forward.router
+        - model.layers.12.feed_forward.router
+        - model.layers.13.feed_forward.router
+        - model.layers.14.feed_forward.router
+        - model.layers.15.feed_forward.router
+        - model.layers.16.feed_forward.router
+        - model.layers.17.feed_forward.router
+        - model.layers.18.feed_forward.router
+        - model.layers.19.feed_forward.router
+        - model.layers.20.feed_forward.router
+        - model.layers.21.feed_forward.router
+        - model.layers.22.feed_forward.router
+        - model.layers.23.feed_forward.router
+        - model.layers.24.feed_forward.router
+        - model.layers.25.feed_forward.router
+        - model.layers.26.feed_forward.router
+        - model.layers.27.feed_forward.router
+        - model.layers.28.feed_forward.router
+        - model.layers.29.feed_forward.router
+        - model.layers.30.feed_forward.router
+        - model.layers.31.feed_forward.router
+        - model.layers.32.feed_forward.router
+        - model.layers.33.feed_forward.router
+        - model.layers.34.feed_forward.router
+        - model.layers.35.feed_forward.router
+        - model.layers.36.feed_forward.router
+        - model.layers.37.feed_forward.router
+        - model.layers.38.feed_forward.router
+        - model.layers.39.feed_forward.router
+        - model.layers.40.feed_forward.router
+        - model.layers.41.feed_forward.router
+        - model.layers.42.feed_forward.router
+        - model.layers.43.feed_forward.router
+        - model.layers.44.feed_forward.router
+        - model.layers.45.feed_forward.router
+        - model.layers.46.feed_forward.router
+        - model.layers.47.feed_forward.router
   datasets:
-    data_dir: null
-    save_intermediate_processing_steps: false
-    train_data:
-      name: ""
-      file_path: ""
-      limit: null
-    val_data:
-      name: ""
-      file_path: ""
-      limit: null
-    train_val_split_ratio: 0.9
-    train_val_split_seed: 42
     preprocessor_cfgs:
-    - type: TrainingSFTSampleConverter
-    - type: Seq2SeqTokensProcessor
-      chat_template_name: llama_3_2_seq_instruct.jinja
-      ignore_prompt_labels: true
-    - type: DropColumns
-      column_names:
-      - messages
+      - type: TrainingSFTSampleConverter
+      - type: Seq2SeqTokensProcessor
+        chat_template_name: llama_3_2_seq_instruct.jinja
+        ignore_prompt_labels: true
+      - type: DropColumns
+        column_names:
+          - messages
   training_args:
-    override_training_dir: true
-    trainer_type: sft
-    trainer_callbacks:
-    - _target_: metering_callback.MeteringCallback
-      output_path: "/opt/ml/metering"
-    training_dir: ""
-    seed: 42
-    packing_samples: false
-    ring_attn_size: 1
-    ring_head_stride: 1
-    pretrain_mode: false
-    aux_loss_coef: 0
-    learning_rate: 0.0001
-    lr_warmup_ratio: 0.1
-    weight_decay: 0.0
-    adam_betas:
-    - 0.9
-    - 0.95
-    lr_scheduler: cosine
-    l2: 0.0
-    gradient_clipping: true
-    gradient_clipping_threshold: 1.0
-    grad_accum_dtype: null
-    gradient_checkpointing: true
-    gradient_checkpointing_use_reentrant: false
-    load_checkpoint: false
-    resume_checkpoint_path: ""
-    disable_ds_ckpt: true
-    disable_fast_tokenizer: false
-    micro_train_batch_size: 1
     train_batch_size: 16
-    eval_steps: 0
-    save_steps: 0
-    save_hf_ckpt: true
     merge_weights: true
-    max_epochs: 5
-    max_len: 4096
-    max_norm: 1.0
-    max_samples: 100000000.0
-    max_ckpt_mem: 100000000.0
-    max_ckpt_num: 3
-    logging_steps: 1
-    use_tensorboard: logs
-    use_wandb: null
-    strategy:
-      fsdp_config:
-        auto_wrap_policy: TRANSFORMER_BASED_WRAP
-        backward_prefetch: BACKWARD_PRE
-        cpu_ram_efficient_loading: true
-        cpu_offload: false
-        forward_prefetch: false
-        sharding_strategy: HYBRID_SHARD
-        state_dict_type: SHARDED_STATE_DICT
-        sync_module_states: true
-        use_orig_params: true
 
-##########################################################################################
-###         The following configurations are used in elastic training only
-##########################################################################################
 elastic_policy:
   is_elastic: false
   min_nodes: 1

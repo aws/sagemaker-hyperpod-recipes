@@ -33,13 +33,18 @@ class Job:
 
 
 class JobRecorder:
-    def __init__(self, max_col_width=30):
+    def __init__(self, max_col_width=30, instance_type=None, platform=None):
         self.jobs = {}
         self.max_col_width = max_col_width
+        self.instance_type = instance_type  # Default instance_type for all jobs
+        self.platform = platform  # Default platform for all jobs
 
     # Use the input filename as the key for each job
     def add_job(self, input_filename, output_path="", status="", output_log="", tokens_throughput=None):
         job = Job(input_filename, output_path, status, output_log, tokens_throughput)
+        # Set default instance_type and platform from recorder
+        job.instance_type = self.instance_type
+        job.platform = self.platform
         self.jobs[input_filename] = job
         return input_filename
 
@@ -59,17 +64,19 @@ class JobRecorder:
             print("No jobs recorded")
             return
 
-        headers = ["#", "InputFileName", "OutputPath", "Status", "Tokens/Sec", "OutputLog"]
+        headers = ["#", "InputFileName", "InstanceType", "OutputPath", "Status", "Tokens/Sec", "OutputLog"]
 
         # Prepare wrapped data
         wrapped_data = []
         for i, job in enumerate(self.jobs.values()):
             # Format tokens throughput
             tokens_display = str(job.tokens_throughput) if job.tokens_throughput is not None else "N/A"
+            instance_type_display = job.instance_type if job.instance_type else "N/A"
 
             row_data = [
                 [str(i + 1)],
                 self._wrap_text(job.input_filename, self.max_col_width),
+                self._wrap_text(instance_type_display, self.max_col_width),
                 self._wrap_text(job.output_path, self.max_col_width),
                 self._wrap_text(job.status, self.max_col_width),
                 self._wrap_text(tokens_display, self.max_col_width),

@@ -17,7 +17,9 @@ class SageMakerJobsValidationLauncher(BaseLauncher):
         launch_command = self._build_command(run_info)
         try:
             # Capture bash output after submitting the job
-            launch_output = subprocess.run(launch_command, capture_output=True, text=True, check=True)
+            # Join command and use shell=True to handle special chars (hyphens) in Hydra overrides
+            cmd_str = " ".join(launch_command)
+            launch_output = subprocess.run(cmd_str, capture_output=True, text=True, check=True, shell=True)
         except subprocess.CalledProcessError as e:
             logging.error(f"Launcher script '{recipe}' failed because of :- {e.stderr}")
             self.job_recorder.update_job(
@@ -92,7 +94,7 @@ class SageMakerJobsValidationLauncher(BaseLauncher):
                     elif current_status == "Completed":
                         job_successful = True
                         break
-                time.sleep(600)  # Wait before next check
+                time.sleep(120)  # Wait before next check
         except Exception as e:
             if hasattr(e, "stderr"):
                 logging.error(f"Error waiting for job to complete: {e.stderr}")
@@ -100,21 +102,44 @@ class SageMakerJobsValidationLauncher(BaseLauncher):
                 logging.error(f"Error waiting for job to complete: {e}")
 
         if job_successful and self._validate_logs(training_job_name):
-            # Extract throughput data from CloudWatch logs using new method
-            tokens_per_sec = self.get_job_throughput_from_cloudwatch(training_job_name, recipe)
+            # Check if we should compute throughput for this recipe
+            if self._should_compute_throughput(recipe):
+                # Extract throughput data from CloudWatch logs
+                # Returns: float (throughput), "invalid" (if status field is invalid), or None
+                tokens_per_sec = self.get_job_throughput_from_cloudwatch(training_job_name, recipe)
 
-            # Record the job as complete with throughput data
-            self.job_recorder.update_job(
-                input_filename=recipe,
-                output_path=output_folder_path,
-                status="Complete",
-                output_log=output_log_cloudwatch,
-                tokens_throughput=tokens_per_sec,
-            )
+                # If calculate_throughput_from_logs returns "invalid" (from status field), mark as failed
+                if tokens_per_sec == "invalid":
+                    logging.warning(f"Job {training_job_name} has invalid throughput status")
+                    self.job_recorder.update_job(
+                        input_filename=recipe,
+                        output_path=output_folder_path,
+                        status="Failed",
+                        output_log=f"{output_log_cloudwatch} - Throughput status is invalid",
+                        tokens_throughput=tokens_per_sec,
+                    )
+                    return True
 
-            # Also use the record_throughput method for logging
-            if tokens_per_sec:
-                self.record_throughput(recipe, tokens_per_sec)
+                # Record the job as complete with throughput data
+                self.job_recorder.update_job(
+                    input_filename=recipe,
+                    output_path=output_folder_path,
+                    status="Complete",
+                    output_log=output_log_cloudwatch,
+                    tokens_throughput=tokens_per_sec,
+                )
+            else:
+                # Skip throughput computation - mark as success based on job completion
+                logging.info(
+                    f"Skipping throughput computation for recipe {recipe} - not in keywords_to_compute_throughput_for"
+                )
+                self.job_recorder.update_job(
+                    input_filename=recipe,
+                    output_path=output_folder_path,
+                    status="Complete",
+                    output_log=output_log_cloudwatch,
+                    tokens_throughput="N/A (throughput not computed for this recipe type)",
+                )
         else:
             self.job_recorder.update_job(
                 input_filename=recipe, output_path=output_folder_path, status="Failed", output_log=output_log_cloudwatch
