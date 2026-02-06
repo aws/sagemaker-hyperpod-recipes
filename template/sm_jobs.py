@@ -51,7 +51,7 @@ def main():
     role = sagemaker.get_execution_role()
 
     sm_jobs_config = OmegaConf.load(args.sm_jobs_config)
-    recipe_overrides = sm_jobs_config.get("recipe_overrides", omegaconf.DictConfig(dict()))
+    recipe_overrides = sm_jobs_config.get("recipe_overrides") or omegaconf.DictConfig(dict())
     recipe = OmegaConf.load(args.recipe)
     recipe = OmegaConf.merge(recipe, recipe_overrides)
     recipe_overrides = OmegaConf.to_container(recipe_overrides)

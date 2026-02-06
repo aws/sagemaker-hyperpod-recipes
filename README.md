@@ -145,9 +145,9 @@ When using the SageMaker HyperPod recipes, you can either create your own traini
 
 The following container images are available for different recipe types:
 
-- **For LLMFT recipes**: `327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0`
-- **For VERL recipes (EKS)**: `327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks`
-- **For VERL recipes (SageMaker Training Jobs)**: `327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj`
+- **For LLMFT recipes**: `920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0`, full list [here](https://github.com/aws/sagemaker-hyperpod-recipes/blob/main/launcher/recipe_templatization/llmft/llmft_regional_parameters.json)
+- **For VERL recipes (EKS)**: `920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks`, full list [here](https://github.com/aws/sagemaker-hyperpod-recipes/blob/main/launcher/recipe_templatization/verl/verl_regional_parameters.json)
+- **For VERL recipes (SageMaker Training Jobs)**: `920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj`
 
 To use a container image for training, modify the `recipes_collection/config.yaml` file with your chosen container image:
 
@@ -176,7 +176,7 @@ Using the recipes involves updating `k8s.yaml`, `config.yaml`, and running the l
 
 - Update your launcher script (e.g., `launcher_scripts/deepseek/run_llmft_deepseek_r1_distilled_llama_8b_seq4k_gpu_sft_lora.sh`)
 
-    - `your_container`: Use the LLMFT container image: `327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0`
+    - `your_container`: Use the LLMFT container image: `920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0`
 
     - (Optional) You can provide the HuggingFace token if you need pre-trained weights from HuggingFace by setting the following key-value pair:
     ```bash
@@ -186,7 +186,7 @@ Using the recipes involves updating `k8s.yaml`, `config.yaml`, and running the l
 ```bash
 #!/bin/bash
 #Users should setup their cluster type in /recipes_collection/config.yaml
-IMAGE="327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+IMAGE="920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
 SAGEMAKER_TRAINING_LAUNCHER_DIR=${SAGEMAKER_TRAINING_LAUNCHER_DIR:-"$(pwd)"}
 EXP_DIR="<your_exp_dir>" # Location to save experiment info including logging, checkpoints, etc
 TRAIN_DIR="<your_training_data_dir>" # Location of training dataset
@@ -245,7 +245,7 @@ To run a recipe on a HyperPod cluster with Slurm, SSH into the head node and clo
 Update the `recipes_collection/config.yaml` file with the LLMFT container image:
 
 ```yaml
-container: 327873000638.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0
+container: 920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0
 ```
 
 #### Running the Training Job

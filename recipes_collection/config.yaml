@@ -30,6 +30,7 @@ git:
   branch: null
   commit: null
   entry_script: null
+  entry_module: null
   token: null
   update_adapter: false # if true it will re-install the Adapter code but not its dependencies
   use_default: True
