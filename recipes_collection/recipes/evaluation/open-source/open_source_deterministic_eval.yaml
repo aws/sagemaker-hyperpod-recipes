@@ -22,7 +22,7 @@ output:
 
 # Optional Inference configs
 inference:
-  max_new_tokens: 8192
+  max_new_tokens: 2048
   top_k: -1
   top_p: 1.0
   temperature: 0
