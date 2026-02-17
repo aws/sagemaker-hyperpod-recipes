@@ -1,0 +1,61 @@
+# @package recipes.training_config.trainer
+npu_profile:
+  options:
+    save_path: ./profiler_data
+    roles:
+    - all
+    level: level1
+    with_memory: false
+    record_shapes: false
+    with_npu: true
+    with_cpu: true
+    with_module: false
+    with_stack: false
+    analysis: true
+balance_batch: true
+total_epochs: 1
+total_training_steps: null
+profile_steps: null
+controller_nsight_options:
+  trace: cuda,nvtx,cublas,ucx
+  cuda-memory-usage: 'true'
+  cuda-graph-trace: graph
+worker_nsight_options:
+  trace: cuda,nvtx,cublas,ucx
+  cuda-memory-usage: 'true'
+  cuda-graph-trace: graph
+  capture-range: cudaProfilerApi
+  capture-range-end: null
+  kill: none
+project_name: rlvr_grpo_gsm8k
+experiment_name: llama-3.1-8b-instruct-fft_grpo-20251118.202718
+logger:
+- console
+- tensorboard
+- mlflow
+log_val_generations: 0
+rollout_data_dir: null
+validation_data_dir: null
+nnodes: 1
+n_gpus_per_node: 8
+save_freq: 20
+esi_redundant_time: 0
+resume_mode: auto
+resume_from_path: null
+val_before_train: true
+val_only: false
+test_freq: 5
+critic_warmup: 0
+default_hdfs_dir: null
+del_local_ckpt_after_load: false
+default_local_dir: /opt/ml/model
+max_actor_ckpt_to_keep: null
+max_critic_ckpt_to_keep: null
+ray_wait_register_center_timeout: 300
+device: cuda
+use_custom_rollouts: false
+custom_rollout:
+  path: None
+  name: None
+use_legacy_worker_impl: auto
+merge_lora_on_final_save: true

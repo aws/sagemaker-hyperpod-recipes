@@ -20,6 +20,27 @@ training_config:
     model_save_name: SageMaker/Qwen3-32B-Lora
   training_args:
     merge_weights: true
+  datasets:
+    preprocessor_cfgs:
+      - type: TrainingPOSampleConverter
+        key_map:
+          chosen: chosen
+          rejected: rejected
+        prompt_key: prompt
+      - type: ApplyChatTemplate
+      - type: SelectColumns
+        selected_columns:
+          - prompt
+          - chosen
+          - rejected
+      - type: TokenizeSampleDPO
+        add_special_tokens: false
+      - type: SequenceLengthFilter
+        max_seq_length: 8192
+        tokens_labels: ['chosen_input_ids']
+      - type: SequenceLengthFilter
+        max_seq_length: 8192
+        tokens_labels: ['rejected_input_ids']
 
 elastic_policy:
   is_elastic: false

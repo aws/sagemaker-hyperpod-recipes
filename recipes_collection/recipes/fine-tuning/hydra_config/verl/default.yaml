@@ -1,0 +1,16 @@
+# @package recipes
+# Common defaults for all VERL recipes
+run:
+  results_dir: ${base_results_dir}/${.name}
+  model_type: verl
+
+trainer:
+  devices: 8
+
+training_config:
+  mlflow:
+    tracking_uri: ''
+    run_id: ''
+  ray_init:
+    num_cpus: null
+    timeline_json_file: null

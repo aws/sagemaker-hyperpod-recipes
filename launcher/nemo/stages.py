@@ -362,7 +362,7 @@ class SMTraining(Training):
                 transformers_upgrade_cmd = "pip install transformers==4.55.0"
                 post_launch_commands.append(transformers_upgrade_cmd)
 
-        launch_docker_container_text.append(f'  "{image}" sleep infinity')
+        launch_docker_container_text.append(f'  --entrypoint /bin/bash "{image}" -c "sleep infinity"')
         launch_docker_container_text.append("")
 
         # Allow containers to talk to each other
@@ -545,8 +545,26 @@ class SMTraining(Training):
         full_recipe_path = Path(job_folder) / "recipe.yaml"
         OmegaConf.save(config=self.cfg.get("training"), f=full_recipe_path)
         sm_jobs_config_path = Path(job_folder) / "sm_jobs_config.yaml"
-        OmegaConf.save(config=self.cfg.cluster.get("sm_jobs_config"), f=sm_jobs_config_path)
-        script_src = Path(ROOT_DIR) / "template" / "sm_jobs.py"
+        sm_jobs_config = self.cfg.cluster.get("sm_jobs_config")
+
+        if not sm_jobs_config:
+            raise ValueError("sm_jobs_config is required for sm_jobs cluster type")
+
+        OmegaConf.save(config=sm_jobs_config, f=sm_jobs_config_path)
+
+        # Choose template based on pysdk_launch_executor (estimator or model_trainer)
+        pysdk_launch_executor = sm_jobs_config.get("pysdk_launch_executor")
+        if pysdk_launch_executor not in ("estimator", "model_trainer"):
+            raise ValueError(
+                f"Invalid pysdk_launch_executor '{pysdk_launch_executor}'. Valid values: 'estimator', 'model_trainer'"
+            )
+
+        if pysdk_launch_executor == "model_trainer":
+            script_src = Path(ROOT_DIR) / "template" / "sm_jobs_model_trainer.py"
+            logger.info("Using ModelTrainer API for SM Jobs")
+        else:
+            script_src = Path(ROOT_DIR) / "template" / "sm_jobs_estimator.py"
+            logger.info("Using PyTorch Estimator API for SM Jobs")
         script_dst = Path(job_folder) / "launch.py"
 
         # Generate VERL config file if this is a Ray job
@@ -634,6 +652,12 @@ class SMTraining(Training):
         """
         Run current stage
         """
+        # Block VERL recipes on slurm - not currently supported
+        model_type = OmegaConf.select(self.cfg, "recipes.run.model_type", default=None)
+        cluster_type = self.get_cluster_type() if hasattr(self, "get_cluster_type") else self.cluster
+        if model_type == "verl" and cluster_type in ("slurm", "bcm"):
+            raise ValueError("VERL recipes are not supported on Slurm clusters.")
+
         # Setup folders and datasets
         self.setup_folder_and_data()
         # Save stage hydra config
@@ -874,7 +898,7 @@ class SMTraining(Training):
         if cluster_parameters.get("service_account_name") is not None:
             values_template.trainingConfig.serviceAccountName = cluster_parameters["service_account_name"]
         if cluster_parameters.get("custom_labels", None) is not None:
-            values_template.trainingConfig.customLabels = literal_eval(cluster_parameters["custom_labels"])
+            values_template.trainingConfig.customLabels = cluster_parameters["custom_labels"]
         if cluster_parameters.get("label_selector", None) is not None:
             values_template.trainingConfig.labelSelector = cluster_parameters["label_selector"]
         if cluster_parameters.get("queue_name", None) is not None:
@@ -967,20 +991,45 @@ class SMTraining(Training):
                     if ray_cfg.worker_nodes.get(key):
                         setattr(values_template.rayCluster.workerNodes, key, str(ray_cfg.worker_nodes[key]))
 
-        if (
-            not hasattr(values_template.trainingConfig, "instanceType")
-            or values_template.trainingConfig.instanceType is None
-        ):
-            instance_type = self.cfg.get("instance_type")
-            if instance_type is None:
-                instance_type = self.cfg.cluster.instance_type
+        # Handle instance types separately for job submitter vs head/workers
+        # Get the instance type from recipe/config
+        instance_type = self.cfg.get("instance_type")
+        if instance_type is None:
+            instance_type = self.cfg.cluster.instance_type
 
-            if instance_type and not instance_type.startswith("ml."):
-                instance_type = f"ml.{instance_type}"
+        if instance_type and not instance_type.startswith("ml."):
+            instance_type = f"ml.{instance_type}"
 
-            values_template.trainingConfig.instanceType = instance_type
-        elif not values_template.trainingConfig.instanceType.startswith("ml."):
-            values_template.trainingConfig.instanceType = f"ml.{values_template.trainingConfig.instanceType}"
+        # Set worker instance type (GPU instances from recipe)
+        values_template.trainingConfig.workerInstanceType = instance_type
+
+        # Set CPU instance types for head and job submitter
+        # Check if user has specified CPU instance types in cluster config
+        cpu_instance_type = OmegaConf.select(self.cfg, "cluster.cpu_instance_type")
+        if cpu_instance_type:
+            # Ensure cpu_instance_type is always a list
+            if isinstance(cpu_instance_type, str):
+                values_template.trainingConfig.cpuInstanceTypes = [cpu_instance_type]
+            else:
+                values_template.trainingConfig.cpuInstanceTypes = cpu_instance_type
+        else:
+            # Use default CPU instance types for head/job submitter
+            values_template.trainingConfig.cpuInstanceTypes = [
+                # Compute optimized
+                "ml.c5.large",
+                "ml.c5.xlarge",
+                "ml.c5.2xlarge",
+                "ml.c5.4xlarge",
+                # General purpose
+                "ml.m5.large",
+                "ml.m5.xlarge",
+                "ml.m5.2xlarge",
+                "ml.m5.4xlarge",
+                # Memory optimized
+                "ml.r5.large",
+                "ml.r5.xlarge",
+                "ml.r5.2xlarge",
+            ]
 
         # Note: Verl Config file will be written in write_value_template method
 

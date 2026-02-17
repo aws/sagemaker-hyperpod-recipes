@@ -1,0 +1,20 @@
+# @package recipes.training_config
+# FFT-specific overrides (Full Fine-Tuning)
+actor_rollout_ref:
+  actor:
+    checkpoint:
+      save_contents: [hf_model]
+      load_contents: [hf_model]
+  model:
+    lora_rank: 0
+    lora_alpha: 16
+
+critic:
+  checkpoint:
+    save_contents: [hf_model]
+    load_contents: [hf_model]
+
+trainer:
+  total_epochs: 1
+  resume_mode: auto
+  resume_from_path: null

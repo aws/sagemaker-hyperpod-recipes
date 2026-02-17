@@ -9,8 +9,12 @@
 # Relevant functions:- add_job(), update_job(), print_results()
 
 import csv
+import json
+import os
 import textwrap
 from datetime import datetime
+
+RESULTS_OUTPUT_DIR = "results"
 
 
 class Job:
@@ -64,7 +68,7 @@ class JobRecorder:
             print("No jobs recorded")
             return
 
-        headers = ["#", "InputFileName", "InstanceType", "OutputPath", "Status", "Tokens/Sec", "OutputLog"]
+        headers = ["#", "InputFileName", "InstanceType", "Status", "Duration", "Tokens", "Tokens/Sec", "OutputLog"]
 
         # Prepare wrapped data
         wrapped_data = []
@@ -73,12 +77,18 @@ class JobRecorder:
             tokens_display = str(job.tokens_throughput) if job.tokens_throughput is not None else "N/A"
             instance_type_display = job.instance_type if job.instance_type else "N/A"
 
+            # Get duration and tokens from throughput_data
+            throughput_data = getattr(job, "throughput_data", {})
+            duration_display = throughput_data.get("duration", "N/A")
+            tokens_count_display = throughput_data.get("tokens", "N/A")
+
             row_data = [
                 [str(i + 1)],
                 self._wrap_text(job.input_filename, self.max_col_width),
                 self._wrap_text(instance_type_display, self.max_col_width),
-                self._wrap_text(job.output_path, self.max_col_width),
                 self._wrap_text(job.status, self.max_col_width),
+                self._wrap_text(duration_display, self.max_col_width),
+                self._wrap_text(tokens_count_display, self.max_col_width),
                 self._wrap_text(tokens_display, self.max_col_width),
                 self._wrap_text(job.output_log, self.max_col_width),
             ]
@@ -122,7 +132,8 @@ class JobRecorder:
             # Create CSV filename with timestamp if not provided
             if filename is None:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"throughput_results_{timestamp}.csv"
+                os.makedirs(RESULTS_OUTPUT_DIR, exist_ok=True)
+                filename = os.path.join(RESULTS_OUTPUT_DIR, f"throughput_results_{timestamp}.csv")
 
             # Define CSV headers (all possible fields)
             headers = [
@@ -172,4 +183,57 @@ class JobRecorder:
 
         except Exception as e:
             print(f"Error writing consolidated CSV file: {e}")
+            return None
+
+    def write_results_json(self, filename=None):
+        """Write complete job results to JSON file"""
+        try:
+            # Create JSON filename with timestamp if not provided
+            if filename is None:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                os.makedirs(RESULTS_OUTPUT_DIR, exist_ok=True)
+                filename = os.path.join(RESULTS_OUTPUT_DIR, f"validation_results_{timestamp}_{self.instance_type}.json")
+
+            # Count successes and failures
+            total_jobs = len(self.jobs)
+            successful_jobs = len([job for job in self.jobs.values() if job.status.lower() == "complete"])
+            failed_jobs = len([job for job in self.jobs.values() if job.status.lower() == "failed"])
+
+            # Build output structure
+            output = {
+                "metadata": {
+                    "timestamp": datetime.now().isoformat(),
+                    "platform": self.platform,
+                    "instance_type": self.instance_type,
+                    "total_jobs": total_jobs,
+                    "successful_jobs": successful_jobs,
+                    "failed_jobs": failed_jobs,
+                },
+                "jobs": [],
+            }
+
+            # Add each job's data
+            for job in self.jobs.values():
+                job_data = {
+                    "input_filename": job.input_filename,
+                    "instance_type": job.instance_type or self.instance_type,
+                    "platform": job.platform or self.platform,
+                    "status": job.status,
+                    "output_path": job.output_path,
+                    "output_log": job.output_log,
+                    "tokens_throughput": job.tokens_throughput,
+                    "throughput_data": getattr(job, "throughput_data", {}),
+                    "job_success_status": getattr(job, "job_success_status", None),
+                }
+                output["jobs"].append(job_data)
+
+            # Write to file
+            with open(filename, "w", encoding="utf-8") as f:
+                json.dump(output, f, indent=2, default=str)
+
+            print(f"Validation results written to {filename}")
+            return filename
+
+        except Exception as e:
+            print(f"Error writing JSON results file: {e}")
             return None

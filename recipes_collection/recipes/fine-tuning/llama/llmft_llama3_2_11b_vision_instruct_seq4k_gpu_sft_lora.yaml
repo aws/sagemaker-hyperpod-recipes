@@ -8,8 +8,8 @@ defaults:
   - _self_
 
 display_name: "Llama 3.2 Vision 11B Supervised Fine-Tuning with LoRA on GPU, 4K sequence length"
-version: "1.1.0"
-instance_types: ['ml.p5.48xlarge']
+version: "1.2.0"
+instance_types: ['ml.p5.48xlarge','ml.p5en.48xlarge']
 
 run:
   name: llama-3-2-11b-vision-instruct

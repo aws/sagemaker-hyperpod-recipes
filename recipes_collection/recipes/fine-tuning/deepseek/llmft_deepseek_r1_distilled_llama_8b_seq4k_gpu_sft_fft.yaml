@@ -9,7 +9,7 @@ defaults:
 
 display_name: "DeepSeek R1 Distill Llama 8B Supervised Fine-Tuning Full Fine-Tuning on GPU"
 version: "1.1.0"
-instance_types: ['ml.p5.48xlarge']
+instance_types: ['ml.p4d.24xlarge','ml.p4de.24xlarge','ml.p5.48xlarge']
 
 run:
   name: deepseek-r1-distilled-llama-8b

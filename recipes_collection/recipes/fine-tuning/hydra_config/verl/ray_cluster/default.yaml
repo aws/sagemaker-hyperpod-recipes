@@ -1,0 +1,14 @@
+# @package recipes.ray_cluster
+head_node:
+  cpu: '16'
+  memory: 32Gi
+  cpuLimit: null
+  memoryLimit: null
+  gpu: '0'
+worker_nodes:
+  replicas: 1
+  cpu: '48'
+  memory: 144Gi
+  cpuLimit: null
+  memoryLimit: null
+  gpu: '8'

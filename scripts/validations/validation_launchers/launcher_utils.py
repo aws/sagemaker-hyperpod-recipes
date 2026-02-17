@@ -10,6 +10,8 @@ from pathlib import Path
 
 from omegaconf import OmegaConf
 
+from utils.recipe_utils import load_recipe_with_hydra
+
 from .path_utils import get_common_config, get_recipes_folder
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -43,6 +45,27 @@ def _load_jumpstart_model_id_map():
 
 
 JUMPSTART_MODEL_ID_MAP = _load_jumpstart_model_id_map()
+
+
+def get_peft_type_from_filename(filename):
+    """
+    Extract PEFT type from recipe filename.
+
+    PEFT types detected:
+    - FFT: if 'fft' in filename (Full Fine-Tuning)
+    - LORA: otherwise (default, LoRA fine-tuning)
+
+    Args:
+        filename: Recipe filename
+
+    Returns:
+        str: PEFT type ("FFT" or "LORA")
+    """
+    filename_lower = filename.lower()
+    if "fft" in filename_lower:
+        return "FFT"
+    else:
+        return "LORA"
 
 
 def _get_training_type_from_filename(filename):
@@ -127,46 +150,73 @@ def get_instance_types_from_recipe(recipe_file_path):
     return None
 
 
-def construct_dynamic_output_path(base_output_path, recipe_cfg, input_file_path):
+def construct_dynamic_output_path(base_output_path, recipe_cfg, input_file_path, validation_run_name, instance_type):
     """
-    Construct dynamic S3 output path based on jumpstart model ID and training type.
+    Construct dynamic S3 output path based on validation run name, jumpstart model ID, PEFT type, training type, and instance type.
 
     Output path structure:
-    <base_output_path>/<jumpstart_model_id>/<training_type>/
+    <base_output_path>/<validation_run_name>/<jumpstart_model_id>/<peft_type>/<training_type>/<instance_type>/
 
     Example:
-    s3://bucket/validation_run/meta-textgeneration-llama-3-2-1b-instruct/SFT/
+    s3://bucket/validation_run/run_20260114/meta-textgeneration-llama-3-2-1b-instruct/FFT/SFT/ml.p4d.24xlarge/
+    s3://bucket/validation_run/run_20260114/meta-textgeneration-llama-3-2-1b-instruct/FFT/DPO/ml.p5.48xlarge/
 
     Args:
         base_output_path: Base S3 output path from config
         recipe_cfg: Loaded recipe configuration
-        input_file_path: Recipe file path (for training type detection)
+        input_file_path: Recipe file path (for training type and PEFT type detection)
+        validation_run_name: Name for validation run folder (REQUIRED for SM Jobs)
+        instance_type: Instance type to include as final subfolder (REQUIRED for SM Jobs)
 
     Returns:
-        str: Dynamic output path, or base path if unable to construct
+        str: Dynamic output path
+
+    Raises:
+        ValueError: If validation_run_name or instance_type is not provided
     """
+    # Validate required parameters for SM Jobs
+    if not validation_run_name:
+        raise ValueError(
+            "validation_run_name is required for SM Jobs. " "Please set smjobs.validation_run_name in your config file."
+        )
+    if not instance_type:
+        raise ValueError(
+            "instance_type is required for SM Jobs output path construction. "
+            "Please ensure instance_type is configured."
+        )
+
     # Get run name from recipe
     run_name = _get_run_name_from_recipe(recipe_cfg)
     if not run_name:
-        logging.warning(f"Could not extract run name from recipe {input_file_path}. Using base output path.")
-        return base_output_path
+        raise ValueError(
+            f"Could not extract run name from recipe {input_file_path}. " "Ensure the recipe has a 'run.name' field."
+        )
 
     # Get jumpstart model ID from mapping
     jumpstart_model_id = _get_jumpstart_model_id(run_name)
     if not jumpstart_model_id:
-        logging.warning(f"Run name '{run_name}' not found in jumpstart model ID map. Using base output path.")
-        return base_output_path
+        raise ValueError(
+            f"Run name '{run_name}' not found in jumpstart model ID map. "
+            "Please add this model to the jumpstart_model-id_map.json file."
+        )
+
+    # Get PEFT type from filename (FFT or LORA)
+    peft_type = get_peft_type_from_filename(input_file_path)
 
     # Get training type from filename
     training_type = _get_training_type_from_filename(input_file_path)
 
-    # Construct dynamic output path
-    dynamic_path = os.path.join(base_output_path, jumpstart_model_id, training_type)
+    # Construct dynamic output path: base/validation_run_name/model_id/peft_type/training_type/instance_type
+    dynamic_path = os.path.join(
+        base_output_path, validation_run_name, jumpstart_model_id, peft_type, training_type, instance_type
+    )
 
     logging.info(f"Constructed dynamic output path: {dynamic_path}")
+    logging.info(f"  - Validation run name: {validation_run_name}")
     logging.info(f"  - Run name: {run_name}")
     logging.info(f"  - Jumpstart model ID: {jumpstart_model_id}")
     logging.info(f"  - Training type: {training_type}")
+    logging.info(f"  - Instance type: {instance_type}")
 
     return dynamic_path
 
@@ -206,7 +256,8 @@ def validate_platform_auth(cfg) -> bool:
     match cfg.platform:
         case "SLURM":
             try:
-                subprocess.run(["squeue"], check=True, capture_output=True, text=True)
+                if not hasattr(cfg, "slurm_client_config"):
+                    subprocess.run(["squeue"], check=True, capture_output=True, text=True)
                 return True
             except subprocess.CalledProcessError as e:
                 logging.info(f"SLURM environment ran into an issue:- '{e.stderr}'")
@@ -296,6 +347,15 @@ def build_argument_parser(parser):
         default=True,
         help="Flag to decide whether to save the model files or delete it after the jobs",
     )
+    parser.add_argument(
+        "--recipe_batch_size",
+        "-b",
+        type=int,
+        default=None,
+        help="Number of recipes to process per batch. If set, recipes are split into batches that run sequentially, "
+        "with recipes within each batch running in parallel. If not set (None), all recipes run in a single parallel batch. "
+        "Example: --recipe_batch_size 5 will process 5 recipes at a time.",
+    )
     return parser
 
 
@@ -373,7 +433,8 @@ def group_recipes_by_model(recipe_list):
     """
     model_groups = {}
     for recipe in recipe_list:
-        recipe_cfg = OmegaConf.load(os.path.join(RECIPES_FOLDER, recipe))
+        # Use Hydra composition
+        recipe_cfg = load_recipe_with_hydra(recipe)
 
         # Get model name using config-driven approach
         model_name = _extract_model_name_from_recipe(COMMON_CONFIG, recipe, recipe_cfg)
@@ -415,7 +476,6 @@ def start_execution(model_groups, launcher):
 # Launcher utils
 def construct_slurm_launch_command(cfg, run_info):
     launch_command = get_launch_command(cfg, run_info)
-    launch_command.append(f"+cluster.container_mounts.0=/fsx:/fsx")
     return launch_command
 
 
@@ -480,6 +540,12 @@ def construct_smjobs_launch_command(cfg, run_info):
     else:
         # Apply S3-specific overrides (original behavior)
         _apply_s3_overrides(launch_command, structure_config, run_info)
+
+    # Add output KMS key for S3 encryption if configured (applies to both FSx and S3 modes)
+    if hasattr(cfg, "smjobs") and hasattr(cfg.smjobs, "output_kms_key") and cfg.smjobs.output_kms_key:
+        launch_command.append(
+            f"+cluster.sm_jobs_config.additional_estimator_kwargs.output_kms_key={cfg.smjobs.output_kms_key}"
+        )
 
     launch_command.append("'cluster.sm_jobs_config.wait=False'")
     print("launch command", launch_command)
@@ -643,7 +709,8 @@ def get_launch_command(cfg, run_info, use_fsx=False):
 
     # Handle special cases that need filename-based logic
     # TODO: Consider moving these to config as well
-    if "rlaif" in run_info["input_file_path"]:
+    # service_account_name is K8s-specific, skip for slurm
+    if "rlaif" in run_info["input_file_path"] and platform != "slurm":
         command.append("+cluster.service_account_name=bedrock-service-account")
 
     if "rlvr" in run_info["input_file_path"]:
@@ -657,34 +724,68 @@ def get_launch_command(cfg, run_info, use_fsx=False):
         command.append("recipes.training_config.algorithm.adv_estimator=grpo")
 
     # Handle additional_launch_config if present
-    # Keys can contain '+' for AND logic (e.g., 'sft+lora' means filename must contain BOTH keywords)
+    # Keys are regex patterns matched against the recipe filename
+    # Example: 'llmft.*sft.*lora(?!.*vision)' matches llmft sft lora but not vision
     if cfg.additional_launch_config:
-        recipe_cfg = OmegaConf.load(os.path.join(RECIPES_FOLDER, run_info["input_file_path"]))
+        # Load recipe with Hydra to resolve all defaults (e.g., FFT recipes use Hydra defaults for datasets)
+        recipe_cfg = load_recipe_with_hydra(run_info["input_file_path"])
         input_file_lower = run_info["input_file_path"].lower()
-        for keyword_pattern, _ in cfg.additional_launch_config.items():
-            # Split by '+' for AND logic - all keywords must match
-            keywords = [kw.strip().lower() for kw in keyword_pattern.split("+")]
-            all_keywords_match = all(kw in input_file_lower for kw in keywords)
-            if all_keywords_match:
-                if cfg.additional_launch_config[keyword_pattern]:
-                    for expected_data_type, _ in cfg.additional_launch_config[keyword_pattern].items():
+        for regex_pattern, _ in cfg.additional_launch_config.items():
+            try:
+                pattern = re.compile(regex_pattern, re.IGNORECASE)
+            except re.error as e:
+                logging.warning(f"Invalid regex pattern '{regex_pattern}' in additional_launch_config: {e}. Skipping.")
+                continue
+
+            if pattern.search(input_file_lower):
+                if cfg.additional_launch_config[regex_pattern]:
+                    for expected_data_type, _ in cfg.additional_launch_config[regex_pattern].items():
                         if expected_data_type == "ListConfig":
-                            for key, value in cfg.additional_launch_config[keyword_pattern][expected_data_type].items():
+                            for key, value in cfg.additional_launch_config[regex_pattern][expected_data_type].items():
                                 current_cfg = recipe_cfg
+                                path_found = True
                                 for sub_cfg in key.split(".")[1:]:
-                                    if sub_cfg in current_cfg:
+                                    if hasattr(current_cfg, sub_cfg) or (
+                                        isinstance(current_cfg, (dict, OmegaConf)) and sub_cfg in current_cfg
+                                    ):
                                         current_cfg = current_cfg[sub_cfg]
                                     else:
                                         logging.info(
-                                            f"Unable to find additional_config {sub_cfg} from {key} in {run_info['input_file_path']}"
+                                            f"Unable to find additional_config {sub_cfg} from {key} in {run_info['input_file_path']}. Skipping this override."
                                         )
-                                value = current_cfg + [value] if current_cfg else [value]
+                                        path_found = False
+                                        break
+
+                                if path_found:
+                                    # Handle list concatenation - current_cfg must be a list
+                                    if OmegaConf.is_list(current_cfg) or isinstance(current_cfg, list):
+                                        value = list(current_cfg) + [value]
+                                    else:
+                                        # If not a list, just use the new value as a single-element list
+                                        logging.info(
+                                            f"Config at {key} is not a list (type: {type(current_cfg)}), using new value only"
+                                        )
+                                        value = [value]
+                                else:
+                                    # Path not found in recipe - config may come from Hydra defaults
+                                    # Use ++ prefix to force-create and just use the new value
+                                    logging.info(
+                                        f"Path {key} not found in recipe (may be in Hydra defaults). "
+                                        f"Using '++' prefix to force-create with new value."
+                                    )
+                                    value = [value]
+
                                 override_li = [
-                                    to_hydra_override(OmegaConf.to_container(override)) for override in value
+                                    to_hydra_override(
+                                        OmegaConf.to_container(override) if hasattr(override, "items") else override
+                                    )
+                                    for override in value
                                 ]
                                 # Wrap entire argument in single quotes so shell passes it as one string to Hydra
                                 # Use comma without space to avoid Hydra parsing issues
-                                command.append(f"'+{key}=[{','.join(override_li)}]'")
+                                # Use plain key=value (no prefix) to override the existing value with our complete list
+                                # Using + prefix causes issues when key exists from Hydra defaults
+                                command.append(f"'{key}=[{','.join(override_li)}]'")
                         else:
                             raise ValueError(
                                 f"Additional configs for expected data type: '{expected_data_type}' not supported"
@@ -841,8 +942,7 @@ def pre_launch_setup(cfg, input_file_path):
     Returns:
         dict: Run information including model name and all job parameters
     """
-    recipe_cfg = OmegaConf.load(os.path.join(RECIPES_FOLDER, input_file_path))
-
+    recipe_cfg = load_recipe_with_hydra(input_file_path)
     # Extract model name using config-driven approach
     hf_model_name = _extract_model_name_from_recipe(cfg, input_file_path, recipe_cfg)
 
@@ -907,9 +1007,15 @@ def get_job_parameters(cfg, input_file_path, hf_model_name):
         # Get S3 output path - construct dynamic path based on jumpstart model ID and training type
         if hasattr(cfg, "smjobs") and hasattr(cfg.smjobs, "output_path"):
             base_output_path = cfg.smjobs.output_path
-            # Load recipe config to extract run name for dynamic path construction
-            recipe_cfg = OmegaConf.load(os.path.join(RECIPES_FOLDER, input_file_path))
-            s3_output_path = construct_dynamic_output_path(base_output_path, recipe_cfg, input_file_path)
+            # Load recipe config with Hydra
+            recipe_cfg = load_recipe_with_hydra(input_file_path)
+            # Get validation_run_name - required for SM Jobs output path
+            validation_run_name = cfg.smjobs.validation_run_name if hasattr(cfg.smjobs, "validation_run_name") else None
+            # Get instance_type - required for SM Jobs output path
+            instance_type = cfg.instance_type if hasattr(cfg, "instance_type") else None
+            s3_output_path = construct_dynamic_output_path(
+                base_output_path, recipe_cfg, input_file_path, validation_run_name, instance_type
+            )
 
     # Build job parameters dictionary
     job_params = {
@@ -1212,6 +1318,6 @@ def cleanup(path):
 
 def delete_dir(path: str | Path) -> None:
     p = Path(path)
-    logging.info("Deleting directory: '{path}'")
+    logging.info(f"Deleting directory: '{path}'")
     if p.exists():
         shutil.rmtree(p)

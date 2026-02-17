@@ -1,0 +1,15 @@
+# @package recipes.training_config
+# Llama 3.1 8B Instruct model config
+actor_rollout_ref:
+  rollout:
+    tensor_model_parallel_size: 2
+  model:
+    path: meta-llama/Llama-3.1-8B-Instruct
+
+critic:
+  model:
+    tokenizer_path: meta-llama/Llama-3.1-8B-Instruct
+
+reward_model:
+  model:
+    input_tokenizer: meta-llama/Llama-3.1-8B-Instruct

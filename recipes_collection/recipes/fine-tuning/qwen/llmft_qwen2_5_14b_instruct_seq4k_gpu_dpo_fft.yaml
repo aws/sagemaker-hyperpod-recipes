@@ -8,8 +8,8 @@ defaults:
   - _self_
 
 display_name: "Qwen 2.5 14B Instruct Direct Preference Optimization Full Fine-Tuning on GPU"
-version: "1.1.0"
-instance_types: ['ml.p5.48xlarge']
+version: "1.2.0"
+instance_types: ['ml.p4de.24xlarge','ml.p5.48xlarge']
 
 run:
   name: qwen-2d5-14b

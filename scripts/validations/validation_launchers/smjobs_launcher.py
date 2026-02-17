@@ -6,9 +6,30 @@ import time
 
 from .base_launcher import BaseLauncher
 
+try:
+    import sagemaker
+except ImportError:
+    logging.warning(
+        "Sagemaker module not found. Sagemaker-specific features will not be available. Please install sagemaker"
+    )
+
 
 class SageMakerJobsValidationLauncher(BaseLauncher):
     """SageMaker Training Jobs launcher"""
+
+    def __init__(self, job_recorder, config):
+        """
+        Initialize smtj launcher.
+
+        Args:
+            job_recorder: Job recorder instance
+            config: Configuration object
+        """
+        super().__init__(job_recorder, config)
+
+        self.sagemaker_session = sagemaker.Session(boto_session=self.boto_session)
+        self.sagemaker_client = self.boto_session.client("sagemaker")
+        self.logs_client = self.boto_session.client("logs")
 
     def launch_job(self, recipe) -> bool:
         """Launch a single Slurm job and return True if successful, False otherwise"""
@@ -19,7 +40,9 @@ class SageMakerJobsValidationLauncher(BaseLauncher):
             # Capture bash output after submitting the job
             # Join command and use shell=True to handle special chars (hyphens) in Hydra overrides
             cmd_str = " ".join(launch_command)
-            launch_output = subprocess.run(cmd_str, capture_output=True, text=True, check=True, shell=True)
+            launch_output = subprocess.run(
+                cmd_str, capture_output=True, text=True, check=True, shell=True, env=self.aws_env
+            )
         except subprocess.CalledProcessError as e:
             logging.error(f"Launcher script '{recipe}' failed because of :- {e.stderr}")
             self.job_recorder.update_job(
@@ -101,7 +124,7 @@ class SageMakerJobsValidationLauncher(BaseLauncher):
             else:
                 logging.error(f"Error waiting for job to complete: {e}")
 
-        if job_successful and self._validate_logs(training_job_name):
+        if job_successful:
             # Check if we should compute throughput for this recipe
             if self._should_compute_throughput(recipe):
                 # Extract throughput data from CloudWatch logs

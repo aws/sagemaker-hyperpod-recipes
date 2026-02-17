@@ -75,3 +75,8 @@ use_hyperpod_pytorch_job: true  # Remove this to return to using KubeFlow PyTorc
 
 # Queue name for scheduling jobs using Kueue
 queue_name: null
+
+# CPU instance type for Ray submitter node (optional)
+# Can be a single instance type string or a list of instance types
+# Example: "m5.xlarge" or ["m5.xlarge", "m5.2xlarge"]
+cpu_instance_type: null

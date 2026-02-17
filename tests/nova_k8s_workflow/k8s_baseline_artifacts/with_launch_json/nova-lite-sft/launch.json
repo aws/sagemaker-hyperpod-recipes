@@ -79,9 +79,11 @@
       "type": "integer",
       "required": true,
       "enum": [
-        16,
-        32,
-        64
+        64,
+        128,
+        256,
+        512,
+        1024
       ],
       "default": 64
     },

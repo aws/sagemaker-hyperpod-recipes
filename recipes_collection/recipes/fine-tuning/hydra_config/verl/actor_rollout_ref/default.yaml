@@ -1,0 +1,25 @@
+# @package recipes.training_config.actor_rollout_ref
+hybrid_engine: true
+profiler:
+  _target_: verl.utils.profiler.ProfilerConfig
+  discrete: false
+  all_ranks: false
+  ranks: []
+model:
+  path: null
+  custom_chat_template: null
+  use_shm: false
+  external_lib: null
+  override_config: {}
+  enable_gradient_checkpointing: true
+  enable_activation_offload: false
+  use_remove_padding: true
+  lora_rank: 0
+  lora_alpha: 16
+  target_modules: all-linear
+  exclude_modules: null
+  use_liger: false
+  use_fused_kernels: false
+  fused_kernel_options:
+    impl_backend: torch
+  trust_remote_code: false

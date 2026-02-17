@@ -11,6 +11,7 @@
 import argparse
 import copy
 import logging
+import math
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -65,7 +66,8 @@ def run_validation(cfg, fileList=None, save_model_files=True, instance_type=None
     # Verify environment
     if not validate_platform_auth(cfg):
         logging.error("Unsupported platform. Currently supported platforms are K8, SLURM, SMJOBS")
-        return None
+        # Return jobRecorder even on failure so JSON can be written
+        return jobRecorder
     fileList = fileList if fileList != None else cfg.recipe_list
     input_file_list = get_input_recipes(fileList, jobRecorder)
     if input_file_list == None:
@@ -98,6 +100,125 @@ def run_validation(cfg, fileList=None, save_model_files=True, instance_type=None
 
 # Default mock instance type for serverless platform (instance type is not used but required for config)
 SERVERLESS_MOCK_INSTANCE_TYPE = "serverless_mock_instance_type"
+
+
+def split_recipes_into_batches(recipe_list, batch_size):
+    """
+    Split a list of recipe files into batches of specified size.
+
+    Args:
+        recipe_list: List of recipe file paths to batch
+        batch_size: Number of recipes per batch. If None or <= 0, returns all recipes as single batch.
+
+    Returns:
+        List of recipe batches (each batch is a list of recipe file paths)
+    """
+    if not recipe_list:
+        return []
+
+    # If batch_size is None or <= 0, return all recipes as a single batch
+    if batch_size is None or batch_size <= 0:
+        return [recipe_list]
+
+    # Calculate number of batches
+    num_batches = math.ceil(len(recipe_list) / batch_size)
+
+    # Split recipes into batches
+    recipe_batches = []
+    for i in range(num_batches):
+        start_idx = i * batch_size
+        end_idx = min((i + 1) * batch_size, len(recipe_list))
+        recipe_batches.append(recipe_list[start_idx:end_idx])
+
+    return recipe_batches
+
+
+def run_recipe_batch_validation(
+    cfg,
+    recipe_batch,
+    batch_num,
+    total_batches,
+    save_model_files=True,
+    cli_instance_types=None,
+    default_instance_types=None,
+):
+    """
+    Run validation for a batch of recipes in parallel.
+
+    All recipes within a batch are scheduled concurrently using ThreadPoolExecutor.
+    This function blocks until all recipes in the batch complete execution.
+
+    Args:
+        cfg: Configuration object
+        recipe_batch: List of recipe file paths to validate in this batch
+        batch_num: Current batch number (1-indexed for logging)
+        total_batches: Total number of batches
+        save_model_files: Whether to keep model files after validation
+        cli_instance_types: Instance types from CLI (takes priority)
+        default_instance_types: Default instance types from config
+
+    Returns:
+        dict: Dictionary mapping instance_type -> JobRecorder with merged results from all recipes in batch
+    """
+    logging.info(f"\n{'='*60}")
+    logging.info(f"BATCH {batch_num}/{total_batches} - Processing {len(recipe_batch)} recipe(s) in parallel")
+    logging.info(f"{'='*60}")
+    for recipe in recipe_batch:
+        logging.info(f"  - {recipe}")
+
+    batch_results = {}
+
+    # Use ThreadPoolExecutor to process all recipes in the batch in parallel
+    with ThreadPoolExecutor() as executor:
+        recipe_futures = {}
+
+        for recipe_file in recipe_batch:
+            # Determine instance types for this recipe
+            if cli_instance_types:
+                recipe_instance_types = cli_instance_types
+            elif default_instance_types:
+                recipe_instance_types = default_instance_types
+            else:
+                # Try to get instance types from the recipe file itself
+                recipe_instance_types = get_instance_types_from_recipe(recipe_file)
+                if not recipe_instance_types:
+                    logging.error(
+                        f"Recipe '{recipe_file}': No instance types available. "
+                        "Specify via --instance_types, in the recipe's instance_types field, "
+                        "or in config's instance_type_list."
+                    )
+                    continue
+
+            # Create config copy for this recipe
+            cfg_copy = copy.deepcopy(cfg)
+            cfg_copy.instance_type_list = recipe_instance_types
+
+            # Submit validation for this recipe
+            future = executor.submit(run_validation_for_all_instance_types, cfg_copy, [recipe_file], save_model_files)
+            recipe_futures[future] = recipe_file
+
+        # Collect results as recipes complete
+        for future in as_completed(recipe_futures):
+            recipe_file = recipe_futures[future]
+            try:
+                recipe_results = future.result()
+
+                # Merge recipe results into batch_results
+                for instance_type, job_recorder in recipe_results.items():
+                    if instance_type not in batch_results:
+                        batch_results[instance_type] = job_recorder
+                    elif job_recorder:
+                        if batch_results[instance_type]:
+                            batch_results[instance_type].jobs.update(job_recorder.jobs)
+                        else:
+                            batch_results[instance_type] = job_recorder
+
+                logging.info(f"Completed validation for recipe: {recipe_file}")
+            except Exception as e:
+                logging.error(f"Validation failed for recipe '{recipe_file}': {e}")
+
+    logging.info(f"Batch {batch_num}/{total_batches} completed - all {len(recipe_batch)} recipes finished")
+    return batch_results
 
 
 def run_validation_for_all_instance_types(cfg, fileList=None, save_model_files=True):
@@ -196,7 +317,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Determine instance types
-    # Priority: CLI args > recipe's instance_types field > config instance_type_list
+    # Priority: CLI args >  config instance_type_list > recipe's instance_types field
     cli_instance_types = None
     logging.debug(f" args.instance_types raw value: '{args.instance_types}' (type: {type(args.instance_types)})")
     if args.instance_types:
@@ -213,51 +334,59 @@ if __name__ == "__main__":
         list(cfg.instance_type_list) if hasattr(cfg, "instance_type_list") and cfg.instance_type_list else []
     )
 
-    # Run validation for each recipe with its own instance types
+    # Determine recipe batch size
+    # Priority: CLI arg > config recipe_batch_size > None (all recipes in single batch)
+    batch_size = None
+    if hasattr(args, "recipe_batch_size") and args.recipe_batch_size is not None:
+        batch_size = args.recipe_batch_size
+        logging.info(f"Using recipe batch size from CLI --recipe_batch_size: {batch_size}")
+    elif hasattr(cfg, "recipe_batch_size") and cfg.recipe_batch_size is not None:
+        batch_size = cfg.recipe_batch_size
+        logging.info(f"Using recipe batch size from config: {batch_size}")
+
+    # Validate batch_size
+    if batch_size is not None:
+        if not isinstance(batch_size, int) or batch_size < 1:
+            logging.error(f"Invalid batch_size: {batch_size}. Must be a positive integer or None.")
+            sys.exit(1)
+
+    # Split recipes into batches
+    recipe_batches = split_recipes_into_batches(file_list, batch_size)
+    total_batches = len(recipe_batches)
+
+    if batch_size is None:
+        logging.info(f"Batch size not set - running all {len(file_list)} recipe(s) in a single batch (parallel)")
+    else:
+        logging.info(
+            f"Splitting {len(file_list)} recipe(s) into {total_batches} batch(es) of up to {batch_size} recipe(s) each"
+        )
+        logging.info("Batches will execute sequentially, recipes within each batch will execute in parallel")
+
+    # Run validation for each batch sequentially
+    # Within each batch, recipes are processed in parallel
     all_results = {}
-    for recipe_file in file_list:
-        # Determine instance types for this recipe
-        if cli_instance_types:
-            # CLI args take priority - use same instance types for all recipes
-            recipe_instance_types = cli_instance_types
-            logging.info(f"Recipe '{recipe_file}': Using instance types from CLI: {recipe_instance_types}")
-        else:
-            # Try to get instance types from the recipe file itself
-            recipe_instance_types = get_instance_types_from_recipe(recipe_file)
-            # Use default instance types from common config
-            if default_instance_types:
-                recipe_instance_types = default_instance_types
-                logging.info(
-                    f"Recipe '{recipe_file}': Using default instance types from config: {recipe_instance_types}"
-                )
-            elif recipe_instance_types:
-                logging.info(f"Recipe '{recipe_file}': Using instance types from recipe file: {recipe_instance_types}")
-            else:
-                # No instance types available at all - fail
-                logging.error(
-                    f"Recipe '{recipe_file}': No instance types available. "
-                    "Specify via --instance_types, in the recipe's instance_types field, "
-                    "or in config's instance_type_list."
-                )
-                sys.exit(1)
+    for batch_num, recipe_batch in enumerate(recipe_batches, start=1):
+        batch_results = run_recipe_batch_validation(
+            cfg=cfg,
+            recipe_batch=recipe_batch,
+            batch_num=batch_num,
+            total_batches=total_batches,
+            save_model_files=args.save_model_files,
+            cli_instance_types=cli_instance_types,
+            default_instance_types=default_instance_types,
+        )
 
-        # Set instance types in config for this recipe
-        cfg_copy = copy.deepcopy(cfg)
-        cfg_copy.instance_type_list = recipe_instance_types
-
-        # Run validation for this recipe with its instance types
-        recipe_results = run_validation_for_all_instance_types(cfg_copy, [recipe_file], args.save_model_files)
-
-        # Merge results
-        for instance_type, job_recorder in recipe_results.items():
+        # Merge batch results into all_results
+        for instance_type, job_recorder in batch_results.items():
             if instance_type not in all_results:
                 all_results[instance_type] = job_recorder
             elif job_recorder:
-                # Merge job records if we have multiple recipes for the same instance type
                 if all_results[instance_type]:
                     all_results[instance_type].jobs.update(job_recorder.jobs)
                 else:
                     all_results[instance_type] = job_recorder
+
+        logging.info(f"Batch {batch_num}/{total_batches} results merged into overall results")
 
     # Print summary of all runs
     logging.info(f"\n{'='*60}")
@@ -267,6 +396,11 @@ if __name__ == "__main__":
         if job_recorder:
             logging.info(f"\nResults for instance type: {instance_type}")
             job_recorder.print_results()
+
+            # Write JSON results
+            json_file = job_recorder.write_results_json()
+            if json_file:
+                logging.info(f"JSON results written to {json_file}")
 
     # Cleans resources no longer needed like model files etc
     if not args.save_model_files:

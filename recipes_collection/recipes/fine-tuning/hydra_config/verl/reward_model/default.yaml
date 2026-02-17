@@ -1,0 +1,36 @@
+# @package recipes.training_config.reward_model
+enable: false
+strategy: fsdp
+model:
+  input_tokenizer: meta-llama/Llama-3.1-8B-Instruct
+  path: sfairXC/FsfairX-LLaMA3-RM-v0.1/
+  external_lib: null
+  trust_remote_code: false
+  use_shm: false
+  use_remove_padding: false
+  use_fused_kernels: false
+  fsdp_config:
+    _target_: verl.workers.config.FSDPEngineConfig
+    wrap_policy:
+      min_num_params: 0
+    param_offload: false
+    reshard_after_forward: true
+    fsdp_size: -1
+    forward_prefetch: false
+micro_batch_size: null
+micro_batch_size_per_gpu: null
+max_length: null
+use_dynamic_bsz: true
+forward_max_token_len_per_gpu: 32768
+reward_manager: prime
+launch_reward_fn_async: true
+sandbox_fusion:
+  url: null
+  max_concurrent: 64
+  memory_limit_mb: 1024
+profiler:
+  _target_: verl.utils.profiler.ProfilerConfig
+  discrete: false
+  all_ranks: false
+  ranks: []
+ulysses_sequence_parallel_size: 1

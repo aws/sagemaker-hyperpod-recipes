@@ -63,7 +63,8 @@
                 },
                 "training_config": {
                     "model_config": {
-                        "model_name_or_path": "{{model_name_or_path}}"
+                        "model_name_or_path": "{{model_name_or_path}}",
+                        "lora_checkpoint_file_path" : "{{resume_from_path}}"
                     },
                     "datasets": {
                         "train_data": {
@@ -144,24 +145,8 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [8, 16, 32, 64, 128],
-                    "default": 8,
-                    "conditional_constraints": {
-                        "enum": {
-                            "Hardware": {
-                                "GPU": [8, 16, 32, 64],
-                                "TRN": [16, 32, 64, 128],
-                                "default": [8, 16, 32, 64]
-                            }
-                        },
-                        "default": {
-                            "Hardware": {
-                                "GPU": 8,
-                                "TRN": 16,
-                                "default": 8
-                            }
-                        }
-                    }
+                    "enum": [8, 16, 32, 64, 128, 256, 512, 1024],
+                    "default": 8
                 },
                 "learning_rate": {
                     "type": "float",
@@ -230,7 +215,8 @@
                 },
                 "training_config": {
                     "model_config": {
-                        "model_name_or_path": "{{model_name_or_path}}"
+                        "model_name_or_path": "{{model_name_or_path}}",
+                        "lora_checkpoint_file_path" : "{{resume_from_path}}"
                     },
                     "datasets": {
                         "train_data": {
@@ -313,23 +299,7 @@
                     "type": "integer",
                     "required": true,
                     "enum": [16, 32, 64, 128],
-                    "default": 16,
-                    "conditional_constraints": {
-                        "enum": {
-                            "Hardware": {
-                                "GPU": [16, 32, 64],
-                                "TRN": [16, 32, 64, 128],
-                                "default": [16, 32, 64]
-                            }
-                        },
-                        "default": {
-                            "Hardware": {
-                                "GPU": 16,
-                                "TRN": 16,
-                                "default": 16
-                            }
-                        }
-                    }
+                    "default": 16
                 },
                 "learning_rate": {
                     "type": "float",
@@ -405,7 +375,8 @@
                 },
                 "training_config": {
                     "model_config": {
-                        "model_name_or_path": "{{model_name_or_path}}"
+                        "model_name_or_path": "{{model_name_or_path}}",
+                        "lora_checkpoint_file_path" : "{{resume_from_path}}"
                     },
                     "datasets": {
                         "train_data": {
@@ -487,23 +458,7 @@
                     "type": "integer",
                     "required": true,
                     "enum": [16, 32, 64, 128],
-                    "default": 16,
-                    "conditional_constraints": {
-                        "enum": {
-                            "Hardware": {
-                                "GPU": [16, 32, 64],
-                                "TRN": [16, 32, 64, 128],
-                                "default": [16, 32, 64]
-                            }
-                        },
-                        "default": {
-                            "Hardware": {
-                                "GPU": 16,
-                                "TRN": 16,
-                                "default": 16
-                            }
-                        }
-                    }
+                    "default": 16
                 },
                 "learning_rate": {
                     "type": "float",
@@ -653,24 +608,8 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [8, 16, 32, 64, 128],
-                    "default": 8,
-                    "conditional_constraints": {
-                        "enum": {
-                            "Hardware": {
-                                "GPU": [8, 16, 32, 64],
-                                "TRN": [16, 32, 64, 128],
-                                "default": [8, 16, 32, 64]
-                            }
-                        },
-                        "default": {
-                            "Hardware": {
-                                "GPU": 8,
-                                "TRN": 16,
-                                "default": 8
-                            }
-                        }
-                    }
+                    "enum": [8, 16, 32, 64, 128, 256, 512, 1024],
+                    "default": 8
                 },
                 "learning_rate": {
                     "type": "float",
@@ -832,23 +771,7 @@
                     "type": "integer",
                     "required": true,
                     "enum": [16, 32, 64, 128],
-                    "default": 16,
-                    "conditional_constraints": {
-                        "enum": {
-                            "Hardware": {
-                                "GPU": [16, 32, 64],
-                                "TRN": [16, 32, 64, 128],
-                                "default": [16, 32, 64]
-                            }
-                        },
-                        "default": {
-                            "Hardware": {
-                                "GPU": 16,
-                                "TRN": 16,
-                                "default": 16
-                            }
-                        }
-                    }
+                    "default": 16
                 },
                 "learning_rate": {
                     "type": "float",

@@ -20,7 +20,7 @@ docker run --gpus 8 \
   "${device[@]}" \
   -v launcher/nemo/nemo_framework_launcher/launcher_scripts:launcher/nemo/nemo_framework_launcher/launcher_scripts \
   -v {$results_dir}:{$results_dir} \
-  "test_container" sleep infinity
+  --entrypoint /bin/bash "test_container" -c "sleep infinity"
 
 # Running post launching commands
 docker exec -itd "sm_training_launcher" bash -c "printf \"Port 2022\n\" >> /etc/ssh/sshd_config"

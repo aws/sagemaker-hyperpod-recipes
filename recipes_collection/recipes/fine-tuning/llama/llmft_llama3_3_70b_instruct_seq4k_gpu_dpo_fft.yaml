@@ -3,13 +3,13 @@ defaults:
   - /hydra_config/llmft/model_config/llama-3-3-70b-instruct
   - /hydra_config/llmft/peft/fft
   - /hydra_config/llmft/algorithm/dpo
-  - /hydra_config/llmft/datasets/default_dpo
+  - /hydra_config/llmft/datasets/default_dpo_fft
   - /hydra_config/llmft/strategy/fsdp_dpo_fft
   - _self_
 
 display_name: "Llama 3.3 70B Instruct Direct Preference Optimization Full Fine-Tuning on GPU"
-version: "1.1.0"
-instance_types: ['ml.p5.48xlarge']
+version: "1.2.0"
+instance_types: ['ml.p4de.24xlarge','ml.p5.48xlarge']
 
 run:
   name: llama-3-3-70b-instruct

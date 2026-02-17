@@ -1,6 +1,27 @@
 mlflow:
   tracking_uri: ''
   run_id: ''
+ray_init:
+  num_cpus: null
+  timeline_json_file: null
+algorithm:
+  _target_: verl.trainer.config.AlgoConfig
+  gamma: 1.0
+  lam: 1.0
+  adv_estimator: grpo
+  norm_adv_by_std_in_grpo: true
+  use_kl_in_reward: false
+  kl_penalty: kl
+  kl_ctrl:
+    _target_: verl.trainer.config.KLControlConfig
+    type: fixed
+    kl_coef: 0.001
+    horizon: 10000
+    target_kl: 0.1
+  use_pf_ppo: false
+  pf_ppo:
+    reweight_method: pow
+    weight_pow: 2.0
 actor_rollout_ref:
   actor:
     _target_: verl.workers.config.FSDPActorConfig
@@ -154,6 +175,11 @@ actor_rollout_ref:
     layered_summon: false
     merge_lora_for_inference: false
   hybrid_engine: true
+  profiler:
+    _target_: verl.utils.profiler.ProfilerConfig
+    discrete: false
+    all_ranks: false
+    ranks: []
   model:
     path: meta-llama/Llama-3.2-1B-Instruct
     custom_chat_template: null
@@ -173,11 +199,74 @@ actor_rollout_ref:
       impl_backend: torch
     trust_remote_code: false
     is_saving_checkpoint_in_lora: true
+critic:
+  _target_: verl.workers.config.FSDPCriticConfig
+  rollout_n: 6
+  strategy: fsdp
+  enable: null
+  optim:
+    lr: 1.0e-05
+    lr_warmup_steps_ratio: 0.0
+    total_training_steps: -1
+    weight_decay: 0.01
+    lr_warmup_steps: -1
+    _target_: verl.workers.config.FSDPOptimizerConfig
+    min_lr_ratio: null
+    warmup_style: constant
+  model:
+    path: deepseek-ai/deepseek-llm-7b-chat
+    tokenizer_path: meta-llama/Llama-3.2-1B-Instruct
+    override_config: {}
+    external_lib: null
+    trust_remote_code: false
+    _target_: verl.workers.config.FSDPCriticModelCfg
+    use_shm: false
+    enable_gradient_checkpointing: true
+    enable_activation_offload: false
+    use_remove_padding: false
+    fsdp_config:
+      _target_: verl.workers.config.FSDPEngineConfig
+      param_offload: false
+      optimizer_offload: false
+      offload_policy: false
+      reshard_after_forward: true
+      wrap_policy:
+        min_num_params: 0
+      fsdp_size: -1
+      forward_prefetch: false
+    lora_rank: 0
+    lora_alpha: 16
+    target_modules: all-linear
+  ppo_mini_batch_size: 256
+  ppo_micro_batch_size: null
+  ppo_micro_batch_size_per_gpu: null
+  use_dynamic_bsz: false
+  ppo_max_token_len_per_gpu: 32768
+  forward_max_token_len_per_gpu: 32768
+  ppo_epochs: 1
+  shuffle: false
+  cliprange_value: 0.5
+  loss_agg_mode: token-mean
+  checkpoint:
+    _target_: verl.trainer.config.CheckpointConfig
+    save_contents:
+    - model
+    - optimizer
+    - extra
+    load_contents:
+    - model
+    - optimizer
+    - extra
+    async_save: false
   profiler:
     _target_: verl.utils.profiler.ProfilerConfig
     discrete: false
     all_ranks: false
     ranks: []
+  forward_micro_batch_size: null
+  forward_micro_batch_size_per_gpu: null
+  ulysses_sequence_parallel_size: 1
+  grad_clip: 1.0
 trainer:
   npu_profile:
     options:
@@ -273,74 +362,6 @@ data:
   datagen:
     path: null
     name: null
-critic:
-  _target_: verl.workers.config.FSDPCriticConfig
-  rollout_n: 6
-  strategy: fsdp
-  enable: null
-  optim:
-    lr: 1.0e-05
-    lr_warmup_steps_ratio: 0.0
-    total_training_steps: -1
-    weight_decay: 0.01
-    lr_warmup_steps: -1
-    _target_: verl.workers.config.FSDPOptimizerConfig
-    min_lr_ratio: null
-    warmup_style: constant
-  model:
-    path: deepseek-ai/deepseek-llm-7b-chat
-    tokenizer_path: meta-llama/Llama-3.2-1B-Instruct
-    override_config: {}
-    external_lib: null
-    trust_remote_code: false
-    _target_: verl.workers.config.FSDPCriticModelCfg
-    use_shm: false
-    enable_gradient_checkpointing: true
-    enable_activation_offload: false
-    use_remove_padding: false
-    fsdp_config:
-      _target_: verl.workers.config.FSDPEngineConfig
-      param_offload: false
-      optimizer_offload: false
-      offload_policy: false
-      reshard_after_forward: true
-      wrap_policy:
-        min_num_params: 0
-      fsdp_size: -1
-      forward_prefetch: false
-    lora_rank: 0
-    lora_alpha: 16
-    target_modules: all-linear
-  ppo_mini_batch_size: 256
-  ppo_micro_batch_size: null
-  ppo_micro_batch_size_per_gpu: null
-  use_dynamic_bsz: false
-  ppo_max_token_len_per_gpu: 32768
-  forward_max_token_len_per_gpu: 32768
-  ppo_epochs: 1
-  shuffle: false
-  cliprange_value: 0.5
-  loss_agg_mode: token-mean
-  checkpoint:
-    _target_: verl.trainer.config.CheckpointConfig
-    save_contents:
-    - model
-    - optimizer
-    - extra
-    load_contents:
-    - model
-    - optimizer
-    - extra
-    async_save: false
-  profiler:
-    _target_: verl.utils.profiler.ProfilerConfig
-    discrete: false
-    all_ranks: false
-    ranks: []
-  forward_micro_batch_size: null
-  forward_micro_batch_size_per_gpu: null
-  ulysses_sequence_parallel_size: 1
-  grad_clip: 1.0
 reward_model:
   enable: false
   strategy: fsdp
@@ -378,10 +399,9 @@ reward_model:
     ranks: []
   ulysses_sequence_parallel_size: 1
   reward_kwargs:
-    reward_fn_name: llmj
     kwargs:
-      llmj_prompt_template_path: /opt/ml/code/verl/summarize.jinja
       model_id: bedrock/openai.gpt-oss-120b-1:0
+      llmj_prompt_template_path: /opt/ml/code/verl/summarize.jinja
       num_retries: 5
       range:
       - 0.0
@@ -393,27 +413,7 @@ reward_model:
         reasoning_effort: null
       max_workers: 100
       aws_region_name: null
+    reward_fn_name: llmj
 custom_reward_function:
   path: ''
   name: ''
-algorithm:
-  _target_: verl.trainer.config.AlgoConfig
-  gamma: 1.0
-  lam: 1.0
-  adv_estimator: grpo
-  norm_adv_by_std_in_grpo: true
-  use_kl_in_reward: false
-  kl_penalty: kl
-  kl_ctrl:
-    _target_: verl.trainer.config.KLControlConfig
-    type: fixed
-    kl_coef: 0.001
-    horizon: 10000
-    target_kl: 0.1
-  use_pf_ppo: false
-  pf_ppo:
-    reweight_method: pow
-    weight_pow: 2.0
-ray_init:
-  num_cpus: null
-  timeline_json_file: null

@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 # Portions taken from <repo>, Copyright Nvidia Corporation
 import math
+import os
 import random
 import string
 import sys
@@ -19,8 +20,9 @@ from typing import Tuple
 
 from validations_wrapper import validate_config
 
-LAUNCHER_SCRIPT_PATH = "./launcher/nemo/nemo_framework_launcher/launcher_scripts/"
-sys.path.append(LAUNCHER_SCRIPT_PATH)
+# Relative path for launcher scripts - converted to absolute only at runtime for Docker mounts
+LAUNCHER_SCRIPT_PATH = "launcher/nemo/nemo_framework_launcher/launcher_scripts/"
+sys.path.append(os.path.abspath("./" + LAUNCHER_SCRIPT_PATH))
 
 import hydra
 import omegaconf
@@ -172,7 +174,10 @@ def preprocess_config(cfg) -> Tuple[bool, bool]:
     """
 
     with omegaconf.open_dict(cfg):
-        cfg.launcher_scripts_path = LAUNCHER_SCRIPT_PATH
+        if "pytest" in sys.modules:
+            cfg.launcher_scripts_path = LAUNCHER_SCRIPT_PATH
+        else:
+            cfg.launcher_scripts_path = os.path.abspath("./" + LAUNCHER_SCRIPT_PATH)
     # Override the cluster type to align with NeMo
     if cfg.get("cluster_type") is None:
         assert cfg.get("cluster") is not None

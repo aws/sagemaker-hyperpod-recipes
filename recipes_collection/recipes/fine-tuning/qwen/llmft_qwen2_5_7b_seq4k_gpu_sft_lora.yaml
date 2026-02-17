@@ -20,6 +20,18 @@ training_config:
     model_save_name: SageMaker/Qwen2.5-7B-Instruct-Lora
   training_args:
     merge_weights: true
+  datasets:
+    preprocessor_cfgs:
+      - type: TrainingSFTSampleConverter
+      - type: Seq2SeqTokensProcessor
+        chat_template_name: null
+        ignore_prompt_labels: true
+      - type: DropColumns
+        column_names:
+          - messages
+      - type: SequenceLengthFilter
+        max_seq_length: 16384
+        tokens_labels: ['input_ids']
 
 elastic_policy:
   is_elastic: false

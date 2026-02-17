@@ -8,7 +8,7 @@ defaults:
   - _self_
 
 display_name: "DeepSeek R1 Distill Qwen 7B Direct Preference Optimization Full Fine-Tuning on GPU"
-version: "1.1.0"
+version: "1.2.0"
 instance_types: ['ml.p5.48xlarge']
 
 run:

@@ -1,0 +1,8 @@
+# @package recipes.training_config
+# RLVR-specific overrides
+trainer:
+  project_name: rlvr_grpo_gsm8k
+  logger: [console, tensorboard, mlflow]
+
+reward_model:
+  reward_manager: prime

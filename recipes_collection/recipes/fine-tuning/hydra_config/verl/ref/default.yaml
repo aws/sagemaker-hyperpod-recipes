@@ -1,0 +1,18 @@
+# @package recipes.training_config.actor_rollout_ref.ref
+strategy: fsdp2
+use_torch_compile: true
+log_prob_micro_batch_size: null
+log_prob_micro_batch_size_per_gpu: 8
+log_prob_use_dynamic_bsz: true
+log_prob_max_token_len_per_gpu: 12288
+fsdp_config:
+  _target_: verl.workers.config.FSDPEngineConfig
+  wrap_policy:
+    min_num_params: 0
+  param_offload: true
+  reshard_after_forward: true
+  forward_prefetch: false
+  model_dtype: bfloat16
+ulysses_sequence_parallel_size: 1
+entropy_from_logits_with_chunking: false
+entropy_checkpointing: false

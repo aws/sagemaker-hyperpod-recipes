@@ -1,0 +1,80 @@
+defaults:
+  - /hydra_config/verl/default
+  - /hydra_config/verl/algorithm/grpo
+  - /hydra_config/verl/actor/default
+  - /hydra_config/verl/ref/default
+  - /hydra_config/verl/critic/default
+  - /hydra_config/verl/rollout/vllm
+  - /hydra_config/verl/actor_rollout_ref/default
+  - /hydra_config/verl/trainer/default
+  - /hydra_config/verl/data/default
+  - /hydra_config/verl/reward_model/default
+  - /hydra_config/verl/ray_cluster/default
+  - /hydra_config/verl/peft/fft
+  - /hydra_config/verl/reward/rlaif
+  - /hydra_config/verl/model_config/qwen-3-1-7b
+  - _self_
+
+display_name: "Qwen 3 1.7B GRPO RLAIF Fine-Tuning"
+version: "1.0.0"
+instance_types: ["ml.p4d.24xlarge", "ml.p4de.24xlarge", "ml.p5.48xlarge"]
+
+run:
+  name: verl-grpo-qwen-3-1-dot-7b-fft
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  actor_rollout_ref:
+    actor:
+      ppo_max_token_len_per_gpu: 12288
+      optim:
+        lr: 1.0e-06
+    ref:
+      log_prob_micro_batch_size_per_gpu: 16
+      log_prob_max_token_len_per_gpu: 12288
+    rollout:
+      prompt_length: 1024
+      tensor_model_parallel_size: 1
+      log_prob_micro_batch_size_per_gpu: 16
+      log_prob_max_token_len_per_gpu: 12288
+      enable_chunked_prefill: true
+      layered_summon: false
+      merge_lora_for_inference: false
+  trainer:
+    project_name: rlvr_grpo_gsm8k
+    experiment_name: qwen3-1.7b-fft_grpo-20251119.033941
+    logger:
+    - console
+    - tensorboard
+    - mlflow
+  data:
+    max_prompt_length: 1024
+    max_response_length: 4096
+    val_batch_size: null
+  critic:
+    rollout_n: 6
+    ppo_max_token_len_per_gpu: 32768
+    use_dynamic_bsz: false
+  reward_model:
+    use_dynamic_bsz: false
+    reward_kwargs:
+      reward_fn_name: llmj
+      kwargs:
+        llmj_prompt_template_path: /opt/ml/code/verl/summarize.jinja
+        model_id: bedrock/openai.gpt-oss-120b-1:0
+        num_retries: 5
+        range:
+        - 0.0
+        - 1.0
+        sampling_params:
+          top_p: 0.9
+          temperature: 0.0
+          max_completion_tokens: 2048
+          reasoning_effort: null
+        max_workers: 100
+        aws_region_name: null
+  custom_reward_function:
+    path: ''
+    name: ''

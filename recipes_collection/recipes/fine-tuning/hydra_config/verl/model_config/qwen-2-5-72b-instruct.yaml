@@ -1,0 +1,18 @@
+# @package recipes
+training_config:
+  actor_rollout_ref:
+    model:
+      path: Qwen/Qwen2.5-72B-Instruct
+      trust_remote_code: false
+    rollout:
+      tensor_model_parallel_size: 4
+  critic:
+    model:
+      tokenizer_path: Qwen/Qwen2.5-72B-Instruct
+  reward_model:
+    model:
+      input_tokenizer: Qwen/Qwen2.5-72B-Instruct
+
+ray_cluster:
+  worker_nodes:
+    replicas: 2

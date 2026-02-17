@@ -3,16 +3,20 @@ defaults:
   - /hydra_config/llmft/model_config/gpt-oss-20b
   - /hydra_config/llmft/peft/fft
   - /hydra_config/llmft/algorithm/dpo
-  - /hydra_config/llmft/datasets/default_dpo
+  - /hydra_config/llmft/datasets/default_dpo_fft
   - /hydra_config/llmft/strategy/fsdp_dpo_fft
   - _self_
 
 display_name: "GPT-OSS 20B Direct Preference Optimization Full Fine-Tuning on GPU"
-version: "1.1.0"
+version: "1.2.0"
 instance_types: ['ml.p5.48xlarge']
 
 run:
   name: openai-gpt-oss-20b
+
+trainer:
+  devices: 8
+  num_nodes: 2
 
 training_config:
   model_config:
