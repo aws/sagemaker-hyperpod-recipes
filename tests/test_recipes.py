@@ -30,11 +30,6 @@ from .test_utils import (
 logger = logging.getLogger(__name__)
 
 RUN_SCRIPT_PATHS = get_launcher_run_script_paths()
-RECIPES_OMIT_VALIDATION = [  # FIXME: these recipes are currently fail dryrun and require a fix to re-enable
-    "training/llama/megatron_llama3_1_8b_nemo",
-    "fine-tuning/nova/nova_1_0/nova_pro/distill/nova_pro_1_0_r5_cpu_distill",
-    "fine-tuning/nova/nova_1_0/nova_premier/distill/nova_premier_1_0_r5_cpu_distill",
-]
 
 
 def test_config_for_run_script_exists():
@@ -87,13 +82,12 @@ def test_dryrun_validation_for_all_recipes(subtests):
     recipes = list_recipes()
 
     for recipe in recipes:
-        if recipe.name in RECIPES_OMIT_VALIDATION:
-            continue  # FIXME: these recipes are currently fail dryrun and require a fix to re-enable
-
         overrides = [
             f"recipes={recipe.name}",
             f"base_results_dir=dummy_dir/results",
             f"dry_run=True",
+            "cluster_type=k8s",
+            "cluster=k8s",
         ]
         if (
             recipe.name.startswith(("training/nova", "fine-tuning/nova", "evaluation/nova"))

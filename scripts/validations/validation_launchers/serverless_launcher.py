@@ -5,10 +5,12 @@ import subprocess
 import time
 from pathlib import Path
 
-import boto3
-from omegaconf import OmegaConf
-
 from .base_launcher import BaseLauncher
+from .launcher_utils import (
+    _get_recipe_type_info,
+    get_peft_type_from_filename,
+    load_recipe_with_hydra,
+)
 from .path_utils import get_recipes_folder
 
 # Path to the jumpstart model ID mapping file
@@ -69,11 +71,10 @@ class ServerlessValidationLauncher(BaseLauncher):
             raise ValueError(f"Could not determine customization technique from recipe: {recipe_path}")
 
     def _extract_run_name_from_recipe(self, recipe_path: str) -> str:
-        """Extract run.name from the recipe YAML file"""
+        """Extract run.name from the recipe YAML file using Hydra composition"""
         try:
-            # Load the recipe YAML file
-            full_recipe_path = Path(self.recipes_folder) / recipe_path
-            recipe_cfg = OmegaConf.load(full_recipe_path)
+            # Load the recipe with Hydra to resolve all defaults
+            recipe_cfg = load_recipe_with_hydra(recipe_path)
 
             # Extract the run.name field
             run_name = recipe_cfg.run.name
@@ -101,19 +102,38 @@ class ServerlessValidationLauncher(BaseLauncher):
 
         return job_name
 
-    def _build_serverless_config(self, technique: str, model_arn: str) -> str:
-        """Build serverless job config JSON string (from shell script logic)"""
+    def _build_serverless_config(self, technique: str, model_arn: str, peft_type: str | None) -> str:
+        """
+        Build serverless job config JSON string.
+
+        Args:
+            technique: Customization technique (SFT, DPO, RLAIF, RLVR)
+            model_arn: The model ARN
+            peft_type: PEFT type - "LORA" for LoRA, None for FFT (full fine-tuning)
+        """
         config = {
             "BaseModelArn": model_arn,
             "AcceptEula": True,
             "JobType": "FineTuning",
-            "CustomizationTechnique": technique,
-            "Peft": "LORA",
+            "CustomizationTechnique": technique,  # At top level as working commands show
         }
 
-        # Add evaluator if applicable
-        if technique in self.evaluator_mapping:
+        # Only include Peft field if it's LORA
+        # For FFT (full fine-tuning), omit the Peft field entirely (API expects null/absence)
+        if peft_type is not None:
+            config["Peft"] = peft_type
+
+        # Add evaluator if applicable and not empty
+        if technique in self.evaluator_mapping and self.evaluator_mapping[technique]:
             config["EvaluatorArn"] = self.evaluator_mapping[technique]
+
+        # Add judge_model_id only for RLAIF jobs
+        if technique == "RLAIF":
+            if hasattr(self.config.serverless_config, "default_hyper_parameters") and hasattr(
+                self.config.serverless_config.default_hyper_parameters, "judge_model_id"
+            ):
+                config["JudgeModelId"] = self.config.serverless_config.default_hyper_parameters.judge_model_id
+                self.logger.info(f"Added judge_model_id for RLAIF job: {config['JudgeModelId']}")
 
         return json.dumps(config)
 
@@ -130,11 +150,42 @@ class ServerlessValidationLauncher(BaseLauncher):
             return f"{base_arn}/{model_version}"
         return base_arn
 
-    def _build_hyper_parameters(self) -> str:
-        """Build hyper-parameters JSON from config"""
+    def _build_hyper_parameters(self, recipe_path: str) -> str:
+        """Build hyper-parameters JSON from config based on recipe type.
+
+        Uses the recipe_structure from recipe_type_config to look up
+        technique-specific hyper-parameters in serverless_hyper_parameters section.
+
+        Args:
+            recipe_path: Path to the recipe file (used to determine recipe type)
+
+        Returns:
+            JSON string of hyper-parameters (default + technique-specific merged)
+        """
         hyper_params = {}
+
+        # Add default hyper-parameters
         if hasattr(self.config.serverless_config, "default_hyper_parameters"):
             hyper_params = dict(self.config.serverless_config.default_hyper_parameters)
+
+        # Get recipe type info to find recipe_structure (used as hyper-parameters key)
+        try:
+            recipe_type_info = _get_recipe_type_info(self.config, recipe_path)
+            recipe_structure = recipe_type_info.get("recipe_structure", "llmft")
+
+            # Look up technique-specific hyper-parameters using recipe_structure as key
+            if hasattr(self.config, "serverless_hyper_parameters"):
+                technique_params = getattr(self.config.serverless_hyper_parameters, recipe_structure, None)
+                if technique_params:
+                    technique_params_dict = dict(technique_params)
+                    if technique_params_dict:  # Only log if there are actual parameters
+                        hyper_params.update(technique_params_dict)
+                        self.logger.info(
+                            f"Added technique-specific hyper-parameters for '{recipe_structure}': {technique_params_dict}"
+                        )
+        except ValueError as e:
+            self.logger.warning(f"Could not determine recipe type for hyper-parameters: {e}")
+
         return json.dumps(hyper_params)
 
     def launch_job(self, recipe: str) -> bool:
@@ -154,16 +205,31 @@ class ServerlessValidationLauncher(BaseLauncher):
             # Generate job name using run.name
             job_name = self._generate_job_name(run_name, technique)
 
+            # Get PEFT type (FFT or LORA) - convert FFT to None for API
+            peft_type = get_peft_type_from_filename(recipe)
+            peft_type = None if peft_type == "FFT" else peft_type
+
             # Get other required ARNs
             dataset_arn = self.dataset_mapping[technique]
             mlflow_arn = self.mlflow_mapping[technique]
-            serverless_config = self._build_serverless_config(technique, model_arn)
+            serverless_config = self._build_serverless_config(technique, model_arn, peft_type)
 
-            # Build hyper-parameters from config
-            hyper_params = self._build_hyper_parameters()
+            # Build hyper-parameters from config (recipe-type-specific)
+            hyper_params = self._build_hyper_parameters(recipe)
 
             # Get region from config
             region = self.config.serverless_config.region
+
+            # Build model package config - include SourceModelPackageArn if available for continuous training
+            model_package_config = {"ModelPackageGroupArn": self.config.serverless_config.model_package_group_arn}
+
+            # Check if we have a source model package ARN for continuous training
+            if hasattr(self.config, "serverless_config") and hasattr(
+                self.config.serverless_config, "source_model_package_arn"
+            ):
+                source_model_arn = self.config.serverless_config.source_model_package_arn
+                model_package_config["SourceModelPackageArn"] = source_model_arn
+                self.logger.info(f"Using SourceModelPackageArn for continuous training: {source_model_arn}")
 
             # Build AWS CLI command
             command = [
@@ -191,7 +257,7 @@ class ServerlessValidationLauncher(BaseLauncher):
                 "--serverless-job-config",
                 serverless_config,
                 "--model-package-config",
-                f'{{"ModelPackageGroupArn": "{self.config.serverless_config.model_package_group_arn}"}}',
+                json.dumps(model_package_config),
             ]
 
             # Generate debug info
@@ -213,6 +279,7 @@ class ServerlessValidationLauncher(BaseLauncher):
             self.logger.info(f"  Recipe: {recipe}")
             self.logger.info(f"  Run Name: {run_name}")
             self.logger.info(f"  Technique: {technique}")
+            self.logger.info(f"  Peft Type: {peft_type if peft_type else 'FFT (full fine-tuning)'}")
             self.logger.info(f"  Model ARN: {model_arn}")
             self.logger.info(f"  Dataset ARN: {dataset_arn}")
 
@@ -276,6 +343,8 @@ class ServerlessValidationLauncher(BaseLauncher):
                     self.config.serverless_config.endpoint,
                     "--training-job-name",
                     job_name,
+                    "--region",
+                    self.config.serverless_config.region,
                 ]
 
                 result = subprocess.run(describe_command, capture_output=True, text=True, check=True)
@@ -323,8 +392,6 @@ class ServerlessValidationLauncher(BaseLauncher):
                     self.logger.info(f"✓ CloudWatch logs validation passed: {log_message}")
 
                     # Criterion 3 (Optional): MLflow metrics verification
-                    # mlflow_valid, mlflow_message = self._validate_mlflow_metrics(job_name, technique)
-                    # mlflow_status = f"MLflow validation: {mlflow_message}" if mlflow_valid is not None else "MLflow validation: skipped"
 
                     # Success!
                     success_msg = f"Job completed successfully. OutputModelPackageArn: {output_model_package_arn}. Log message: {log_message}."
@@ -368,7 +435,20 @@ class ServerlessValidationLauncher(BaseLauncher):
                 f.write("# You can run this manually to test the command\n\n")
 
                 # Write the command with proper escaping and formatting
-                cmd_str = " \\\n    ".join([f'"{arg}"' if " " in arg else arg for arg in command])
+                # Use single quotes for JSON arguments to avoid escaping issues
+                escaped_args = []
+                for arg in command:
+                    if arg.startswith("{") or arg.startswith("["):
+                        # JSON argument - use single quotes to avoid escaping issues
+                        escaped_args.append(f"'{arg}'")
+                    elif " " in arg:
+                        # Regular argument with spaces - use double quotes
+                        escaped_args.append(f'"{arg}"')
+                    else:
+                        # Simple argument - no quotes needed
+                        escaped_args.append(arg)
+
+                cmd_str = " \\\n    ".join(escaped_args)
                 f.write(f"{cmd_str}\n")
 
             # Make the script executable
@@ -423,7 +503,7 @@ class ServerlessValidationLauncher(BaseLauncher):
                 else "/aws/sagemaker/TrainingJobs"
             )
 
-            logs_client = boto3.client("logs", region_name=region)
+            logs_client = self.boto_session.client("logs", region_name=region)
 
             # Define expected messages based on technique
             expected_messages = {

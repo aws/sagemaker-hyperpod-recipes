@@ -8,13 +8,6 @@ from typing import Dict
 
 import boto3
 
-try:
-    import sagemaker
-except ImportError:
-    logging.warning(
-        "Sagemaker module not found. Sagemaker-specific features will not be available. Please install sagemaker"
-    )
-
 from scripts.validations.validation_launchers.launcher_utils import (
     construct_k8_launch_command,
     construct_slurm_launch_command,
@@ -39,34 +32,35 @@ class BaseLauncher(ABC):
         self.logger.setLevel(logging.INFO)
         self.logger.propagate = False  # Prevent duplicate logging
 
-        if self.config.platform == "SMJOBS":
-            # Check if we need to assume a role for SageMaker operations
-            assume_role_arn = os.environ.get("HP_MODEL_CUSTOMIZATION_ASSUME_ROLE_ARN")
+        assume_role_arn = getattr(config, "assume_role_arn", None)
+        if assume_role_arn:
+            sts_client = boto3.client("sts")
+            self.logger.info(f"Creating assumed session for {assume_role_arn}")
 
-            if assume_role_arn:
-                self.logger.info(f"Assuming role for SageMaker operations: {assume_role_arn}")
-                # Assume the role
-                sts_client = boto3.client("sts")
-                assumed_role = sts_client.assume_role(
-                    RoleArn=assume_role_arn, RoleSessionName="sagemaker-validation-session"
-                )
+            assumed_role = sts_client.assume_role(
+                RoleArn=assume_role_arn, RoleSessionName=f"{config.platform.lower()}-validation-session"
+            )
+            credentials = assumed_role["Credentials"]
+            self.boto_session = boto3.Session(
+                aws_access_key_id=credentials["AccessKeyId"],
+                aws_secret_access_key=credentials["SecretAccessKey"],
+                aws_session_token=credentials["SessionToken"],
+            )
+        else:
+            self.logger.info(f"Creating default boto session")
+            self.boto_session = boto3.Session()
 
-                # Create boto3 session with assumed role credentials
-                credentials = assumed_role["Credentials"]
-                boto_session = boto3.Session(
-                    aws_access_key_id=credentials["AccessKeyId"],
-                    aws_secret_access_key=credentials["SecretAccessKey"],
-                    aws_session_token=credentials["SessionToken"],
-                )
+        credentials = self.boto_session.get_credentials()
+        self.aws_env = os.environ.copy()
 
-                self.sagemaker_session = sagemaker.Session(boto_session=boto_session)
-                self.sagemaker_client = boto_session.client("sagemaker")
-                self.logs_client = boto_session.client("logs")
-            else:
-                # Use default credentials
-                self.sagemaker_session = sagemaker.Session()
-                self.sagemaker_client = self.sagemaker_session.boto_session.client("sagemaker")
-                self.logs_client = boto3.Session().client("logs")
+        if credentials:
+            self.aws_env.update(
+                {
+                    "AWS_ACCESS_KEY_ID": credentials.access_key,
+                    "AWS_SECRET_ACCESS_KEY": credentials.secret_key,
+                    "AWS_SESSION_TOKEN": credentials.token if credentials.token else "",
+                }
+            )
 
     def launch_model_group(self, model_name, recipes):
         """Launch all jobs in parallel"""
@@ -172,6 +166,17 @@ class BaseLauncher(ABC):
                     throughput_data = self._parse_throughput_dict(dict_str)
 
                     if throughput_data:
+                        # Store the full throughput_data in job recorder (for duration, tokens, etc.)
+                        if input_filename:
+                            self.job_recorder.update_job(
+                                input_filename=input_filename,
+                                throughput_data=throughput_data,
+                                job_success_status=job_success_status,
+                            )
+                            self.logger.info(
+                                f"Stored throughput_data in job recorder for {input_filename}: {throughput_data}"
+                            )
+
                         # Return throughput value or "invalid" based on status
                         status = throughput_data.get("status", "").lower()
                         if "invalid" in status:
@@ -209,6 +214,15 @@ class BaseLauncher(ABC):
         except Exception as e:
             self.logger.error(f"Error calculating throughput for job {job_name}: {e}")
             return None
+
+    def _store_throughput_data(self, data, job_name, success, input_file):
+        self.job_recorder.update_job(
+            input_filename=input_file,
+            throughput_model=data.get("model"),
+            throughput_duration=data.get("duration"),
+            throughput_tokens=data.get("tokens"),
+            throughput_status=data.get("status"),
+        )
 
     def _parse_throughput_dict(self, dict_str):
         """Parse the dictionary string and extract key-value pairs"""

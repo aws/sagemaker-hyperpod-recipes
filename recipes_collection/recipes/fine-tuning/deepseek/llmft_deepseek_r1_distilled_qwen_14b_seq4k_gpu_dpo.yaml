@@ -8,7 +8,7 @@ defaults:
   - _self_
 
 display_name: "DeepSeek R1 Distill Qwen 14B Direct Preference Optimization on GPU, 4K sequence length"
-version: "1.1.0"
+version: "1.2.0"
 instance_types: ['ml.p4de.24xlarge', 'ml.p4d.24xlarge', 'ml.p5.48xlarge', 'ml.g5.48xlarge']
 
 run:

@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     """Nova-specific recipe template processor for both fine-tuning and evaluation."""
 
+    framework_type = "nova"
+
     def __init__(
         self,
         staging_cfg: dict,

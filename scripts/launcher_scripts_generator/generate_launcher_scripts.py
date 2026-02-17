@@ -165,9 +165,20 @@ class LauncherScriptGenerator:
             return OmegaConf.to_container(cfg.get("recipes", cfg), resolve=True)
 
     def get_model_type(self) -> str:
-        """Get run.model_type from recipe."""
+        """Get run.model_type from recipe, or infer from Hydra defaults."""
         run = self.recipe_data.get("run", {})
-        return run.get("model_type", "") if isinstance(run, dict) else ""
+        if isinstance(run, dict) and run.get("model_type"):
+            return run.get("model_type")
+
+        # Infer from Hydra defaults
+        defaults = self.recipe_data.get("defaults", [])
+        for default in defaults:
+            if isinstance(default, str) and "/hydra_config/verl/" in default:
+                return "verl"
+            if isinstance(default, str) and "/hydra_config/llmft/" in default:
+                return "llm_finetuning_aws"
+
+        return ""
 
     def get_template_key(self) -> str:
         """Select template based on model_type."""

@@ -1,0 +1,63 @@
+# @package recipes.training_config.actor_rollout_ref.rollout
+name: vllm
+mode: sync
+temperature: 1.0
+top_k: -1
+top_p: 1
+prompt_length: 512
+response_length: 1024
+dtype: bfloat16
+gpu_memory_utilization: 0.6
+ignore_eos: false
+enforce_eager: false
+free_cache_engine: true
+tensor_model_parallel_size: 2
+max_num_batched_tokens: 8192
+max_model_len: null
+max_num_seqs: 1024
+log_prob_micro_batch_size: null
+log_prob_micro_batch_size_per_gpu: 8
+log_prob_use_dynamic_bsz: true
+log_prob_max_token_len_per_gpu: 12288
+disable_log_stats: true
+do_sample: true
+n: 8
+multi_stage_wake_up: false
+engine_kwargs:
+  vllm:
+    swap_space: null
+    disable_mm_preprocessor_cache: false
+  sglang:
+    attention_backend: null
+val_kwargs:
+  top_k: -1
+  top_p: 1.0
+  temperature: 0
+  n: 1
+  do_sample: false
+multi_turn:
+  enable: false
+  max_assistant_turns: null
+  tool_config_path: null
+  max_user_turns: null
+  max_parallel_calls: 1
+  max_tool_response_length: 256
+  tool_response_truncate_side: middle
+  interaction_config_path: null
+  use_inference_chat_template: false
+  tokenization_sanity_check_mode: strict
+  format: hermes
+calculate_log_probs: false
+agent:
+  num_workers: 8
+  agent_loop_config_path: null
+  custom_async_server:
+    path: null
+    name: null
+update_weights_bucket_megabytes: 512
+trace:
+  backend: mlflow
+  token2text: false
+enable_chunked_prefill: false
+load_format: safetensors
+layered_summon: true

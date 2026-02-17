@@ -60,7 +60,8 @@ minversion = 7.0
 addopts = [
     "--cache-clear",
     "--quiet",
-    "--durations=0",
+    # Uncomment this line to see durations
+    # "--durations=0",
     "-n=auto",
     "--cov=launcher/",
     "--cov=hyperpod_recipes/",

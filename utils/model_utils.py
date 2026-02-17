@@ -40,7 +40,7 @@ def get_jumpstart_model_id(model_name):
 def download_model(cfg):
     if cfg.get("training_config", None) != None and cfg.cluster_type in ["k8s", "slurm"]:
         model_name_or_path = cfg.get("local_model_name_or_path", None)
-        if model_name_or_path == None:
+        if model_name_or_path == None or "verl" in cfg["recipes"]["run"]["name"]:
             return
 
         if cfg.cluster_type == "k8s":
@@ -69,7 +69,14 @@ def download_model_from_hf(cfg, hf_access_token, model_name, save_path):
     if hf_access_token == None:
         logging.error("HF Access token not found. Please set the value in common_config.yaml")
 
-    if cfg.cluster_type == "slurm":
+    if cfg.cluster_type == "k8s":
+        download_model_on_k8s(cfg.cluster.general_pod, model_name, hf_access_token, save_path)
+        return
+    elif cfg.cluster_type == "slurm":
+        # This will skip downloading the model if already present
+        if os.path.exists(save_path):
+            logging.info(f"Model already exists at {save_path}, skipping download")
+            return
         logging.info(f"Initiating model download from HF for {model_name}")
         hf_hub = get_huggingface_hub()
         path = hf_hub.snapshot_download(

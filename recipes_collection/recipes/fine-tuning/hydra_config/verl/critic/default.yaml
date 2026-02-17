@@ -1,0 +1,64 @@
+# @package recipes.training_config.critic
+_target_: verl.workers.config.FSDPCriticConfig
+rollout_n: 5
+strategy: fsdp
+enable: null
+optim:
+  lr: 1.0e-05
+  lr_warmup_steps_ratio: 0.0
+  total_training_steps: -1
+  weight_decay: 0.01
+  lr_warmup_steps: -1
+  _target_: verl.workers.config.FSDPOptimizerConfig
+  min_lr_ratio: null
+  warmup_style: constant
+model:
+  path: deepseek-ai/deepseek-llm-7b-chat
+  tokenizer_path: meta-llama/Llama-3.1-8B-Instruct
+  override_config: {}
+  external_lib: null
+  trust_remote_code: false
+  _target_: verl.workers.config.FSDPCriticModelCfg
+  use_shm: false
+  enable_gradient_checkpointing: true
+  enable_activation_offload: false
+  use_remove_padding: false
+  fsdp_config:
+    _target_: verl.workers.config.FSDPEngineConfig
+    param_offload: false
+    optimizer_offload: false
+    offload_policy: false
+    reshard_after_forward: true
+    wrap_policy:
+      min_num_params: 0
+    fsdp_size: -1
+    forward_prefetch: false
+  lora_rank: 0
+  lora_alpha: 16
+  target_modules: all-linear
+ppo_mini_batch_size: 256
+ppo_micro_batch_size: null
+ppo_micro_batch_size_per_gpu: null
+use_dynamic_bsz: true
+ppo_max_token_len_per_gpu: 24576
+forward_max_token_len_per_gpu: 32768
+ppo_epochs: 1
+shuffle: false
+cliprange_value: 0.5
+loss_agg_mode: token-mean
+checkpoint:
+  _target_: verl.trainer.config.CheckpointConfig
+  save_contents:
+  - hf_model
+  load_contents:
+  - hf_model
+  async_save: false
+profiler:
+  _target_: verl.utils.profiler.ProfilerConfig
+  discrete: false
+  all_ranks: false
+  ranks: []
+forward_micro_batch_size: null
+forward_micro_batch_size_per_gpu: null
+ulysses_sequence_parallel_size: 1
+grad_clip: 1.0

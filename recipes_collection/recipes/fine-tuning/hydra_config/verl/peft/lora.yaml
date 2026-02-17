@@ -1,0 +1,25 @@
+# @package recipes.training_config
+# LoRA-specific overrides
+actor_rollout_ref:
+  actor:
+    ppo_max_token_len_per_gpu: 24576
+    checkpoint:
+      save_contents: [model, optimizer, extra]
+      load_contents: [model, optimizer, extra]
+  ref:
+    log_prob_max_token_len_per_gpu: 24576
+  rollout:
+    log_prob_max_token_len_per_gpu: 24576
+  model:
+    lora_rank: 32
+    lora_alpha: 64
+
+critic:
+  checkpoint:
+    save_contents: [model, optimizer, extra]
+    load_contents: [model, optimizer, extra]
+  ppo_max_token_len_per_gpu: 32768
+
+trainer:
+  total_epochs: 2
+  merge_lora_on_final_save: true

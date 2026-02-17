@@ -8,8 +8,8 @@ defaults:
   - _self_
 
 display_name: "Llama 3.3 70B Instruct Supervised Fine-Tuning Full Fine-Tuning on GPU"
-version: "1.1.0"
-instance_types: ['ml.p5.48xlarge']
+version: "1.2.0"
+instance_types: ['ml.p4de.24xlarge','ml.p5.48xlarge']
 
 run:
   name: llama-3-3-70b-instruct
@@ -24,3 +24,6 @@ training_config:
     chat_template_key: llama--meta-llama-3.3-70b-instruct
   training_args:
     train_batch_size: 32
+
+fsdp_config:
+  state_dict_type: SHARDED_STATE_DICT

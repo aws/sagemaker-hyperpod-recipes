@@ -11,7 +11,10 @@ from typing import Optional
 import yaml
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
+from utils.recipe_utils import load_recipe_with_hydra
+
 from ..nemo.constants import ROOT_DIR
+from .process_special_override_parameters import SpecialOverrideParametersProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +26,9 @@ class ServerlessMeteringType(Enum):
 
 class BaseRecipeTemplateProcessor(ABC):
     """Abstract base class for recipe template processors."""
+
+    # Framework type for special parameter processing. Subclasses should override this.
+    framework_type: str = "default"
 
     def __init__(self, staging_cfg: dict):
         self.staging_cfg = staging_cfg
@@ -320,7 +326,15 @@ class BaseRecipeTemplateProcessor(ABC):
     #
     # Why do we need conditional constraints? Helps us use a single template for multiple recipe files with overlapping recipe contents
     def _resolve_constraints_using_metadata(self, metadata: dict) -> dict:
-        """Resolve conditional constraints using already generated metadata."""
+        """Resolve conditional constraints using already generated metadata.
+
+        For each parameter:
+        - If it has conditional_constraints: resolve using metadata
+        - Else if it's a special param (global_batch_size, rollout): use dynamic computation
+
+        This ensures params with explicit constraints use those constraints,
+        while params without constraints get dynamic computation based on their default values.
+        """
         if not self.recipe_override_parameters:
             return {}
 
@@ -329,42 +343,59 @@ class BaseRecipeTemplateProcessor(ABC):
 
         logger.info(f"Resolving constraints using metadata: {metadata}")
 
-        # Process each parameter that has conditional_constraints
+        # Initialize special params processor for params without conditional_constraints
+        special_params_processor = SpecialOverrideParametersProcessor(framework=self.framework_type)
+        special_param_names = set(special_params_processor.params_config.keys())
+
+        # Process each parameter - route to appropriate handler
         for param_name, param_config in resolved_parameters.items():
             if "conditional_constraints" in param_config:
-                conditional_constraints = param_config["conditional_constraints"]
-
-                # for condition_key, constraint_map in conditional_constraints.items():
-                for params_to_be_changed, constraint_map in conditional_constraints.items():
-                    if len(constraint_map) > 1:
-                        raise ValueError(
-                            f"Multiple constraints found for {param_name} : {params_to_be_changed}. Only one constraint is allowed."
-                        )
-                    condition_key, resolver_map = next(iter(constraint_map.items()))
-                    if condition_key not in metadata:
-                        raise KeyError(f"Condition key {condition_key} not found in metadata")
-
-                    resolved_values = None
-
-                    condition_value = metadata[condition_key]
-
-                    # Look for exact match first, then fall back to "default"
-                    for constraint in resolver_map:
-                        if constraint in condition_value:
-                            resolved_values = resolver_map[constraint]
-                            break
-
-                    if not resolved_values:
-                        resolved_values = resolver_map["default"]
-
-                    # Resolve the constraints
-                    param_config[params_to_be_changed] = resolved_values
-
-                # Cleanup the conditional constraints section from the override_parameters
-                del param_config["conditional_constraints"]
+                # Route 1: Has conditional_constraints - resolve using metadata
+                self._resolve_conditional_constraints(param_name, param_config, metadata)
+            elif param_name in special_param_names:
+                # Route 2: Special param without conditional_constraints - use dynamic computation
+                special_params_processor.process_single_param(param_name, param_config)
 
         logging.info("Constraints resolved")
         return resolved_parameters
+
+    def _resolve_conditional_constraints(self, param_name: str, param_config: dict, metadata: dict) -> None:
+        """Resolve conditional constraints for a single parameter using metadata.
+
+        Args:
+            param_name: Name of the parameter
+            param_config: Parameter configuration dict (modified in place)
+            metadata: Recipe metadata dict
+        """
+        conditional_constraints = param_config["conditional_constraints"]
+
+        for params_to_be_changed, constraint_map in conditional_constraints.items():
+            if len(constraint_map) > 1:
+                raise ValueError(
+                    f"Multiple constraints found for {param_name} : {params_to_be_changed}. Only one constraint is allowed."
+                )
+            condition_key, resolver_map = next(iter(constraint_map.items()))
+            if condition_key not in metadata:
+                raise KeyError(f"Condition key {condition_key} not found in metadata")
+
+            resolved_values = None
+
+            condition_value = metadata[condition_key]
+
+            # Look for exact match first, then fall back to "default"
+            for constraint in resolver_map:
+                if constraint in condition_value:
+                    resolved_values = resolver_map[constraint]
+                    break
+
+            if not resolved_values:
+                resolved_values = resolver_map["default"]
+
+            # Resolve the constraints
+            param_config[params_to_be_changed] = resolved_values
+
+        # Cleanup the conditional constraints section from the override_parameters
+        del param_config["conditional_constraints"]
 
     def get_recipe_name_from_path(self, recipe_file_path: str) -> str:
         """
@@ -410,3 +441,6 @@ class BaseRecipeTemplateProcessor(ABC):
             logging.info(f"No hosting config found for recipe: {recipe_name}")
 
         return hosting_configs
+
+    def _load_recipe_config(self, recipe_file_path: str):
+        return load_recipe_with_hydra(recipe_file_path)

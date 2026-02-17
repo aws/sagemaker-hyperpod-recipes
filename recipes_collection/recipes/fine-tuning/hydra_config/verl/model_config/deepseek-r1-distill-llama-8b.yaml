@@ -1,0 +1,18 @@
+# @package recipes
+training_config:
+  actor_rollout_ref:
+    model:
+      path: deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+      trust_remote_code: false
+    rollout:
+      tensor_model_parallel_size: 1
+  critic:
+    model:
+      tokenizer_path: deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+  reward_model:
+    model:
+      input_tokenizer: deepseek-ai/DeepSeek-R1-Distill-Llama-8B
+
+ray_cluster:
+  worker_nodes:
+    replicas: 1

@@ -29,8 +29,7 @@
                             }
                         },
                         "rollout": {
-                            "prompt_length": "{{max_prompt_length}}",
-                            "n": "{{rollout}}"
+                            "prompt_length": "{{max_prompt_length}}"
                         },
                         "model": {
                             "path": "{{model_name_or_path}}"
@@ -130,68 +129,6 @@
                     "enum": ["/opt/ml/code/verl/cot.jinja", "/opt/ml/code/verl/evaluate.jinja", "/opt/ml/code/verl/faithfulness.jinja", "/opt/ml/code/verl/summarize.jinja"],
                     "default": "/opt/ml/code/verl/summarize.jinja"
                 },
-                "rollout": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [4, 5, 6, 8],
-                    "default": 8,
-                    "conditional_constraints": {
-                        "enum": {
-                            "Name": {
-                                "verl-grpo-rlaif-deepseek-r1-distilled-llama-70b-lora": [8],
-                                "verl-grpo-rlaif-deepseek-r1-distilled-llama-8b-lora": [8],
-                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-1-dot-5b-lora": [8],
-                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-14b-lora": [8],
-                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-32b-lora": [8],
-                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-7b-lora": [8],
-                                "verl-grpo-rlaif-gpt-oss-120b-lora": [8],
-                                "verl-grpo-rlaif-gpt-oss-20b-lora": [8],
-                                "verl-grpo-rlaif-llama-3-dot-1-8b-instruct-lora": [8],
-                                "verl-grpo-rlaif-llama-3-dot-2-1b-instruct-lora": [8],
-                                "verl-grpo-rlaif-llama-3-dot-2-3b-instruct-lora": [8],
-                                "verl-grpo-rlaif-llama-3-dot-3-70b-instruct-lora": [8],
-                                "verl-grpo-rlaif-qwen-2-dot-5-14b-instruct-lora": [8],
-                                "verl-grpo-rlaif-qwen-2-dot-5-32b-instruct-lora": [8],
-                                "verl-grpo-rlaif-qwen-2-dot-5-72b-instruct-lora": [8],
-                                "verl-grpo-rlaif-qwen-2-dot-5-7b-instruct-lora": [8],
-                                "verl-grpo-rlaif-qwen-3-0-dot-6b-lora": [8],
-                                "verl-grpo-rlaif-qwen-3-1-dot-7b-lora": [8],
-                                "verl-grpo-rlaif-qwen-3-14b-lora": [8],
-                                "verl-grpo-rlaif-qwen-3-32b-lora": [8],
-                                "verl-grpo-rlaif-qwen-3-4b-lora": [8],
-                                "verl-grpo-rlaif-qwen-3-8b-lora": [8],
-                                "default": [8]
-                            }
-                        },
-                        "default": {
-                            "Name": {
-                                "verl-grpo-rlaif-deepseek-r1-distilled-llama-70b-lora": 8,
-                                "verl-grpo-rlaif-deepseek-r1-distilled-llama-8b-lora": 8,
-                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-1-dot-5b-lora": 8,
-                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-14b-lora": 8,
-                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-32b-lora": 8,
-                                "verl-grpo-rlaif-deepseek-r1-distilled-qwen-7b-lora": 8,
-                                "verl-grpo-rlaif-gpt-oss-120b-lora": 8,
-                                "verl-grpo-rlaif-gpt-oss-20b-lora": 8,
-                                "verl-grpo-rlaif-llama-3-dot-1-8b-instruct-lora": 8,
-                                "verl-grpo-rlaif-llama-3-dot-2-1b-instruct-lora": 8,
-                                "verl-grpo-rlaif-llama-3-dot-2-3b-instruct-lora": 8,
-                                "verl-grpo-rlaif-llama-3-dot-3-70b-instruct-lora": 8,
-                                "verl-grpo-rlaif-qwen-2-dot-5-14b-instruct-lora": 8,
-                                "verl-grpo-rlaif-qwen-2-dot-5-32b-instruct-lora": 8,
-                                "verl-grpo-rlaif-qwen-2-dot-5-72b-instruct-lora": 8,
-                                "verl-grpo-rlaif-qwen-2-dot-5-7b-instruct-lora": 8,
-                                "verl-grpo-rlaif-qwen-3-0-dot-6b-lora": 8,
-                                "verl-grpo-rlaif-qwen-3-1-dot-7b-lora": 8,
-                                "verl-grpo-rlaif-qwen-3-14b-lora": 8,
-                                "verl-grpo-rlaif-qwen-3-32b-lora": 8,
-                                "verl-grpo-rlaif-qwen-3-4b-lora": 8,
-                                "verl-grpo-rlaif-qwen-3-8b-lora": 8,
-                                "default": 8
-                            }
-                        }
-                    }
-                },
                 "train_val_split_ratio": {
                     "type": "float",
                     "required": false,
@@ -246,8 +183,7 @@
                             }
                         },
                         "rollout": {
-                            "prompt_length": "{{max_prompt_length}}",
-                            "n": "{{rollout}}"
+                            "prompt_length": "{{max_prompt_length}}"
                         },
                         "model": {
                             "path": "{{model_name_or_path}}"
@@ -339,45 +275,7 @@
                     "type": "integer",
                     "required": true,
                     "enum": [128, 256, 512, 1024],
-                    "default": 128,
-                    "conditional_constraints": {
-                    "enum": {
-                        "Name": {
-                            "verl-grpo-rlvr-llama-3-dot-2-1b-instruct-lora": [64, 128, 256, 512, 1024],
-                            "verl-grpo-rlvr-gpt-oss-120b-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-llama-3-dot-2-3b-instruct-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-deepseek-r1-distilled-llama-8b-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-deepseek-r1-distilled-llama-70b-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-1-dot-5b-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-14b-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-qwen-2-dot-5-14b-instruct-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-qwen-2-dot-5-72b-instruct-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-qwen-3-1-dot-7b-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-qwen-3-4b-lora": [256, 512, 1024],
-                            "verl-grpo-rlvr-qwen-3-14b-lora": [256, 512, 1024],
-                            "default": [128, 256, 512, 1024]
-                        }
-                    },
-                    "default": {
-                        "Name": {
-                            "verl-grpo-rlvr-llama-3-dot-2-1b-instruct-lora": 64,
-                            "verl-grpo-rlvr-gpt-oss-120b-lora": 1024,
-                            "verl-grpo-rlvr-llama-3-dot-2-3b-instruct-lora": 256,
-                            "verl-grpo-rlvr-deepseek-r1-distilled-llama-8b-lora": 256,
-                            "verl-grpo-rlvr-deepseek-r1-distilled-llama-70b-lora": 256,
-                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-1-dot-5b-lora": 256,
-                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-lora": 256,
-                            "verl-grpo-rlvr-deepseek-r1-distilled-qwen-14b-lora": 256,
-                            "verl-grpo-rlvr-qwen-2-dot-5-14b-instruct-lora": 256,
-                            "verl-grpo-rlvr-qwen-2-dot-5-72b-instruct-lora": 256,
-                            "verl-grpo-rlvr-qwen-3-1-dot-7b-lora": 256,
-                            "verl-grpo-rlvr-qwen-3-4b-lora": 256,
-                            "verl-grpo-rlvr-qwen-3-14b-lora": 256,
-                            "default": 128
-                        }
-                    }
-                }
+                    "default": 128
                 },
                 "max_prompt_length": {
                     "type": "integer",
@@ -385,69 +283,6 @@
                     "min": 512,
                     "max": 16384,
                     "default": 1024
-                },
-
-                "rollout": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [4, 5, 6, 8],
-                    "default": 6,
-                    "conditional_constraints": {
-                        "enum": {
-                            "Name": {
-                                "verl-grpo-rlvr-deepseek-r1-distilled-llama-70b-lora": [6],
-                                "verl-grpo-rlvr-deepseek-r1-distilled-llama-8b-lora": [6],
-                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-1-dot-5b-lora": [6],
-                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-14b-lora": [6],
-                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-32b-lora": [8],
-                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-lora": [6],
-                                "verl-grpo-rlvr-gpt-oss-120b-lora": [5],
-                                "verl-grpo-rlvr-gpt-oss-20b-lora": [8],
-                                "verl-grpo-rlvr-llama-3-dot-1-8b-instruct-lora": [8],
-                                "verl-grpo-rlvr-llama-3-dot-2-1b-instruct-lora": [8],
-                                "verl-grpo-rlvr-llama-3-dot-2-3b-instruct-lora": [6],
-                                "verl-grpo-rlvr-llama-3-dot-3-70b-instruct-lora": [8],
-                                "verl-grpo-rlvr-qwen-2-dot-5-14b-instruct-lora": [5],
-                                "verl-grpo-rlvr-qwen-2-dot-5-32b-instruct-lora": [8],
-                                "verl-grpo-rlvr-qwen-2-dot-5-72b-instruct-lora": [6],
-                                "verl-grpo-rlvr-qwen-2-dot-5-7b-instruct-lora": [8],
-                                "verl-grpo-rlvr-qwen-3-0-dot-6b-lora": [8],
-                                "verl-grpo-rlvr-qwen-3-1-dot-7b-lora": [6],
-                                "verl-grpo-rlvr-qwen-3-14b-lora": [6],
-                                "verl-grpo-rlvr-qwen-3-32b-lora": [8],
-                                "verl-grpo-rlvr-qwen-3-4b-lora": [6],
-                                "verl-grpo-rlvr-qwen-3-8b-lora": [8],
-                                "default": [6]
-                            }
-                        },
-                        "default": {
-                            "Name": {
-                                "verl-grpo-rlvr-deepseek-r1-distilled-llama-70b-lora": 6,
-                                "verl-grpo-rlvr-deepseek-r1-distilled-llama-8b-lora": 6,
-                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-1-dot-5b-lora": 6,
-                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-14b-lora": 6,
-                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-32b-lora": 8,
-                                "verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-lora": 6,
-                                "verl-grpo-rlvr-gpt-oss-120b-lora": 5,
-                                "verl-grpo-rlvr-gpt-oss-20b-lora": 8,
-                                "verl-grpo-rlvr-llama-3-dot-1-8b-instruct-lora": 8,
-                                "verl-grpo-rlvr-llama-3-dot-2-1b-instruct-lora": 8,
-                                "verl-grpo-rlvr-llama-3-dot-2-3b-instruct-lora": 6,
-                                "verl-grpo-rlvr-llama-3-dot-3-70b-instruct-lora": 8,
-                                "verl-grpo-rlvr-qwen-2-dot-5-14b-instruct-lora": 5,
-                                "verl-grpo-rlvr-qwen-2-dot-5-32b-instruct-lora": 8,
-                                "verl-grpo-rlvr-qwen-2-dot-5-72b-instruct-lora": 6,
-                                "verl-grpo-rlvr-qwen-2-dot-5-7b-instruct-lora": 8,
-                                "verl-grpo-rlvr-qwen-3-0-dot-6b-lora": 8,
-                                "verl-grpo-rlvr-qwen-3-1-dot-7b-lora": 6,
-                                "verl-grpo-rlvr-qwen-3-14b-lora": 6,
-                                "verl-grpo-rlvr-qwen-3-32b-lora": 8,
-                                "verl-grpo-rlvr-qwen-3-4b-lora": 6,
-                                "verl-grpo-rlvr-qwen-3-8b-lora": 8,
-                                "default": 6
-                            }
-                        }
-                    }
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -503,8 +338,7 @@
                             }
                         },
                         "rollout": {
-                            "prompt_length": "{{max_prompt_length}}",
-                            "n": "{{rollout}}"
+                            "prompt_length": "{{max_prompt_length}}"
                         },
                         "model": {
                             "path": "{{model_name_or_path}}"
@@ -604,44 +438,6 @@
                     "enum": ["/opt/ml/code/verl/cot.jinja", "/opt/ml/code/verl/evaluate.jinja", "/opt/ml/code/verl/faithfulness.jinja", "/opt/ml/code/verl/summarize.jinja"],
                     "default": "/opt/ml/code/verl/summarize.jinja"
                 },
-                "rollout": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [4, 5, 6, 8],
-                    "default": 8,
-                    "conditional_constraints": {
-                        "enum": {
-                            "Name": {
-                                "verl-deepseek-r1-distill-qwen-32b-fft": [8],
-                                "verl-grpo-gpt-oss-20b-fft": [8],
-                                "verl-grpo-llama-3-dot-1-8b-instruct-fft": [8],
-                                "verl-grpo-llama-3-dot-3-70b-instruct-fft": [8],
-                                "verl-grpo-qwen-2-dot-5-7b-instruct-fft": [8],
-                                "verl-grpo-qwen-2-dot-5-14b-instruct-fft": [8],
-                                "verl-grpo-qwen-2-dot-5-32b-instruct-fft": [8],
-                                "verl-grpo-qwen-3-0-dot-6b-fft": [8],
-                                "verl-grpo-qwen-3-8b-fft": [8],
-                                "verl-grpo-qwen-3-32b-fft": [8],
-                                "default": [8]
-                            }
-                        },
-                        "default": {
-                            "Name": {
-                                "verl-deepseek-r1-distill-qwen-32b-fft": 8,
-                                "verl-grpo-gpt-oss-20b-fft": 8,
-                                "verl-grpo-llama-3-dot-1-8b-instruct-fft": 8,
-                                "verl-grpo-llama-3-dot-3-70b-instruct-fft": 8,
-                                "verl-grpo-qwen-2-dot-5-7b-instruct-fft": 8,
-                                "verl-grpo-qwen-2-dot-5-14b-instruct-fft": 8,
-                                "verl-grpo-qwen-2-dot-5-32b-instruct-fft": 8,
-                                "verl-grpo-qwen-3-0-dot-6b-fft": 8,
-                                "verl-grpo-qwen-3-8b-fft": 8,
-                                "verl-grpo-qwen-3-32b-fft": 8,
-                                "default": 8
-                            }
-                        }
-                    }
-                },
                 "train_val_split_ratio": {
                     "type": "float",
                     "required": false,
@@ -696,8 +492,7 @@
                             }
                         },
                         "rollout": {
-                            "prompt_length": "{{max_prompt_length}}",
-                            "n": "{{rollout}}"
+                            "prompt_length": "{{max_prompt_length}}"
                         },
                         "model": {
                             "path": "{{model_name_or_path}}"
@@ -797,54 +592,6 @@
                     "min": 512,
                     "max": 16384,
                     "default": 1024
-                },
-                "rollout": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [4, 5, 6, 8],
-                    "default": 6,
-                    "conditional_constraints": {
-                        "enum": {
-                            "Name": {
-                                "verl-grpo-deepseek-r1-distilled-llama-8b-fft": [8],
-                                "verl-grpo-deepseek-r1-distilled-qwen-14b-fft": [8],
-                                "verl-grpo-deepseek-r1-distilled-qwen-32b-fft": [8],
-                                "verl-grpo-gpt-oss-20b-fft": [8],
-                                "verl-grpo-llama-3-dot-1-8b-fft": [8],
-                                "verl-grpo-llama-3-dot-2-1b-instruct-fft": [8],
-                                "verl-grpo-llama-3-dot-2-3b-instruct-fft": [8],
-                                "verl-grpo-qwen-2-dot-5-14b-fft": [8],
-                                "verl-grpo-qwen-2-dot-5-32b-instruct-fft": [8],
-                                "verl-grpo-qwen-2-dot-5-7b-instruct-fft": [8],
-                                "verl-grpo-qwen-3-0-dot-6b-fft": [8],
-                                "verl-grpo-qwen-3-14b-fft": [8],
-                                "verl-grpo-qwen-3-32b-fft": [8],
-                                "verl-grpo-qwen-3-4b-fft": [8],
-                                "verl-grpo-qwen-3-8b-fft": [8],
-                                "default": [8]
-                            }
-                        },
-                        "default": {
-                            "Name": {
-                                "verl-grpo-deepseek-r1-distilled-llama-8b-fft": 8,
-                                "verl-grpo-deepseek-r1-distilled-qwen-14b-fft": 8,
-                                "verl-grpo-deepseek-r1-distilled-qwen-32b-fft": 8,
-                                "verl-grpo-gpt-oss-20b-fft": 8,
-                                "verl-grpo-llama-3-dot-1-8b-fft": 8,
-                                "verl-grpo-llama-3-dot-2-1b-instruct-fft": 8,
-                                "verl-grpo-llama-3-dot-2-3b-instruct-fft": 8,
-                                "verl-grpo-qwen-2-dot-5-14b-fft": 8,
-                                "verl-grpo-qwen-2-dot-5-32b-instruct-fft": 8,
-                                "verl-grpo-qwen-2-dot-5-7b-instruct-fft": 8,
-                                "verl-grpo-qwen-3-0-dot-6b-fft": 8,
-                                "verl-grpo-qwen-3-14b-fft": 8,
-                                "verl-grpo-qwen-3-32b-fft": 8,
-                                "verl-grpo-qwen-3-4b-fft": 8,
-                                "verl-grpo-qwen-3-8b-fft": 8,
-                                "default": 8
-                            }
-                        }
-                    }
                 },
                 "train_val_split_ratio": {
                     "type": "float",

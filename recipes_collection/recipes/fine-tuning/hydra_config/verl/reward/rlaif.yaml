@@ -1,0 +1,11 @@
+# @package recipes.training_config
+# RLAIF-specific overrides
+trainer:
+  project_name: SageMaker
+  logger: [console, mlflow]
+
+reward_model:
+  reward_manager: batch
+  reward_kwargs:
+    kwargs:
+      model_id: bedrock/openai.gpt-oss-120b-1:0

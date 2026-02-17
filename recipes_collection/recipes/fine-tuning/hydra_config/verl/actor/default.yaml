@@ -1,0 +1,65 @@
+# @package recipes.training_config.actor_rollout_ref.actor
+_target_: verl.workers.config.FSDPActorConfig
+strategy: fsdp2
+ppo_mini_batch_size: 32
+ppo_micro_batch_size: null
+ppo_micro_batch_size_per_gpu: 2
+use_dynamic_bsz: true
+ppo_max_token_len_per_gpu: 12288
+clip_ratio: 0.2
+clip_ratio_low: 0.2
+clip_ratio_high: 0.2
+policy_loss:
+  _target_: verl.workers.config.PolicyLossConfig
+  loss_mode: vanilla
+  clip_cov_ratio: 0.0002
+  clip_cov_lb: 1.0
+  clip_cov_ub: 5.0
+  kl_cov_ratio: 0.0002
+  ppo_kl_coef: 0.1
+clip_ratio_c: 3.0
+loss_agg_mode: token-mean
+entropy_coeff: 0
+entropy_advantage: false
+entropy_advantage_alpha: 0.4
+entropy_advantage_kappa: 2
+use_kl_loss: true
+use_torch_compile: true
+kl_loss_coef: 0.001
+kl_loss_type: low_var_kl
+ppo_epochs: 1
+shuffle: false
+checkpoint:
+  _target_: verl.trainer.config.CheckpointConfig
+  save_contents:
+  - hf_model
+  load_contents:
+  - hf_model
+  async_save: false
+optim:
+  lr: 1.0e-06
+  lr_warmup_steps_ratio: 0.0
+  total_training_steps: -1
+  weight_decay: 0.01
+  lr_warmup_steps: -1
+  _target_: verl.workers.config.FSDPOptimizerConfig
+  min_lr_ratio: 0.0
+  num_cycles: 0.5
+  warmup_style: constant
+use_fused_kernels: false
+grad_clip: 1.0
+ulysses_sequence_parallel_size: 1
+entropy_from_logits_with_chunking: false
+entropy_checkpointing: false
+fsdp_config:
+  _target_: verl.workers.config.FSDPEngineConfig
+  wrap_policy:
+    min_num_params: 0
+  param_offload: false
+  optimizer_offload: false
+  offload_policy: false
+  reshard_after_forward: true
+  fsdp_size: -1
+  forward_prefetch: false
+  model_dtype: bfloat16
+use_remove_padding: true

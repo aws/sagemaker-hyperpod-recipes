@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 
 sm_jobs_config:
+  pysdk_launch_executor: estimator # SageMaker PySDK API to use for launching the job. Valid values: "estimator" (PyTorchEstimator), "model_trainer" (ModelTrainer)
   output_path: null  # S3 output path to output artifacts
   tensorboard_config:
     output_path: null  # Output path for tensorboard logs
@@ -27,5 +28,5 @@ sm_jobs_config:
         directory_path: null
   additional_estimator_kwargs:  # All other additional args to pass to estimator. Must be int, float or string.
     max_run: 1800
-    enable_remote_debug: True
+    enable_remote_debug: False
   recipe_overrides: null

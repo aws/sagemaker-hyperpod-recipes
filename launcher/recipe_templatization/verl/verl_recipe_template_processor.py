@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import os
 from collections import OrderedDict
 from typing import Optional
 
@@ -14,6 +13,8 @@ from ..base_recipe_template_processor import (
 
 class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     """VERL-specific recipe template processor for reinforcement learning fine-tuning."""
+
+    framework_type = "verl"
 
     def __init__(
         self,
@@ -40,7 +41,7 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
             raise ValueError("recipe_file_path is required to get recipe template")
 
         recipe_file_name = self.get_recipe_name_from_path(recipe_file_path)
-        recipe_cfg = OmegaConf.load(os.path.join("./recipes_collection/recipes", recipe_file_path + ".yaml"))
+        recipe_cfg = self._load_recipe_config(recipe_file_path)
         self.algorithm_type = self._extract_algorithm_type(recipe_cfg)
 
         # Determine template key based on algorithm and reward mechanism
@@ -67,7 +68,7 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     def get_recipe_metadata(self, recipe_file_path: str) -> OrderedDict:
         """Generate metadata for VERL recipes."""
         metadata = OrderedDict()
-        recipe_cfg = OmegaConf.load(os.path.join("./recipes_collection/recipes", recipe_file_path + ".yaml"))
+        recipe_cfg = self._load_recipe_config(recipe_file_path)
         recipe_metadata_helpers = self.matched_template_group["recipe_metadata_helpers"]
 
         # Basic metadata
@@ -83,6 +84,9 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         # Get Job Type - All Verl recipes are FineTuning
         metadata["Type"] = "FineTuning"
 
+        # Extract algorithm type from config
+        self.algorithm_type = self._extract_algorithm_type(recipe_cfg)
+
         # Extract VERL-specific technique using helper function
         if self.algorithm_type in recipe_metadata_helpers["rl_algorithms"]:
             if self.algorithm_type == "grpo":
@@ -94,12 +98,12 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         else:
             raise ValueError(f"Customization technique not found: {self.algorithm_type}")
 
-        # Extract model info
-        model_path = recipe_cfg.run.name
-        if model_path in self.recipe_jumpstart_model_id_mapping:
-            metadata["Model_ID"] = self.recipe_jumpstart_model_id_mapping[model_path]
+        # Extract model info from the composed configuration
+        model_name = self._extract_model_name(recipe_cfg)
+        if model_name in self.recipe_jumpstart_model_id_mapping:
+            metadata["Model_ID"] = self.recipe_jumpstart_model_id_mapping[model_name]
         else:
-            raise ValueError(f"Model ID not found: {model_path}")
+            raise ValueError(f"Model ID not found: {model_name}")
 
         # Hardware and instance types
         hardware_type = self._extract_hardware_type(recipe_file_name)
@@ -113,16 +117,20 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         # Extract reward function if present (only for templates that support it)
         if "preset_reward_function" in recipe_metadata_helpers:
             reward_function_name = self._extract_reward_function_name(recipe_cfg)
-            if reward_function_name in recipe_metadata_helpers["preset_reward_function"]:
+            if reward_function_name and reward_function_name in recipe_metadata_helpers["preset_reward_function"]:
                 metadata["PresetRewardFunction"] = recipe_metadata_helpers["preset_reward_function"][
                     reward_function_name
                 ]
 
-        # Set PEFT technique based on recipe name
-        for peft_key, peft_value in recipe_metadata_helpers.get("peft_techniques", {}).items():
-            if peft_key in recipe_file_name.lower():
-                metadata["Peft"] = peft_value
-                break
+        # Set PEFT technique based on recipe name or config
+        peft_technique = self._extract_peft_type_from_config(recipe_cfg)
+        if peft_technique is None:
+            for peft_key, peft_value in recipe_metadata_helpers.get("peft_techniques", {}).items():
+                if peft_key in recipe_file_name.lower():
+                    peft_technique = peft_value
+                    break
+        if peft_technique:
+            metadata["Peft"] = peft_technique
 
         # Get Recipe Version
         assert recipe_cfg["version"] is not None, "Recipe version not found in recipe file"
@@ -140,11 +148,12 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         metadata["ServerlessMeteringType"] = ServerlessMeteringType.HOURLY.value
 
         # Get Instance Count (number of nodes)
-        assert recipe_cfg["trainer"]["num_nodes"] is not None, "Number of nodes not found in recipe config"
-        metadata["InstanceCount"] = recipe_cfg["trainer"]["num_nodes"]
+        num_nodes = self._extract_num_nodes(recipe_cfg)
+        assert num_nodes is not None, "Number of nodes not found in recipe config"
+        metadata["InstanceCount"] = num_nodes
 
         # Get input sequence length
-        seq_length = recipe_cfg["training_config"]["actor_rollout_ref"]["rollout"]["prompt_length"]
+        seq_length = self._extract_sequence_length(recipe_cfg)
         assert seq_length is not None, "Sequence length not found in recipe config"
         metadata["SequenceLength"] = self.format_sequence_length(seq_length)
 
@@ -152,7 +161,16 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
 
     def _extract_algorithm_type(self, recipe_cfg) -> Optional[str]:
         """Extract RL algorithm type from recipe configuration."""
-        return recipe_cfg["training_config"]["algorithm"]["adv_estimator"]
+        training_config = recipe_cfg.get("training_config")
+        algorithm = training_config.get("algorithm")
+        return algorithm.get("adv_estimator")
+
+    def _extract_model_name(self, recipe_cfg) -> Optional[str]:
+        """Extract model name for jumpstart mapping lookup."""
+        run_config = recipe_cfg.get("run")
+        if run_config and "name" in run_config:
+            return run_config.get("name")
+        return None
 
     def _extract_hardware_type(self, recipe_name: str) -> str:
         """Extract hardware type from recipe name."""
@@ -160,7 +178,37 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
 
     def _extract_reward_function_name(self, recipe_cfg) -> Optional[str]:
         """Extract reward function name from recipe configuration."""
-        return recipe_cfg["training_config"]["custom_reward_function"]["name"]
+        training_config = recipe_cfg.get("training_config")
+        custom_reward_function = training_config.get("custom_reward_function")
+        return custom_reward_function.get("name")
+
+    def _extract_peft_type_from_config(self, recipe_cfg) -> Optional[str]:
+        """Extract PEFT type from recipe configuration."""
+        training_config = recipe_cfg.get("training_config")
+        actor_rollout_ref = training_config.get("actor_rollout_ref")
+        model = actor_rollout_ref.get("model")
+        lora_rank = model.get("lora_rank")
+
+        # If lora_rank > 0, it's LoRA; if 0, it's FFT
+        if lora_rank and int(lora_rank) > 0:
+            return "LoRA"
+        return None
+
+    def _extract_num_nodes(self, recipe_cfg) -> Optional[int]:
+        """Extract number of nodes from recipe configuration."""
+        trainer = recipe_cfg.get("trainer")
+        if trainer and "num_nodes" in trainer:
+            return trainer.get("num_nodes")
+
+        ray_cluster = recipe_cfg.get("ray_cluster")
+        worker_nodes = ray_cluster.get("worker_nodes")
+        return worker_nodes.get("replicas")
+
+    def _extract_sequence_length(self, recipe_cfg) -> Optional[int]:
+        """Extract sequence length from recipe configuration."""
+        training_config = recipe_cfg.get("training_config")
+        data = training_config.get("data")
+        return data.get("max_prompt_length")
 
     def _training_technique(self, algorithm_type: str, display_name: str) -> str:
         """Determine training technique based on algorithm type and display name."""

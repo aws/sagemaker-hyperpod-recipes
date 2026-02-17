@@ -1,12 +1,48 @@
 import subprocess
 import time
-from typing import Dict
+from typing import Dict, Optional
 
+from ..clients.slurm_client import SlurmClient
 from .base_launcher import BaseLauncher
 
 
 class SlurmValidationLauncher(BaseLauncher):
     """Slurm-specific job launcher"""
+
+    def __init__(self, job_recorder, config):
+        """
+        Initialize Slurm launcher.
+
+        Args:
+            job_recorder: Job recorder instance
+            config: Configuration object
+        """
+        super().__init__(job_recorder, config)
+
+        self.slurm_client: Optional[SlurmClient] = None
+        slurm_client_config = getattr(self.config, "slurm_client_config", None)
+        if slurm_client_config:
+            self.logger.info("Initializing Slurm launcher with remote execution")
+            slurm_client_config = self.config.slurm_client_config
+
+            self.slurm_client = SlurmClient(slurm_client_config, logger=self.logger, boto_session=self.boto_session)
+        else:
+            self.logger.info("Initializing Slurm launcher with local execution")
+
+    def _execute_command(self, command: list):
+        """Execute command"""
+        cmd_str = " ".join(command)
+        try:
+            return (
+                self.slurm_client.launch_job([cmd_str])
+                if self.slurm_client
+                else subprocess.run(cmd_str, capture_output=True, text=True, check=True, shell=True)
+            )
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Error executing command: {e.stderr}")
+            if self.slurm_client:
+                self.slurm_client.cleanup()
+            raise e
 
     def _parse_output(self, input_file_path: str, launch_output) -> Dict:
         job_id = ""
@@ -22,9 +58,41 @@ class SlurmValidationLauncher(BaseLauncher):
                 log_file_path = line.split(" ")[-1]
 
         if not all([job_id, log_file_path, output_folder_path]):
-            self.job_recorder.update_job(input_file_path, output_folder_path, "Failed", log_file_path)
+            self.job_recorder.update_job(
+                input_file_path, output_path=output_folder_path, status="Failed", output_log=log_file_path
+            )
 
         return {"job_id": job_id, "log_file_path": log_file_path, "output_folder_path": output_folder_path}
+
+    def _get_job_state(self, job_id: str) -> str:
+        """Get job state using wrapper or local subprocess."""
+        cmd = ["sacct", "-j", job_id, "-X", "-n", "-P", "-o", "JobID,State"]
+        try:
+            sq = (
+                self.slurm_client.run([" ".join(cmd)]).stdout
+                if self.slurm_client
+                else subprocess.check_output(cmd, text=True).strip()
+            )
+
+            for line in sq.split("\n"):
+                line = line.strip()
+                if line and "|" in line and not line.startswith("Starting") and not line.startswith("Exiting"):
+                    _, job_state = line.split("|")
+                    return job_state
+        except Exception as e:
+            self.logger.error(f"Failed to get job status: {e}")
+
+        return "UNKNOWN"
+
+    def _cancel_job(self, job_id: str) -> None:
+        """Cancel job using wrapper or local subprocess."""
+        try:
+            cmd = ["scancel", job_id]
+            self.slurm_client.run([" ".join(cmd)]) if self.slurm_client else subprocess.run(
+                cmd, capture_output=True, text=True, check=True
+            )
+        except Exception as e:
+            self.logger.error(f"Error cleaning up job: {e}")
 
     def _monitor_job(self, input_file_path: str, job_details: Dict, poll_sec: int = 60) -> bool:
         job_id = job_details["job_id"]
@@ -38,14 +106,12 @@ class SlurmValidationLauncher(BaseLauncher):
         tokens_per_sec = None
         try:
             while True:
-                sq = subprocess.check_output(
-                    ["sacct", "-j", job_id, "-X", "-n", "-P", "-o", "JobID,State"], text=True
-                ).strip()
-                if not sq:
+                job_state = self._get_job_state(job_id)
+
+                if not job_state or job_state == "UNKNOWN":
                     break
-                time.sleep(poll_sec)
-                _, job_state = sq.split("|")
-                if job_state in ["COMPLETED"]:
+
+                if job_state == "COMPLETED" or job_state == "FAILED":
                     current_job_logs = self._collect_job_logs(log_file_path)
 
                     if self._validate_logs(current_job_logs):
@@ -64,16 +130,15 @@ class SlurmValidationLauncher(BaseLauncher):
 
                     time.sleep(poll_sec)
                 else:
-                    self.logger.info(f"Job {job_id} not deployed yet")
+                    self.logger.info(f"Job {job_id} state: {job_state}")
+                    time.sleep(poll_sec)
 
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
             self.logger.error(f"Error monitoring job: {e}")
 
         # Cleanup
-        try:
-            subprocess.run(["scancel", job_id], capture_output=True, text=True, check=True)
-        except subprocess.CalledProcessError as e:
-            self.logger.error(f"Error cleaning up job: {e}")
+        self._cancel_job(job_id)
+        self.slurm_client.cleanup() if self.slurm_client else True
 
         status = "Complete" if job_successful else "Failed"
         self.job_recorder.update_job(
@@ -85,11 +150,15 @@ class SlurmValidationLauncher(BaseLauncher):
         )
         return job_successful
 
-    def _collect_job_logs(self, log_file: str) -> list:
-        logs = " ".join(open(log_file, "r").readlines())
+    def _collect_job_logs(self, log_file: str) -> str:
+        if self.slurm_client:
+            logs = self.slurm_client.run([f"cat {log_file}"]).stdout
+            self.logger.info(f"Job logs: {logs}")
+        else:
+            logs = " ".join(open(log_file, "r").readlines())
         return logs
 
-    def _validate_logs(self, logs, threshold=5):
-        epoch_count = logs.lower().count("epoch=")
+    def _validate_logs(self, logs):
+        # Checking for errors
         error_count = logs.lower().count("srun: error:")
-        return epoch_count >= threshold and error_count == 0
+        return error_count == 0

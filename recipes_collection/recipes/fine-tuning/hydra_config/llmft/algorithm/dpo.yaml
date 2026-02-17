@@ -37,9 +37,9 @@ grad_accum_dtype: null
 gradient_checkpointing: true
 gradient_checkpointing_use_reentrant: false
 
-load_checkpoint: false
+load_checkpoint: true
 resume_checkpoint_path: ""
-disable_ds_ckpt: true
+disable_ds_ckpt: false
 disable_fast_tokenizer: false
 
 micro_train_batch_size: 1
