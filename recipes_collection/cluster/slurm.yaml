@@ -6,6 +6,7 @@ job_name_prefix: 'sagemaker-'
 slurm_create_submission_file_only: False # Setting to True if just want to create submission file
 stderr_to_stdout: True # Setting to False to split the stderr and stdout logs
 srun_args:
+  - --auto-resume=1
   # - "--no-container-mount-home"
 slurm_docker_cfg:
   docker_args:
