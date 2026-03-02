@@ -1,0 +1,20 @@
+name: Check PyPI dependencies
+on:
+  pull_request:
+    paths:
+      - "requirements.txt"
+      - "pyproject.toml"
+      - ".github/**"
+
+jobs:
+  check-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify packages exist on PyPI
+        run: |
+          pip install packaging
+          python .github/scripts/check_pypi_deps.py
