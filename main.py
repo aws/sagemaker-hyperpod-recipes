@@ -352,7 +352,11 @@ def is_evaluation_recipe(cfg) -> bool:
 @validate_config
 def main(cfg):
     # Check if model exists and download if it doesn't
-    download_model(cfg)
+    dry_run = cfg.get("dry_run", False)
+    if not dry_run:
+        download_model(cfg)
+    else:
+        print("[DRY_RUN] Skipping download model.")
 
     # check if it's an evaluation recipe FIRST, before preprocess_config
     if is_evaluation_recipe(cfg):
@@ -366,7 +370,7 @@ def main(cfg):
         else:
             launcher = SMEvaluationK8SLauncher(cfg)
 
-        if cfg.dry_run:
+        if dry_run:
             print("[DRY_RUN] Skipping launcher run.")
         else:
             launcher.run()
@@ -421,11 +425,11 @@ def main(cfg):
                 cfg[stage_name]["run"]["dependency"] = dependency
 
             stage = stage_class(cfg)
-            if cfg.dry_run:
-                print("[DRY_RUN] Skipping launcher run.")
-            else:
-                job_id = stage.run()
 
+            job_id = stage.run()
+            if dry_run:
+                print("[DRY_RUN] Launch skipped.")
+            else:
                 job_path = stage.get_job_path()
                 command = " \\\n  ".join(sys.argv)
                 with open(job_path.folder / "launcher_cmd.log", "w") as f:

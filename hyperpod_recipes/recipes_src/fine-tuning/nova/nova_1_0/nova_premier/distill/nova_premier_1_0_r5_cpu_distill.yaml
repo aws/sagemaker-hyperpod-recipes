@@ -1,0 +1,29 @@
+## Run config
+# Note: This recipe is supported only in the IAD (us-east-1) AWS region
+run:
+  name: "data-distillation-premier-teacher"     # A descriptive name for your training job
+  model_type: "amazon.nova-premier-v1:0:300k"    # Model type for distillation
+  model_name_or_path: ""
+
+## Training specific configs
+training_config:
+  distillation_data: "true"                    # Enable data distillation job, do not change
+  maxNumberOfPrompts: "20000"                  # Maximum number of prompts in the dataset
+  maxResponseLength: "5000"                    # Maximum response length per prompt (tokens)
+  minNumberOfPrompts: "0"                      # Minimum number of prompts required in the dataset
+  maxInputFileSizeInGB: "2"                    # Maximum size of the input file (in GB)
+  maxLineLengthInKB: "180"                     # Maximum size of a single line in the input file (in KB)
+
+  # Maximum context window size (tokens) for student model. Must not exceed student model capacity.
+  # You can set this value to 32k or 64k based on student model capacity.
+  maxStudentModelFineTuningContextLengthInTokens: "32000"
+
+  # Teacher model configuration
+  teacherModelId: "us.amazon.nova-premier-v1:0"    # Teacher model ID for Amazon Nova Premier, do not change
+
+  # Note: Adjust the following parameters based on the chosen student model and the complexity of your task
+  temperature: "0.7"                           # Sampling temperature for generation. Higher = more random
+  top_p: "0.9"                                # Top-p nucleus sampling cutoff
+
+  customer_bucket: ""  # S3 bucket for input/output data
+  kms_key: ""  # AWS KMS key to encrypt input/output in S3

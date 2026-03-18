@@ -74,7 +74,17 @@ class BaseLauncher(ABC):
         # Launch all jobs in parallel
         logging.info(f"Launching all {len(recipes)} jobs for model {model_name} in parallel")
         with ThreadPoolExecutor(max_workers=min(len(recipes), 10)) as executor:
-            executor.map(self.launch_job, recipes)
+            futures = {executor.submit(self.launch_job, recipe): recipe for recipe in recipes}
+            for future in futures:
+                recipe = futures[future]
+                try:
+                    future.result()
+                except Exception as e:
+                    logging.error(f"Unhandled exception for recipe '{recipe}': {e}")
+                    logging.error(f"Full traceback:\n{traceback.format_exc()}")
+                    self.job_recorder.update_job(
+                        input_filename=recipe, status="Failed", output_log=f"Unhandled exception: {e}"
+                    )
 
     def launch_job(self, input_file_path: str) -> bool:
         """Main job launch workflow - template method"""

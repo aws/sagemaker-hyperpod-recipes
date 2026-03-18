@@ -290,6 +290,26 @@ class EvaluationK8SLauncher:
             if "smtj_container_image" in eval_recipe_config:
                 regional_parameters["container_image"] = eval_recipe_config["smtj_container_image"]
 
+        if "serverless_sku" in eval_recipe_config:
+            sku_prefixes = eval_recipe_config["serverless_sku"]
+            model_id = base_model_name
+
+            # Build serverless_sku_input
+            resolved_sku_input = {}
+            for stage, regions in sku_prefixes.items():
+                resolved_sku_input[stage] = {}
+                for region, prefix in regions.items():
+                    resolved_sku_input[stage][region] = f"{prefix}-ServerlessTraining:Evaluation-Input-{model_id}"
+            regional_parameters["serverless_sku_input"] = resolved_sku_input
+
+            # Build serverless_sku_output
+            resolved_sku_output = {}
+            for stage, regions in sku_prefixes.items():
+                resolved_sku_output[stage] = {}
+                for region, prefix in regions.items():
+                    resolved_sku_output[stage][region] = f"{prefix}-ServerlessTraining:Evaluation-Output-{model_id}"
+            regional_parameters["serverless_sku_output"] = resolved_sku_output
+
         launch_json["regional_parameters"] = regional_parameters
 
         # Add recipe override parameters

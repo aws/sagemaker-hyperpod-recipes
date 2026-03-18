@@ -1,0 +1,25 @@
+defaults:
+  - /hydra_config/llmft/default
+  - /hydra_config/llmft/model_config/llama-3-2-3b-instruct
+  - /hydra_config/llmft/peft/fft
+  - /hydra_config/llmft/algorithm/dpo
+  - /hydra_config/llmft/datasets/default_dpo
+  - /hydra_config/llmft/strategy/fsdp_dpo_fft
+  - _self_
+
+display_name: "Llama 3.2 3B Instruct Direct Preference Optimization Full Fine-Tuning on GPU"
+version: "1.2.0"
+instance_types: ['ml.p5.48xlarge', 'ml.g6.48xlarge', 'ml.g6.12xlarge', 'ml.g6e.12xlarge']
+
+run:
+  name: llama-3-2-3b-instruct
+
+training_config:
+  model_config:
+    model_name_or_path: "meta-llama/Llama-3.2-3B-Instruct"
+    model_save_name: SageMaker-FFT/Llama-3.2-3B-Instruct
+    chat_template_key: llama--meta-llama-3.2-3B-instruct
+  training_args:
+    ulysses_sequence_parallel_size: 1
+    log_run_time: false
+    log_gpu_memory: false

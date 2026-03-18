@@ -1,107 +1,198 @@
-defaults:
-  - /hydra_config/llmft/default
-  - /hydra_config/llmft/model_config/qwen-2-5-7b-instruct
-  - /hydra_config/llmft/peft/lora
-  - /hydra_config/llmft/algorithm/sft
-  - /hydra_config/llmft/datasets/default_sft
-  - /hydra_config/llmft/strategy/fsdp_peft
-  - _self_
-
-display_name: "Qwen 2.5 7B Supervised Fine-Tuning with LoRA on GPU, 4K sequence length"
-version: "1.1.0"
-instance_types: ['ml.p4de.24xlarge', 'ml.p4d.24xlarge', 'ml.p5.48xlarge', 'ml.g5.48xlarge']
-
-run:
-  name: qwen-2d5-7b
-
-training_config:
-  model_config:
-    model_name_or_path: "Qwen/Qwen2.5-7B-Instruct"
-    model_save_name: SageMaker/Qwen2.5-7B-Instruct-Lora
-  training_args:
-    merge_weights: true
-  datasets:
-    preprocessor_cfgs:
-      - type: TrainingSFTSampleConverter
-      - type: Seq2SeqTokensProcessor
-        chat_template_name: null
-        ignore_prompt_labels: true
-      - type: DropColumns
-        column_names:
-          - messages
-      - type: SequenceLengthFilter
-        max_seq_length: 16384
-        tokens_labels: ['input_ids']
-
+display_name: Qwen 2.5 7B Supervised Fine-Tuning with LoRA on GPU, 4K sequence length
 elastic_policy:
-  is_elastic: false
-  min_nodes: 1
-  max_nodes: 16
-  use_graceful_shutdown: true
-  scaling_timeout: 600
   graceful_shutdown_timeout: 600
-
+  is_elastic: false
+  max_nodes: 16
+  min_nodes: 1
+  scaling_timeout: 600
+  use_graceful_shutdown: true
+instance_types:
+- ml.p4de.24xlarge
+- ml.p4d.24xlarge
+- ml.p5.48xlarge
+- ml.g5.48xlarge
+run:
+  hf_access_token: null
+  model_type: llm_finetuning_aws
+  name: qwen-2d5-7b
+  results_dir: ${base_results_dir}/${.name}
 scale_config:
   1:
     trainer:
       num_nodes: 1
     training_config:
       training_args:
-        train_batch_size: 128
-        micro_train_batch_size: 8
         learning_rate: 0.0004
+        micro_train_batch_size: 8
+        train_batch_size: 128
   2:
     trainer:
       num_nodes: 2
     training_config:
       training_args:
-        train_batch_size: 128
-        micro_train_batch_size: 8
         learning_rate: 0.0004
+        micro_train_batch_size: 8
+        train_batch_size: 128
   3:
     trainer:
       num_nodes: 3
     training_config:
       training_args:
-        train_batch_size: 128
         learning_rate: 0.0004
+        train_batch_size: 128
         uneven_batch:
-          use_uneven_batch: true
+          large_local_batch_size: 6
           num_dp_groups_with_small_batch_size: 16
           small_local_batch_size: 5
-          large_local_batch_size: 6
+          use_uneven_batch: true
   4:
     trainer:
       num_nodes: 4
     training_config:
       training_args:
-        train_batch_size: 128
-        micro_train_batch_size: 4
         learning_rate: 0.0004
+        micro_train_batch_size: 4
+        train_batch_size: 128
   6:
     trainer:
       num_nodes: 6
     training_config:
       training_args:
-        train_batch_size: 128
         learning_rate: 0.0004
+        train_batch_size: 128
         uneven_batch:
-          use_uneven_batch: true
+          large_local_batch_size: 3
           num_dp_groups_with_small_batch_size: 16
           small_local_batch_size: 2
-          large_local_batch_size: 3
+          use_uneven_batch: true
   8:
     trainer:
       num_nodes: 8
     training_config:
       training_args:
-        train_batch_size: 128
-        micro_train_batch_size: 2
         learning_rate: 0.0004
+        micro_train_batch_size: 2
+        train_batch_size: 128
   16:
     trainer:
       num_nodes: 16
     training_config:
       training_args:
-        train_batch_size: 128
         learning_rate: 0.0004
+        train_batch_size: 128
+trainer:
+  devices: 8
+  num_nodes: 1
+training_config:
+  datasets:
+    data_dir: null
+    preprocessor_cfgs:
+    - type: TrainingSFTSampleConverter
+    - chat_template_name: null
+      ignore_prompt_labels: true
+      type: Seq2SeqTokensProcessor
+    - column_names:
+      - messages
+      type: DropColumns
+    - max_seq_length: 16384
+      tokens_labels:
+      - input_ids
+      type: SequenceLengthFilter
+    save_intermediate_processing_steps: false
+    train_data:
+      file_path: ''
+      limit: null
+      name: ''
+    train_val_split_ratio: 0.9
+    train_val_split_seed: 42
+    val_data:
+      file_path: ''
+      limit: null
+      name: ''
+  force_rerun: false
+  mlflow:
+    run_id: ''
+    tracking_uri: ''
+  model_config:
+    apply_chat_template: false
+    attn_implementation: sdpa
+    chat_template_key: null
+    device_map: null
+    generation_cfg:
+      do_sample: true
+      max_new_tokens: 2048
+      num_parallel_jobs: 0
+      num_return_sequences: 1
+      temperature: 0.6
+      tensor_parallel_size: 2
+      top_p: 0.9
+    lora_checkpoint_file_path: null
+    model_name_or_path: Qwen/Qwen2.5-7B-Instruct
+    model_save_name: SageMaker/Qwen2.5-7B-Instruct-Lora
+    multimodal: false
+    peft_config:
+      bias: none
+      lora_alpha: 32
+      lora_dropout: 0.05
+      peft_type: lora
+      r: 16
+      target_modules: all-linear
+      task_type: CAUSAL_LM
+      use_dora: false
+  training_args:
+    adam_betas:
+    - 0.9
+    - 0.95
+    aux_loss_coef: 0
+    disable_ds_ckpt: false
+    disable_fast_tokenizer: false
+    eval_steps: 0
+    grad_accum_dtype: null
+    gradient_checkpointing: true
+    gradient_checkpointing_use_reentrant: false
+    gradient_clipping: true
+    gradient_clipping_threshold: 1.0
+    l2: 0.0
+    learning_rate: 0.0001
+    load_checkpoint: true
+    logging_steps: 1
+    lr_scheduler: cosine
+    lr_warmup_ratio: 0.1
+    max_ckpt_mem: 100000000.0
+    max_ckpt_num: 3
+    max_epochs: 5
+    max_len: 4096
+    max_norm: 1.0
+    max_samples: 100000000.0
+    merge_weights: true
+    micro_train_batch_size: 1
+    override_training_dir: true
+    packing_samples: false
+    pretrain_mode: false
+    resume_checkpoint_path: ''
+    ring_attn_size: 1
+    ring_head_stride: 1
+    save_hf_ckpt: true
+    save_steps: 0
+    seed: 42
+    strategy:
+      fsdp_config:
+        auto_wrap_policy: TRANSFORMER_BASED_WRAP
+        backward_prefetch: BACKWARD_PRE
+        cpu_offload: false
+        cpu_ram_efficient_loading: true
+        forward_prefetch: false
+        sharding_strategy: HYBRID_SHARD
+        state_dict_type: SHARDED_STATE_DICT
+        sync_module_states: true
+        use_orig_params: true
+    train_batch_size: 8
+    trainer_callbacks:
+    - _target_: metering_callback.MeteringCallback
+      output_path: /opt/ml/metering
+    trainer_type: sft
+    training_dir: ''
+    use_tensorboard: logs
+    use_wandb: null
+    weight_decay: 0.0
+version: 1.1.0

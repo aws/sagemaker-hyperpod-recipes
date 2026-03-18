@@ -1,0 +1,73 @@
+defaults:
+  - /hydra_config/llmft/default
+  - /hydra_config/llmft/model_config/deepseek-r1-distill-llama-70b
+  - /hydra_config/llmft/peft/lora
+  - /hydra_config/llmft/algorithm/sft
+  - /hydra_config/llmft/datasets/default_sft
+  - /hydra_config/llmft/strategy/fsdp_peft
+  - _self_
+
+display_name: "DeepSeek R1 Distill Llama 70B Supervised Fine-Tuning with LoRA on GPU, 4K sequence length"
+version: "2.0.0"
+instance_types: ['ml.p4de.24xlarge', 'ml.p5.48xlarge']
+
+run:
+  name: deepseek-r1-distilled-llama-70b
+
+training_config:
+  force_rerun: true
+  model_config:
+    model_name_or_path: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
+    model_save_name: SageMaker/DeepSeek-R1-Distill-Llama-70B-Lora
+    chat_template_key: llama--meta-llama-3.3-70b
+  training_args:
+    merge_weights: true
+
+elastic_policy:
+  is_elastic: false
+  min_nodes: 1
+  max_nodes: 16
+  use_graceful_shutdown: true
+  scaling_timeout: 600
+  graceful_shutdown_timeout: 900
+
+scale_config:
+  1:
+    trainer:
+      num_nodes: 1
+    training_config:
+      training_args:
+        train_batch_size: 128
+        micro_train_batch_size: 2
+        learning_rate: 0.0004
+  2:
+    trainer:
+      num_nodes: 2
+    training_config:
+      training_args:
+        train_batch_size: 128
+        micro_train_batch_size: 2
+        learning_rate: 0.0004
+  4:
+    trainer:
+      num_nodes: 4
+    training_config:
+      training_args:
+        train_batch_size: 128
+        micro_train_batch_size: 2
+        learning_rate: 0.0004
+  8:
+    trainer:
+      num_nodes: 8
+    training_config:
+      training_args:
+        train_batch_size: 128
+        micro_train_batch_size: 2
+        learning_rate: 0.0004
+  16:
+    trainer:
+      num_nodes: 16
+    training_config:
+      training_args:
+        train_batch_size: 128
+        learning_rate: 0.0004

@@ -1,4 +1,6 @@
+import logging
 import os
+import shutil
 from pathlib import Path
 
 
@@ -15,5 +17,24 @@ def get_recipes_folder():
 
 
 def get_common_config():
-    """Get the absolute path to common validation config"""
-    return os.path.join(get_project_root(), "scripts", "validations", "common_validation_config.yaml")
+    """Get the absolute path to common validation config.
+
+    If common_validation_config.yaml does not exist, it is automatically created
+    by copying common_validation_config.example.yaml on first usage.
+    """
+    project_root = get_project_root()
+    config_path = os.path.join(project_root, "scripts", "validations", "common_validation_config.yaml")
+    example_path = os.path.join(project_root, "scripts", "validations", "common_validation_config.example.yaml")
+
+    if not os.path.exists(config_path):
+        if not os.path.exists(example_path):
+            raise FileNotFoundError(
+                f"Neither '{config_path}' nor the example file '{example_path}' were found. "
+                "Cannot initialize validation config."
+            )
+        shutil.copy2(example_path, config_path)
+        logging.info(
+            f"Created '{config_path}' from example. " "Edit this file to customize your validation configuration."
+        )
+
+    return config_path

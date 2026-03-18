@@ -15,6 +15,7 @@ def mock_config():
     config.base_results_dir = "/tmp/results"
     config.platform = "K8"
     config.assume_role_arn = None
+    config.get = Mock(side_effect=lambda key, default=None: "/tmp/results" if key == "base_results_dir" else default)
     return config
 
 
@@ -52,12 +53,16 @@ NAME: test-job-123
 submission file created at /tmp/verl_output
 NAME: verl-job-456
 """
-        result = launcher._parse_output("verl_recipe.yaml", launch_output)
+        with patch.object(launcher, "get_pods", return_value=["verl-job-456"]), patch.object(
+            launcher, "get_head_node", return_value="verl-job-456"
+        ), patch("subprocess.run") as mock_run:
+            mock_run.return_value = Mock()
 
-        assert result["job_name"] == "verl-job-456"
-        assert result["pod_name"] == "verl-job-456"
-        assert result["output_folder_path"] == "/tmp/verl_output"
-        assert "all_pods" not in result  # VERL jobs don't set all_pods
+            result = launcher._parse_output("verl_recipe.yaml", launch_output)
+
+            assert result["job_name"] == "verl-job-456"
+            assert result["pod_name"] == "verl-job-456"
+            assert result["output_folder_path"] == "/tmp/verl_output"
 
     def test_parse_output_missing_fields(self, launcher, mock_job_recorder):
         launch_output = Mock()
@@ -85,118 +90,30 @@ NAME: test-job-123
                 launcher._parse_output("test_recipe.yaml", launch_output)
 
 
-class TestMonitorJob:
-    def test_monitor_job_pytorch(self, launcher):
-        job_details = {"job_name": "test-job", "pod_name": "test-pod"}
-
-        with patch.object(launcher, "_monitor_pytorch_job", return_value=True) as mock_monitor:
-            result = launcher._monitor_job("test_recipe.yaml", job_details)
-
-            assert result is True
-            mock_monitor.assert_called_once_with("test_recipe.yaml", job_details, 10)
-
-    def test_monitor_job_verl(self, launcher):
-        job_details = {"job_name": "verl-job"}
-
-        with patch.object(launcher, "_monitor_ray_job", return_value=True) as mock_monitor:
-            result = launcher._monitor_job("verl_recipe.yaml", job_details)
-
-            assert result is True
-            mock_monitor.assert_called_once_with("verl_recipe.yaml", job_details, 10)
-
-
-class TestMonitorRayJob:
-    @patch("subprocess.run")
-    @patch("time.sleep")
-    def test_monitor_ray_job_success(self, mock_sleep, mock_run, launcher, mock_job_recorder):
-        job_details = {"job_name": "verl-job", "pod_name": "verl-job", "output_folder_path": "/tmp/output"}
-        # First call: kubectl get rayjobs (status check) returns "Completed"
-        # Second call: kubectl delete rayjobs (cleanup)
-        mock_run.side_effect = [
-            Mock(stdout="SUCCEEDED"),  # status check
-            Mock(),  # cleanup
-        ]
-
-        with patch.object(launcher, "_collect_pod_logs", return_value="logs"), patch.object(
-            launcher, "calculate_throughput_from_logs", return_value=None
-        ):
-            result = launcher._monitor_ray_job("verl_recipe.yaml", job_details)
-
-            assert result is True
-            mock_job_recorder.update_job.assert_called_once()
-            assert mock_job_recorder.update_job.call_args[1]["status"] == "Complete"
+class TestMonitorJobPyTorch:
+    """Tests for _monitor_job with PyTorch jobs"""
 
     @patch("subprocess.run")
     @patch("time.sleep")
-    def test_monitor_ray_job_failure(self, mock_sleep, mock_run, launcher, mock_job_recorder):
-        job_details = {"job_name": "verl-job", "pod_name": "verl-job", "output_folder_path": "/tmp/output"}
-        # Status check returns "Failed"
-        mock_run.side_effect = [
-            Mock(stdout="FAILED"),  # status check
-            Mock(),  # cleanup
-        ]
-
-        with patch.object(launcher, "_collect_pod_logs", return_value="logs"):
-            result = launcher._monitor_ray_job("verl_recipe.yaml", job_details)
-
-            assert result is False
-            mock_job_recorder.update_job.assert_called_once()
-
-    @patch("subprocess.run")
-    @patch("time.sleep")
-    def test_monitor_ray_job_pod_not_ready(self, mock_sleep, mock_run, launcher, mock_job_recorder):
-        job_details = {"job_name": "verl-job", "pod_name": "verl-job", "output_folder_path": "/tmp/output"}
-        mock_run.side_effect = [
-            Mock(stdout="SUCCEEDED"),  # status check
-            Mock(),  # cleanup
-        ]
-
-        with patch.object(launcher, "_collect_pod_logs", return_value="logs"), patch.object(
-            launcher, "calculate_throughput_from_logs", return_value=None
-        ):
-            result = launcher._monitor_ray_job("verl_recipe.yaml", job_details)
-
-            assert result is True
-
-    @patch("subprocess.run")
-    @patch("time.sleep")
-    def test_monitor_ray_job_cleanup_fails(self, mock_sleep, mock_run, launcher, mock_job_recorder):
-        job_details = {"job_name": "verl-job", "pod_name": "verl-job", "output_folder_path": "/tmp/output"}
-        mock_run.side_effect = [
-            Mock(stdout="SUCCEEDED"),  # status check
-            subprocess.CalledProcessError(1, "cmd", stderr="cleanup error"),  # cleanup fails
-        ]
-
-        with patch.object(launcher, "_collect_pod_logs", return_value="logs"), patch.object(
-            launcher, "calculate_throughput_from_logs", return_value=None
-        ):
-            result = launcher._monitor_ray_job("verl_recipe.yaml", job_details)
-
-            assert result is True  # Job succeeds even if cleanup fails
-
-
-class TestMonitorPytorchJob:
-    @patch("subprocess.run")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("os.makedirs")
-    def test_monitor_pytorch_job_success(self, mock_makedirs, mock_file, mock_run, launcher, mock_job_recorder):
+    @patch("threading.Thread")
+    def test_monitor_job_success(self, mock_thread, mock_sleep, mock_run, launcher, mock_job_recorder):
         job_details = {
             "job_name": "test-job",
             "pod_name": "test-pod",
-            "all_pods": ["test-pod"],
             "output_folder_path": "/tmp/output",
         }
-        # First call: kubectl get hyperpodpytorchjobs (status check) returns "Completed True"
-        # Second call: kubectl delete hyperpodpytorchjobs (cleanup)
-        mock_run.side_effect = [
-            Mock(stdout="Completed True"),  # status check
-            Mock(),  # cleanup
-        ]
+        mock_log_thread = Mock()
+        mock_log_thread.is_alive.return_value = True
+        mock_thread.return_value = mock_log_thread
 
-        with patch.object(launcher, "_wait_for_pod_status"), patch.object(
-            launcher, "_collect_pod_logs", return_value="epoch=1 epoch=2 epoch=3 epoch=4 epoch=5 agent is finished"
-        ), patch.object(launcher, "calculate_throughput_from_logs", return_value=100.5):
-            result = launcher._monitor_pytorch_job("test_recipe.yaml", job_details)
+        with patch.object(launcher, "_get_job_status", return_value="Completed"), patch.object(
+            launcher, "clean_up_resource"
+        ), patch("os.path.exists", return_value=True), patch(
+            "builtins.open", mock_open(read_data="logs")
+        ), patch.object(
+            launcher, "calculate_throughput_from_logs", return_value=100.5
+        ):
+            result = launcher._monitor_job("test_recipe.yaml", job_details)
 
             assert result is True
             mock_job_recorder.update_job.assert_called_once()
@@ -204,47 +121,123 @@ class TestMonitorPytorchJob:
             assert mock_job_recorder.update_job.call_args[1]["tokens_throughput"] == 100.5
 
     @patch("subprocess.run")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("os.makedirs")
-    def test_monitor_pytorch_job_failure(self, mock_makedirs, mock_file, mock_run, launcher, mock_job_recorder):
+    @patch("time.sleep")
+    @patch("threading.Thread")
+    def test_monitor_job_failure(self, mock_thread, mock_sleep, mock_run, launcher, mock_job_recorder):
         job_details = {
             "job_name": "test-job",
             "pod_name": "test-pod",
-            "all_pods": ["test-pod"],
             "output_folder_path": "/tmp/output",
         }
-        mock_run.side_effect = [
-            Mock(stdout="Failed True"),  # status check
-            Mock(),  # cleanup
-        ]
+        mock_log_thread = Mock()
+        mock_log_thread.is_alive.return_value = True
+        mock_thread.return_value = mock_log_thread
 
-        with patch.object(launcher, "_wait_for_pod_status"), patch.object(
-            launcher, "_collect_pod_logs", return_value="error logs"
-        ), patch.object(launcher, "calculate_throughput_from_logs", return_value=None):
-            result = launcher._monitor_pytorch_job("test_recipe.yaml", job_details)
+        with patch.object(launcher, "_get_job_status", return_value="Failed"), patch.object(
+            launcher, "clean_up_resource"
+        ), patch("os.path.exists", return_value=False):
+            result = launcher._monitor_job("test_recipe.yaml", job_details)
 
             assert result is False
             mock_job_recorder.update_job.assert_called_once()
             assert mock_job_recorder.update_job.call_args[1]["status"] == "Failed"
 
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("os.makedirs")
-    def test_monitor_pytorch_job_exception(self, mock_makedirs, mock_file, launcher, mock_job_recorder):
+    @patch("subprocess.run")
+    @patch("time.sleep")
+    @patch("threading.Thread")
+    def test_monitor_job_exception(self, mock_thread, mock_sleep, mock_run, launcher, mock_job_recorder):
         job_details = {
             "job_name": "test-job",
             "pod_name": "test-pod",
-            "all_pods": ["test-pod"],
             "output_folder_path": "/tmp/output",
         }
+        mock_log_thread = Mock()
+        mock_log_thread.is_alive.return_value = True
+        mock_thread.return_value = mock_log_thread
 
-        with patch.object(launcher, "_wait_for_pod_status") as mock_wait:
-            mock_wait.side_effect = subprocess.CalledProcessError(1, "cmd", stderr="error")
-            with patch.object(launcher, "clean_up_resource"):
-                result = launcher._monitor_pytorch_job("test_recipe.yaml", job_details)
+        with patch.object(
+            launcher, "_get_job_status", side_effect=subprocess.CalledProcessError(1, "cmd", stderr="error")
+        ):
+            result = launcher._monitor_job("test_recipe.yaml", job_details)
 
-                assert result is False
-                mock_job_recorder.update_job.assert_called_once()
-                assert mock_job_recorder.update_job.call_args[1]["status"] == "Failed"
+            assert result is False
+
+
+class TestMonitorJobVERL:
+    """Tests for _monitor_job with VERL jobs"""
+
+    @patch("subprocess.run")
+    @patch("time.sleep")
+    @patch("threading.Thread")
+    def test_monitor_job_success(self, mock_thread, mock_sleep, mock_run, launcher, mock_job_recorder):
+        job_details = {"job_name": "verl-job", "pod_name": "verl-job", "output_folder_path": "/tmp/output"}
+        mock_log_thread = Mock()
+        mock_log_thread.is_alive.return_value = True
+        mock_thread.return_value = mock_log_thread
+
+        with patch.object(launcher, "_get_job_status", return_value="SUCCEEDED"), patch.object(
+            launcher, "clean_up_resource"
+        ):
+            result = launcher._monitor_job("verl_recipe.yaml", job_details)
+
+            assert result is True
+            mock_job_recorder.update_job.assert_called_once()
+            assert mock_job_recorder.update_job.call_args[1]["status"] == "Complete"
+
+    @patch("subprocess.run")
+    @patch("time.sleep")
+    @patch("threading.Thread")
+    def test_monitor_job_failure(self, mock_thread, mock_sleep, mock_run, launcher, mock_job_recorder):
+        job_details = {"job_name": "verl-job", "pod_name": "verl-job", "output_folder_path": "/tmp/output"}
+        mock_log_thread = Mock()
+        mock_log_thread.is_alive.return_value = True
+        mock_thread.return_value = mock_log_thread
+
+        with patch.object(launcher, "_get_job_status", return_value="FAILED"), patch.object(
+            launcher, "clean_up_resource"
+        ):
+            result = launcher._monitor_job("verl_recipe.yaml", job_details)
+
+            assert result is False
+            mock_job_recorder.update_job.assert_called_once()
+
+    @patch("subprocess.run")
+    @patch("time.sleep")
+    @patch("threading.Thread")
+    def test_monitor_job_cleanup_fails(self, mock_thread, mock_sleep, mock_run, launcher, mock_job_recorder):
+        job_details = {"job_name": "verl-job", "pod_name": "verl-job", "output_folder_path": "/tmp/output"}
+        mock_log_thread = Mock()
+        mock_log_thread.is_alive.return_value = True
+        mock_thread.return_value = mock_log_thread
+
+        with patch.object(launcher, "_get_job_status", return_value="SUCCEEDED"), patch.object(
+            launcher, "clean_up_resource", side_effect=subprocess.CalledProcessError(1, "cmd", stderr="cleanup error")
+        ):
+            with pytest.raises(subprocess.CalledProcessError):
+                launcher._monitor_job("verl_recipe.yaml", job_details)
+
+    @patch("subprocess.run")
+    @patch("time.sleep")
+    @patch("threading.Thread")
+    def test_monitor_job_log_thread_dies(self, mock_thread, mock_sleep, mock_run, launcher, mock_job_recorder):
+        job_details = {"job_name": "verl-job", "pod_name": "verl-job", "output_folder_path": "/tmp/output"}
+        mock_log_thread = Mock()
+        mock_log_thread.is_alive.return_value = False
+        mock_thread.return_value = mock_log_thread
+
+        with patch.object(launcher, "_get_job_status", return_value="Running"):
+            result = launcher._monitor_job("verl_recipe.yaml", job_details)
+
+            assert result is False
+
+        mock_thread.return_value = mock_log_thread
+
+        with patch.object(
+            launcher, "_get_job_status", side_effect=subprocess.CalledProcessError(1, "cmd", stderr="error")
+        ):
+            result = launcher._monitor_job("test_recipe.yaml", job_details)
+
+            assert result is False
 
 
 class TestCollectPodLogs:
@@ -278,6 +271,27 @@ class TestCollectPodLogs:
         assert "verl log" in logs
         assert "-n" in mock_popen.call_args[0][0]
         assert "ray-training" in mock_popen.call_args[0][0]
+
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("os.makedirs")
+    @patch("subprocess.Popen")
+    def test_collect_pod_logs_training_errors(self, mock_popen, mock_makedirs, mock_file, launcher):
+        mock_proc = Mock()
+        mock_proc.stdout = [
+            "normal log\n",
+            "Exception occurred during training: OOM\n",
+            "more logs\n",
+            "Exception occurred during training: Error 2\n",
+            "Exception occurred during training: Error 3\n",
+        ]
+        mock_proc.wait.return_value = None
+        mock_popen.return_value = mock_proc
+
+        logs = launcher._collect_pod_logs("test-job", "test-pod", False, training_error_limit=3)
+
+        # Should stop after 3 errors
+        assert "normal log" in logs
+        mock_proc.terminate.assert_called_once()
 
 
 class TestWaitForPodStatus:
@@ -346,6 +360,15 @@ class TestDescribeResource:
         with pytest.raises(subprocess.CalledProcessError):
             launcher.describe_resource("pod", "test-pod")
 
+    @patch("subprocess.run")
+    def test_describe_resource_verl(self, mock_run, launcher):
+        mock_run.return_value = Mock(stdout="resource details")
+
+        result = launcher.describe_resource("rayjobs", "verl-job", is_verl=True)
+
+        assert "-n" in mock_run.call_args[0][0]
+        assert "ray-training" in mock_run.call_args[0][0]
+
 
 class TestCleanUpResource:
     @patch("subprocess.run")
@@ -382,6 +405,16 @@ class TestGetPods:
 
         with pytest.raises(subprocess.TimeoutExpired):
             launcher.get_pods("test-job")
+
+    @patch("subprocess.run")
+    def test_get_pods_verl(self, mock_run, launcher):
+        mock_run.return_value = Mock(stdout="verl-job-pod1\nverl-job-pod2\n")
+
+        pods = launcher.get_pods("verl-job", is_verl=True)
+
+        assert pods == ["verl-job-pod1", "verl-job-pod2"]
+        assert "-n" in mock_run.call_args[0][0]
+        assert "ray-training" in mock_run.call_args[0][0]
 
 
 class TestGetHeadNode:
@@ -426,6 +459,14 @@ class TestGetHeadNode:
                 "test-job", all_pods=["test-job-worker-0", "test-job-worker-1"], max_retries=1, delay=0
             )
 
+    @patch("subprocess.run")
+    def test_get_head_node_verl(self, mock_run, launcher):
+        all_pods = ["verl-job-launcher", "verl-job-head", "verl-job-worker"]
+
+        head = launcher.get_head_node("verl-job", all_pods=all_pods, is_verl=True)
+
+        assert head == "verl-job-launcher"
+
 
 class TestAwsEnvParameter:
     """Test that aws_env is passed to subprocess.run calls."""
@@ -454,3 +495,54 @@ class TestAwsEnvParameter:
 
         assert mock_run.called
         assert mock_run.call_args.kwargs["env"] == launcher.aws_env
+
+
+class TestWaitForJobStatus:
+    """Tests for _wait_for_job_status method"""
+
+    @patch("subprocess.run")
+    def test_wait_for_job_status_pytorch(self, mock_run, launcher):
+        mock_run.return_value = Mock()
+
+        launcher._wait_for_job_status("test-job", "Running", is_verl=False)
+
+        assert "hyperpodpytorchjob/test-job" in mock_run.call_args[0][0]
+        assert "--for=condition=Running" in mock_run.call_args[0][0]
+
+    @patch("subprocess.run")
+    def test_wait_for_job_status_verl(self, mock_run, launcher):
+        mock_run.return_value = Mock()
+
+        launcher._wait_for_job_status("verl-job", "Running", is_verl=True)
+
+        assert "rayjobs/verl-job" in mock_run.call_args[0][0]
+        assert "--for=jsonpath={.status.jobDeploymentStatus}=Running" in mock_run.call_args[0][0]
+        assert "-n" in mock_run.call_args[0][0]
+        assert "ray-training" in mock_run.call_args[0][0]
+
+
+class TestGetJobStatus:
+    """Tests for _get_job_status method"""
+
+    @patch("subprocess.run")
+    def test_get_job_status_pytorch(self, mock_run, launcher):
+        mock_run.return_value = Mock(stdout="Completed True")
+
+        status = launcher._get_job_status("test-job", is_verl=False)
+
+        assert status == "Completed True"
+        # Current implementation returns both type and status
+        assert "jsonpath={.status.conditions[-1].type} {.status.conditions[-1].status}" in " ".join(
+            mock_run.call_args[0][0]
+        )
+
+    @patch("subprocess.run")
+    def test_get_job_status_verl(self, mock_run, launcher):
+        mock_run.return_value = Mock(stdout="RUNNING")
+
+        status = launcher._get_job_status("verl-job", is_verl=True)
+
+        assert status == "RUNNING"
+        assert "jsonpath={.status.jobStatus}" in mock_run.call_args[0][0]
+        assert "-n" in mock_run.call_args[0][0]
+        assert "ray-training" in mock_run.call_args[0][0]

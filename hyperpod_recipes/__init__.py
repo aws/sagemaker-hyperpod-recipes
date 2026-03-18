@@ -26,6 +26,7 @@ def list_recipes() -> List[Recipe]:
                 continue
             abs_path = os.path.join(root, f)
             recipes.append(Recipe(abs_path))
+    sorted(recipes, key=lambda r: r.name)
     return recipes
 
 

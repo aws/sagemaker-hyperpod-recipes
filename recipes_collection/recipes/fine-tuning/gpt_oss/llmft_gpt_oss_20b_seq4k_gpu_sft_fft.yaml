@@ -1,22 +1,113 @@
-defaults:
-  - /hydra_config/llmft/default
-  - /hydra_config/llmft/model_config/gpt-oss-20b
-  - /hydra_config/llmft/peft/fft
-  - /hydra_config/llmft/algorithm/sft
-  - /hydra_config/llmft/datasets/default_sft
-  - /hydra_config/llmft/strategy/fsdp_fft
-  - _self_
-
-display_name: "GPT-OSS 20B Supervised Fine-Tuning Full Fine-Tuning on GPU"
-version: "1.1.0"
-instance_types: ['ml.p5.48xlarge']
-
+display_name: GPT-OSS 20B Supervised Fine-Tuning Full Fine-Tuning on GPU
+instance_types:
+- ml.p5.48xlarge
+- ml.p5e.48xlarge
+- ml.p5en.48xlarge
 run:
+  hf_access_token: null
+  model_type: llm_finetuning_aws
   name: openai-gpt-oss-20b
-
+  results_dir: ${base_results_dir}/${.name}
+trainer:
+  devices: 8
+  num_nodes: 1
 training_config:
+  datasets:
+    data_dir: null
+    preprocessor_cfgs:
+    - type: TrainingSFTSampleConverter
+    - chat_template_name: null
+      ignore_prompt_labels: true
+      type: Seq2SeqTokensProcessor
+    - column_names:
+      - messages
+      type: DropColumns
+    save_intermediate_processing_steps: false
+    train_data:
+      file_path: ''
+      limit: null
+      name: ''
+    train_val_split_ratio: 0.9
+    train_val_split_seed: 42
+    val_data:
+      file_path: ''
+      limit: null
+      name: ''
+  force_rerun: false
+  mlflow:
+    run_id: ''
+    tracking_uri: ''
   model_config:
-    model_name_or_path: "openai/gpt-oss-20b-bf16"
+    apply_chat_template: false
+    attn_implementation: kernels-community/vllm-flash-attn3
+    chat_template_key: null
+    device_map: null
+    generation_cfg:
+      do_sample: true
+      max_new_tokens: 2048
+      num_parallel_jobs: 1
+      num_return_sequences: 1
+      temperature: 0.6
+      top_p: 0.9
+    lora_checkpoint_file_path: null
+    model_name_or_path: openai/gpt-oss-20b-bf16
     model_save_name: SageMaker-FFT/gpt-oss-20b-bf16
+    multimodal: false
+    peft_config: null
   training_args:
+    adam_betas:
+    - 0.9
+    - 0.95
+    aux_loss_coef: 0
+    disable_ds_ckpt: false
+    disable_fast_tokenizer: false
+    eval_steps: 0
+    grad_accum_dtype: null
+    gradient_checkpointing: true
+    gradient_checkpointing_use_reentrant: false
+    gradient_clipping: true
+    gradient_clipping_threshold: 1.0
+    l2: 0.0
+    learning_rate: 0.0001
+    load_checkpoint: true
+    logging_steps: 1
+    lr_scheduler: cosine
+    lr_warmup_ratio: 0.1
+    max_ckpt_mem: 100000000.0
+    max_ckpt_num: 3
+    max_epochs: 5
+    max_len: 4096
+    max_norm: 1.0
+    max_samples: 100000000.0
     merge_weights: true
+    micro_train_batch_size: 1
+    override_training_dir: true
+    packing_samples: false
+    pretrain_mode: false
+    resume_checkpoint_path: ''
+    ring_attn_size: 1
+    ring_head_stride: 1
+    save_hf_ckpt: true
+    save_steps: 0
+    seed: 42
+    strategy:
+      fsdp_config:
+        auto_wrap_policy: TRANSFORMER_BASED_WRAP
+        backward_prefetch: BACKWARD_PRE
+        cpu_offload: false
+        cpu_ram_efficient_loading: true
+        forward_prefetch: false
+        sharding_strategy: FULL_SHARD
+        state_dict_type: FULL_STATE_DICT
+        sync_module_states: true
+        use_orig_params: true
+    train_batch_size: 8
+    trainer_callbacks:
+    - _target_: metering_callback.MeteringCallback
+      output_path: /opt/ml/metering
+    trainer_type: sft
+    training_dir: ''
+    use_tensorboard: logs
+    use_wandb: null
+    weight_decay: 0.0
+version: 1.1.0

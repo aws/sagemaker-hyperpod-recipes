@@ -1,0 +1,6 @@
+# @package recipes.training_config
+# LoRA-specific overrides for SFT
+model:
+  lora_rank: 32
+  lora_alpha: 64
+  target_modules: all-linear

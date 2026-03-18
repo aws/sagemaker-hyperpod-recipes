@@ -2,6 +2,7 @@
 Slurm client to support remote slurm execution.
 Executes commands remotely via SSM start-session.
 """
+
 import json
 import logging
 import os
@@ -152,12 +153,26 @@ class SlurmClient:
             self.run([f"mkdir -p {self.controller_work_dir}"])
             self.__sync_repository()
 
-            # install dependencies
+            # Detect Python version and install matching venv package
+            py_ver_cmd = "python3 -c \"import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')\""
+            venv_pkg_cmd = (
+                f"PY_VER=$({py_ver_cmd}) && "
+                f"dpkg -l | grep -q python${{PY_VER}}-venv || apt install -y python${{PY_VER}}-venv"
+            )
+
+            # Create venv and install dependencies using the venv's pip directly
             self.run(
                 [
-                    "dpkg -l | grep -q python3.10-venv || apt install -y python3.10-venv",
+                    venv_pkg_cmd,
                     f"python3 -m venv {self.controller_work_dir}/venv --copies",
-                    f"source {self.controller_work_dir}/venv/bin/activate && pip3 install -r {self.controller_work_dir}/requirements.txt",
+                    f"{self.controller_work_dir}/venv/bin/pip3 install -r {self.controller_work_dir}/requirements.txt",
+                ]
+            )
+
+            # Verify critical packages are installed in the venv
+            self.run(
+                [
+                    f"{self.controller_work_dir}/venv/bin/python3 -c 'import omegaconf; import hydra; print(f\"omegaconf={{omegaconf.__version__}}, hydra={{hydra.__version__}}\")'",
                 ]
             )
         except Exception as e:

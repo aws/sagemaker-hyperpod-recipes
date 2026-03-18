@@ -473,6 +473,232 @@
                 }
             }
         },
+        "sft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}"
+                    },
+                    "model": {
+                        "path": "{{model_name_or_path}}"
+                    },
+                    "optim": {
+                        "lr": "{{learning_rate}}"
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_batch_size": "{{global_batch_size}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1.0e-07,
+                    "max": 1.0e-03,
+                    "default": 1.0e-05
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 3
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [32, 64, 128, 256, 512, 1024],
+                    "default": 32
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "default": "default",
+                    "required": true,
+                    "type": "string"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "sft_algorithms": {
+                    "sft": "SFT"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                }
+            }
+        },
+        "sft_fft": {
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}"
+                    },
+                    "model": {
+                        "path": "{{model_name_or_path}}"
+                    },
+                    "optim": {
+                        "lr": "{{learning_rate}}"
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_batch_size": "{{global_batch_size}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1.0e-07,
+                    "max": 1.0e-03,
+                    "default": 1.0e-05
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 30,
+                    "default": 3
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [32, 64, 128, 256, 512, 1024],
+                    "default": 32
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "default": "default",
+                    "required": true,
+                    "type": "string"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "sft_algorithms": {
+                    "sft": "SFT"
+                },
+                "hardware_types": {
+                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                }
+            }
+        },
         "grpo_rlvr_fft": {
             "recipe_template": {
                 "run": {

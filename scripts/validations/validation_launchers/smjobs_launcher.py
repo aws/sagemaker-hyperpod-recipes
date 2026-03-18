@@ -4,6 +4,10 @@ import re
 import subprocess
 import time
 
+from scripts.validations.validation_launchers.launcher_utils import (
+    execute_pysdk_finetune,
+)
+
 from .base_launcher import BaseLauncher
 
 try:
@@ -27,12 +31,21 @@ class SageMakerJobsValidationLauncher(BaseLauncher):
         """
         super().__init__(job_recorder, config)
 
-        self.sagemaker_session = sagemaker.Session(boto_session=self.boto_session)
-        self.sagemaker_client = self.boto_session.client("sagemaker")
-        self.logs_client = self.boto_session.client("logs")
+        if config.platform == "PYSDK_FINETUNE":
+            # PYSDK_FINETUNE calls PySDK trainers directly (no subprocess needed)
+            self.sagemaker_session = None
+            self.sagemaker_client = None
+            self.logs_client = self.boto_session.client("logs")
+        else:
+            self.sagemaker_session = sagemaker.Session(boto_session=self.boto_session)
+            self.sagemaker_client = self.boto_session.client("sagemaker")
+            self.logs_client = self.boto_session.client("logs")
 
     def launch_job(self, recipe) -> bool:
-        """Launch a single Slurm job and return True if successful, False otherwise"""
+        """Launch a single job and return True if successful, False otherwise"""
+        if self.config.platform == "PYSDK_FINETUNE":
+            return self._launch_pysdk_finetune_job(recipe)
+
         run_info = self._prepare_job(recipe)
 
         launch_command = self._build_command(run_info)
@@ -65,6 +78,27 @@ class SageMakerJobsValidationLauncher(BaseLauncher):
             self.job_recorder.update_job(input_filename=recipe, status=status, output_log=launch_output.stdout)
             return False
         return self._monitor_job(recipe, training_job_name, output_folder_path)
+
+    def _launch_pysdk_finetune_job(self, recipe) -> bool:
+        """Launch a PYSDK_FINETUNE job"""
+        try:
+            run_info = self._prepare_job(recipe)
+            training_job = execute_pysdk_finetune(self.config, run_info)
+
+            job_name = training_job.training_job_name
+            logging.info(f"PYSDK_FINETUNE job submitted for '{recipe}': {job_name}")
+
+            self.job_recorder.update_job(
+                input_filename=recipe,
+                status="Submitted",
+                output_log=f"PYSDK_FINETUNE job submitted. training_job_name: {job_name}",
+            )
+            return True
+
+        except Exception as e:
+            logging.error(f"Error launching PYSDK_FINETUNE job for recipe '{recipe}': {e}")
+            self.job_recorder.update_job(input_filename=recipe, status="Failed", output_log=str(e))
+            return False
 
     def _parse_output(self, launch_stdout):
         job_name = ""

@@ -21,12 +21,6 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from omegaconf import OmegaConf
 
 from scripts.validations.job_recorder import JobRecorder
-from scripts.validations.validation_launchers import (
-    K8sValidationLauncher,
-    SageMakerJobsValidationLauncher,
-    ServerlessValidationLauncher,
-    SlurmValidationLauncher,
-)
 from scripts.validations.validation_launchers.launcher_utils import (
     COMMON_CONFIG_PATH,
     build_argument_parser,
@@ -36,6 +30,7 @@ from scripts.validations.validation_launchers.launcher_utils import (
     get_recipes_by_regex,
     group_recipes_by_model,
     parse_instance_types,
+    select_validation_launcher,
     start_execution,
     validate_platform_auth,
 )
@@ -80,15 +75,7 @@ def run_validation(cfg, fileList=None, save_model_files=True, instance_type=None
     logging.info(f"Found {len(model_groups)} model groups")
 
     # Initiate launcher object and start execution
-    match cfg.platform:
-        case "K8":
-            launcher = K8sValidationLauncher(jobRecorder, cfg)
-        case "SLURM":
-            launcher = SlurmValidationLauncher(jobRecorder, cfg)
-        case "SMJOBS":
-            launcher = SageMakerJobsValidationLauncher(jobRecorder, cfg)
-        case "SERVERLESS":
-            launcher = ServerlessValidationLauncher(jobRecorder, cfg)
+    launcher = select_validation_launcher(cfg.platform)(jobRecorder, cfg)
     start_execution(model_groups, launcher)
 
     # Cleans resources no longer needed like model files etc
@@ -98,8 +85,9 @@ def run_validation(cfg, fileList=None, save_model_files=True, instance_type=None
     return jobRecorder
 
 
-# Default mock instance type for serverless platform (instance type is not used but required for config)
+# Default mock instance type for serverless/pysdk_finetune platforms (instance type is not used but required for config)
 SERVERLESS_MOCK_INSTANCE_TYPE = "serverless_mock_instance_type"
+PYSDK_FINETUNE_MOCK_INSTANCE_TYPE = "pysdk_finetune_mock_instance_type"
 
 
 def split_recipes_into_batches(recipe_list, batch_size):
@@ -239,7 +227,7 @@ def run_validation_for_all_instance_types(cfg, fileList=None, save_model_files=T
     Returns:
         dict: Dictionary mapping instance_type -> JobRecorder
     """
-    # For SERVERLESS platform, instance types don't matter
+    # For SERVERLESS or PYSDK_FINETUNE platforms, instance types don't matter
     # Run validation only once with a mock instance type
     if cfg.platform == "SERVERLESS":
         logging.info(
@@ -249,6 +237,15 @@ def run_validation_for_all_instance_types(cfg, fileList=None, save_model_files=T
         cfg_copy = copy.deepcopy(cfg)
         job_recorder = run_validation(cfg_copy, fileList, save_model_files, SERVERLESS_MOCK_INSTANCE_TYPE)
         return {SERVERLESS_MOCK_INSTANCE_TYPE: job_recorder}
+
+    if cfg.platform == "PYSDK_FINETUNE":
+        logging.info(
+            f"PYSDK_FINETUNE platform detected - instance types are not used. "
+            f"Running validation once with mock instance type: {PYSDK_FINETUNE_MOCK_INSTANCE_TYPE}"
+        )
+        cfg_copy = copy.deepcopy(cfg)
+        job_recorder = run_validation(cfg_copy, fileList, save_model_files, PYSDK_FINETUNE_MOCK_INSTANCE_TYPE)
+        return {PYSDK_FINETUNE_MOCK_INSTANCE_TYPE: job_recorder}
 
     # Get instance type list from config
     instance_type_list = list(cfg.instance_type_list) if hasattr(cfg, "instance_type_list") else []

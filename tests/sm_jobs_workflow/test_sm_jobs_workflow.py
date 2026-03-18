@@ -103,35 +103,6 @@ def test_sm_jobs_workflow_with_additional_kwargs():
     is_requirements_file(artifacts_dir, "llama-8b", "with_kwargs", False)
 
 
-@pytest.mark.xfail(reason="Broken by HF recipe removal, need to be fixed")
-def test_sm_jobs_workflow_multimodal():
-    logger.info("Testing sm_jobs workflow for multi-modal")
-
-    artifacts_dir = create_temp_directory()
-    overrides = [
-        "recipes=training/llama/hf_llama3_2_11b_seq8k_gpu_p5x4_pretrain",
-        "cluster=sm_jobs",
-        "cluster_type=sm_jobs",
-        "instance_type=p5.48xlarge",
-        "base_results_dir={}".format(artifacts_dir),
-        "+cluster.sm_jobs_config.output_path=s3://test_path",
-        "+cluster.sm_jobs_config.tensorboard_config.output_path=s3://test_tensorboard_path",
-        "+cluster.sm_jobs_config.tensorboard_config.container_logs_path=/opt/ml/output/tensorboard",
-        "container=test_container",
-        "+env_vars.NEMO_LAUNCHER_DEBUG=1",
-    ]
-
-    sample_sm_jobs_config = make_hydra_cfg_instance("../recipes_collection", "config", overrides)
-
-    logger.info("\nsample_sm_jobs_config\n")
-    logger.info(OmegaConf.to_yaml(sample_sm_jobs_config))
-
-    main(sample_sm_jobs_config)
-
-    compare_sm_jobs_common_artifacts(artifacts_dir, "llama3-2-11b", "multimodal")
-    is_requirements_file(artifacts_dir, "llama3-2-11b", "multimodal", True)
-
-
 @patch(
     "launcher.recipe_templatization.base_recipe_template_processor.BaseRecipeTemplateProcessor.load_hosting_config",
     side_effect=mock_load_hosting_config,
@@ -169,6 +140,42 @@ def test_sm_jobs_workflow_with_launch_json(mock_load_hosting):
 
 
 # SM Jobs PySdk Launch Executor Tests (Estimator and ModelTrainer)
+
+
+@patch(
+    "launcher.recipe_templatization.base_recipe_template_processor.BaseRecipeTemplateProcessor.load_hosting_config",
+    side_effect=mock_load_hosting_config,
+)
+def test_sm_jobs_workflow_with_launch_json_verl_sft(mock_load_hosting):
+    logger.info("Testing sm_jobs workflow launch json for verl SFT model")
+
+    artifacts_dir = create_temp_directory("test_sm_jobs_workflow_with_launch_json_verl_sft")
+    overrides = [
+        "recipes=fine-tuning/qwen/verl-sft-qwen-3-8b-lora",
+        "cluster=sm_jobs",
+        "cluster_type=sm_jobs",
+        "instance_type=p5.48xlarge",
+        "base_results_dir={}".format(artifacts_dir),
+        "+cluster.sm_jobs_config.output_path=s3://test_path",
+        "+cluster.sm_jobs_config.tensorboard_config.output_path=s3://test_tensorboard_path",
+        "+cluster.sm_jobs_config.tensorboard_config.container_logs_path=/opt/ml/output/tensorboard",
+        "container=test_container",
+        "+env_vars.NEMO_LAUNCHER_DEBUG=1",
+        "git.use_default=false",
+        "git.entry_script=/app/src/train_hp.py",
+    ]
+
+    sample_sm_jobs_config = make_hydra_cfg_instance("../recipes_collection", "config", overrides)
+    OmegaConf.set_struct(sample_sm_jobs_config, False)
+    sample_sm_jobs_config.launch_json = True
+
+    logger.info("\nsample_sm_jobs_config\n")
+    logger.info(OmegaConf.to_yaml(sample_sm_jobs_config))
+    del sample_sm_jobs_config["hydra"]
+    main(sample_sm_jobs_config)
+
+    baseline_artifacts_dir = "/tests/sm_jobs_workflow/sm_jobs_baseline_artifacts/with_launch_json"
+    compare_artifacts(["/qwen-3-8b/launch.json"], artifacts_dir, baseline_artifacts_dir)
 
 
 @patch(

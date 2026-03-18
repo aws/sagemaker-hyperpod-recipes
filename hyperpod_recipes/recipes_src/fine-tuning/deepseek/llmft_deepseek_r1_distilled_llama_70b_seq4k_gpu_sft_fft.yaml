@@ -1,0 +1,26 @@
+defaults:
+  - /hydra_config/llmft/default
+  - /hydra_config/llmft/model_config/deepseek-r1-distill-llama-70b
+  - /hydra_config/llmft/peft/fft
+  - /hydra_config/llmft/algorithm/sft
+  - /hydra_config/llmft/datasets/default_sft_fft
+  - /hydra_config/llmft/strategy/fsdp_fft
+  - _self_
+
+display_name: "DeepSeek R1 Distill Llama 70B Supervised Fine-Tuning Full Fine-Tuning on GPU"
+version: "1.1.0"
+instance_types: ['ml.p4de.24xlarge', 'ml.p5.48xlarge']
+
+run:
+  name: deepseek-r1-distilled-llama-70b
+
+trainer:
+  num_nodes: 4
+
+training_config:
+  model_config:
+    model_name_or_path: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
+    model_save_name: SageMaker-FFT/DeepSeek-R1-Distill-Llama-70B
+    chat_template_key: llama--meta-llama-3.3-70b
+  training_args:
+    train_batch_size: 32

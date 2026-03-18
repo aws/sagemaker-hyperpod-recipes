@@ -1,3 +1,4 @@
+import re
 import subprocess
 import time
 from typing import Dict, Optional
@@ -44,20 +45,37 @@ class SlurmValidationLauncher(BaseLauncher):
                 self.slurm_client.cleanup()
             raise e
 
+    @staticmethod
+    def _strip_control_chars(text):
+        """Strip ANSI escape codes and control characters from SSM session output."""
+        text = re.sub(r"\x1b\[[0-9;]*[a-zA-Z]", "", text)
+        text = re.sub(r"\x1b\].*?\x07", "", text)
+        text = text.replace("\r", "")
+        return text
+
     def _parse_output(self, input_file_path: str, launch_output) -> Dict:
         job_id = ""
         log_file_path = ""
         output_folder_path = ""
 
-        for line in launch_output.stdout.split("\n"):
+        stdout = self._strip_control_chars(launch_output.stdout) if launch_output.stdout else ""
+
+        for line in stdout.split("\n"):
             if "submission file created at" in line:
-                output_folder_path = line.split(" ")[-1]
+                output_folder_path = line.split(" ")[-1].strip()
             elif "submitted with Job ID" in line:
-                job_id = line.split(" ")[-1]
+                job_id = line.split(" ")[-1].strip()
             elif "Submitted job's logfile path" in line:
-                log_file_path = line.split(" ")[-1]
+                log_file_path = line.split(" ")[-1].strip()
 
         if not all([job_id, log_file_path, output_folder_path]):
+            self.logger.error(f"Failed to parse job submission output for {input_file_path}")
+            self.logger.error(
+                f"Raw STDOUT (first 2000 chars): {launch_output.stdout[:2000] if launch_output.stdout else 'None'}"
+            )
+            self.logger.error(
+                f"Raw STDERR (first 2000 chars): {launch_output.stderr[:2000] if launch_output.stderr else 'None'}"
+            )
             self.job_recorder.update_job(
                 input_file_path, output_path=output_folder_path, status="Failed", output_log=log_file_path
             )
@@ -88,8 +106,10 @@ class SlurmValidationLauncher(BaseLauncher):
         """Cancel job using wrapper or local subprocess."""
         try:
             cmd = ["scancel", job_id]
-            self.slurm_client.run([" ".join(cmd)]) if self.slurm_client else subprocess.run(
-                cmd, capture_output=True, text=True, check=True
+            (
+                self.slurm_client.run([" ".join(cmd)])
+                if self.slurm_client
+                else subprocess.run(cmd, capture_output=True, text=True, check=True)
             )
         except Exception as e:
             self.logger.error(f"Error cleaning up job: {e}")

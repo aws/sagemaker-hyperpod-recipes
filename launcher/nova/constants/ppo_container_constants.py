@@ -1,6 +1,6 @@
 from enum import Enum
 
-ACTOR_GENERATION_REGION_ACCOUNT_MAP = {"us-east-1": "708977205387"}
+ACTOR_GENERATION_REGION_ACCOUNT_MAP = {"us-east-1": "708977205387", "ap-northeast-1": "878185805882"}
 
 
 class JobType(Enum):

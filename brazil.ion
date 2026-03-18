@@ -1,0 +1,32 @@
+'brazil_package_spec@1.0'
+
+common::{
+  name: "SageMakerHyperpodRecipesStaging",
+  major_version: "1.0",
+
+  dependencies: {
+    default_closure: run,
+
+    closures: {
+      run: public::{
+        include: [self],
+      },
+    },
+  },
+
+  build: {
+    command : "peru-hatch",
+
+    env: {
+      PATH: [
+        (farm "PeruHatch" "bin"),
+        (env PATH),
+      ],
+    },
+
+    outputs: {
+      public_dir : ".",
+      cleaned: [ "./build", "./.mypy_cache", "./.hatch_venv", "./.pytest_cache", "./.coverage" ],
+    },
+  },
+}

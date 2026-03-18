@@ -1,0 +1,5 @@
+# @package recipes.training_config.checkpoint
+_target_: verl.trainer.config.CheckpointConfig
+
+save_contents:
+- model

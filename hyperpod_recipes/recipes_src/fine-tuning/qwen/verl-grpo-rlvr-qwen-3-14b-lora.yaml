@@ -1,0 +1,61 @@
+defaults:
+  - /hydra_config/verl/default
+  - /hydra_config/verl/algorithm/grpo
+  - /hydra_config/verl/actor/default
+  - /hydra_config/verl/ref/default
+  - /hydra_config/verl/critic/default
+  - /hydra_config/verl/rollout/vllm
+  - /hydra_config/verl/actor_rollout_ref/default
+  - /hydra_config/verl/trainer/default
+  - /hydra_config/verl/data/default
+  - /hydra_config/verl/reward_model/default
+  - /hydra_config/verl/ray_cluster/default
+  - /hydra_config/verl/peft/lora
+  - /hydra_config/verl/reward/rlvr
+  - /hydra_config/verl/model_config/qwen-3-14b
+  - _self_
+
+display_name: "Qwen 3 14B GRPO RLVR Fine-Tuning with LoRA"
+version: "2.0.0"
+instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
+
+run:
+  name: verl-grpo-qwen-3-14b-lora
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  actor_rollout_ref:
+    actor:
+      optim:
+        lr: 1.0e-05
+    ref:
+      strategy: fsdp
+      log_prob_micro_batch_size_per_gpu: 16
+    rollout:
+      log_prob_micro_batch_size_per_gpu: 16
+      log_prob_use_dynamic_bsz: false
+      enable_chunked_prefill: true
+      layered_summon: false
+      merge_lora_for_inference: false
+    model:
+      is_saving_checkpoint_in_lora: true
+  trainer:
+    experiment_name: qwen3-14b-lora_grpo-20251113.224040
+    logger:
+    - console
+    - mlflow
+    resume_mode: resume_path
+    resume_from_path: ''
+    test_freq: 7
+  critic:
+    rollout_n: 6
+    ppo_max_token_len_per_gpu: 24576
+  reward_model:
+    model:
+      path: sfairX/FsfairX-LLaMA3-RM-v0.1
+  custom_reward_function:
+    lambda_arn: ''
+    path: ''
+    name: ''

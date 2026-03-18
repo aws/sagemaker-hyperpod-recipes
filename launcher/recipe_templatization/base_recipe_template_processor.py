@@ -160,7 +160,7 @@ class BaseRecipeTemplateProcessor(ABC):
 
         # Fetch regional parameters for the specific recipe only
         recipe_name = recipe_metadata.get("Name")
-        regional_parameters = self._get_regional_parameters(recipe_name) if recipe_name else {}
+        regional_parameters = self._get_regional_parameters(recipe_name, recipe_metadata) if recipe_name else {}
 
         return [recipe_metadata, resolved_override_parameters, regional_parameters]
 
@@ -176,7 +176,7 @@ class BaseRecipeTemplateProcessor(ABC):
             return False
 
         try:
-            regional_parameters = self._get_regional_parameters(recipe_name)
+            regional_parameters = self._get_regional_parameters(recipe_name, recipe_metadata)
             if regional_parameters == {}:
                 logging.error(
                     "No regional parameters found, skipping container availability check and launch json generation"
@@ -204,7 +204,7 @@ class BaseRecipeTemplateProcessor(ABC):
         return True
 
     # Fetches the regional parameters from *_regional_parameters.json for a given platform and recipe_name
-    def _get_regional_parameters(self, recipe_name: str) -> dict:
+    def _get_regional_parameters(self, recipe_name: str, recipe_metadata: dict) -> dict:
         """Get regional parameters for the given recipe name."""
 
         regional_parameters = {}
@@ -242,6 +242,16 @@ class BaseRecipeTemplateProcessor(ABC):
         for regional_parameter in regional_parameter_option.get("sm_jobs", {}):
             if regional_parameter == "container_image":
                 regional_parameters["smtj_regional_ecr_uri"] = regional_parameter_option["sm_jobs"][regional_parameter]
+            elif regional_parameter == "serverless_sku":
+                serverless_sku_templates = self._build_serverless_sku_template(recipe_metadata)
+                sku_prefixes = regional_parameter_option["sm_jobs"][regional_parameter]
+                for sku_key, sku_template in serverless_sku_templates.items():
+                    resolved_sku = {}
+                    for stage, regions in sku_prefixes.items():
+                        resolved_sku[stage] = {}
+                        for region, prefix in regions.items():
+                            resolved_sku[stage][region] = f"{prefix}-{sku_template}"
+                    regional_parameters[sku_key] = resolved_sku
             else:
                 regional_parameters[regional_parameter] = regional_parameter_option["sm_jobs"][regional_parameter]
         # Add the common regional parameters for sm_jobs
@@ -251,6 +261,24 @@ class BaseRecipeTemplateProcessor(ABC):
             ]
 
         return regional_parameters
+
+    def _build_serverless_sku_template(self, metadata: dict) -> dict:
+        """Build the ServerlessSKU template from metadata fields."""
+        recipe_type = metadata.get("Type", "")
+        model_id = metadata.get("Model_ID", "")
+
+        if recipe_type == "FineTuning":
+            technique = metadata.get("CustomizationTechnique", "")
+            peft = "LORA" if metadata.get("Peft") else "FULLRANK"
+            return {"serverless_sku": f"ServerlessTraining:FineTuning-{technique}-{peft}-{model_id}"}
+
+        elif recipe_type == "Evaluation":
+            return {
+                "serverless_sku_input": f"ServerlessTraining:Evaluation-Input-{model_id}",
+                "serverless_sku_output": f"ServerlessTraining:Evaluation-Output-{model_id}",
+            }
+
+        return {}
 
     def extract_sequence_length(self, recipe_name: str) -> Optional[str]:
         """Extract sequence length from recipe name."""
