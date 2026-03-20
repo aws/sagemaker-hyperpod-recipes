@@ -2,6 +2,7 @@
 """
 Helper functions for EKS recipe validation workflow
 """
+
 import argparse
 import json
 import os
@@ -14,7 +15,16 @@ import yaml
 PLATFORM_INSTANCE_CONSTRAINTS = {
     "K8": ["ml.p5.48xlarge"],
     "SLURM": ["ml.p5.48xlarge"],
-    "SMJOBS": ["ml.p4d.24xlarge", "ml.p4de.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"],
+    "SMJOBS": [
+        "ml.p4d.24xlarge",
+        "ml.p4de.24xlarge",
+        "ml.p5.48xlarge",
+        "ml.g5.48xlarge",
+        "ml.g6.48xlarge",
+        "ml.g5.12xlarge",
+        "ml.g6.12xlarge",
+        "ml.g6e.12xlarge",
+    ],
 }
 
 PLATFORMS = ["K8", "SLURM", "SMJOBS"]
@@ -105,6 +115,7 @@ def create_validation_matrix(
         new_recipes = _detect_new_recipes(base_branch, recipes_dir)
 
     matrix = []
+    platforms_to_use = custom_platform if custom_platform else PLATFORMS
 
     for recipe in recipes:
         # Normalize path: strip prefix if present
@@ -112,7 +123,7 @@ def create_validation_matrix(
         if normalized_recipe.startswith(RECIPES_PREFIX):
             normalized_recipe = normalized_recipe[len(RECIPES_PREFIX) :]
 
-        for platform in PLATFORMS:
+        for platform in platforms_to_use:
             # Determine instance types for this recipe+platform
             instances = _get_instance_types(
                 recipe=recipe,
@@ -323,6 +334,7 @@ def main():
     create_parser.add_argument("--recipes-dir", default="recipes_collection/recipes/")
     create_parser.add_argument("--recipes", help="Comma-separated recipe list (optional)")
     create_parser.add_argument("--instances", help="Comma-separated instance types (optional)")
+    create_parser.add_argument("--platform", help="Comma-separated platform list (optional)")
     create_parser.add_argument("--batch-size", type=int, default=25)
     create_parser.add_argument(
         "--max-workers", type=int, default=5, help="Upper limit on number of workers to scale up"
@@ -331,7 +343,11 @@ def main():
     # update-config command
     update_parser = subparsers.add_parser("update-config", help="Update validation configuration")
     update_parser.add_argument("--recipe-files", nargs="+", required=True, help="List of recipe files to validate")
-    update_parser.add_argument("--config-path", required=True, help="Path to common_validation_config.yaml")
+    update_parser.add_argument(
+        "--config-path",
+        required=True,
+        help="Path to common_validation_config.yaml (copy from common_validation_config.example.yaml if it does not exist)",
+    )
     update_parser.add_argument("--instance-type", required=True, help="Instance type to use for validation")
     update_parser.add_argument("--platform", required=True, help="Platform type to use for validation")
 
@@ -346,11 +362,13 @@ def main():
     elif args.command == "create-matrix":
         custom_recipes = args.recipes.split(",") if args.recipes else None
         custom_instances = args.instances.split(",") if args.instances else None
+        custom_platform = args.platform.split(",") if args.platform else None
         result = create_validation_matrix(
             base_branch=args.base_branch,
             recipes_dir=args.recipes_dir,
             custom_recipes=custom_recipes,
             custom_instances=custom_instances,
+            custom_platform=custom_platform,
             batch_size=args.batch_size,
             max_workers=args.max_workers,
         )

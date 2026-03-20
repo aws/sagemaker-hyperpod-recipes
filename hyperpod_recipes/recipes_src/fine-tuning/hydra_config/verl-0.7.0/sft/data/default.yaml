@@ -1,0 +1,26 @@
+# @package recipes.training_config.data
+train_files: null
+
+val_files: null
+
+messages_key: messages
+
+train_batch_size: 256
+
+micro_batch_size_per_gpu: 4
+
+max_length: 1024
+
+pad_mode: no_padding
+
+truncation: error
+
+use_dynamic_bsz: true
+
+max_token_len_per_gpu: 8192
+
+ignore_input_ids_mismatch: false
+
+custom_cls:
+  path: null
+  name: null

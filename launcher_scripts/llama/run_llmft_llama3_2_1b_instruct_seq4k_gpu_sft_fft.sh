@@ -18,7 +18,7 @@ EXP_DIR="${EXP_DIR}" # Location to save experiment info including logging, check
 
 MODEL_NAME_OR_PATH="${MODEL_NAME_OR_PATH}"
 
-MODEL_SAVE_NAME="llama-3.2-1B-Instruct-FFT"
+MODEL_SAVE_NAME="Llama-3.2-1B-Instruct"
 
 CONTAINER_MOUNT="${CONTAINER_MOUNT}"
 

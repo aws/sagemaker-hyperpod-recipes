@@ -442,7 +442,7 @@ class LaunchJsonGenerator:
             return None, "skipped"
 
         if proc_result.returncode != 0:
-            logger.error(f"Generation failed for {display_name}: {proc_result.stderr[:500]}")
+            logger.error(f"Generation failed for {display_name}: {proc_result.stderr}")
             return None, f"failed: {proc_result.stderr[:200]}"
 
         # Find generated launch.json

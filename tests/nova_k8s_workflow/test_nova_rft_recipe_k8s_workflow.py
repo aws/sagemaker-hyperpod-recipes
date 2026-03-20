@@ -9,6 +9,8 @@ from main import main
 logger = logging.getLogger(__name__)
 
 from tests.test_utils import (
+    GOLDEN_WRITE,
+    compare_files,
     create_temp_directory,
     make_hydra_cfg_instance,
     replace_placeholder,
@@ -32,6 +34,7 @@ def compare_rft_artifacts_with_dynamic_names(
         # Make a copy of baseline artifacts to replace placeholders
         baseline_artifact_copy_folder = create_temp_directory()
         shutil.copytree(baseline_artifact_folder, baseline_artifact_copy_folder, dirs_exist_ok=True)
+        original_baseline_artifact_path = baseline_artifact_folder + baseline_path
         baseline_artifact_path = baseline_artifact_copy_folder + baseline_path
 
         # Replace placeholders in baseline
@@ -51,15 +54,14 @@ def compare_rft_artifacts_with_dynamic_names(
             replace_placeholder(baseline_artifact_path, baseline_job_name, actual_job_name)
 
         # Read both files and compare with whitespace normalization
-        with open(baseline_artifact_path, "r") as f:
-            baseline_content = f.read().rstrip("\n\r\t ")
-        with open(actual_artifact_path, "r") as f:
-            actual_content = f.read().rstrip("\n\r\t ")
-
-        if baseline_content != actual_content:
-            assert (
-                False
-            ), f"{baseline_artifact_path} does not match {actual_artifact_path}\nBaseline: {repr(baseline_content)}\nActual: {repr(actual_content)}"
+        comparison_result = compare_files(baseline_artifact_path, actual_artifact_path)
+        if comparison_result is False:
+            if GOLDEN_WRITE:
+                shutil.copyfile(actual_artifact_path, original_baseline_artifact_path)
+            else:
+                assert (
+                    False
+                ), f"{baseline_artifact_path} does not match {actual_artifact_path}. Run with GOLDEN_TEST_WRITE=1 to update"
 
 
 @pytest.fixture(autouse=True)

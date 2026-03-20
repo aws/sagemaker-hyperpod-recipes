@@ -81,6 +81,9 @@ VALID_REGIONAL_PARAMS = {
     "rft_nats_reloader_container_image",
     "rft_storm_container_image",
     "rft_redis_container_image",
+    "serverless_sku",
+    "serverless_sku_input",
+    "serverless_sku_output",
 }
 
 

@@ -1,0 +1,35 @@
+# @package recipes.training_config.trainer
+total_epochs: 1
+
+total_training_steps: null
+
+project_name: verl_sft
+
+experiment_name: verl-sft
+
+logger:
+- console
+
+save_freq: -1
+
+test_freq: -1
+
+max_ckpt_to_keep: null
+
+resume_mode: auto
+
+resume_from_path: null
+
+default_hdfs_dir: null
+
+default_local_dir: /opt/ml/model
+
+nnodes: 1
+
+n_gpus_per_node: 8
+
+device: cuda
+
+profile_interval:
+- -1
+- -1

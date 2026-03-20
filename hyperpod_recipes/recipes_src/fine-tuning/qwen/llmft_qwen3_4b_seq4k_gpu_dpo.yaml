@@ -1,0 +1,83 @@
+defaults:
+  - /hydra_config/llmft/default
+  - /hydra_config/llmft/model_config/qwen-3-4b
+  - /hydra_config/llmft/peft/lora
+  - /hydra_config/llmft/algorithm/dpo
+  - /hydra_config/llmft/datasets/default_dpo
+  - /hydra_config/llmft/strategy/fsdp_peft
+  - _self_
+
+display_name: "Qwen 3 4B Direct Preference Optimization on GPU, 4K sequence length"
+version: "2.0.0"
+instance_types: ['ml.p4de.24xlarge', 'ml.p4d.24xlarge', 'ml.p5.48xlarge', 'ml.g5.48xlarge', 'ml.g6.48xlarge', 'ml.g6.12xlarge', 'ml.g6e.12xlarge']
+
+run:
+  name: qwen-3-4b
+
+training_config:
+  model_config:
+    model_name_or_path: "Qwen/Qwen3-4B"
+    model_save_name: SageMaker/Qwen3-4B-Lora
+  training_args:
+    merge_weights: true
+
+elastic_policy:
+  is_elastic: false
+  min_nodes: 1
+  max_nodes: 16
+  use_graceful_shutdown: true
+  scaling_timeout: 600
+  graceful_shutdown_timeout: 600
+
+scale_config:
+  1:
+    trainer:
+      num_nodes: 1
+    training_config:
+      training_args:
+        train_batch_size: 128
+        micro_train_batch_size: 4
+        learning_rate: 0.0002828
+  2:
+    trainer:
+      num_nodes: 2
+    training_config:
+      training_args:
+        train_batch_size: 128
+        micro_train_batch_size: 4
+        learning_rate: 0.0002828
+  4:
+    trainer:
+      num_nodes: 4
+    training_config:
+      training_args:
+        train_batch_size: 128
+        micro_train_batch_size: 4
+        learning_rate: 0.0002828
+  6:
+    trainer:
+      num_nodes: 6
+    training_config:
+      training_args:
+        train_batch_size: 128
+        learning_rate: 0.0002828
+        uneven_batch:
+          use_uneven_batch: true
+          num_dp_groups_with_small_batch_size: 16
+          small_local_batch_size: 2
+          large_local_batch_size: 3
+  8:
+    trainer:
+      num_nodes: 8
+    training_config:
+      training_args:
+        train_batch_size: 128
+        micro_train_batch_size: 2
+        learning_rate: 0.0002828
+  16:
+    trainer:
+      num_nodes: 16
+    training_config:
+      training_args:
+        train_batch_size: 128
+        learning_rate: 0.0002828

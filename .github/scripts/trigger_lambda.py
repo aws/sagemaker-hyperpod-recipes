@@ -36,14 +36,16 @@ class CloudWatchHandler:
     def put_metric(self, status_code, recipe_count):
         """Put metrics based on lambda response"""
         try:
+            is_error = status_code_error(status_code)
+            metric_value = 1 if is_error else 0
+
             metric_data = [
                 {
                     "MetricName": "GithubActions",
-                    "Value": 1,
+                    "Value": metric_value,
                     "Unit": "Count",
                     "Dimensions": [
-                        {"Name": "Workflow", "Value": "process-recipes-changes"},
-                        {"Name": "RecipeUpdateStatus", "Value": str(status_code)},
+                        {"Name": "Workflow", "Value": ".github/workflows/recipe-change-processor.yml"},
                     ],
                 }
             ]
@@ -148,14 +150,17 @@ def handle_lambda_response(response, recipe_metadata):
 
     handler.put_log(stream_name, log_message, recipe_metadata)
 
-    if "statusCode" is None:
-        print("Error in JS Lambda response: ", response)
+    if status_code_error(status_code):
+        print(f"Recipe update failed with status code {status_code}")
+        print("JS Lambda response: ", response)
         sys.exit(1)
 
-    # Need to handle different status codes
-    if status_code in [502, 503, 504] or (400 <= status_code <= 500):
-        print(f"Recipe update failed with status code {status_code}")
-        sys.exit(1)
+
+def status_code_error(status_code):
+    if status_code is None or status_code != 200:
+        return True
+
+    return False
 
 
 if __name__ == "__main__":

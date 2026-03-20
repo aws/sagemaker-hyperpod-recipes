@@ -80,7 +80,7 @@ class TestServerlessLauncherCloudWatchValidation(unittest.TestCase):
         mock_logs_client.get_log_events.return_value = {
             "events": [
                 {"message": "Training started"},
-                {"message": "Saving the merged model"},  # Success message for RLAIF
+                {"message": "Training completed successfully"},  # Success message for RLAIF
                 {"message": "Training completed"},
             ]
         }
@@ -90,7 +90,7 @@ class TestServerlessLauncherCloudWatchValidation(unittest.TestCase):
 
         # Assert
         self.assertTrue(is_valid)
-        self.assertIn("Saving the merged model", message)
+        self.assertIn("Training completed successfully", message)
         self.assertIn("stream1", message)
 
         # Verify boto3 client was called with correct parameters (no assume role)
@@ -189,7 +189,7 @@ class TestServerlessLauncherCloudWatchValidation(unittest.TestCase):
         # Third stream has success message
         def get_log_events_side_effect(logGroupName, logStreamName, **kwargs):
             if "stream3" in logStreamName:
-                return {"events": [{"message": "Saving the complete model"}]}  # Success for SFT
+                return {"events": [{"message": "Training completed successfully"}]}  # Success for SFT
             return {"events": [{"message": "Some other log message"}]}
 
         mock_logs_client.get_log_events.side_effect = get_log_events_side_effect
@@ -199,7 +199,7 @@ class TestServerlessLauncherCloudWatchValidation(unittest.TestCase):
 
         # Assert
         self.assertTrue(is_valid)
-        self.assertIn("Saving the complete model", message)
+        self.assertIn("Training completed successfully", message)
         self.assertIn("stream3", message)
 
     def test_validate_cloudwatch_logs_case_insensitive_match(self):
@@ -215,7 +215,7 @@ class TestServerlessLauncherCloudWatchValidation(unittest.TestCase):
 
         # Mock log events with different case
         mock_logs_client.get_log_events.return_value = {
-            "events": [{"message": "SAVING THE MERGED MODEL"}]  # Uppercase version
+            "events": [{"message": "TRAINING COMPLETED SUCCESSFULLY"}]  # Uppercase version
         }
 
         # Execute
@@ -223,7 +223,7 @@ class TestServerlessLauncherCloudWatchValidation(unittest.TestCase):
 
         # Assert
         self.assertTrue(is_valid)
-        self.assertIn("Saving the merged model", message)
+        self.assertIn("Training completed successfully", message)
 
     def test_validate_cloudwatch_logs_default_log_group(self):
         """Test that default log group is used when not specified in config."""
@@ -259,7 +259,7 @@ class TestServerlessLauncherCloudWatchValidation(unittest.TestCase):
 
         mock_logs_client.describe_log_streams.return_value = {"logStreams": [{"logStreamName": f"{job_name}/stream1"}]}
 
-        mock_logs_client.get_log_events.return_value = {"events": [{"message": "Saving the merged model"}]}
+        mock_logs_client.get_log_events.return_value = {"events": [{"message": "Training completed successfully"}]}
 
         # Execute
         is_valid, message = launcher._validate_cloudwatch_logs(job_name, technique)
@@ -303,20 +303,20 @@ class TestServerlessLauncherTechniqueMessages(unittest.TestCase):
         self.launcher = ServerlessValidationLauncher(self.mock_job_recorder, self.mock_config)
 
     def test_rlaif_success_message(self):
-        """Test RLAIF technique expects 'Saving the merged model'."""
-        self._test_technique_message("RLAIF", "Saving the merged model")
+        """Test RLAIF technique expects 'Training completed successfully'."""
+        self._test_technique_message("RLAIF", "Training completed successfully")
 
     def test_rlvr_success_message(self):
-        """Test RLVR technique expects 'Saving the merged model'."""
-        self._test_technique_message("RLVR", "Saving the merged model")
+        """Test RLVR technique expects 'Training completed successfully'."""
+        self._test_technique_message("RLVR", "Training completed successfully")
 
     def test_dpo_success_message(self):
-        """Test DPO technique expects 'Saving the complete model'."""
-        self._test_technique_message("DPO", "Saving the complete model")
+        """Test DPO technique expects 'Training completed successfully'."""
+        self._test_technique_message("DPO", "Training completed successfully")
 
     def test_sft_success_message(self):
-        """Test SFT technique expects 'Saving the complete model'."""
-        self._test_technique_message("SFT", "Saving the complete model")
+        """Test SFT technique expects 'Training completed successfully'."""
+        self._test_technique_message("SFT", "Training completed successfully")
 
     def _test_technique_message(self, technique, expected_message):
         """Helper method to test technique-specific messages."""

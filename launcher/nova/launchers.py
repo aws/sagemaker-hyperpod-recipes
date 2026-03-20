@@ -818,9 +818,11 @@ class SMNovaK8SLauncherPPO(NovaK8SLauncher):
                         "master_nodes": master_nodes,
                         "worker_nodes": worker_nodes,
                         "devices": devices,
-                        "processed_worker_nodes": "replicas_placeholder"
-                        if (self._launch_json and "eval" not in recipe_file_path)
-                        else worker_nodes,
+                        "processed_worker_nodes": (
+                            "replicas_placeholder"
+                            if (self._launch_json and "eval" not in recipe_file_path)
+                            else worker_nodes
+                        ),
                     }
                 )
         return job_list

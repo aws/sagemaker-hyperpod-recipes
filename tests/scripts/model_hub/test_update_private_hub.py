@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from subprocess import CalledProcessError
 from unittest.mock import MagicMock, patch
 
 # Add the project root to the path
@@ -15,18 +16,21 @@ sys.path.insert(0, str(project_root))
 from scripts.model_hub.update_private_hub import (
     bump_version,
     create_new_recipecollection,
+    export_hub_content,
     extract_sm_jobs_yaml_content,
     extract_yaml_content,
     get_model_name_from_recipe,
     get_recipe_name_from_path,
     get_regional_ecr_uri,
     get_version_from_export,
+    import_hub_content,
     is_nova_recipe,
     load_recipes,
     load_recipes_from_file_list,
     load_recipes_from_regex,
     process_recipe_metadata,
     update_exported_json,
+    upload_artifacts_to_s3,
     upload_json_to_s3,
     upload_yaml_to_s3,
 )
@@ -547,26 +551,36 @@ class TestExportHubContent(unittest.TestCase):
     @patch("os.path.exists")
     def test_successful_export(self, mock_exists, mock_run):
         """Test successful hub content export."""
-        from scripts.model_hub.update_private_hub import export_hub_content
 
         mock_run.return_value = MagicMock(returncode=0, stdout="Success", stderr="")
         mock_exists.return_value = True
 
-        result = export_hub_content("test-hub", "test-model", "us-west-2", "/output", "prod")
+        result = export_hub_content(
+            hub_name="test-hub",
+            model_id="test-model",
+            region="us-west-2",
+            output="test-model-private_export.json",
+            output_dir="/output",
+            endpoint="prod",
+        )
 
-        self.assertEqual(result, "/output/test-model_export.json")
+        self.assertEqual(result, "/output/test-model-private_export.json")
         mock_run.assert_called_once()
 
     @patch("subprocess.run")
     def test_failed_export(self, mock_run):
         """Test failed hub content export."""
-        from subprocess import CalledProcessError
-
-        from scripts.model_hub.update_private_hub import export_hub_content
 
         mock_run.side_effect = CalledProcessError(1, "cmd", stderr="Error")
 
-        result = export_hub_content("test-hub", "test-model", "us-west-2", "/output", "prod")
+        result = export_hub_content(
+            hub_name="test-hub",
+            model_id="test-model",
+            region="us-west-2",
+            output="export.json",
+            output_dir="/output",
+            endpoint="prod",
+        )
 
         self.assertIsNone(result)
 
@@ -588,9 +602,6 @@ class TestImportHubContent(unittest.TestCase):
     @patch("subprocess.run")
     def test_failed_import_raises_exception(self, mock_run):
         """Test that failed import raises exception."""
-        from subprocess import CalledProcessError
-
-        from scripts.model_hub.update_private_hub import import_hub_content
 
         mock_run.side_effect = CalledProcessError(1, "cmd", stderr="Error")
 
@@ -606,7 +617,6 @@ class TestUploadArtifactsToS3(unittest.TestCase):
     @patch("scripts.model_hub.update_private_hub.extract_yaml_content")
     def test_uploads_all_artifacts(self, mock_extract_yaml, mock_extract_sm_jobs, mock_boto_client):
         """Test that all artifacts are uploaded to S3."""
-        from scripts.model_hub.update_private_hub import upload_artifacts_to_s3
 
         launch_data = {"config.yaml": "test: content", "recipe_override_parameters": {"param1": "value1"}}
         mock_extract_yaml.return_value = "yaml_content"
@@ -645,7 +655,6 @@ class TestUploadArtifactsToS3(unittest.TestCase):
     @patch("scripts.model_hub.update_private_hub.extract_yaml_content")
     def test_s3_key_format(self, mock_extract_yaml, mock_extract_sm_jobs, mock_boto_client):
         """Test that S3 keys follow the expected format."""
-        from scripts.model_hub.update_private_hub import upload_artifacts_to_s3
 
         launch_data = {"config.yaml": "test: content", "recipe_override_parameters": {}}
         mock_extract_yaml.return_value = "yaml_content"
@@ -681,7 +690,6 @@ class TestUploadArtifactsToS3(unittest.TestCase):
     @patch("scripts.model_hub.update_private_hub.extract_yaml_content")
     def test_k8s_yaml_container_replacement(self, mock_extract_yaml, mock_extract_sm_jobs, mock_boto_client):
         """Test that k8s YAML replaces test_container with {{container_image}} placeholder."""
-        from scripts.model_hub.update_private_hub import upload_artifacts_to_s3
 
         launch_data = {"config.yaml": "image: test_container\n", "recipe_override_parameters": {}}
         mock_extract_yaml.return_value = "image: test_container\nother: value"
@@ -716,7 +724,6 @@ class TestUploadArtifactsToS3(unittest.TestCase):
     @patch("scripts.model_hub.update_private_hub.extract_yaml_content")
     def test_sagemaker_tagging_applied(self, mock_extract_yaml, mock_extract_sm_jobs, mock_boto_client):
         """Test that SageMaker=True tagging is applied to all uploads."""
-        from scripts.model_hub.update_private_hub import upload_artifacts_to_s3
 
         launch_data = {"config.yaml": "test: content", "recipe_override_parameters": {}}
         mock_extract_yaml.return_value = "yaml_content"

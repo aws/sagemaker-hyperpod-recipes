@@ -4,6 +4,7 @@ Parse validation results from JSON output files.
 
 Reads structured JSON results from JobRecorder instead of parsing log text.
 """
+
 import argparse
 import glob
 import json

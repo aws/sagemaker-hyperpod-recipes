@@ -58,6 +58,8 @@ class JobRecorder:
 
     # Just to prevent the table from becoming too wide
     def _wrap_text(self, text, width):
+        if text is None:
+            text = ""
         return textwrap.fill(text, width=width).split("\n")
 
     def get_status(self):

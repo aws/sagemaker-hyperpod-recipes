@@ -32,6 +32,7 @@ REGION_ACCOUNT_MAPPING = {
             "us-east-1": "708977205387",
             "eu-west-2": "470633809225",
             "us-west-2": "176779409107",
+            "ap-northeast-1": "878185805882",
         },
         "gamma": {
             "us-east-1": "900867814919",
@@ -93,7 +94,7 @@ REGION_ACCOUNT_MAPPING = {
 ACCOUNT_IDS = {
     "nova": {
         "gamma": {"900867814919"},
-        "prod": {"708977205387", "470633809225", "176779409107"},
+        "prod": {"708977205387", "470633809225", "176779409107", "878185805882"},
     },
     "llmft": {
         "prod": {
@@ -162,10 +163,27 @@ VALID_REGIONAL_PARAM_KEYS = {
     "rft_nats_reloader_container_image",
     "rft_storm_container_image",
     "rft_redis_container_image",
+    "serverless_sku",
 }
 
 # Valid stages/environments - only these are allowed
 VALID_STAGES = {"prod", "gamma", "beta"}
+
+VALID_SKUS = {"USE1", "USE2", "USW1", "USW2", "EU", "EUC1", "APN1", "APN2", "APS1", "APS2", "SAE1"}
+
+REGION_TO_SKU_MAPPING = {
+    "us-east-1": "USE1",
+    "us-east-2": "USE2",
+    "us-west-1": "USW1",
+    "us-west-2": "USW2",
+    "eu-west-1": "EU",
+    "eu-central-1": "EUC1",
+    "ap-northeast-1": "APN1",
+    "ap-northeast-2": "APN2",
+    "ap-southeast-1": "APS1",
+    "ap-southeast-2": "APS2",
+    "sa-east-1": "SAE1",
+}
 
 
 @pytest.fixture(scope="module")
@@ -692,5 +710,156 @@ class TestRegionalParametersAccountIDs:
         assert not violations, (
             f"[{processor}] Structure violations found. "
             f"Expected: recipe -> platform -> regional_param -> env -> region -> value. "
+            f"Violations:\n{json.dumps(violations, indent=2)}"
+        )
+
+    @pytest.mark.parametrize("processor", RECIPE_TYPES)
+    def test_sku_format_validation(self, processor, all_regional_params):
+        """Test that all serverless_sku values use valid SKU codes."""
+        regional_params = all_regional_params[processor]
+        invalid_skus = []
+
+        for recipe_name, recipe_config in regional_params.items():
+            if recipe_name.startswith("_"):
+                continue
+
+            for platform_name, platform_config in recipe_config.items():
+                if not isinstance(platform_config, dict):
+                    continue
+
+                if "serverless_sku" not in platform_config:
+                    continue
+
+                sku_config = platform_config["serverless_sku"]
+
+                for env_name, env_config in sku_config.items():
+                    if not isinstance(env_config, dict):
+                        continue
+
+                    for region, sku in env_config.items():
+                        if sku not in VALID_SKUS:
+                            invalid_skus.append(
+                                {
+                                    "recipe": recipe_name,
+                                    "platform": platform_name,
+                                    "environment": env_name,
+                                    "region": region,
+                                    "sku": sku,
+                                    "valid_skus": list(VALID_SKUS),
+                                }
+                            )
+
+        assert not invalid_skus, (
+            f"[{processor}] Found invalid SKU codes. "
+            f"Only {VALID_SKUS} are allowed. "
+            f"Invalid entries:\n{json.dumps(invalid_skus, indent=2)}"
+        )
+
+    @pytest.mark.parametrize("processor", RECIPE_TYPES)
+    def test_sku_region_consistency(self, processor, all_regional_params):
+        """Test that each region maps to the correct SKU code."""
+        regional_params = all_regional_params[processor]
+        violations = []
+
+        for recipe_name, recipe_config in regional_params.items():
+            if recipe_name.startswith("_"):
+                continue
+
+            for platform_name, platform_config in recipe_config.items():
+                if not isinstance(platform_config, dict):
+                    continue
+
+                if "serverless_sku" not in platform_config:
+                    continue
+
+                sku_config = platform_config["serverless_sku"]
+
+                for env_name, env_config in sku_config.items():
+                    if not isinstance(env_config, dict):
+                        continue
+
+                    for region, sku in env_config.items():
+                        if region in REGION_TO_SKU_MAPPING:
+                            expected_sku = REGION_TO_SKU_MAPPING[region]
+                            if sku != expected_sku:
+                                violations.append(
+                                    {
+                                        "recipe": recipe_name,
+                                        "platform": platform_name,
+                                        "environment": env_name,
+                                        "region": region,
+                                        "expected_sku": expected_sku,
+                                        "actual_sku": sku,
+                                    }
+                                )
+
+        assert not violations, (
+            f"[{processor}] Found SKU-region mapping inconsistencies. "
+            f"Expected mapping: {REGION_TO_SKU_MAPPING}\n"
+            f"Violations:\n{json.dumps(violations, indent=2)}"
+        )
+
+    @pytest.mark.parametrize("processor", RECIPE_TYPES)
+    def test_sku_structure_validation(self, processor, all_regional_params):
+        """Test that serverless_sku follows correct structure: env -> region -> SKU string."""
+        regional_params = all_regional_params[processor]
+        violations = []
+
+        for recipe_name, recipe_config in regional_params.items():
+            if recipe_name.startswith("_"):
+                continue
+
+            for platform_name, platform_config in recipe_config.items():
+                if not isinstance(platform_config, dict):
+                    continue
+
+                if "serverless_sku" not in platform_config:
+                    continue
+
+                sku_config = platform_config["serverless_sku"]
+
+                if not isinstance(sku_config, dict):
+                    violations.append(
+                        {"recipe": recipe_name, "platform": platform_name, "issue": "serverless_sku must be a dict"}
+                    )
+                    continue
+
+                for env_name, env_config in sku_config.items():
+                    if env_name not in VALID_STAGES:
+                        violations.append(
+                            {
+                                "recipe": recipe_name,
+                                "platform": platform_name,
+                                "issue": f"Invalid environment '{env_name}'",
+                                "valid_envs": list(VALID_STAGES),
+                            }
+                        )
+                        continue
+
+                    if not isinstance(env_config, dict):
+                        violations.append(
+                            {
+                                "recipe": recipe_name,
+                                "platform": platform_name,
+                                "environment": env_name,
+                                "issue": "Environment config must be a dict",
+                            }
+                        )
+                        continue
+
+                    for region, sku in env_config.items():
+                        if not isinstance(sku, str):
+                            violations.append(
+                                {
+                                    "recipe": recipe_name,
+                                    "platform": platform_name,
+                                    "environment": env_name,
+                                    "region": region,
+                                    "issue": f"SKU must be string, got {type(sku).__name__}",
+                                }
+                            )
+
+        assert not violations, (
+            f"[{processor}] Found serverless_sku structure violations. "
             f"Violations:\n{json.dumps(violations, indent=2)}"
         )

@@ -106,13 +106,13 @@ spec:
               {{- end}}
               # New environmental variables for the script
               - name: GIT_REPO_URL
-                value: {{ $config.git.repo_url_or_path | quote }}
+                value: {{ $config.git.repo_url_or_path | default "" | quote }}
               - name: GIT_BRANCH
-                value: {{ $config.git.branch | quote }}
+                value: {{ $config.git.branch | default "" | quote }}
               - name: GIT_COMMIT
-                value: {{ $config.git.commit | quote }}
+                value: {{ $config.git.commit | default "" | quote }}
               - name: GIT_UPDATE_ADAPTER
-                value: {{ $config.git.update_adapter | quote }}
+                value: {{ $config.git.update_adapter | default "" | quote }}
               - name: NODES
                 value: {{ $config.nodes | quote }}
               - name: NTASKS_PER_NODE

@@ -272,7 +272,7 @@ def validate_platform_auth(cfg) -> bool:
         case "SMJOBS":
             return True
 
-        case "SERVERLESS":  # Add this case
+        case "SERVERLESS":
             # For serverless, we just need to check if AWS CLI is available
             try:
                 subprocess.run(["aws", "--version"], check=True, capture_output=True, text=True)
@@ -281,8 +281,12 @@ def validate_platform_auth(cfg) -> bool:
                 logging.info(f"SERVERLESS environment ran into an issue - AWS CLI not available: '{e.stderr}'")
                 return False
 
+        case "PYSDK_FINETUNE":
+            # PYSDK_FINETUNE uses SageMaker PySDK trainers (SFTTrainer, DPOTrainer, etc.) to launch training jobs
+            return True
+
         case _:
-            logging.info("Valid environment (SLURM, K8, SMJOBS) not found")
+            logging.info("Valid environment (SLURM, K8, SMJOBS, SERVERLESS, PYSDK_FINETUNE) not found")
             return False
 
 
@@ -550,6 +554,92 @@ def construct_smjobs_launch_command(cfg, run_info):
     launch_command.append("'cluster.sm_jobs_config.wait=False'")
     print("launch command", launch_command)
     return launch_command
+
+
+def execute_pysdk_finetune(cfg, run_info):
+    """
+    Execute PYSDK_FINETUNE training
+
+    Args:
+        cfg: Configuration object
+        run_info: Dictionary with runtime information from pre_launch_setup
+
+    Returns:
+        training_job: The training job object returned by launch_training
+
+    Raises:
+        ValueError: If required configuration (model, dataset, etc.) is missing
+    """
+    from scripts.validations.pysdk_serverless import create_trainer, launch_training
+
+    training_type = _get_training_type_from_filename(run_info["input_file_path"]).lower()
+    training_type_upper = training_type.upper()
+
+    lora_or_full = "lora"
+    input_file_lower = run_info["input_file_path"].lower()
+    if "_fft" in input_file_lower or "full_fine_tuning" in input_file_lower:
+        lora_or_full = "full"
+
+    model_identifier = run_info.get("run_name")
+    if not model_identifier:
+        raise ValueError(
+            f"run_name not found in recipe config for '{run_info['input_file_path']}'. "
+            "Serverless training requires run.name in the recipe to map to JumpStart model ID."
+        )
+
+    training_dataset = run_info.get("train_data_dir", "")
+    if not training_dataset and hasattr(cfg, "pysdk_finetune_dataset_mapping"):
+        training_dataset = cfg.pysdk_finetune_dataset_mapping.get(training_type_upper, "")
+    if not training_dataset:
+        raise ValueError(
+            f"No training dataset found for training type '{training_type_upper}'. "
+            f"Set pysdk_finetune_dataset_mapping.{training_type_upper} in config or provide train_data_dir."
+        )
+
+    validation_dataset = run_info.get("val_data_dir", "") or None
+
+    model_package_group = ""
+    if hasattr(cfg, "serverless_config") and hasattr(cfg.serverless_config, "model_package_group_arn"):
+        model_package_group = cfg.serverless_config.model_package_group_arn
+
+    custom_reward_function = None
+    if training_type in ["rlaif", "rlvr"] and hasattr(cfg, "serverless_evaluator_mapping"):
+        custom_reward_function = cfg.serverless_evaluator_mapping.get(training_type_upper, "") or None
+
+    mlflow_resource_arn = None
+    if hasattr(cfg, "serverless_mlflow_mapping"):
+        mlflow_resource_arn = cfg.serverless_mlflow_mapping.get(training_type_upper, "") or None
+
+    s3_output_path = None
+    if hasattr(cfg, "serverless_config") and hasattr(cfg.serverless_config, "s3_output_path"):
+        s3_output_path = cfg.serverless_config.s3_output_path or None
+
+    accept_eula = (
+        hasattr(cfg, "serverless_config")
+        and hasattr(cfg.serverless_config, "accept_eula")
+        and cfg.serverless_config.accept_eula
+    )
+
+    logging.info(
+        f"PYSDK_FINETUNE direct call: model={model_identifier}, training_type={training_type}, "
+        f"lora_or_full={lora_or_full}, dataset={training_dataset}"
+    )
+
+    trainer = create_trainer(
+        model=model_identifier,
+        training_type=training_type,
+        training_dataset=training_dataset,
+        model_package_group=model_package_group,
+        validation_dataset=validation_dataset,
+        lora_or_full=lora_or_full,
+        mlflow_resource_arn=mlflow_resource_arn,
+        s3_output_path=s3_output_path,
+        accept_eula=accept_eula,
+        custom_reward_function=custom_reward_function,
+    )
+
+    training_job = launch_training(trainer=trainer, wait=False)
+    return training_job
 
 
 def _add_fsx_run_info(cfg, run_info):
@@ -948,6 +1038,11 @@ def pre_launch_setup(cfg, input_file_path):
 
     run_info = get_job_parameters(cfg, input_file_path, hf_model_name)
     run_info["input_file_path"] = input_file_path
+
+    run_name = _get_run_name_from_recipe(recipe_cfg)
+    if run_name:
+        run_info["run_name"] = run_name
+
     return run_info
 
 
@@ -973,6 +1068,18 @@ def get_job_parameters(cfg, input_file_path, hf_model_name):
     # Normalize platform name to lowercase
     platform = cfg.platform.lower()
 
+    training_launcher_dir = Path.cwd()
+    base_results_dir = os.path.join(training_launcher_dir, "results")
+
+    if platform == "pysdk_finetune":
+        return {
+            "training_launcher_dir": training_launcher_dir,
+            "base_results_dir": base_results_dir,
+            "hf_model_name": hf_model_name,
+            "train_data_dir": "",
+            "val_data_dir": "",
+        }
+
     # Check if FSx mode is enabled for smjobs
     use_fsx = platform == "smjobs" and hasattr(cfg, "smjobs") and hasattr(cfg.smjobs, "use_fsx") and cfg.smjobs.use_fsx
 
@@ -984,10 +1091,6 @@ def get_job_parameters(cfg, input_file_path, hf_model_name):
 
     # Get container path
     container_path = _get_container_path(cfg, input_file_path, platform)
-
-    # Get directory paths
-    training_launcher_dir = Path.cwd()
-    base_results_dir = os.path.join(training_launcher_dir, "results")
 
     # Get experiment configuration
     # exp_dir = cfg.experiment_dir
@@ -1321,3 +1424,32 @@ def delete_dir(path: str | Path) -> None:
     logging.info(f"Deleting directory: '{path}'")
     if p.exists():
         shutil.rmtree(p)
+
+
+def select_validation_launcher(cfg_platform):
+    from scripts.validations.validation_launchers.k8s_launcher import (
+        K8sValidationLauncher,
+    )
+    from scripts.validations.validation_launchers.serverless_launcher import (
+        ServerlessValidationLauncher,
+    )
+    from scripts.validations.validation_launchers.slurm_launcher import (
+        SlurmValidationLauncher,
+    )
+    from scripts.validations.validation_launchers.smjobs_launcher import (
+        SageMakerJobsValidationLauncher,
+    )
+
+    match cfg_platform.upper():
+        case "K8":
+            return K8sValidationLauncher
+        case "SLURM":
+            return SlurmValidationLauncher
+        case "SMJOBS":
+            return SageMakerJobsValidationLauncher
+        case "SERVERLESS":
+            return ServerlessValidationLauncher
+        case "PYSDK_FINETUNE":
+            return SageMakerJobsValidationLauncher
+        case _:
+            raise ValueError(f"Unknown platform: {cfg_platform}")

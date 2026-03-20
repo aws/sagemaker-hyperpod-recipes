@@ -8,8 +8,10 @@ results/
 outputs/
 tmp/
 scripts/validations/models_folder/
+scripts/validations/common_validation_config.yaml
 .venv/
 venv
+auto_configurator/**/output/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -40,3 +42,7 @@ failed*
 throughput_results*
 
 debug_serverless/
+
+# Ignore PeruHatch local cache directory
+/.hatch
+build/

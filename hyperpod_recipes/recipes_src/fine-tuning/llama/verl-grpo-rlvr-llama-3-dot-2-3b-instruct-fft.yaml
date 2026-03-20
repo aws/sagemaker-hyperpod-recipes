@@ -1,0 +1,48 @@
+defaults:
+  - /hydra_config/verl/default
+  - /hydra_config/verl/algorithm/grpo
+  - /hydra_config/verl/actor/default
+  - /hydra_config/verl/ref/default
+  - /hydra_config/verl/critic/default
+  - /hydra_config/verl/rollout/vllm
+  - /hydra_config/verl/actor_rollout_ref/default
+  - /hydra_config/verl/trainer/default
+  - /hydra_config/verl/data/default
+  - /hydra_config/verl/reward_model/default
+  - /hydra_config/verl/ray_cluster/default
+  - /hydra_config/verl/peft/fft
+  - /hydra_config/verl/reward/rlvr
+  - /hydra_config/verl/model_config/llama-3-2-3b-instruct
+  - _self_
+
+display_name: "Llama 3.2 3B GRPO RLVR Fine-Tuning"
+version: "1.1.0"
+instance_types: ["ml.p5.48xlarge"]
+
+run:
+  name: verl-grpo-llama-3-dot-2-3b-instruct-fft
+trainer:
+  num_nodes: 1
+
+training_config:
+  actor_rollout_ref:
+    actor:
+      fsdp_config:
+        optimizer_offload: true
+    ref:
+      log_prob_micro_batch_size_per_gpu: 16
+      fsdp_config:
+        param_offload: false
+    rollout:
+      tensor_model_parallel_size: 2
+      log_prob_micro_batch_size_per_gpu: 16
+      merge_lora_for_inference: false
+  trainer:
+    experiment_name: llama-3.2-3b-instruct-fft_grpo
+    test_freq: 7
+  critic:
+    rollout_n: 6
+  custom_reward_function:
+    lambda_arn: ''
+    path: ''
+    name: ''

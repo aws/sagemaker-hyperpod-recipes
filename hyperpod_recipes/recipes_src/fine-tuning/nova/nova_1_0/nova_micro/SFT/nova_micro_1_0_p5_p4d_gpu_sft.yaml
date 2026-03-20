@@ -1,0 +1,44 @@
+# Note:
+# This recipe can run on p5.48xlarge, p5en.48xlarge and p4d.24xlarge instance types.
+
+## Run config
+run:
+  name: "my-fullrank-run"             # A descriptive name for your training job
+  model_type: "amazon.nova-micro-v1:0:128k"  # Model variant specification, do not change
+  model_name_or_path: "nova-micro/prod"      # Base model path, do not change
+  replicas: 2                     # Number of compute instances for training, allowed values are 2, 4, 8
+  data_s3_path: ""                # Customer data path
+  output_s3_path: ""              # Output artifact path, Sagemaker Hyperpod job-specific configuration - not compatible with standard Sagemaker Training jobs
+  mlflow_tracking_uri: "" # Required for MLFlow
+  mlflow_experiment_name: "my-fullrank-experiment" # Optional for MLFlow. Note: leave this field non-empty
+  mlflow_run_name: "my-fullrank-run" # Optional for MLFlow. Note: leave this field non-empty
+
+## Training specific configs
+training_config:
+  max_length: 32768               # Maximum context window size (tokens).
+  global_batch_size: 16           # Global batch size, allowed values are 16, 32, 64.
+
+  trainer:
+    max_epochs: 1                # Number of training epochs
+
+  model:
+    hidden_dropout: 0.0          # Dropout for hidden states, must be between 0.0 and 1.0
+    attention_dropout: 0.0       # Dropout for attention weights, must be between 0.0 and 1.0
+    ffn_dropout: 0.0             # Dropout for feed-forward networks, must be between 0.0 and 1.0
+
+    optim:
+      lr: 5e-6                 # Learning rate
+      name: distributed_fused_adam  # Optimizer algorithm, do not change
+      adam_w_mode: true        # Enable AdamW mode
+      eps: 1e-06               # Epsilon for numerical stability
+      weight_decay: 0.0        # L2 regularization strength, must be between 0.0 and 1.0
+      betas:                   # Adam optimizer betas, must be between 0.0 and 1.0
+        - 0.9
+        - 0.999
+      sched:
+        warmup_steps: 10     # Learning rate warmup steps
+        constant_steps: 0    # Steps at constant learning rate
+        min_lr: 5e-7         # Minimum learning rate, must be lower than lr
+
+    peft:
+      peft_scheme: null      # Disables PEFT

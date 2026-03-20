@@ -9,7 +9,7 @@ from pathlib import Path
 import boto3
 import yaml
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from scripts.generate_launch_jsons import LaunchJsonGenerator
 
 
@@ -37,6 +37,11 @@ def parse_arguments():
     recipe_group.add_argument(
         "--recipe-files",
         help="Comma-separated list of recipe file paths relative to recipes_collection/recipes/ (e.g., 'fine-tuning/llama/recipe1.yaml,fine-tuning/qwen/recipe2.yaml')",
+    )
+
+    # Eval recipe support
+    parser.add_argument(
+        "--eval", action="store_true", help="Generate eval recipes (deterministic + llmaj) for all processed models"
     )
 
     return parser.parse_args()
@@ -142,7 +147,16 @@ def get_recipe_name_from_path(recipe_file_path):
     return Path(recipe_file_path).stem
 
 
-def generate_launch_json(recipe_file, recipe_name, output_dir):
+def get_eval_recipe_path(eval_type: str) -> str:
+    """Map eval type to recipe path."""
+    eval_recipe_mapping = {
+        "deterministic": "recipes_collection/recipes/evaluation/open-source/open_source_deterministic_eval.yaml",
+        "llmaj": "recipes_collection/recipes/evaluation/open-source/open_source_llmaj_eval.yaml",
+    }
+    return eval_recipe_mapping.get(eval_type)
+
+
+def generate_launch_json(recipe_file, recipe_name, output_dir, model_name=None):
     """Generate launch.json for a recipe using sm_jobs job type."""
     generator = LaunchJsonGenerator(working_dir=Path.cwd())
     recipe_path = Path(recipe_file).resolve()
@@ -153,7 +167,7 @@ def generate_launch_json(recipe_file, recipe_name, output_dir):
         recipe_path=recipe_path,
         job_type="sm_jobs",
         output_dir=output_dir,
-        model_name=None,
+        model_name=model_name,
     )
 
     if status == "success":
@@ -273,12 +287,68 @@ def process_recipe_metadata(launch_json_path, s3_uris, region, endpoint):
     return recipe_entry
 
 
+def process_eval_recipe_metadata(
+    launch_json_path: str, s3_uris: dict, model_id: str, eval_type: str, region: str, endpoint: str
+):
+    """Create RecipeCollection entry for eval recipe."""
+    with open(launch_json_path, "r") as f:
+        launch_data = json.load(f)
+
+    metadata = launch_data.get("metadata", {})
+
+    # Determine eval type specific values
+    if eval_type == "deterministic":
+        eval_type_name = "DeterministicEvaluation"
+        hardware = "GPU"
+        # Get instance types from evaluation_regional_parameters.json
+        instance_types = metadata.get("InstanceTypes", ["ml.g5.16xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge"])
+    else:  # llmaj
+        eval_type_name = "LLMAJEvaluation"
+        hardware = "CPU"
+        instance_types = ["ml.t3.large"]
+
+    # Format model_id for recipe name (replace hyphens with underscores)
+    model_id_formatted = model_id.replace("-", "_")
+    recipe_name = f"open-source-eval-{model_id}-{eval_type}"
+    display_name = f"Open Source Evaluation Evaluation on {hardware} - {metadata.get('DisplayName', model_id.replace('-', ' ').title())}"
+
+    recipe_entry = {
+        "DisplayName": display_name,
+        "Name": recipe_name,
+        "Type": "Evaluation",
+        "Versions": ["1.0"],
+        "Hardware": hardware,
+        "SupportedInstanceTypes": instance_types,
+        "EvaluationType": eval_type_name,
+        "HpEksPayloadTemplateS3Uri": s3_uris["k8s_yaml"],
+        "HpEksOverrideParamsS3Uri": s3_uris["k8s_json"],
+        "SmtjRecipeTemplateS3Uri": s3_uris["sm_jobs_yaml"],
+        "SmtjOverrideParamsS3Uri": s3_uris["sm_jobs_json"],
+        "SmtjImageUri": get_eval_regional_ecr_uri(eval_type, region, endpoint),
+    }
+
+    return recipe_entry
+
+
 def get_regional_ecr_uri(launch_data, region, endpoint):
     """Extract regional ECR URI from launch data"""
     regional_params = launch_data.get("regional_parameters", {})
     ecr_uris = regional_params.get("smtj_regional_ecr_uri", {})
     prod_uris = ecr_uris.get(endpoint, {})
     return prod_uris.get(region)
+
+
+def get_eval_regional_ecr_uri(eval_type: str, region: str, endpoint: str):
+    """Get ECR URI for eval container from evaluation_regional_parameters.json."""
+    eval_params_path = Path("launcher/recipe_templatization/evaluation/evaluation_regional_parameters.json")
+    with open(eval_params_path) as f:
+        eval_data = json.load(f)
+
+    recipe_name = f"open_source_{eval_type}_eval"
+    container_mapping = eval_data.get("recipe_container_mapping", {}).get(recipe_name, {})
+    smtj_images = container_mapping.get("smtj_container_image", {})
+
+    return smtj_images.get("prod", {}).get(region)
 
 
 def create_new_recipecollection(exported_json_path):
@@ -310,7 +380,7 @@ def update_exported_json(exported_json_path, new_recipe_entries, model_id, versi
     print(f"Updated {exported_json_path} with {len(new_recipe_entries)} new recipes")
 
 
-def export_hub_content(hub_name, model_id, region, output_dir, endpoint):
+def export_hub_content(hub_name, model_id, region, output, output_dir, endpoint):
     export_script_path = os.path.join("scripts", "model_hub", "export_hub_content.py")
     abs_export_script_path = os.path.abspath(export_script_path)
 
@@ -324,6 +394,8 @@ def export_hub_content(hub_name, model_id, region, output_dir, endpoint):
         model_id,
         "--region",
         region,
+        "--output",
+        output,
         "--endpoint",
         endpoint,
     ]
@@ -333,7 +405,7 @@ def export_hub_content(hub_name, model_id, region, output_dir, endpoint):
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=output_dir)
 
-        export_filename = f"{model_id}_export.json"
+        export_filename = output
         export_path = os.path.join(output_dir, export_filename)
 
         if os.path.exists(export_path):
@@ -415,7 +487,7 @@ def get_version_from_export(exported_json_path):
 
 
 def bump_version(version_string):
-    """Bump the patch version (e.g., '2.36.0' -> '2.36.1')"""
+    """Bump the patch version (e.g., '2.36.0' -> '2.36.2')"""
     parts = version_string.split(".")
     parts[-1] = str(int(parts[-1]) + 1)
     return ".".join(parts)
@@ -459,20 +531,27 @@ def main():
 
         # Get hub content from JumpStart's hub
         if model_id not in processed_models:
+            js_output_file_name = f"{model_id}_export.json"
             exported_json_path = export_hub_content(
-                "SageMakerPublicHub", model_id, args.region, args.output_dir, args.endpoint
+                "SageMakerPublicHub", model_id, args.region, js_output_file_name, args.output_dir, args.endpoint
             )
             if exported_json_path:
                 results["exported_models"][model_id] = exported_json_path
 
                 # Get current version and bump it
+                private_output_file_name = f"{model_id}_private_export.json"
                 private_hub_json_path = export_hub_content(
-                    "TestPrivateHub", model_id, args.region, args.output_dir, args.endpoint
+                    args.hub_name, model_id, args.region, private_output_file_name, args.output_dir, args.endpoint
                 )
-                current_version = get_version_from_export(private_hub_json_path)
-                bumped_version = bump_version(current_version)
+
+                if private_hub_json_path is None:  # new model into the private hub
+                    bumped_version = "1.0.0"
+                else:
+                    current_version = get_version_from_export(private_hub_json_path)
+                    bumped_version = bump_version(current_version)
+
                 version_by_model[model_id] = bumped_version
-                print(f"Version for {model_id}: {current_version} -> {bumped_version}")
+                print(f"Version for {model_id}: {bumped_version}")
 
                 if create_new_recipecollection(exported_json_path):
                     print(f"Prepared {model_id} for new recipe collection")
@@ -500,6 +579,44 @@ def main():
         if model_id not in recipe_metadata_by_model:
             recipe_metadata_by_model[model_id] = []
         recipe_metadata_by_model[model_id].append(recipe_metadata)
+
+    # process eval recipes
+    if args.eval:
+        eval_types = ["deterministic", "llmaj"]
+
+        for model_id in processed_models:
+            print(f"\n===== Processing eval recipes for model: {model_id} =====")
+
+            for eval_type in eval_types:
+                eval_recipe_path = get_eval_recipe_path(eval_type)
+                if not eval_recipe_path:
+                    print(f"Unknown eval type: {eval_type}, skipping")
+                    continue
+
+                recipe_name = f"open-source-eval-{model_id}-{eval_type}"
+
+                # Use existing generate_launch_json with model_name
+                launch_json_path = generate_launch_json(
+                    eval_recipe_path, recipe_name, args.output_dir, model_name=model_id
+                )
+
+                if launch_json_path is None:
+                    print(f"Skipping {recipe_name} - launch.json generation failed")
+                    continue
+
+                results["generated_launch_jsons"][recipe_name] = launch_json_path
+
+                s3_uris = upload_artifacts_to_s3(
+                    launch_json_path, recipe_name, args.s3_bucket, args.region, version_by_model[model_id]
+                )
+                results["uploaded_artifacts"][recipe_name] = s3_uris
+
+                eval_recipe_metadata = process_eval_recipe_metadata(
+                    launch_json_path, s3_uris, model_id, eval_type, args.region, args.endpoint
+                )
+                results["recipe_metadata"][recipe_name] = eval_recipe_metadata
+
+                recipe_metadata_by_model[model_id].append(eval_recipe_metadata)
 
     # Update exported hub content with recipe metadata from launch.jsons
     for model_id, recipe_entries in recipe_metadata_by_model.items():

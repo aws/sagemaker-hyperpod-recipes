@@ -1,0 +1,115 @@
+# Original Copyright (c), NVIDIA CORPORATION. Modifications © Amazon.com
+
+# Basic run information configs
+run:
+  name: falcon-7b
+  results_dir: ${base_results_dir}/${.name}
+  time_limit: "6-00:00:00"
+  model_type: hf # huggingface for our recipes
+
+# Basic pytorch lightning trainer config
+trainer:
+  devices: 8
+  num_nodes: 2
+  accelerator: gpu
+  precision: bf16
+  max_steps: 50
+  log_every_n_steps: 10
+  val_check_interval: 1
+  limit_val_batches: 0 # Number of batches per each validation run, set to 0 to disable validation.
+
+# Basic pytorch lightning experiment config
+# Config for checkpoint/tensorboard etc
+exp_manager:
+  exp_dir: null
+  name: experiment
+  # experiment loggers
+  create_tensorboard_logger: False
+  summary_writer_kwargs: {"save_dir" : "${recipes.exp_manager.exp_dir}/tensorboard"}
+  create_mlflow_logger: False
+  mlflow_logger_kwargs: {"tracking_uri" : "${recipes.exp_manager.exp_dir}/mlflow"}
+  create_wandb_logger: False
+  wandb_logger_kwargs: {"save_dir" : "${recipes.exp_manager.exp_dir}"} # wandb creates a wandb folder by default
+  create_checkpoint_callback: True
+  # Configs to save checkpoint with a fixed interval
+  # Note: These config will not work with auto checkpoint mode
+  checkpoint_callback_params:
+    # Set save_top_k = 0 to disable sharded checkpointing
+    save_top_k: 0
+    every_n_train_steps: 10
+    monitor: "step"
+    mode: "max"
+    save_last: False
+  checkpoint_dir: ${recipes.exp_manager.exp_dir}/checkpoints/
+  resume_from_checkpoint: null
+  # Set auto_checkpoint = False to disable auto resilience checkpointing
+  # Enable auto_checkpoint to automatically calculate the checkpoint interval and resume from checkpoint
+  auto_checkpoint:
+    enabled: False
+  export_full_model:
+    # Set every_n_train_steps = 0 to disable full checkpointing
+    every_n_train_steps: 0
+    save_last: True
+
+
+use_smp_model: False #enable SMP
+distributed_backend: nccl
+
+
+# Start training from pretrained model
+model:
+  model_type: falcon
+  do_finetune: False
+  hf_model_name_or_path: "tiiuae/falcon-7b"
+  hf_access_token: None
+  train_batch_size: 1
+  val_batch_size: 1
+  seed: 12345
+  grad_clip: 1.0
+  use_flash_attention: True
+  activation_checkpointing: True
+
+  # FSDP Configs
+  sharding_strategy: hybrid_shard
+  forward_prefetch: True
+  shard_degree: 16
+  backward_fetch_policy: backward_pre
+  auto_wrap_policy: transformer_auto_wrap_policy
+  limit_all_gathers: true
+  use_orig_param: False
+
+  # model architecture
+  max_context_width: 2048
+  precision: bf16
+  lr_decay_iters: 47683
+  log_reduced_training_loss: True
+
+  # PEFT
+  peft:
+    peft_type: null # lora
+
+  # Optimizer
+  optim:
+    name: adamw
+    lr: 2e-4
+    weight_decay: 0.01
+    betas:
+    - 0.9
+    - 0.98
+    sched:
+      name: CosineAnnealing
+      warmup_steps: 500
+      constant_steps: 0
+      min_lr: 2e-5
+
+  # Data
+  data:
+    train_dir: null
+    val_dir: null
+    dataset_type: hf
+    use_synthetic_data: False
+    zipped_data: False
+
+  # Viztracer
+  viztracer:
+    enabled: false

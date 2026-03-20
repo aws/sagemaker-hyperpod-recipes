@@ -1,0 +1,104 @@
+defaults:
+  - /hydra_config/verl/default
+  - /hydra_config/verl/algorithm/grpo
+  - /hydra_config/verl/actor/default
+  - /hydra_config/verl/ref/default
+  - /hydra_config/verl/critic/default
+  - /hydra_config/verl/rollout/vllm
+  - /hydra_config/verl/actor_rollout_ref/default
+  - /hydra_config/verl/trainer/default
+  - /hydra_config/verl/data/default
+  - /hydra_config/verl/reward_model/default
+  - /hydra_config/verl/ray_cluster/default
+  - /hydra_config/verl/peft/fft
+  - /hydra_config/verl/reward/rlvr
+  - /hydra_config/verl/model_config/qwen-2-5-32b-instruct
+  - _self_
+
+display_name: "Qwen 2.5 32B GRPO RLVR Fine-Tuning"
+version: "1.2.0"
+instance_types: ["ml.p4d.24xlarge","ml.p4de.24xlarge","ml.p5.48xlarge"]
+
+run:
+  name: verl-grpo-qwen-2-dot-5-32b-instruct-fft
+
+trainer:
+  num_nodes: 2
+
+training_config:
+  actor_rollout_ref:
+    actor:
+      ppo_max_token_len_per_gpu: 10240
+      fsdp_config:
+        optimizer_offload: true
+    ref:
+      log_prob_micro_batch_size_per_gpu: 16
+      log_prob_max_token_len_per_gpu: 10240
+      fsdp_config:
+        param_offload: false
+    rollout:
+      log_prob_micro_batch_size_per_gpu: 16
+      log_prob_max_token_len_per_gpu: 10240
+    merge_lora_for_inference: false
+    model:
+      path: Qwen/Qwen2.5-32B-Instruct
+      custom_chat_template: null
+      use_shm: false
+      external_lib: null
+      override_config: {}
+      enable_gradient_checkpointing: true
+      enable_activation_offload: false
+      use_remove_padding: true
+      lora_rank: 0
+      lora_alpha: 16
+      target_modules: all-linear
+      exclude_modules: null
+      use_liger: false
+      use_fused_kernels: false
+      fused_kernel_options:
+        impl_backend: torch
+      trust_remote_code: false
+    profiler:
+      _target_: verl.utils.profiler.ProfilerConfig
+      discrete: false
+      all_ranks: false
+      ranks: []
+  trainer:
+    experiment_name: qwen2.5-32b-instruct-fft_grpo
+    nnodes: 2
+    test_freq: 7
+  critic:
+    rollout_n: 6
+    model:
+      path: deepseek-ai/deepseek-llm-7b-chat
+      tokenizer_path: Qwen/Qwen2.5-32B-Instruct
+      override_config: {}
+      external_lib: null
+      trust_remote_code: false
+      _target_: verl.workers.config.FSDPCriticModelCfg
+      use_shm: false
+      enable_gradient_checkpointing: true
+      enable_activation_offload: false
+      use_remove_padding: false
+      fsdp_config:
+        _target_: verl.workers.config.FSDPEngineConfig
+        param_offload: false
+        optimizer_offload: false
+        offload_policy: false
+        reshard_after_forward: true
+        wrap_policy:
+          min_num_params: 0
+        fsdp_size: -1
+        forward_prefetch: false
+      lora_rank: 0
+      lora_alpha: 16
+      target_modules: all-linear
+    ppo_mini_batch_size: 256
+    ppo_micro_batch_size: null
+    ppo_micro_batch_size_per_gpu: null
+    use_dynamic_bsz: true
+    ppo_max_token_len_per_gpu: 20480
+  custom_reward_function:
+    lambda_arn: ''
+    path: ''
+    name: ''

@@ -1,0 +1,7 @@
+# @package recipes
+# Qwen 3 8B model configuration for verl-0.7.0 SFT
+training_config:
+  model:
+    path: Qwen/Qwen3-8B
+    use_liger: true
+    use_fused_kernels: true

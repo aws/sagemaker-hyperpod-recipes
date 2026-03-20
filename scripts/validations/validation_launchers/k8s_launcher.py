@@ -1,13 +1,25 @@
 import os
 import re
 import subprocess
+import threading
 import time
-from pathlib import Path
 from typing import Dict
+
+from scripts.validations.validation_launchers.path_utils import get_project_root
 
 from .base_launcher import BaseLauncher
 
 HP_PYTORCH_JOB_RESOURCE_NAME = "hyperpodpytorchjob"
+RAY_JOBS_RESOURCE_NAME = "rayjobs"
+RAY_TRAINING_NAMESPACE = "ray-training"
+
+# Keywords that indicate Ray-based verl jobs (RLVR/RLAIF use Ray, SFT uses torchrun)
+VERL_RAY_KEYWORDS = ["rlvr", "rlaif"]
+
+
+def _is_verl_ray_job(input_file_path: str) -> bool:
+    path_lower = input_file_path.lower()
+    return any(kw in path_lower for kw in VERL_RAY_KEYWORDS)
 
 
 class K8sValidationLauncher(BaseLauncher):
@@ -27,34 +39,12 @@ class K8sValidationLauncher(BaseLauncher):
 
         # Dynamically find the pod name after job is created
         if job_name:
-            if "verl" in input_file_path:
-                pod_name = job_name
-            else:
-                try:
-                    subprocess.run(
-                        [
-                            "kubectl",
-                            "wait",
-                            "--for=condition=Running",
-                            f"{HP_PYTORCH_JOB_RESOURCE_NAME}/{job_name}",
-                            "--timeout=30m",
-                        ],
-                        capture_output=True,
-                        text=True,
-                        check=True,
-                        env=self.aws_env,
-                    )
-                except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-                    self.logger.error(f"Failed to wait for job to each Running: {job_name}")
-                    try:
-                        self.logger.info(self.describe_resource(HP_PYTORCH_JOB_RESOURCE_NAME, job_name).stdout)
-                    except:
-                        pass
-                    self.clean_up_resource(HP_PYTORCH_JOB_RESOURCE_NAME, job_name)
-                    raise e
+            is_verl = _is_verl_ray_job(input_file_path)
 
-                all_pods = self.get_pods(job_name)
-                pod_name = self.get_head_node(job_name, all_pods=all_pods)
+            self._wait_for_job_status(job_name, is_verl=is_verl)
+
+            all_pods = self.get_pods(job_name, is_verl=is_verl)
+            pod_name = self.get_head_node(job_name, all_pods=all_pods, is_verl=is_verl)
 
         if not all([job_name, pod_name, output_folder_path]):
             print(f"\n{'='*80}")
@@ -86,145 +76,60 @@ class K8sValidationLauncher(BaseLauncher):
         return result
 
     def _monitor_job(self, input_file_path: str, job_details: Dict, poll_sec: int = 10) -> bool:
-        """monitoring job dispatcher method"""
-        if "verl" in input_file_path:
-            return self._monitor_ray_job(input_file_path, job_details, poll_sec)
-        else:
-            return self._monitor_pytorch_job(input_file_path, job_details, poll_sec)
+        """Monitor job until completion"""
+        is_verl = _is_verl_ray_job(input_file_path)
 
-    def _monitor_ray_job(self, input_file_path: str, job_details: Dict, poll_sec: int = 10) -> bool:
-        """Monitor a Ray/VERL job until completion"""
         job_name = job_details["job_name"]
         pod_name = job_details["pod_name"]
         output_folder_path = job_details["output_folder_path"]
         job_successful = False
-
-        time.sleep(45)  # Initial wait for Ray cluster to start
         tokens_per_sec = None
+
+        pod_timeout = 45 if is_verl else 10
+        self._wait_for_pod_status(pod_name, "Running", is_verl, timeout_in_minutes=pod_timeout)
+
+        # Start log collection in background
+        log_thread = threading.Thread(target=self._collect_pod_logs, args=(job_name, pod_name, is_verl))
+        log_thread.daemon = True
+        log_thread.start()
+
+        resource_name = RAY_JOBS_RESOURCE_NAME if is_verl else HP_PYTORCH_JOB_RESOURCE_NAME
         while True:
             try:
-                output = subprocess.run(
-                    [
-                        "kubectl",
-                        "get",
-                        "rayjobs",
-                        "-n",
-                        "ray-training",
-                        job_name,
-                        "-o",
-                        "jsonpath={.status.jobStatus} ",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                    env=self.aws_env,
-                ).stdout.strip()
-                cond_status = output or None
+                # Check job status
+                status = self._get_job_status(job_name, is_verl)
 
-                if cond_status == "SUCCEEDED":
-                    logs = self._collect_pod_logs(job_name, pod_name, False)
+                if any(s in status for s in ["SUCCEEDED", "Completed"]):
                     job_successful = True
-                    # Extract and record throughput data
-                    tokens_per_sec = self.calculate_throughput_from_logs(
-                        logs, job_name, job_successful, input_file_path
-                    )
+                    break
+                elif any(s in status for s in ["FAILED", "Failed"]):
+                    job_successful = False
                     break
 
-                if cond_status == "FAILED":
-                    logs = self._collect_pod_logs(job_name, pod_name, False)
+                # Check if log thread stopped (max errors reached)
+                if not log_thread.is_alive():
+                    self.logger.info(f"Fast-failing. Log collection stopped for {pod_name}")
                     job_successful = False
-
                     break
 
                 time.sleep(poll_sec)
 
             except subprocess.CalledProcessError as e:
-                self.logger.error(f"Error monitoring Ray job: {e.stderr}")
+                self.logger.error(f"Error monitoring job: {e.stderr}")
                 break
 
-        # Cleanup Ray job
-        try:
-            subprocess.run(
-                ["kubectl", "delete", "rayjobs", f"{job_name}", "-n", "ray-training"],
-                capture_output=True,
-                text=True,
-                check=True,
-                env=self.aws_env,
-            )
-        except subprocess.CalledProcessError as e:
-            self.logger.error(f"Error cleaning up Ray job {job_name}: {e.stderr}")
+        # Wait for log thread to finish
+        log_thread.join(timeout=5)
 
-        status = "Complete" if job_successful else "Failed"
-        self.job_recorder.update_job(
-            input_filename=input_file_path,
-            output_path=output_folder_path,
-            status=status,
-            output_log=job_name if "job_name" in locals() else "",
-        )
-        return job_successful
+        # Read logs for throughput calculation
+        log_save_path = self._construct_log_path(job_name, pod_name)
+        if not is_verl and job_successful and os.path.exists(log_save_path):
+            with open(log_save_path, "r") as f:
+                logs = f.read()
+            tokens_per_sec = self.calculate_throughput_from_logs(logs, job_name, job_successful, input_file_path)
 
-    def _monitor_pytorch_job(self, input_file_path: str, job_details: Dict, poll_sec: int = 10) -> bool:
-        """Monitor a HyperPod job until completion"""
-        job_name = job_details["job_name"]
-        pod_name = job_details["pod_name"]
-        output_folder_path = job_details["output_folder_path"]
-        job_successful = False
-
-        tokens_per_sec = None
-        while True:
-            try:
-                self._wait_for_pod_status(pod_name, "Running")  # wait for pod to start
-                output = subprocess.run(
-                    [
-                        "kubectl",
-                        "get",
-                        "hyperpodpytorchjobs",
-                        job_name,
-                        "-o",
-                        "jsonpath={.status.conditions[-1].type} {.status.conditions[-1].status}",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                    env=self.aws_env,
-                ).stdout.strip()
-                if not output:
-                    cond_type, cond_status = None, None
-                else:
-                    cond_type, cond_status = output.split()
-
-                if cond_type == "Completed" and cond_status == "True":
-                    logs = self._collect_pod_logs(job_name, pod_name, False)
-                    job_successful = True
-                    # Extract and record throughput data
-                    tokens_per_sec = self.calculate_throughput_from_logs(
-                        logs, job_name, job_successful, input_file_path
-                    )
-                    break
-
-                if cond_type == "Failed" and cond_status == "True":
-                    logs = self._collect_pod_logs(job_name, pod_name, False)
-                    job_successful = False
-
-                    break
-
-                time.sleep(poll_sec)
-
-            except subprocess.CalledProcessError as e:
-                self.logger.error(f"Error monitoring HyperPod job: {e.stderr}")
-                break
-
-        # Cleanup HyperPod job
-        try:
-            subprocess.run(
-                ["kubectl", "delete", "hyperpodpytorchjobs", job_name],
-                capture_output=True,
-                text=True,
-                check=True,
-                env=self.aws_env,
-            )
-        except subprocess.CalledProcessError as e:
-            self.logger.error(f"Error cleaning up HyperPod job {job_name}: {e.stderr}")
+        # Cleanup job
+        self.clean_up_resource(resource_name, job_name, is_verl=is_verl)
 
         status = "Complete" if job_successful else "Failed"
         self.job_recorder.update_job(
@@ -236,14 +141,12 @@ class K8sValidationLauncher(BaseLauncher):
         )
         return job_successful
 
-    def _collect_pod_logs(self, job_name: str, pod_name: str, is_verl: bool) -> list:
+    def _collect_pod_logs(self, job_name: str, pod_name: str, is_verl: bool = False, training_error_limit: int = 3):
         """Collect and save pod logs"""
 
-        logs_command = ["kubectl", "logs"]
+        logs_command = ["kubectl", "logs", "-f", pod_name]
         if is_verl:
-            logs_command += [pod_name, "-n", "ray-training"]
-        else:
-            logs_command += [pod_name]
+            logs_command += ["-n", RAY_TRAINING_NAMESPACE]
 
         proc = subprocess.Popen(
             logs_command,
@@ -253,41 +156,58 @@ class K8sValidationLauncher(BaseLauncher):
             bufsize=1,
             encoding="utf-8",
             errors="replace",
+            env=self.aws_env,
         )
         logs = []
-        try:
-            for line in proc.stdout:
-                logs.append(line)
-        finally:
-            proc.wait()
-        # Save logs
-        base_results_dir = os.path.join(Path.cwd(), "results")
-        log_save_path = os.path.join(base_results_dir, f"{job_name}.logs")
-        self.logger.info(f"Saving K8s Job:{job_name} logs at '{log_save_path}'")
-        with open(log_save_path, "w") as f:
-            f.writelines(logs)
+        log_save_path = self._construct_log_path(job_name, pod_name)
+        os.makedirs(os.path.dirname(log_save_path), exist_ok=True)
 
-        logs = " ".join(logs)
-        self.logger.info(f"Logs for pod {pod_name}:\n{logs}")
-        return logs
+        with open(log_save_path, "w") as log_file:
+            try:
+                error_count = 0
+                for line in proc.stdout:
+                    log_file.write(line)
+                    log_file.flush()
+                    logs.append(line)
 
-    def _wait_for_pod_status(self, pod_name: str, status: str, timeout_in_minutes: int = 10) -> None:
-        self.logger.info(f"Waiting for pod {pod_name} to reach status {status}")
+                    if any(
+                        s in line.lower()
+                        for s in ["exception occurred during training:", "training related exception occurred"]
+                    ):
+                        error_count += 1
+                        self.logger.info(f"Detected error in {job_name}: {line}")
+                        if error_count >= training_error_limit:
+                            self.logger.info(
+                                f"Training error limit ({training_error_limit}) reached, stopping log stream."
+                            )
+                            break
+            finally:
+                proc.terminate()
+                proc.wait()
+
+        self.logger.info(f"Saved K8s Job:{job_name} logs at '{log_save_path}'")
+        return " ".join(logs)
+
+    def _wait_for_pod_status(self, pod_name: str, status: str, is_verl=False, timeout_in_minutes: int = 10) -> None:
+        self.logger.debug(f"Waiting for pod {pod_name} to reach status {status}")
+        wait_command = [
+            "kubectl",
+            "wait",
+            f"--for=jsonpath={{.status.phase}}={status}",
+            f"pod/{pod_name}",
+            f"--timeout={timeout_in_minutes}m",
+        ]
+        if is_verl:
+            wait_command += ["-n", RAY_TRAINING_NAMESPACE]
         try:
             subprocess.run(
-                [
-                    "kubectl",
-                    "wait",
-                    f"--for=jsonpath={{.status.phase}}={status}",
-                    f"pod/{pod_name}",
-                    f"--timeout={timeout_in_minutes}m",
-                ],
+                wait_command,
                 capture_output=True,
                 text=True,
                 check=True,
                 env=self.aws_env,
             )
-            self.logger.info(f"Pod {pod_name} has reached status: {status}")
+            self.logger.debug(f"Pod {pod_name} has reached status: {status}")
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             self.logger.error(f"Failed to wait for {pod_name} to reach status {status}: {e.stderr}")
             try:
@@ -297,15 +217,55 @@ class K8sValidationLauncher(BaseLauncher):
 
             raise e
 
-    def describe_resource(self, resource_type: str, resource_name: str):
+    def _get_job_status(self, job_name: str, is_verl: bool) -> str:
+        """Get job status string."""
+        resource_name = self._get_resource_name(is_verl)
+        cmd = ["kubectl", "get", resource_name, job_name, "-o"]
+
+        if is_verl:
+            cmd += ["jsonpath={.status.jobStatus}", "-n", RAY_TRAINING_NAMESPACE]
+        else:
+            cmd += ["jsonpath={.status.conditions[-1].type} {.status.conditions[-1].status}"]
+
+        return subprocess.run(cmd, capture_output=True, text=True, check=True, env=self.aws_env).stdout.strip()
+
+    def _wait_for_job_status(self, job_name: str, status: str = "Running", is_verl: bool = False, timeout: str = "30m"):
+        """Wait for job to reach specified status"""
+        resource_name = self._get_resource_name(is_verl)
+        self.logger.info(f"Waiting for job {job_name} to reach {status}")
+
+        cmd = ["kubectl", "wait", f"{resource_name}/{job_name}", f"--timeout={timeout}"]
         try:
+            if is_verl:
+                # RayJobs use jobDeploymentStatus, not conditions
+                cmd += [
+                    f"--for=jsonpath={{.status.jobDeploymentStatus}}={status}",
+                    "-n",
+                    RAY_TRAINING_NAMESPACE,
+                ]
+            else:
+                cmd += [
+                    f"--for=condition={status}",
+                ]
+
+            subprocess.run(cmd, capture_output=True, text=True, check=True, env=self.aws_env)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+            self.logger.error(f"Failed to wait for job to reach {status}: {job_name}")
+            try:
+                self.logger.info(self.describe_resource(resource_name, job_name, is_verl=is_verl).stdout)
+            except:
+                pass
+            self.clean_up_resource(resource_name, job_name, is_verl=is_verl)
+            raise e
+
+    def describe_resource(self, resource_type: str, resource_name: str, is_verl: bool = False):
+        try:
+            cmd = ["kubectl", "describe", resource_type, resource_name]
+            if is_verl:
+                cmd.extend(["-n", RAY_TRAINING_NAMESPACE])
+
             return subprocess.run(
-                [
-                    "kubectl",
-                    "describe",
-                    resource_type,
-                    resource_name,
-                ],
+                cmd,
                 capture_output=True,
                 text=True,
                 check=True,
@@ -315,22 +275,28 @@ class K8sValidationLauncher(BaseLauncher):
             self.logger.error(f"Failed to describe {resource_type} {resource_name}: {e.stderr}")
             raise e
 
-    def clean_up_resource(self, resource, job_name: str):
+    def clean_up_resource(self, resource, job_name: str, is_verl: bool = False):
         self.logger.info(f"Cleaning up {resource} job: {job_name}")
         try:
-            subprocess.run(
-                ["kubectl", "delete", resource, job_name], capture_output=True, text=True, check=True, env=self.aws_env
-            )
+            cmd = ["kubectl", "delete", resource, job_name]
+            if is_verl:
+                cmd.extend(["-n", RAY_TRAINING_NAMESPACE])
+
+            subprocess.run(cmd, capture_output=True, text=True, check=True, env=self.aws_env)
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Error cleaning up {resource} {job_name}: {e.stderr}")
 
-    def get_pods(self, job_name):
+    def get_pods(self, job_name, is_verl=False):
         """Returns the pods for a job."""
         self.logger.info(f"Fetching pods for job: {job_name}")
 
         try:
+            cmd = ["kubectl", "get", "pods", "--no-headers", "-o", "custom-columns=:metadata.name"]
+            if is_verl:
+                cmd.extend(["-n", RAY_TRAINING_NAMESPACE])
+
             result = subprocess.run(
-                ["kubectl", "get", "pods", "--no-headers", "-o", "custom-columns=:metadata.name"],
+                cmd,
                 capture_output=True,
                 text=True,
                 check=True,
@@ -346,13 +312,21 @@ class K8sValidationLauncher(BaseLauncher):
             self.logger.error(f"Failed to get pods for job {job_name}")
             raise e
 
-    def get_head_node(self, job_name, all_pods=None, max_retries=6, delay=10):
+    def get_head_node(self, job_name, all_pods=None, max_retries=6, delay=10, is_verl=False):
         """Returns the head node (group_rank=0) for a job."""
-        pod_names = self.get_pods(job_name) if not all_pods else all_pods
+        pod_names = self.get_pods(job_name, is_verl=is_verl) if not all_pods else all_pods
 
         if len(pod_names) == 1:
             return pod_names[0]
 
+        # For VERL RayJobs, head pod has '-head-' in the name
+        if is_verl:
+            head_pods = [p for p in pod_names if "-head-" not in p and "-worker-" not in p]
+            if head_pods:
+                self.logger.info(f"Returning VERL launcher pod: {head_pods[0]}")
+                return head_pods[0]
+
+        # For non-VERL jobs, find head by group_rank=0 in logs
         for attempt in range(max_retries):
             for pod in pod_names:
                 try:
@@ -375,3 +349,14 @@ class K8sValidationLauncher(BaseLauncher):
             time.sleep(delay)
 
         raise RuntimeError(f"Unable to determine head node for job {job_name}")
+
+    def _construct_log_path(self, job_name: str, pod_name: str) -> str:
+        """Construct log file path for a job"""
+        return os.path.join(
+            self.config.get("base_results_dir", os.path.join(get_project_root(), "results")),
+            job_name,
+            f"{pod_name}.logs",
+        )
+
+    def _get_resource_name(self, is_verl: bool):
+        return RAY_JOBS_RESOURCE_NAME if is_verl else HP_PYTORCH_JOB_RESOURCE_NAME

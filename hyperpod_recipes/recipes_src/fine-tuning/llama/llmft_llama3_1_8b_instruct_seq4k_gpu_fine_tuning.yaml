@@ -1,0 +1,40 @@
+defaults:
+  - /hydra_config/llmft/default
+  - /hydra_config/llmft/model_config/llama-3-1-8b-instruct
+  - /hydra_config/llmft/peft/fft
+  - /hydra_config/llmft/algorithm/sft
+  - /hydra_config/llmft/datasets/default_sft
+  - /hydra_config/llmft/strategy/fsdp_dpo_fft
+  - _self_
+
+display_name: "Llama 3.1 8B Supervised Fine-Tuning on GPU, 4K sequence length"
+version: "1.1.0"
+instance_types: ['ml.p4de.24xlarge', 'ml.p4d.24xlarge', 'ml.p5.48xlarge', 'ml.g5.48xlarge']
+
+run:
+  name: llama-3-1-8b-instruct
+
+training_config:
+  force_rerun: true
+  model_config:
+    model_name_or_path: "meta-llama/Llama-3.1-8B-Instruct"
+    model_save_name: ""
+    chat_template_key: llama--meta-llama-3.1-8b-instruct
+    generation_cfg:
+      num_parallel_jobs: 0
+  datasets:
+    train_data:
+      name: tatqa_train
+    val_data:
+      name: tatqa_val
+    preprocessor_cfgs:
+      - type: TrainingSFTSampleConverter
+      - type: Seq2SeqTokensProcessor
+        chat_template_name: llama_3_2_seq_instruct.jinja
+        ignore_prompt_labels: true
+      - type: DropColumns
+        column_names:
+          - messages
+  training_args:
+    train_batch_size: 16
+    max_epochs: 1

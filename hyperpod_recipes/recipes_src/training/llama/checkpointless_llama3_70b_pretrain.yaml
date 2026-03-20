@@ -1,0 +1,153 @@
+display_name: "HyperPod Checkpointless Training Llama 3 70B Pre-Training on GPU, 2K sequence length"
+version: "1.0.0"
+instance_types: ["ml.p5.48xlarge", "ml.p5e.48xlarge"]
+
+run:
+  name: llama-3-3-70b
+  results_dir: ${base_results_dir}/${.name}
+  time_limit: "6-00:00:00"
+  model_type: hyperpod_checkpointless_nemo
+
+pre_script: "sysctl -w net.ipv4.ip_local_port_range='20000 65535'; export LD_LIBRARY_PATH='/opt/aws-ofi-nccl/lib:$LD_LIBRARY_PATH'; ln -sf /opt/aws-ofi-nccl/lib/libnccl-net-ofi.so /opt/aws-ofi-nccl/lib/libnccl-net-aws-ofi.so"
+
+trainer:
+  accelerator: gpu
+  devices: 8
+  num_nodes: 16
+  max_steps: 1168251
+  limit_val_batches: 32
+  limit_test_batches: 50
+  val_check_interval: 2000
+  num_sanity_val_steps: 0
+  log_every_n_steps: 10
+  accumulate_grad_batches: 1
+  use_distributed_sampler: False
+  reload_dataloaders_every_n_epochs: 1
+
+resources:
+  hugepages: 5120Mi
+  memory: 32000Mi
+
+exp_manager:
+  exp_dir: null
+  name: experiment
+
+strategy:
+  tensor_model_parallel_size: 8
+  pipeline_model_parallel_size: 4
+  virtual_pipeline_model_parallel_size: null
+  context_parallel_size: 1
+  sequence_parallel: True
+  pipeline_dtype: torch.bfloat16
+  ckpt_async_save: True
+  ckpt_parallel_load: True
+  gradient_as_bucket_view: True
+  num_distributed_optimizer_instances: 2
+
+ddp:
+  grad_reduce_in_fp32: True
+  overlap_param_gather: True
+  check_for_nan_in_grad: True
+  average_in_collective: True
+
+plugins:
+  _target_: nemo.lightning.pytorch.plugins.MegatronMixedPrecision
+  precision: 'bf16-mixed'
+
+callbacks:
+  - _target_: nemo.utils.exp_manager.TimingCallback
+  - _target_: nemo.lightning.pytorch.callbacks.GarbageCollectionCallback
+    gc_interval_train: 100
+    gc_interval_val: 100
+  - _target_: nemo.lightning.pytorch.callbacks.megatron_comm_overlap.MegatronCommOverlapCallback
+    tp_comm_overlap: False
+  - _target_: hyperpod_checkpointless_training.nemo_plugins.fault_injection.HPFaultInjectionCallback
+    test_fault_config:
+      fault_type: "ipr"
+      fault_prob_after_bwd: 0
+      fault_prob_between_lock: 0
+      fault_prob_during_fwd: 0
+      fault_prob_during_bwd: 0
+      fault_prob_random: 0
+      fault_ranks: [8]
+      steps_before_fault: 3
+  - _target_: hyperpod_checkpointless_training.nemo_plugins.callbacks.CheckpointlessCallback # Checkpointless changes.
+    enable_inprocess: true
+    enable_checkpointless: true
+    enable_checksum: false
+    clean_tensor_hook : true
+  - _target_: hyperpod_checkpointless_training.nemo_plugins.datamodule_epoch_callback.DataModuleEpochCallback
+
+data:
+  seq_length: 2048
+  micro_batch_size: 1
+  global_batch_size: 512
+
+dataset:
+  dataset_path: null
+  num_workers: 1
+  partition: "train"
+  keep_in_memory: true
+  pin_memory: false
+  shuffle: false
+  drop_last: true
+
+model:
+  config:
+    seq_length: 2048
+    vocab_size: 128256
+
+log_dir: null
+
+log:
+  _target_: nemo.lightning.nemo_logger.NeMoLogger
+  name: 'llama3_70b_checkpointless_pretraining'
+  log_dir: ${recipes.log_dir}
+  ckpt:
+    _target_: nemo.lightning.pytorch.callbacks.model_checkpoint.ModelCheckpoint
+    monitor: "step"
+    mode: "max"
+    save_last: True
+    save_top_k: 2
+    every_n_train_steps: &checkpoint_frequency 20
+    dirpath : ${recipes.log_dir}
+    filename: '{model_name}--{val_loss:.2f}-{step}-{consumed_samples}'
+    save_weights_only: False
+    save_optim_on_train_end: True
+  tensorboard:
+    _target_: lightning.pytorch.loggers.TensorBoardLogger
+    save_dir: 'tb_logs'
+    name: 'llama3_70b_checkpointless_pretraining'
+  wandb: null
+
+mmap:
+  cache_dir: "/dev/shm/pdl_cache"
+  prefetch_length: 10
+  lookback_length: 10
+  checkpoint_frequency: *checkpoint_frequency
+
+optim:
+  config:
+    _target_: megatron.core.optimizer.OptimizerConfig
+    optimizer: 'adam'
+    lr: 0.0003
+    weight_decay: 0.1
+    fp16: False
+    bf16: True
+    adam_beta1: 0.9
+    adam_beta2: 0.95
+    adam_eps: 1e-05
+    use_distributed_optimizer: True
+    clip_grad: 1.0
+  lr_scheduler:
+    _target_: nemo.lightning.pytorch.optim.CosineAnnealingScheduler
+    warmup_steps: 2000
+    constant_steps: 0
+    min_lr: 3e-05
+
+resume:
+  _target_: hyperpod_checkpointless_training.nemo_plugins.resume.CheckpointlessAutoResume # Checkpointless changes.
+  resume_from_directory: ${recipes.log.ckpt.dirpath}
+  resume_if_exists: true
+  resume_past_end: true
+  resume_ignore_no_checkpoint: true

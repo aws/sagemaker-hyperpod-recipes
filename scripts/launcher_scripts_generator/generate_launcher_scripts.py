@@ -186,6 +186,9 @@ class LauncherScriptGenerator:
 
         # Exact match
         if model_type in self.config.templates:
+            if model_type == "verl" and "sft" in self.recipe_path:
+                return "verl-sft"
+
             return model_type
 
         # Prefix match for Nova models

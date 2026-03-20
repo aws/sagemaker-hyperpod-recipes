@@ -258,6 +258,7 @@ def mock_load_hosting_config(recipe_name: str):
         "verl-ppo-qwen-2-dot-5-0-dot-5b",
         "verl-grpo-rlaif-llama-3-dot-2-1b-instruct-lora",
         "verl-grpo-rlvr-llama-3-dot-1-8b-instruct-lora",
+        "verl-sft-qwen-3-8b-lora",
         # LLMFT recipes
         "llmft_llama3_2_1b_instruct_seq4k_gpu_sft_lora",
     ]
