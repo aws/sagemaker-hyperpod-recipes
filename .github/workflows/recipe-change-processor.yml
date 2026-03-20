@@ -1,0 +1,110 @@
+name: Recipe Change Trigger to JS Lambda
+
+on:
+  pull_request:
+    branches:
+      - release
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      recipe_metadata:
+        description: 'Custom recipe metadata JSON (optional)'
+        required: false
+        type: string
+      lambda_name:
+        description: 'Custom Lambda function ARN (optional)'
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: read # This is required for actions/checkout
+
+jobs:
+  process-recipes-changes:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch full history for git diff
+          ref: ${{ github.event.pull_request.head.sha }}
+          submodules: recursive
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.JS_RECIPE_UPDATE_ROLE }}
+          aws-region: us-west-2
+
+      - name: Who am I (sanity)
+        run: aws sts get-caller-identity
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install boto3
+
+      - name: Detect recipe changes
+        id: detect-changes
+        if: ${{ !inputs.recipe_metadata }}
+        run: |
+          # Run comparison script (skip version validation)
+          python .github/scripts/compare_launch_jsons.py \
+            --release-branch release \
+            --output-dir /tmp/launch_json_compare \
+            --job-types "k8s" \
+            --skip-version-check
+
+          # Read results from JSON file
+          RESULTS_FILE="/tmp/launch_json_compare/comparison_results.json"
+
+          # Extract new + changed + removed using jq
+          CHANGED_FILES=$(jq -r '(.new + .changed + .removed) | .[]' "$RESULTS_FILE" 2>/dev/null || echo "")
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No recipe changes detected"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
+      - name: Process recipe changes
+        id: process-recipes
+        if: steps.detect-changes.outputs.has_changes == 'true' || inputs.recipe_metadata
+        env:
+          CHANGED_FILES: ${{ steps.detect-changes.outputs.changed_files }}
+          LAUNCH_JSON_DIR: /tmp/launch_json_compare/current
+        run: python .github/scripts/process_recipe_metadata.py
+
+      - name: Configure TCP keepalive
+        run: |
+          sudo sysctl -w net.ipv4.tcp_keepalive_time=30
+          sudo sysctl -w net.ipv4.tcp_keepalive_intvl=30
+          sudo sysctl -w net.ipv4.tcp_keepalive_probes=5
+
+      - name: Trigger JumpStart Lambda and Update CloudWatch
+        if: steps.detect-changes.outputs.has_changes == 'true' || inputs.recipe_metadata
+        env:
+          RECIPE_METADATA: ${{ inputs.recipe_metadata || steps.process-recipes.outputs.recipe_metadata }}
+          JS_LAMBDA_NAME: ${{ inputs.lambda_name || secrets.JS_LAMBDA_ARN }}
+          AWS_REGION: us-west-2
+        run: |
+          echo "Processed metadata: $RECIPE_METADATA"
+          python .github/scripts/trigger_lambda.py \
+            --metadata "$RECIPE_METADATA" \
+            --lambda-name "$JS_LAMBDA_NAME"
