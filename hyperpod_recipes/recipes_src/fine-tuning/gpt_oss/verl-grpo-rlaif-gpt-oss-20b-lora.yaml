@@ -15,7 +15,7 @@ defaults:
 - /hydra_config/verl/model_config/gpt-oss-20b
 - _self_
 display_name: GPT OSS 20B GRPO RLAIF Fine-Tuning with LoRA
-version: 1.0.0
+version: 2.0.0
 instance_types:
 - ml.p5.48xlarge
 run:
