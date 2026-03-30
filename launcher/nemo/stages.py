@@ -29,6 +29,8 @@ from nemo_launcher.utils.job_utils import JobPaths
 from omegaconf import OmegaConf, open_dict
 from pydantic import ValidationError
 
+from utils.template_utils import remove_quotes_from_numeric_params
+
 from ..accelerator_devices import get_num_accelerator_devices
 from ..efa import (
     efa_supported_instance,
@@ -1214,10 +1216,20 @@ class SMTraining(Training):
         ]
         subprocess.run(cmd, check=True)
 
+        # Get override spec from template processor for quote removal
+        additional_data = recipe_template_processor.get_additional_data(recipe_file_path)
+        override_spec = {}
+        if additional_data:
+            _, recipe_override_parameters, _ = additional_data
+            override_spec = recipe_override_parameters if recipe_override_parameters else {}
+
         # Walk rendered files and dump into JSON
         launch_json = {}
         for path in sorted(render_dir.rglob("*.yaml"), key=lambda p: p.name):
             content = path.read_text()
+
+            # Remove quotes from numeric parameters in YAML
+            content = remove_quotes_from_numeric_params(content, override_spec)
 
             # Replace following references in content
             # Replace following references in content. String replace is followed here instead of templatization because

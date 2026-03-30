@@ -14,6 +14,8 @@ project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from scripts.model_hub.update_private_hub import (
+    RecipeArtifactPaths,
+    S3UploadConfig,
     bump_version,
     create_new_recipecollection,
     export_hub_content,
@@ -629,7 +631,9 @@ class TestUploadArtifactsToS3(unittest.TestCase):
             json.dump(launch_data, f)
             f.flush()
             try:
-                result = upload_artifacts_to_s3(f.name, "test-recipe", "test-bucket", "us-west-2", "1.0.0")
+                artifacts = RecipeArtifactPaths(f.name, f.name, "test-recipe")
+                s3_config = S3UploadConfig("test-bucket", "us-west-2", "1.0.0")
+                result = upload_artifacts_to_s3(artifacts, s3_config)
 
                 # Verify S3 client was created with correct region
                 mock_boto_client.assert_called_once_with("s3", region_name="us-west-2")
@@ -667,7 +671,9 @@ class TestUploadArtifactsToS3(unittest.TestCase):
             json.dump(launch_data, f)
             f.flush()
             try:
-                result = upload_artifacts_to_s3(f.name, "llama-8b-sft", "my-bucket", "us-east-1", "2.0.0")
+                artifacts = RecipeArtifactPaths(f.name, f.name, "llama-8b-sft")
+                s3_config = S3UploadConfig("my-bucket", "us-east-1", "2.0.0")
+                result = upload_artifacts_to_s3(artifacts, s3_config)
 
                 # Verify S3 key format: recipes/{recipe_name}_payload_template_k8s_{version}.yaml
                 self.assertEqual(
@@ -702,7 +708,9 @@ class TestUploadArtifactsToS3(unittest.TestCase):
             json.dump(launch_data, f)
             f.flush()
             try:
-                upload_artifacts_to_s3(f.name, "test-recipe", "test-bucket", "us-west-2", "1.0.0")
+                artifacts = RecipeArtifactPaths(f.name, f.name, "test-recipe")
+                s3_config = S3UploadConfig("test-bucket", "us-west-2", "1.0.0")
+                upload_artifacts_to_s3(artifacts, s3_config)
 
                 # Find the k8s yaml upload call and verify content has replacement
                 calls = mock_s3_client.put_object.call_args_list
@@ -736,7 +744,9 @@ class TestUploadArtifactsToS3(unittest.TestCase):
             json.dump(launch_data, f)
             f.flush()
             try:
-                upload_artifacts_to_s3(f.name, "test-recipe", "test-bucket", "us-west-2", "1.0.0")
+                artifacts = RecipeArtifactPaths(f.name, f.name, "test-recipe")
+                s3_config = S3UploadConfig("test-bucket", "us-west-2", "1.0.0")
+                upload_artifacts_to_s3(artifacts, s3_config)
 
                 # Verify all uploads have SageMaker tagging
                 for call in mock_s3_client.put_object.call_args_list:

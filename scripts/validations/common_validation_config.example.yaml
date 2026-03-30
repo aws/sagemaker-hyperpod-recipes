@@ -291,7 +291,7 @@ git:
 
 # This is the name of a sleeper pod that we can use to copy stuff between the cluster and the local machine
 k8:
-  general_pod: "k8s-sleeper-faraday-66794d5cb4-fhf9v"
+  sleeper_deployment: "hp-recipe-validator-sleeper"
 
 # Keywords to determine which recipes should have throughput computed
 # Recipes matching these keywords will have throughput calculated and reported
@@ -416,9 +416,33 @@ pysdk_finetune_dataset_mapping:
 # USAGE:
 # Set to null to disable additional launch configs (current state)
 # Uncomment and modify the examples below to enable specific configurations
+# ============================================================================
+# FSX CHECKPOINT OVERRIDE (K8)
+# ============================================================================
+# Some recipes (e.g., 70b FFT) produce checkpoints too large for /opt/ml/model
+# on K8 pod local storage. This config redirects checkpoint output to FSx.
 #
-# TEMPORARILY DISABLED: The configurations below are commented out as containers that support the
-# pad-processors are not deployed in all regions yet.
+# Each entry in the list specifies:
+#   - fsx_path: FSx directory to store checkpoints
+#   - override_key: Hydra config key to override (differs by recipe structure)
+#       - llmft recipes: recipes.training_config.training_args.training_dir
+#       - verl recipes:  recipes.training_config.trainer.default_local_dir
+#   - recipe_list: Exact recipe filenames (relative to recipes_collection/recipes/)
+#
+# Set to null to disable. To add new recipes, append to the appropriate
+# recipe_list or add a new entry with a different override_key.
+fsx_checkpoint_override:
+  - fsx_path: "/data/hp-recipe-validator/outputs/integ_test_checkpoints"
+    override_key: "recipes.training_config.training_args.training_dir"
+    recipe_list:
+      - "fine-tuning/llama/llmft_llama3_3_70b_instruct_seq4k_gpu_sft_fft.yaml"
+
+  # For VERL recipes:
+  # - fsx_path: "/data/hp-recipe-validator/outputs/integ_test_checkpoints"
+  #   override_key: "recipes.training_config.trainer.default_local_dir"
+  #   recipe_list:
+  #     - "fine-tuning/llama/verl-grpo-rlvr-llama-3-3-70b-lora.yaml"
+
 additional_launch_config: null
   # 'llmft.*sft.*lora(?!.*vision)':  # Only applies to SFT lora recipes, excludes vision models
   #   'ListConfig':

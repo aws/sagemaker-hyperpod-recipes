@@ -483,6 +483,39 @@ def construct_slurm_launch_command(cfg, run_info):
     return launch_command
 
 
+def _resolve_general_pod_name(cfg, env=None) -> str:
+    """Resolve the running sleeper pod from its Deployment label selector."""
+    deployment = getattr(cfg.k8, "sleeper_deployment", "")
+    if not deployment:
+        raise ValueError("k8.sleeper_deployment is required but not set in config. ")
+    try:
+        result = subprocess.run(
+            [
+                "kubectl",
+                "get",
+                "pods",
+                "-l",
+                f"app={deployment}",
+                "--field-selector=status.phase=Running",
+                "--no-headers",
+                "-o",
+                "custom-columns=:metadata.name",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+            env=env,
+        )
+        pods = [p.strip() for p in result.stdout.split("\n") if p.strip()]
+        if pods:
+            logging.info(f"Resolved sleeper pod: {pods[0]}")
+            return pods[0]
+        logging.warning(f"No running pod found for deployment: {deployment}")
+    except subprocess.CalledProcessError as e:
+        logging.warning(f"Failed to resolve sleeper pod for deployment '{deployment}': {e.stderr}")
+    return ""
+
+
 def construct_k8_launch_command(cfg, run_info):
     """
     Construct K8-specific launch command.
@@ -882,7 +915,45 @@ def get_launch_command(cfg, run_info, use_fsx=False):
                             )
                 break
 
+    # Apply FSx checkpoint override for K8 recipes with large checkpoints
+    command = apply_fsx_checkpoint_override(cfg, run_info["input_file_path"], command, run_info=run_info)
+
     return command
+
+
+def apply_fsx_checkpoint_override(cfg, input_file_path, commands, run_info=None):
+    """
+    Apply FSx checkpoint override for K8 recipes with large checkpoints.
+
+    When run_info contains an 'fsx_run_id' key the id is appended to the FSx
+    path so that concurrent jobs write to isolated subdirectories
+    (e.g. /data/.../integ_test_checkpoints/<run_id>/).
+    """
+    if cfg.platform.lower() != "k8":
+        return commands
+
+    if not cfg.fsx_checkpoint_override:
+        return commands
+
+    for override_group in cfg.fsx_checkpoint_override:
+        recipe_list = list(override_group.recipe_list) if hasattr(override_group, "recipe_list") else []
+        if input_file_path in recipe_list:
+            fsx_path = override_group.fsx_path
+
+            # Append unique run id so concurrent jobs don't collide
+            if run_info and run_info.get("fsx_run_id"):
+                fsx_path = os.path.join(fsx_path, run_info["fsx_run_id"])
+
+            override_key = override_group.override_key
+
+            for i, cmd in enumerate(commands):
+                if override_key in cmd:
+                    commands[i] = f"{override_key}={fsx_path}"
+                    logging.info(f"FSx checkpoint override applied for '{input_file_path}': {commands[i]}")
+                    break
+            break
+
+    return commands
 
 
 def _extract_model_name_from_recipe(cfg, input_file_path, recipe_cfg):
@@ -1135,7 +1206,7 @@ def get_job_parameters(cfg, input_file_path, hf_model_name):
         "training_dir": "",
         "entry_module": entry_module,
         "use_default_repo": use_default_repo,
-        "k8_general_pod": cfg.k8.general_pod,
+        "k8_general_pod": _resolve_general_pod_name(cfg) if platform == "k8" else "",
         "instance_type": cfg.instance_type,
         "s3_models_path": s3_models_path,
         "s3_output_path": s3_output_path,

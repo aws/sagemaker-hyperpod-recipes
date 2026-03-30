@@ -1,13 +1,17 @@
+import logging
 import os
 import re
 import subprocess
 import threading
 import time
+import traceback
+import uuid
 from typing import Dict
 
 from scripts.validations.validation_launchers.path_utils import get_project_root
 
 from .base_launcher import BaseLauncher
+from .launcher_utils import _resolve_general_pod_name
 
 HP_PYTORCH_JOB_RESOURCE_NAME = "hyperpodpytorchjob"
 RAY_JOBS_RESOURCE_NAME = "rayjobs"
@@ -24,6 +28,73 @@ def _is_verl_ray_job(input_file_path: str) -> bool:
 
 class K8sValidationLauncher(BaseLauncher):
     """Kubernetes-specific job launcher"""
+
+    def launch_job(self, input_file_path: str) -> bool:
+        """Override base launch_job to add FSx checkpoint dir cleanup after job completion."""
+        fsx_cleanup_path = None
+        try:
+            run_info = self._prepare_job(input_file_path)
+
+            fsx_run_id = uuid.uuid4().hex[:8]
+            run_info["fsx_run_id"] = fsx_run_id
+
+            launch_command = self._build_command(run_info)
+
+            fsx_base_path = self._get_fsx_checkpoint_path(input_file_path)
+            if fsx_base_path:
+                fsx_cleanup_path = os.path.join(fsx_base_path, fsx_run_id)
+
+            launch_output = self._execute_command(launch_command)
+            job_details = self._parse_output(input_file_path, launch_output)
+            if not job_details:
+                return False
+
+            logging.info(f"Job details:- {job_details}")
+            job_success_status = self._monitor_job(input_file_path, job_details)
+
+            return job_success_status
+        except Exception as e:
+            error_msg = f"Job launch failed for {input_file_path}: {e}"
+            self.logger.error(error_msg)
+            self.logger.error(f"Full traceback:\n{traceback.format_exc()}")
+            self.job_recorder.update_job(input_filename=input_file_path, status="Failed", output_log=str(e))
+            return False
+        finally:
+            if fsx_cleanup_path:
+                self._cleanup_fsx_directory(fsx_cleanup_path)
+
+    def _get_fsx_checkpoint_path(self, input_file_path: str):
+        """Check if recipe has FSx checkpoint override and return the FSx path."""
+        if not self.config.fsx_checkpoint_override:
+            return None
+
+        for override_group in self.config.fsx_checkpoint_override:
+            recipe_list = list(override_group.recipe_list) if hasattr(override_group, "recipe_list") else []
+            if input_file_path in recipe_list:
+                return override_group.fsx_path
+        return None
+
+    def _cleanup_fsx_directory(self, fsx_path: str):
+        """Cleanup FSx checkpoint directory after job completion.
+        Args:
+            fsx_path: FSx directory path to remove
+        """
+        general_pod = _resolve_general_pod_name(self.config, env=self.aws_env)
+        if not general_pod:
+            self.logger.warning("Could not resolve sleeper pod; skipping FSx cleanup")
+            return
+        self.logger.info(f"Cleaning up FSx checkpoint directory: {fsx_path} via pod {general_pod}")
+        try:
+            subprocess.run(
+                ["kubectl", "exec", general_pod, "--", "rm", "-rf", fsx_path],
+                capture_output=True,
+                text=True,
+                check=True,
+                env=self.aws_env,
+            )
+            self.logger.info(f"Successfully cleaned up FSx directory: {fsx_path}")
+        except subprocess.CalledProcessError as e:
+            self.logger.warning(f"Failed to cleanup FSx directory {fsx_path}: {e.stderr}")
 
     def _parse_output(self, input_file_path: str, launch_output) -> Dict:
         job_name = ""

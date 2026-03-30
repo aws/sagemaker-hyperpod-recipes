@@ -2,10 +2,9 @@ import json
 import random
 import string
 import subprocess
+import threading
 import time
 from pathlib import Path
-
-import boto3
 
 from .base_launcher import BaseLauncher
 from .launcher_utils import (
@@ -46,6 +45,7 @@ class ServerlessValidationLauncher(BaseLauncher):
 
         # Track which models have had their Hub content overridden (by run_name)
         self._hub_content_overridden_models = set()
+        self._hub_override_lock = threading.Lock()
 
     def _load_model_mapping(self) -> dict:
         """Load model mapping from jumpstart_model-id_map.json"""
@@ -137,7 +137,7 @@ class ServerlessValidationLauncher(BaseLauncher):
         client_kwargs = {"region_name": region}
         if endpoint_url:
             client_kwargs["endpoint_url"] = endpoint_url
-        sagemaker = boto3.client("sagemaker", **client_kwargs)
+        sagemaker = self.boto_session.client("sagemaker", **client_kwargs)
 
         self.logger.info(f"Updating {len(model_names)} models in Hub: {hub_name}")
 
@@ -603,10 +603,11 @@ class ServerlessValidationLauncher(BaseLauncher):
             run_name = self._extract_run_name_from_recipe(recipe)
 
             # Override Hub content for this model if not already done
-            if run_name not in self._hub_content_overridden_models:
-                self.logger.info(f"Overriding Hub content for run.name '{run_name}' (recipe: {recipe})")
-                self._override_hub_content(recipe=recipe)
-                self._hub_content_overridden_models.add(run_name)
+            with self._hub_override_lock:
+                if run_name not in self._hub_content_overridden_models:
+                    self.logger.info(f"Overriding Hub content for run.name '{run_name}' (recipe: {recipe})")
+                    self._override_hub_content(recipe=recipe)
+                    self._hub_content_overridden_models.add(run_name)
 
             # Get model ARN using run.name
             if run_name not in self.model_mapping:
