@@ -15,6 +15,7 @@ import logging
 import os
 from unittest.mock import patch
 
+import yaml
 from omegaconf import OmegaConf
 
 from hyperpod_recipes import list_recipes
@@ -30,15 +31,11 @@ from .test_utils import (
 logger = logging.getLogger(__name__)
 
 RUN_SCRIPT_PATHS = get_launcher_run_script_paths()
-RECIPES_OMIT_VALIDATION = [  # FIXME: these recipes are currently fail dryrun and require a fix to re-enable
-    "training/llama/megatron_llama3_1_8b_nemo",
-    "fine-tuning/nova/nova_1_0/nova_pro/distill/nova_pro_1_0_r5_cpu_distill",
-    "fine-tuning/nova/nova_1_0/nova_premier/distill/nova_premier_1_0_r5_cpu_distill",
-]
+
+RECIPES_DIR = ROOT_DIR / "recipes_collection/recipes"
 
 
 def test_config_for_run_script_exists():
-    RECIPES_DIR = ROOT_DIR / "recipes_collection/recipes"
     log_line = lambda script, config: logger.info(
         f"\nlauncher file: {script.relative_to(ROOT_DIR)}" f"\nconfig file: {config.relative_to(ROOT_DIR)}" "\n"
     )
@@ -87,13 +84,12 @@ def test_dryrun_validation_for_all_recipes(subtests):
     recipes = list_recipes()
 
     for recipe in recipes:
-        if recipe.name in RECIPES_OMIT_VALIDATION:
-            continue  # FIXME: these recipes are currently fail dryrun and require a fix to re-enable
-
         overrides = [
             f"recipes={recipe.name}",
             f"base_results_dir=dummy_dir/results",
             f"dry_run=True",
+            "cluster_type=k8s",
+            "cluster=k8s",
         ]
         if (
             recipe.name.startswith(("training/nova", "fine-tuning/nova", "evaluation/nova"))
@@ -109,3 +105,76 @@ def test_dryrun_validation_for_all_recipes(subtests):
             print("cfg", cfg)
             with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}):
                 main(cfg)
+
+
+def test_trainer_callbacks_in_openweights_finetuning_recipes(subtests):
+    """
+    Test that every LLMFT fine-tuning recipe has the required trainer_callbacks field
+    with the MeteringCallback configuration.
+
+    Expected structure:
+    LLMFT:
+    training_config:
+      training_args:
+        trainer_callbacks:
+          - _target_: metering_callback.MeteringCallback
+            output_path: /opt/ml/metering
+
+    Note: This only applies to llmft recipes. Verl metering is not supported yet.
+    """
+    recipes_dir = RECIPES_DIR
+    finetuning_dir = recipes_dir / "fine-tuning"
+
+    # Find all fine-tuning recipe files
+    recipe_files = list(finetuning_dir.rglob("*.yaml"))
+
+    for recipe_path in recipe_files:
+        if not recipe_path.is_file():
+            continue
+
+        recipe_rel_path = str(recipe_path.relative_to(recipes_dir))
+
+        # Skip Nova recipes - they have different architecture
+        if "nova" in recipe_rel_path.lower():
+            continue
+
+        # Skip Verl recipes - they have different architecture (no training_args)
+        if "verl" in recipe_rel_path.lower():
+            continue
+
+        # Skip checkpointless recipes
+        if "checkpointless" in recipe_rel_path.lower():
+            continue
+
+        with subtests.test(msg=f"trainer_callbacks in {recipe_rel_path}"):
+            with open(recipe_path) as f:
+                recipe_data = yaml.safe_load(f)
+
+            # Navigate to trainer_callbacks
+            assert "training_config" in recipe_data, f"Recipe {recipe_rel_path} missing 'training_config' section"
+            assert (
+                "training_args" in recipe_data["training_config"]
+            ), f"Recipe {recipe_rel_path} missing 'training_config.training_args' section"
+            assert (
+                "trainer_callbacks" in recipe_data["training_config"]["training_args"]
+            ), f"Recipe {recipe_rel_path} missing 'training_config.training_args.trainer_callbacks' field"
+
+            trainer_callbacks = recipe_data["training_config"]["training_args"]["trainer_callbacks"]
+
+            # Should be a list with at least one callback
+            assert isinstance(trainer_callbacks, list), f"Recipe {recipe_rel_path} trainer_callbacks should be a list"
+            assert (
+                len(trainer_callbacks) >= 1
+            ), f"Recipe {recipe_rel_path} trainer_callbacks should have at least one entry"
+
+            # Check that MeteringCallback is present with correct configuration
+            metering_callback_found = False
+            for callback in trainer_callbacks:
+                if callback.get("_target_") == "metering_callback.MeteringCallback":
+                    metering_callback_found = True
+                    assert (
+                        callback.get("output_path") == "/opt/ml/metering"
+                    ), f"Recipe {recipe_rel_path} MeteringCallback should have output_path='/opt/ml/metering'"
+                    break
+
+            assert metering_callback_found, f"Recipe {recipe_rel_path} missing MeteringCallback in trainer_callbacks"

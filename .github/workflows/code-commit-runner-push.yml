@@ -1,0 +1,43 @@
+name: Code commit replication
+
+on:
+  push:
+    branches:
+      - 'main' # Triggers on direct pushes to the main branch
+      - 'release-*' # Triggers on direct pushes to the release branch
+
+permissions:
+   id-token: write # This is required for requesting the JWT
+   contents: read # This is required for actions/checkout
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install Python and pip
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install git-remote-codecommit
+        run: |
+          python -m pip install --upgrade pip
+          pip install git-remote-codecommit
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.RUNNER_ROLE_ARN }}
+          role-session-name: unit-test-runner-push-session
+          aws-region: us-west-2
+
+      - name: Push to Code Commit
+        run: |
+          git remote add codecommit codecommit::us-west-2://private-sagemaker-training-launcher-staging
+          git push codecommit HEAD:${{ github.ref_name }} --force

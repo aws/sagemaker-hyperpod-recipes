@@ -3,10 +3,15 @@ import json
 import os
 import re
 import subprocess
+import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import boto3
 import yaml
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from scripts.generate_launch_jsons import LaunchJsonGenerator
 
 
 def parse_arguments():
@@ -22,7 +27,6 @@ def parse_arguments():
         default="launcher/recipe_templatization/jumpstart_model-id_map.json",
         help="Path to model ID mapping file",
     )
-    parser.add_argument("--version", default="1.0.0", help="Version for the hub content (format: x.xx.xx).")
     parser.add_argument("--endpoint", default="prod", help="SageMaker endpoint, beta/prod")
 
     # Recipe input options (mutually exclusive)
@@ -34,6 +38,11 @@ def parse_arguments():
     recipe_group.add_argument(
         "--recipe-files",
         help="Comma-separated list of recipe file paths relative to recipes_collection/recipes/ (e.g., 'fine-tuning/llama/recipe1.yaml,fine-tuning/qwen/recipe2.yaml')",
+    )
+
+    # Eval recipe support
+    parser.add_argument(
+        "--eval", action="store_true", help="Generate eval recipes (deterministic + llmaj) for all processed models"
     )
 
     return parser.parse_args()
@@ -129,129 +138,102 @@ def get_model_name_from_recipe(recipe_file):
     return recipe_name
 
 
+def is_nova_recipe(recipe_path):
+    """Check if recipe is a Nova recipe"""
+    return "nova" in str(recipe_path).lower()
+
+
 def get_recipe_name_from_path(recipe_file_path):
     """Get recipe from recipe path"""
-    # path_string = "recipes_collection/recipes/fine-tuning/nova/nova_1_0/nova_micro/SFT/nova_micro_1_0_p5_p4d_gpu_lora_sft.yaml"
-    # return # nova_micro_1_0_p5_p4d_gpu_lora_sft
     return Path(recipe_file_path).stem
 
 
-def generate_launch_json(recipe_file, recipe_name, output_dir):
-    # Convert file path to recipe path for launch json
-    # e.g., "recipes_collection/recipes/fine-tuning/deepseek/recipe.yaml" -> "fine-tuning/deepseek/recipe"
-    recipe_path = get_recipe_path_from_file(recipe_file)
+def get_eval_recipe_path(eval_type: str) -> str:
+    """Map eval type to recipe path."""
+    eval_recipe_mapping = {
+        "deterministic": "recipes_collection/recipes/evaluation/open-source/open_source_deterministic_eval.yaml",
+        "llmaj": "recipes_collection/recipes/evaluation/open-source/open_source_llmaj_eval.yaml",
+    }
+    return eval_recipe_mapping.get(eval_type)
 
-    cmd = build_launch_json_command(recipe_path, recipe_name, output_dir)
 
-    print(f"Generating launch.json for {recipe_name}...")
-    print(f"Command: {' '.join(cmd)}")
+def generate_launch_json(recipe_file, recipe_name, output_dir, model_name=None, job_type="sm_jobs"):
+    """Generate launch.json for a recipe using the specified job type."""
+    generator = LaunchJsonGenerator(working_dir=Path.cwd())
+    recipe_path = Path(recipe_file).resolve()
 
-    # Execute command
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    print(f"Generating launch.json for {recipe_name} ({job_type})...")
 
-    if result.returncode != 0:
-        print(f"Failed to generate launch.json for {recipe_name}: {result.stderr}")
+    launch_json_path, status = generator.generate_launch_json(
+        recipe_path=recipe_path,
+        job_type=job_type,
+        output_dir=output_dir,
+        model_name=model_name,
+    )
+
+    if status == "success":
+        print(f"  ✓ Generated ({job_type}): {launch_json_path}")
+        return str(launch_json_path)
+    elif status == "skipped":
+        print(f"  ⊘ Skipped: Recipe not supported on {job_type}")
+        return None
+    else:
+        print(f"  ✗ Failed ({job_type}): {status}")
         return None
 
-    launch_json_path = extract_launch_json_path_from_output(result.stdout)
-    return launch_json_path
+
+@dataclass
+class RecipeArtifactPaths:
+    """Paths to the generated launch.json artifacts for a recipe."""
+
+    k8s_launch_json_path: str
+    sm_jobs_launch_json_path: str
+    recipe_name: str
 
 
-def get_recipe_path_from_file(recipe_file):
-    """Convert recipe file path to recipe path for main.py"""
-    # Remove recipes_collection/ prefix and .yaml suffix
-    path = recipe_file.replace("recipes_collection/recipes/", "")
-    if path.endswith(".yaml"):
-        path = path[:-5]
-    return path
+@dataclass
+class S3UploadConfig:
+    """Configuration for uploading artifacts to S3."""
+
+    s3_bucket: str
+    region: str
+    version: str
 
 
-def build_launch_json_command(recipe_path, recipe_name, results_dir):
-    """Build command to generate launch.json (inspired by your example)"""
+def upload_artifacts_to_s3(artifacts: RecipeArtifactPaths, s3_config: S3UploadConfig):
+    """Upload recipe artifacts to S3 and return S3 URIs."""
+    # k8s artifacts from k8s launch.json
+    with open(artifacts.k8s_launch_json_path, "r") as f:
+        k8s_launch_data = json.load(f)
+    k8s_yaml_content = extract_yaml_content(k8s_launch_data)
+    k8s_yaml_content = k8s_yaml_content.replace("test_container", "{{container_image}}")
+    override_params = k8s_launch_data.get("recipe_override_parameters", {})
 
-    # Base command - similar to _build_standard_command
-    cmd = [
-        "python3",
-        "main.py",
-        f"recipes={recipe_path}",
-        "cluster_type=k8s",
-        "cluster=k8s",
-        f"base_results_dir={results_dir}",
-        "container=test_container",
-        "git.use_default=false",
-        "git.entry_script=/app/src/train_hp.py",
-        "launch_json=true",
-        "++recipes.training_config.model_config.model_name_or_path=''",
-        "++recipes.training_config.training_args.training_dir=''",
-        "++recipes.training_config.datasets.train_data.name=''",
-        "++recipes.training_config.datasets.train_data.file_path=''",
-        "++recipes.training_config.datasets.val_data.name=''",
-        "++recipes.training_config.datasets.val_data.file_path=''",
-    ]
-
-    # Add recipe-specific parameters based on recipe type
-    if is_nova_recipe(recipe_path):
-        cmd.extend(["instance_type=p5.48xlarge"])
-    else:
-        cmd.extend(
-            [
-                "+cluster.persistent_volume_claims.0.claimName=fsx-claim",
-                "+cluster.persistent_volume_claims.0.mountPath=/data",
-            ]
-        )
-
-    return cmd
-
-
-def is_nova_recipe(recipe_path):
-    """Check if recipe is a Nova recipe"""
-    return "nova" in recipe_path.lower()
-
-
-def extract_launch_json_path_from_output(stdout):
-    """Extract the launch.json file path from command output"""
-    for line in stdout.split("\n"):
-        if "launch.json" in line:
-            path = line.strip().split()[-1]
-            if os.path.exists(path):
-                return path
-
-    return None
-
-
-def upload_artifacts_to_s3(launch_json_path, recipe_name, s3_bucket, region, version):
-    """Upload recipe artifacts to S3 and return S3 URIs"""
-    with open(launch_json_path, "r") as f:
-        launch_data = json.load(f)
-
-    yaml_content = extract_yaml_content(launch_data)
-    k8s_yaml_content = yaml_content.replace("test_container", "{{container_image}}")
-    sm_jobs_yaml_content = extract_sm_jobs_yaml_content(launch_json_path, recipe_name)
-    override_params = launch_data.get("recipe_override_parameters", {})
-
+    # sm_jobs artifacts from sm_jobs launch.json
+    sm_jobs_yaml_content = extract_sm_jobs_yaml_content(artifacts.sm_jobs_launch_json_path, artifacts.recipe_name)
     s3_keys = {
-        "k8s_yaml": f"recipes/{recipe_name}_payload_template_k8s_{version}.yaml",
-        "k8s_json": f"recipes/{recipe_name}_override_params_k8s_{version}.json",
-        "sm_jobs_yaml": f"recipes/{recipe_name}_payload_template_sm_jobs_{version}.yaml",
-        "sm_jobs_json": f"recipes/{recipe_name}_override_params_sm_jobs_{version}.json",
+        "k8s_yaml": f"recipes/{artifacts.recipe_name}_payload_template_k8s_{s3_config.version}.yaml",
+        "k8s_json": f"recipes/{artifacts.recipe_name}_override_params_k8s_{s3_config.version}.json",
+        "sm_jobs_yaml": f"recipes/{artifacts.recipe_name}_payload_template_sm_jobs_{s3_config.version}.yaml",
+        "sm_jobs_json": f"recipes/{artifacts.recipe_name}_override_params_sm_jobs_{s3_config.version}.json",
     }
 
-    s3_client = boto3.client("s3", region_name=region)
+    s3_client = boto3.client("s3", region_name=s3_config.region)
     s3_uris = {}
 
     # Upload k8s artifacts
-    upload_yaml_to_s3(s3_client, k8s_yaml_content, s3_bucket, s3_keys["k8s_yaml"])
-    upload_json_to_s3(s3_client, override_params, s3_bucket, s3_keys["k8s_json"])
+    upload_yaml_to_s3(s3_client, k8s_yaml_content, s3_config.s3_bucket, s3_keys["k8s_yaml"])
+    upload_json_to_s3(s3_client, override_params, s3_config.s3_bucket, s3_keys["k8s_json"])
 
     # Upload sm_jobs artifacts
-    upload_yaml_to_s3(s3_client, sm_jobs_yaml_content, s3_bucket, s3_keys["sm_jobs_yaml"])
-    upload_json_to_s3(s3_client, override_params, s3_bucket, s3_keys["sm_jobs_json"])
+    upload_yaml_to_s3(s3_client, sm_jobs_yaml_content, s3_config.s3_bucket, s3_keys["sm_jobs_yaml"])
+    upload_json_to_s3(s3_client, override_params, s3_config.s3_bucket, s3_keys["sm_jobs_json"])
 
     # Generate S3 URIs
     for key_name, s3_key in s3_keys.items():
-        s3_uris[key_name] = f"s3://{s3_bucket}/{s3_key}"
+        s3_uris[key_name] = f"s3://{s3_config.s3_bucket}/{s3_key}"
 
-    print(f"Uploaded artifacts for recipe={recipe_name} to S3")
+    print(f"Uploaded artifacts for recipe={artifacts.recipe_name} to S3")
     return s3_uris
 
 
@@ -265,6 +247,7 @@ def extract_yaml_content(launch_data):
 
 
 def extract_sm_jobs_yaml_content(launch_json_path, recipe_name):
+    """Extract SM Jobs YAML content from launch.json directory"""
     recipe_dir = os.path.dirname(launch_json_path)
 
     print(f"Searching *_hydra.yaml under {recipe_dir}")
@@ -289,7 +272,7 @@ def upload_json_to_s3(s3_client, data, bucket, key):
     s3_client.put_object(Bucket=bucket, Key=key, Body=content.encode("utf-8"), Tagging="SageMaker=True")
 
 
-def process_recipe_metadata(launch_json_path, s3_uris, region):
+def process_recipe_metadata(launch_json_path, s3_uris, region, endpoint):
     """Use launch.json to create recipe collection metadata"""
     with open(launch_json_path, "r") as f:
         launch_data = json.load(f)
@@ -316,7 +299,7 @@ def process_recipe_metadata(launch_json_path, s3_uris, region):
         "SmtjRecipeTemplateS3Uri": s3_uris["sm_jobs_yaml"],
         "SmtjOverrideParamsS3Uri": s3_uris["sm_jobs_json"],
         # Add regional ECR URI
-        "SmtjImageUri": get_regional_ecr_uri(launch_data, region),
+        "SmtjImageUri": get_regional_ecr_uri(launch_data, region, endpoint),
     }
 
     if metadata.get("Peft"):
@@ -325,12 +308,68 @@ def process_recipe_metadata(launch_json_path, s3_uris, region):
     return recipe_entry
 
 
-def get_regional_ecr_uri(launch_data, region):
+def process_eval_recipe_metadata(
+    launch_json_path: str, s3_uris: dict, model_id: str, eval_type: str, region: str, endpoint: str
+):
+    """Create RecipeCollection entry for eval recipe."""
+    with open(launch_json_path, "r") as f:
+        launch_data = json.load(f)
+
+    metadata = launch_data.get("metadata", {})
+
+    # Determine eval type specific values
+    if eval_type == "deterministic":
+        eval_type_name = "DeterministicEvaluation"
+        hardware = "GPU"
+        # Get instance types from evaluation_regional_parameters.json
+        instance_types = metadata.get("InstanceTypes", ["ml.g5.16xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge"])
+    else:  # llmaj
+        eval_type_name = "LLMAJEvaluation"
+        hardware = "CPU"
+        instance_types = ["ml.t3.large"]
+
+    # Format model_id for recipe name (replace hyphens with underscores)
+    model_id_formatted = model_id.replace("-", "_")
+    recipe_name = f"open-source-eval-{model_id}-{eval_type}"
+    display_name = f"Open Source Evaluation Evaluation on {hardware} - {metadata.get('DisplayName', model_id.replace('-', ' ').title())}"
+
+    recipe_entry = {
+        "DisplayName": display_name,
+        "Name": recipe_name,
+        "Type": "Evaluation",
+        "Versions": ["1.0"],
+        "Hardware": hardware,
+        "SupportedInstanceTypes": instance_types,
+        "EvaluationType": eval_type_name,
+        "HpEksPayloadTemplateS3Uri": s3_uris["k8s_yaml"],
+        "HpEksOverrideParamsS3Uri": s3_uris["k8s_json"],
+        "SmtjRecipeTemplateS3Uri": s3_uris["sm_jobs_yaml"],
+        "SmtjOverrideParamsS3Uri": s3_uris["sm_jobs_json"],
+        "SmtjImageUri": get_eval_regional_ecr_uri(eval_type, region, endpoint),
+    }
+
+    return recipe_entry
+
+
+def get_regional_ecr_uri(launch_data, region, endpoint):
     """Extract regional ECR URI from launch data"""
     regional_params = launch_data.get("regional_parameters", {})
     ecr_uris = regional_params.get("smtj_regional_ecr_uri", {})
-    prod_uris = ecr_uris.get("prod", {})
+    prod_uris = ecr_uris.get(endpoint, {})
     return prod_uris.get(region)
+
+
+def get_eval_regional_ecr_uri(eval_type: str, region: str, endpoint: str):
+    """Get ECR URI for eval container from evaluation_regional_parameters.json."""
+    eval_params_path = Path("launcher/recipe_templatization/evaluation/evaluation_regional_parameters.json")
+    with open(eval_params_path) as f:
+        eval_data = json.load(f)
+
+    recipe_name = f"open_source_{eval_type}_eval"
+    container_mapping = eval_data.get("recipe_container_mapping", {}).get(recipe_name, {})
+    smtj_images = container_mapping.get("smtj_container_image", {})
+
+    return smtj_images.get("prod", {}).get(region)
 
 
 def create_new_recipecollection(exported_json_path):
@@ -362,7 +401,7 @@ def update_exported_json(exported_json_path, new_recipe_entries, model_id, versi
     print(f"Updated {exported_json_path} with {len(new_recipe_entries)} new recipes")
 
 
-def export_hub_content(model_id, region, output_dir, endpoint):
+def export_hub_content(hub_name, model_id, region, output, output_dir, endpoint):
     export_script_path = os.path.join("scripts", "model_hub", "export_hub_content.py")
     abs_export_script_path = os.path.abspath(export_script_path)
 
@@ -371,11 +410,13 @@ def export_hub_content(model_id, region, output_dir, endpoint):
         "python3",
         abs_export_script_path,
         "--hub-name",
-        "SageMakerPublicHub",
+        hub_name,
         "--content-name",
         model_id,
         "--region",
         region,
+        "--output",
+        output,
         "--endpoint",
         endpoint,
     ]
@@ -385,18 +426,37 @@ def export_hub_content(model_id, region, output_dir, endpoint):
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=output_dir)
 
-        export_filename = f"{model_id}_export.json"
+        export_filename = output
         export_path = os.path.join(output_dir, export_filename)
 
         if os.path.exists(export_path):
             print(f"Exported hub content to: {export_path}")
             return export_path
         else:
-            print(f"Export file {export_filename} not found in {output_dir}")
+            print(f"\n{'='*60}")
+            print(f"WARNING: Export file not found")
+            print(f"{'='*60}")
+            print(f"Expected file: {export_filename}")
+            print(f"Expected path: {export_path}")
+            print(f"Working directory: {output_dir}")
+            if result.stdout:
+                print(f"\n--- STDOUT ---")
+                print(result.stdout)
+            print(f"{'='*60}\n")
             return None
 
     except subprocess.CalledProcessError as e:
-        print(f"Failed to export hub content for {model_id}: {e.stderr}")
+        print(f"\n{'='*60}")
+        print(f"ERROR: Failed to export hub content for {model_id}")
+        print(f"{'='*60}")
+        print(f"Exit code: {e.returncode}")
+        if e.stdout:
+            print(f"\n--- STDOUT ---")
+            print(e.stdout)
+        if e.stderr:
+            print(f"\n--- STDERR ---")
+            print(e.stderr)
+        print(f"{'='*60}\n")
         return None
 
 
@@ -420,16 +480,38 @@ def import_hub_content(exported_json_path, private_hub_name, region, endpoint):
     print(f"Target hub: {private_hub_name}")
     print(f"Command: {' '.join(cmd)}")
 
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-    if result.returncode != 0:
-        print(f"Failed to import hub content due to: {result.stderr}")
-        return False
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print(f"Successfully imported hub content to {private_hub_name}")
+        print(f"Output: {result.stdout}")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"\n{'='*60}")
+        print(f"ERROR: Failed to import hub content for {exported_json_path}")
+        print(f"{'='*60}")
+        print(f"Exit code: {e.returncode}")
+        if e.stdout:
+            print(f"\n--- STDOUT ---")
+            print(e.stdout)
+        if e.stderr:
+            print(f"\n--- STDERR ---")
+            print(e.stderr)
+        print(f"{'='*60}\n")
+        raise  # Re-raise to stop execution or remove this line to continue with other imports
 
-    print(f"Successfully imported hub content to {private_hub_name}")
 
-    print(f"Output: {result.stdout}")
+def get_version_from_export(exported_json_path):
+    """Extract HubContentVersion from exported JSON file"""
+    with open(exported_json_path, "r") as f:
+        hub_content = json.load(f)
+    return hub_content.get("HubContentVersion", "1.0.0")
 
-    return True
+
+def bump_version(version_string):
+    """Bump the patch version (e.g., '2.36.0' -> '2.36.2')"""
+    parts = version_string.split(".")
+    parts[-1] = str(int(parts[-1]) + 1)
+    return ".".join(parts)
 
 
 def main():
@@ -451,6 +533,8 @@ def main():
 
     recipe_metadata_by_model = {}
 
+    version_by_model = {}
+
     results = {
         "exported_models": {},
         "generated_launch_jsons": {},
@@ -468,9 +552,28 @@ def main():
 
         # Get hub content from JumpStart's hub
         if model_id not in processed_models:
-            exported_json_path = export_hub_content(model_id, args.region, args.output_dir, args.endpoint)
+            js_output_file_name = f"{model_id}_export.json"
+            exported_json_path = export_hub_content(
+                "SageMakerPublicHub", model_id, args.region, js_output_file_name, args.output_dir, args.endpoint
+            )
             if exported_json_path:
                 results["exported_models"][model_id] = exported_json_path
+
+                # Get current version and bump it
+                private_output_file_name = f"{model_id}_private_export.json"
+                private_hub_json_path = export_hub_content(
+                    args.hub_name, model_id, args.region, private_output_file_name, args.output_dir, args.endpoint
+                )
+
+                if private_hub_json_path is None:  # new model into the private hub
+                    bumped_version = "1.0.0"
+                else:
+                    current_version = get_version_from_export(private_hub_json_path)
+                    bumped_version = bump_version(current_version)
+
+                version_by_model[model_id] = bumped_version
+                print(f"Version for {model_id}: {bumped_version}")
+
                 if create_new_recipecollection(exported_json_path):
                     print(f"Prepared {model_id} for new recipe collection")
                 else:
@@ -478,28 +581,79 @@ def main():
 
                 processed_models.add(model_id)
 
-        # Generate launch.jsons
-        launch_json_path = generate_launch_json(recipe_file, recipe_name, args.output_dir)
-        if launch_json_path:
-            results["generated_launch_jsons"][recipe_name] = launch_json_path
+        # Generate launch.jsons for both k8s and sm_jobs using LaunchJsonGenerator
+        k8s_launch_json_path = generate_launch_json(recipe_file, recipe_name, args.output_dir, job_type="k8s")
+        sm_jobs_launch_json_path = generate_launch_json(recipe_file, recipe_name, args.output_dir, job_type="sm_jobs")
+        if k8s_launch_json_path is None or sm_jobs_launch_json_path is None:
+            print(f"Skipping {recipe_name} - launch.json generation failed or not supported")
+            continue
 
-            s3_uris = upload_artifacts_to_s3(launch_json_path, recipe_name, args.s3_bucket, args.region, args.version)
-            results["uploaded_artifacts"][recipe_name] = s3_uris
+        results["generated_launch_jsons"][recipe_name] = {
+            "k8s": k8s_launch_json_path,
+            "sm_jobs": sm_jobs_launch_json_path,
+        }
 
-            recipe_metadata = process_recipe_metadata(launch_json_path, s3_uris, args.region)
-            results["recipe_metadata"][recipe_name] = recipe_metadata
+        artifacts = RecipeArtifactPaths(k8s_launch_json_path, sm_jobs_launch_json_path, recipe_name)
+        s3_config = S3UploadConfig(args.s3_bucket, args.region, version_by_model[model_id])
+        s3_uris = upload_artifacts_to_s3(artifacts, s3_config)
+        results["uploaded_artifacts"][recipe_name] = s3_uris
 
-            if model_id not in recipe_metadata_by_model:
-                recipe_metadata_by_model[model_id] = []
-            recipe_metadata_by_model[model_id].append(recipe_metadata)
+        recipe_metadata = process_recipe_metadata(sm_jobs_launch_json_path, s3_uris, args.region, args.endpoint)
+        results["recipe_metadata"][recipe_name] = recipe_metadata
+
+        if model_id not in recipe_metadata_by_model:
+            recipe_metadata_by_model[model_id] = []
+        recipe_metadata_by_model[model_id].append(recipe_metadata)
+
+    # process eval recipes
+    if args.eval:
+        eval_types = ["deterministic", "llmaj"]
+
+        for model_id in processed_models:
+            print(f"\n===== Processing eval recipes for model: {model_id} =====")
+
+            for eval_type in eval_types:
+                eval_recipe_path = get_eval_recipe_path(eval_type)
+                if not eval_recipe_path:
+                    print(f"Unknown eval type: {eval_type}, skipping")
+                    continue
+
+                recipe_name = f"open-source-eval-{model_id}-{eval_type}"
+
+                # Generate both k8s and sm_jobs launch.jsons for eval recipes
+                k8s_launch_json_path = generate_launch_json(
+                    eval_recipe_path, recipe_name, args.output_dir, model_name=model_id, job_type="k8s"
+                )
+                sm_jobs_launch_json_path = generate_launch_json(
+                    eval_recipe_path, recipe_name, args.output_dir, model_name=model_id, job_type="sm_jobs"
+                )
+
+                if k8s_launch_json_path is None or sm_jobs_launch_json_path is None:
+                    print(f"Skipping {recipe_name} - launch.json generation failed")
+                    continue
+
+                results["generated_launch_jsons"][recipe_name] = {
+                    "k8s": k8s_launch_json_path,
+                    "sm_jobs": sm_jobs_launch_json_path,
+                }
+
+                artifacts = RecipeArtifactPaths(k8s_launch_json_path, sm_jobs_launch_json_path, recipe_name)
+                s3_config = S3UploadConfig(args.s3_bucket, args.region, version_by_model[model_id])
+                s3_uris = upload_artifacts_to_s3(artifacts, s3_config)
+                results["uploaded_artifacts"][recipe_name] = s3_uris
+
+                eval_recipe_metadata = process_eval_recipe_metadata(
+                    sm_jobs_launch_json_path, s3_uris, model_id, eval_type, args.region, args.endpoint
+                )
+                results["recipe_metadata"][recipe_name] = eval_recipe_metadata
+
+                recipe_metadata_by_model[model_id].append(eval_recipe_metadata)
 
     # Update exported hub content with recipe metadata from launch.jsons
-    print("TEST")
     for model_id, recipe_entries in recipe_metadata_by_model.items():
         if model_id in results["exported_models"]:
             exported_json_path = results["exported_models"][model_id]
-            update_exported_json(exported_json_path, recipe_entries, model_id, args.version)
-            print(f"Updated {model_id} with {len(recipe_entries)} recipe entries")
+            update_exported_json(exported_json_path, recipe_entries, model_id, version_by_model[model_id])
 
     # Import exported hub content to private hub
     for model_id in recipe_metadata_by_model:

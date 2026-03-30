@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hp-recipe-validator-sleeper
+  labels:
+    app: hp-recipe-validator-sleeper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hp-recipe-validator-sleeper
+  template:
+    metadata:
+      labels:
+        app: hp-recipe-validator-sleeper
+    spec:
+      containers:
+        - name: sleeper
+          image: public.ecr.aws/amazonlinux/amazonlinux:latest
+          command: ["/bin/sh", "-c", "while true; do sleep 3600; done"]
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: fsx-volume
+              mountPath: /data
+      volumes:
+        - name: fsx-volume
+          persistentVolumeClaim:
+            claimName: fsx-claim
+      nodeSelector:
+        kubernetes.io/os: linux
+      restartPolicy: Always

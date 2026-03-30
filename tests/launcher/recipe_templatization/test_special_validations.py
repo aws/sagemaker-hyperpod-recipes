@@ -22,9 +22,13 @@ from pathlib import Path
 from typing import List, Tuple
 
 import pytest
-from omegaconf import OmegaConf
+
+from utils.recipe_utils import load_recipe_with_hydra
 
 logger = logging.getLogger(__name__)
+
+# Path to recipes_collection directory
+RECIPES_COLLECTION_DIR = Path.cwd() / "recipes_collection"
 
 
 def find_all_ppo_mini_batch_sizes(config_dict, path="") -> List[Tuple[int, str]]:
@@ -93,13 +97,10 @@ class TestVerlBatchSizeConstraints:
         Args:
             recipe_path: Path to the VERL recipe file
         """
-        # Load recipe with OmegaConf - don't resolve interpolations like ${base_results_dir}
-        # since they require parent config context that we don't have in unit tests
-        recipe_cfg = OmegaConf.load(recipe_path)
-
-        # Convert to dict WITHOUT resolving interpolations
-        # This preserves the structure we need (batch sizes) while allowing unresolved interpolations
-        recipe_dict = OmegaConf.to_container(recipe_cfg, resolve=False, throw_on_missing=False)
+        # Load recipe with Hydra composition to resolve all defaults
+        # This is required because VERL recipes define train_batch_size in Hydra config files
+        # (e.g., /hydra_config/verl/data/default.yaml) rather than directly in the recipe
+        recipe_dict = load_recipe_with_hydra(recipe_path, return_dict=True)
 
         # Find all ppo_mini_batch_size values
         ppo_mini_batch_sizes = find_all_ppo_mini_batch_sizes(recipe_dict)

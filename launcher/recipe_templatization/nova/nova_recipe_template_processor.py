@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     """Nova-specific recipe template processor for both fine-tuning and evaluation."""
 
+    framework_type = "nova"
+
     def __init__(
         self,
         staging_cfg: dict,
@@ -121,7 +123,10 @@ class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
 
         # Fetch regional parameters for the specific recipe only
         recipe_name = recipe_metadata.get("Name")
-        regional_parameters = self._get_regional_parameters(recipe_name) if recipe_name else {}
+        serverless_sku_templates = self._build_serverless_sku_template(recipe_metadata)
+        regional_parameters = (
+            self._get_regional_parameters(recipe_name, serverless_sku_templates) if recipe_name else {}
+        )
 
         return [recipe_metadata, resolved_override_parameters, regional_parameters]
 

@@ -11,7 +11,10 @@ from typing import Optional
 import yaml
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
+from utils.recipe_utils import load_recipe_with_hydra
+
 from ..nemo.constants import ROOT_DIR
+from .process_special_override_parameters import SpecialOverrideParametersProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +26,9 @@ class ServerlessMeteringType(Enum):
 
 class BaseRecipeTemplateProcessor(ABC):
     """Abstract base class for recipe template processors."""
+
+    # Framework type for special parameter processing. Subclasses should override this.
+    framework_type: str = "default"
 
     def __init__(self, staging_cfg: dict):
         self.staging_cfg = staging_cfg
@@ -154,7 +160,7 @@ class BaseRecipeTemplateProcessor(ABC):
 
         # Fetch regional parameters for the specific recipe only
         recipe_name = recipe_metadata.get("Name")
-        regional_parameters = self._get_regional_parameters(recipe_name) if recipe_name else {}
+        regional_parameters = self._get_regional_parameters(recipe_name, recipe_metadata) if recipe_name else {}
 
         return [recipe_metadata, resolved_override_parameters, regional_parameters]
 
@@ -170,7 +176,7 @@ class BaseRecipeTemplateProcessor(ABC):
             return False
 
         try:
-            regional_parameters = self._get_regional_parameters(recipe_name)
+            regional_parameters = self._get_regional_parameters(recipe_name, recipe_metadata)
             if regional_parameters == {}:
                 logging.error(
                     "No regional parameters found, skipping container availability check and launch json generation"
@@ -198,7 +204,7 @@ class BaseRecipeTemplateProcessor(ABC):
         return True
 
     # Fetches the regional parameters from *_regional_parameters.json for a given platform and recipe_name
-    def _get_regional_parameters(self, recipe_name: str) -> dict:
+    def _get_regional_parameters(self, recipe_name: str, recipe_metadata: dict) -> dict:
         """Get regional parameters for the given recipe name."""
 
         regional_parameters = {}
@@ -236,6 +242,16 @@ class BaseRecipeTemplateProcessor(ABC):
         for regional_parameter in regional_parameter_option.get("sm_jobs", {}):
             if regional_parameter == "container_image":
                 regional_parameters["smtj_regional_ecr_uri"] = regional_parameter_option["sm_jobs"][regional_parameter]
+            elif regional_parameter == "serverless_sku":
+                serverless_sku_templates = self._build_serverless_sku_template(recipe_metadata)
+                sku_prefixes = regional_parameter_option["sm_jobs"][regional_parameter]
+                for sku_key, sku_template in serverless_sku_templates.items():
+                    resolved_sku = {}
+                    for stage, regions in sku_prefixes.items():
+                        resolved_sku[stage] = {}
+                        for region, prefix in regions.items():
+                            resolved_sku[stage][region] = f"{prefix}-{sku_template}"
+                    regional_parameters[sku_key] = resolved_sku
             else:
                 regional_parameters[regional_parameter] = regional_parameter_option["sm_jobs"][regional_parameter]
         # Add the common regional parameters for sm_jobs
@@ -245,6 +261,24 @@ class BaseRecipeTemplateProcessor(ABC):
             ]
 
         return regional_parameters
+
+    def _build_serverless_sku_template(self, metadata: dict) -> dict:
+        """Build the ServerlessSKU template from metadata fields."""
+        recipe_type = metadata.get("Type", "")
+        model_id = metadata.get("Model_ID", "")
+
+        if recipe_type == "FineTuning":
+            technique = metadata.get("CustomizationTechnique", "")
+            peft = "LORA" if metadata.get("Peft") else "FULLRANK"
+            return {"serverless_sku": f"ServerlessTraining:FineTuning-{technique}-{peft}-{model_id}"}
+
+        elif recipe_type == "Evaluation":
+            return {
+                "serverless_sku_input": f"ServerlessTraining:Evaluation-Input-{model_id}",
+                "serverless_sku_output": f"ServerlessTraining:Evaluation-Output-{model_id}",
+            }
+
+        return {}
 
     def extract_sequence_length(self, recipe_name: str) -> Optional[str]:
         """Extract sequence length from recipe name."""
@@ -320,7 +354,15 @@ class BaseRecipeTemplateProcessor(ABC):
     #
     # Why do we need conditional constraints? Helps us use a single template for multiple recipe files with overlapping recipe contents
     def _resolve_constraints_using_metadata(self, metadata: dict) -> dict:
-        """Resolve conditional constraints using already generated metadata."""
+        """Resolve conditional constraints using already generated metadata.
+
+        For each parameter:
+        - If it has conditional_constraints: resolve using metadata
+        - Else if it's a special param (global_batch_size, rollout): use dynamic computation
+
+        This ensures params with explicit constraints use those constraints,
+        while params without constraints get dynamic computation based on their default values.
+        """
         if not self.recipe_override_parameters:
             return {}
 
@@ -329,42 +371,59 @@ class BaseRecipeTemplateProcessor(ABC):
 
         logger.info(f"Resolving constraints using metadata: {metadata}")
 
-        # Process each parameter that has conditional_constraints
+        # Initialize special params processor for params without conditional_constraints
+        special_params_processor = SpecialOverrideParametersProcessor(framework=self.framework_type)
+        special_param_names = set(special_params_processor.params_config.keys())
+
+        # Process each parameter - route to appropriate handler
         for param_name, param_config in resolved_parameters.items():
             if "conditional_constraints" in param_config:
-                conditional_constraints = param_config["conditional_constraints"]
-
-                # for condition_key, constraint_map in conditional_constraints.items():
-                for params_to_be_changed, constraint_map in conditional_constraints.items():
-                    if len(constraint_map) > 1:
-                        raise ValueError(
-                            f"Multiple constraints found for {param_name} : {params_to_be_changed}. Only one constraint is allowed."
-                        )
-                    condition_key, resolver_map = next(iter(constraint_map.items()))
-                    if condition_key not in metadata:
-                        raise KeyError(f"Condition key {condition_key} not found in metadata")
-
-                    resolved_values = None
-
-                    condition_value = metadata[condition_key]
-
-                    # Look for exact match first, then fall back to "default"
-                    for constraint in resolver_map:
-                        if constraint in condition_value:
-                            resolved_values = resolver_map[constraint]
-                            break
-
-                    if not resolved_values:
-                        resolved_values = resolver_map["default"]
-
-                    # Resolve the constraints
-                    param_config[params_to_be_changed] = resolved_values
-
-                # Cleanup the conditional constraints section from the override_parameters
-                del param_config["conditional_constraints"]
+                # Route 1: Has conditional_constraints - resolve using metadata
+                self._resolve_conditional_constraints(param_name, param_config, metadata)
+            elif param_name in special_param_names:
+                # Route 2: Special param without conditional_constraints - use dynamic computation
+                special_params_processor.process_single_param(param_name, param_config)
 
         logging.info("Constraints resolved")
         return resolved_parameters
+
+    def _resolve_conditional_constraints(self, param_name: str, param_config: dict, metadata: dict) -> None:
+        """Resolve conditional constraints for a single parameter using metadata.
+
+        Args:
+            param_name: Name of the parameter
+            param_config: Parameter configuration dict (modified in place)
+            metadata: Recipe metadata dict
+        """
+        conditional_constraints = param_config["conditional_constraints"]
+
+        for params_to_be_changed, constraint_map in conditional_constraints.items():
+            if len(constraint_map) > 1:
+                raise ValueError(
+                    f"Multiple constraints found for {param_name} : {params_to_be_changed}. Only one constraint is allowed."
+                )
+            condition_key, resolver_map = next(iter(constraint_map.items()))
+            if condition_key not in metadata:
+                raise KeyError(f"Condition key {condition_key} not found in metadata")
+
+            resolved_values = None
+
+            condition_value = metadata[condition_key]
+
+            # Look for exact match first, then fall back to "default"
+            for constraint in resolver_map:
+                if constraint in condition_value:
+                    resolved_values = resolver_map[constraint]
+                    break
+
+            if not resolved_values:
+                resolved_values = resolver_map["default"]
+
+            # Resolve the constraints
+            param_config[params_to_be_changed] = resolved_values
+
+        # Cleanup the conditional constraints section from the override_parameters
+        del param_config["conditional_constraints"]
 
     def get_recipe_name_from_path(self, recipe_file_path: str) -> str:
         """
@@ -410,3 +469,6 @@ class BaseRecipeTemplateProcessor(ABC):
             logging.info(f"No hosting config found for recipe: {recipe_name}")
 
         return hosting_configs
+
+    def _load_recipe_config(self, recipe_file_path: str):
+        return load_recipe_with_hydra(recipe_file_path)

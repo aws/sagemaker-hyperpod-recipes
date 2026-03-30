@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "aws-hp-launcher"
-version = "0.1.0"
+name = "amzn-sagemaker-hyperpod-recipes-staging"
+version = "1.0"
 description = "AWS HyperPod Launcher for distributed training"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -38,6 +38,7 @@ dependencies = [
     "pytest-xdist",
     "pytest-cov",
     "pytest-subtests",
+    "pathspec",
 ]
 
 [project.urls]
@@ -48,7 +49,7 @@ Repository = "https://github.com/aws/sagemaker-hyperpod-recipes"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["launcher"]
+packages = ["launcher", "utils"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "launcher/nemo/nemo_framework_launcher/launcher_scripts/nemo_launcher" = "nemo_launcher"
@@ -60,12 +61,46 @@ minversion = 7.0
 addopts = [
     "--cache-clear",
     "--quiet",
-    "--durations=0",
+    # Uncomment this line to see durations
+    # "--durations=0",
     "-n=auto",
     "--cov=launcher/",
     "--cov=hyperpod_recipes/",
+    "--cov=auto_configurator/",
     # uncomment this line to see a detailed HTML test coverage report instead of the usual summary table output to stdout.
     # "--cov-report=html"
 ]
 testpaths = ["tests"]
 norecursedirs = [".eggs", ".pytest_cache", "*.egg-info", ".git", "build"]
+
+# ---- Peru/Hatch build infrastructure (for publishing wheel to WIRE) ----
+
+[tool.hatch.build]
+directory = "./build"
+
+[tool.hatch.envs.default]
+python = "3.12"
+lock-filename = "requirements/requirements-default.txt"
+
+[tool.hatch.envs.default.scripts]
+# release is a no-op: tests run via existing CI, peru-hatch handles build+publish
+release = ["echo 'Skipping tests - handled by existing CI'"]
+update = ["hatch-pip-compile --upgrade --all"]
+
+[tool.hatch.envs.build-tools]
+python = "3.12"
+detached = true
+skip-install = true
+dependencies = [
+  "hatch",
+  "hatch-pip-compile",
+]
+
+[tool.hatch.env]
+requires = ["hatch-pip-compile"]
+
+[tool.hatch.env.collectors.custom]
+path = ".hatch/hatch_plugin.py"
+disable_lockfile_update_on_build_fleet = true
+
+[tool.uv.workspace]

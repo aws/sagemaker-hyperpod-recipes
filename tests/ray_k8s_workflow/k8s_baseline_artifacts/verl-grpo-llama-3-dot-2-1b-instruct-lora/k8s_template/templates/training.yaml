@@ -7,7 +7,44 @@ spec:
   shutdownAfterJobFinishes: {{ .Values.gc.shutdownAfterJobFinishes | default true }}
   ttlSecondsAfterFinished: {{ .Values.gc.ttlSecondsAfterFinished | default 600 }}
 
-  # Verl driver: use container entrypoint directly
+  # Ensure submitter is a K8s Job so we can schedule it
+  submissionMode: K8sJobMode
+  submitterPodTemplate:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ .Values.trainingConfig.serviceAccountName | default "default" }}
+      {{- if .Values.trainingConfig.cpuInstanceTypes }}
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: node.kubernetes.io/instance-type
+                    operator: In
+                    values:
+                      {{- range .Values.trainingConfig.cpuInstanceTypes }}
+                      - {{ . | quote }}
+                      {{- end }}
+      {{- end }}
+      containers:
+        - name: ray-job-submitter
+          image: {{ .Values.image.trainingImage | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+          resources:
+            requests:
+              cpu: {{ .Values.rayCluster.jobSubmitter.cpu | quote }}
+              memory: {{ .Values.rayCluster.jobSubmitter.memory | quote }}
+            {{- if or .Values.rayCluster.jobSubmitter.cpuLimit .Values.rayCluster.jobSubmitter.memoryLimit }}
+            limits:
+              {{- if .Values.rayCluster.jobSubmitter.cpuLimit }}
+              cpu: {{ .Values.rayCluster.jobSubmitter.cpuLimit | quote }}
+              {{- end }}
+              {{- if .Values.rayCluster.jobSubmitter.memoryLimit }}
+              memory: {{ .Values.rayCluster.jobSubmitter.memoryLimit | quote }}
+              {{- end }}
+            {{- end }}
+
   entrypoint: >-
     python -u -m verl.trainer.main_ppo --config-path /config --config-name verl_config
 
@@ -19,12 +56,20 @@ spec:
         dashboard-host: "0.0.0.0"
         dashboard-port: "8265"
       template:
+        metadata:
+          labels:
+            ray-job-name: {{ .Values.trainingConfig.jobName | quote }}
+            ray-role: "head"
+            ray-co-locate: "true"
         spec:
           serviceAccountName: {{ .Values.trainingConfig.serviceAccountName | default "default" }}
-          {{- if .Values.trainingConfig.instanceType }}
+
+          # head must be scheduled onto GPU worker instance type nodes, to have workers scheduled on the same node
+          {{- if .Values.trainingConfig.workerInstanceType }}
           nodeSelector:
-            node.kubernetes.io/instance-type: {{ .Values.trainingConfig.instanceType }}
+            node.kubernetes.io/instance-type: {{ .Values.trainingConfig.workerInstanceType | quote }}
           {{- end }}
+
           containers:
           - name: ray-head
             image: {{ .Values.image.trainingImage | quote }}
@@ -70,6 +115,7 @@ spec:
                 nvidia.com/gpu: {{ $gpucnt | quote }}
                 {{- end }}
               {{- end }}
+
           volumes:
           - name: training-config
             configMap:
@@ -90,12 +136,42 @@ spec:
       replicas: {{ .Values.rayCluster.workerNodes.replicas }}
       rayStartParams: {}
       template:
+        metadata:
+          labels:
+            ray-job-name: {{ .Values.trainingConfig.jobName | quote }}
+            ray-role: "worker"
+            ray-co-locate: "true"
         spec:
           serviceAccountName: {{ .Values.trainingConfig.serviceAccountName | default "default" }}
-          {{- if .Values.trainingConfig.instanceType }}
+
+          # Keep existing behavior: pin workers to GPU instance type
+          {{- if .Values.trainingConfig.workerInstanceType }}
           nodeSelector:
-            node.kubernetes.io/instance-type: {{ .Values.trainingConfig.instanceType }}
+            node.kubernetes.io/instance-type: {{ .Values.trainingConfig.workerInstanceType | quote }}
           {{- end }}
+
+          # workers tries to be on the same node as worker pod
+          affinity:
+            podAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  podAffinityTerm:
+                    topologyKey: kubernetes.io/hostname
+                    labelSelector:
+                      matchExpressions:
+                        - key: ray-job-name
+                          operator: In
+                          values:
+                            - {{ .Values.trainingConfig.jobName | quote }}
+                        - key: ray-role
+                          operator: In
+                          values:
+                            - "head"
+                        - key: ray-co-locate
+                          operator: In
+                          values:
+                            - "true"
+
           containers:
           - name: ray-worker
             image: {{ .Values.image.trainingImage | quote }}
@@ -132,6 +208,7 @@ spec:
                 nvidia.com/gpu: {{ $gpucnt | quote }}
                 {{- end }}
               {{- end }}
+
           volumes:
           {{- if .Values.trainingConfig.persistentVolumeClaims }}
           {{- range .Values.trainingConfig.persistentVolumeClaims }}

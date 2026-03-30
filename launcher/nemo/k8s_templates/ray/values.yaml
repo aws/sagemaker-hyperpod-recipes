@@ -76,6 +76,12 @@ trainingConfig:
     token: null
     update_adapter: false
 
+  # CPU instance types for head node and job submitter (smaller instances)
+  cpuInstanceTypes: null
+
+  # Worker instance type (can be GPU instances)
+  workerInstanceType: null
+
 rlConfig:
   # VERL training type: "ppo" or "grpo"
   trainingType: "ppo"
@@ -86,12 +92,21 @@ rayCluster:
   rayVersion: "2.46.0"
   logging:
     level: "INFO"
+
+  # Job submitter configuration
+  jobSubmitter:
+    cpu: "1"
+    memory: "2Gi"
+    cpuLimit: "2"
+    memoryLimit: "4Gi"
+
   headNode:
-    cpu: "16"
-    memory: "32Gi"
+    cpu: "4"
+    memory: "16Gi"
     cpuLimit: null
     memoryLimit: null
-    gpu: "1"
+    gpu: "0"
+
   workerNodes:
     replicas: 2
     cpu: "16"

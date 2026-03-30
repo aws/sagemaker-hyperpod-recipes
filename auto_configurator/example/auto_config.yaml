@@ -1,0 +1,20 @@
+name: llama_3_1_8b_autoconfig
+
+platform: "K8"
+
+# path from inside recipes_collection/recipes/
+recipe: "fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_sft_fft.yaml"
+
+autotune_config:
+  sequence_lengths: auto
+
+  instance_type_list:     # FIXME - this needs to support auto, not currently functional
+    - "ml.p5.48xlarge"
+
+  llmft:
+    train_batch_size: auto
+    gradient_checkpointing: auto
+    sharding_strategy: auto
+    cpu_offload: auto
+  verl:
+    # FIXME

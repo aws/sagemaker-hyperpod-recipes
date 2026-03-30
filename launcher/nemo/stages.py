@@ -27,6 +27,9 @@ from hydra.core.hydra_config import HydraConfig
 from nemo_launcher.core.stages import Training, _hydra_interpolation
 from nemo_launcher.utils.job_utils import JobPaths
 from omegaconf import OmegaConf, open_dict
+from pydantic import ValidationError
+
+from utils.template_utils import remove_quotes_from_numeric_params
 
 from ..accelerator_devices import get_num_accelerator_devices
 from ..efa import (
@@ -36,6 +39,10 @@ from ..efa import (
 )
 from ..recipe_templatization.checkpointless.checkpointless_recipe_template_processor import (
     CheckpointlessRecipeTemplateProcessor,
+)
+from ..recipe_templatization.launch_json_validation import (
+    LaunchJsonSchema,
+    get_launch_type,
 )
 from ..recipe_templatization.llmft.llmft_recipe_template_processor import (
     LLMFTRecipeTemplateProcessor,
@@ -362,7 +369,7 @@ class SMTraining(Training):
                 transformers_upgrade_cmd = "pip install transformers==4.55.0"
                 post_launch_commands.append(transformers_upgrade_cmd)
 
-        launch_docker_container_text.append(f'  "{image}" sleep infinity')
+        launch_docker_container_text.append(f'  --entrypoint /bin/bash "{image}" -c "sleep infinity"')
         launch_docker_container_text.append("")
 
         # Allow containers to talk to each other
@@ -545,8 +552,26 @@ class SMTraining(Training):
         full_recipe_path = Path(job_folder) / "recipe.yaml"
         OmegaConf.save(config=self.cfg.get("training"), f=full_recipe_path)
         sm_jobs_config_path = Path(job_folder) / "sm_jobs_config.yaml"
-        OmegaConf.save(config=self.cfg.cluster.get("sm_jobs_config"), f=sm_jobs_config_path)
-        script_src = Path(ROOT_DIR) / "template" / "sm_jobs.py"
+        sm_jobs_config = self.cfg.cluster.get("sm_jobs_config")
+
+        if not sm_jobs_config:
+            raise ValueError("sm_jobs_config is required for sm_jobs cluster type")
+
+        OmegaConf.save(config=sm_jobs_config, f=sm_jobs_config_path)
+
+        # Choose template based on pysdk_launch_executor (estimator or model_trainer)
+        pysdk_launch_executor = sm_jobs_config.get("pysdk_launch_executor")
+        if pysdk_launch_executor not in ("estimator", "model_trainer"):
+            raise ValueError(
+                f"Invalid pysdk_launch_executor '{pysdk_launch_executor}'. Valid values: 'estimator', 'model_trainer'"
+            )
+
+        if pysdk_launch_executor == "model_trainer":
+            script_src = Path(ROOT_DIR) / "template" / "sm_jobs_model_trainer.py"
+            logger.info("Using ModelTrainer API for SM Jobs")
+        else:
+            script_src = Path(ROOT_DIR) / "template" / "sm_jobs_estimator.py"
+            logger.info("Using PyTorch Estimator API for SM Jobs")
         script_dst = Path(job_folder) / "launch.py"
 
         # Generate VERL config file if this is a Ray job
@@ -585,14 +610,12 @@ class SMTraining(Training):
     def make_smtj_launch_json(self, job_folder, recipe_template_processor, stage_cfg_path, recipe_file_path):
         """
         Create launch.json file containing the argument values for creating
-        a SageMaker PyTorch estimator.
+        a SageMaker PyTorch estimator, with Pydantic v2 validation.
         """
         sm_jobs_config = OmegaConf.load(Path(job_folder) / "sm_jobs_config.yaml")
 
-        # Convert overrides / additional kwargs
         additional_estimator_kwargs = sm_jobs_config.get("additional_estimator_kwargs", {})
 
-        # Read the YAML file and convert it to a properly formatted YAML string
         with open(stage_cfg_path, "r") as f:
             recipe_yaml_content = f.read()
 
@@ -600,11 +623,11 @@ class SMTraining(Training):
             "training_recipe.yaml": recipe_yaml_content,
             "output_path": sm_jobs_config.get("output_path"),
             "launch_overrides": sm_jobs_config.get("recipe_overrides"),
-            **additional_estimator_kwargs,
+            **additional_estimator_kwargs,  # e.g. instance_count, volume_size, max_run
         }
+
         additional_data = recipe_template_processor.get_additional_data(recipe_file_path)
 
-        # Check if container is available for this platform
         if additional_data is None:
             logger.error("Recipe templatization failed because additional_data was returned as None")
             return
@@ -615,9 +638,9 @@ class SMTraining(Training):
             launch_json["regional_parameters"],
         ) = additional_data
 
-        # Fields to drop for smtj
-        override_params_to_be_deleted_in_smtj = ["instance_type", "namespace", "instance_count", "replicas"]
-        for key in override_params_to_be_deleted_in_smtj:
+        # Drop SMTJ-irrelevant override parameters
+        override_params_to_delete = ["instance_type", "namespace", "instance_count", "replicas"]
+        for key in override_params_to_delete:
             if key in launch_json["recipe_override_parameters"]:
                 del launch_json["recipe_override_parameters"][key]
 
@@ -625,15 +648,57 @@ class SMTraining(Training):
         if tensorboard_config:
             launch_json["tensorboard_config"] = OmegaConf.to_container(tensorboard_config, resolve=True)
 
+        # ── Pydantic v2 validation ────────────────────────────────────────────────
+        try:
+            launch_type = get_launch_type(recipe_template_processor, "sm_jobs")
+            validated_launch_json = LaunchJsonSchema(
+                launch_type=launch_type,
+                metadata=launch_json["metadata"],
+                recipe_override_parameters=launch_json["recipe_override_parameters"],
+                regional_parameters=launch_json["regional_parameters"],
+                **{"training_recipe.yaml": recipe_yaml_content},  # dotted key can't be a kwarg directly
+                output_path=sm_jobs_config.get("output_path"),
+                launch_overrides=sm_jobs_config.get("recipe_overrides"),
+                tensorboard_config=launch_json["tensorboard_config"],
+                **additional_estimator_kwargs,
+            )
+
+            # by_alias=True preserves dotted keys like "training_recipe.yaml"
+            validated_dict = validated_launch_json.model_dump(
+                mode="json",
+                exclude_unset=True,
+                by_alias=True,
+            )
+
+            logger.info("SMTJ launch JSON validation successful")
+
+        except ValidationError as e:
+            logger.error(f"SMTJ launch JSON not valid: {e}")
+            for error in e.errors():
+                logger.error(f"  Field: {error['loc']}, Error: {error['msg']}")
+            raise RuntimeError(
+                f"SMTJ launch.json structure not valid."
+                f"Check the recipe configuration and ensure all required fields are present. "
+                f"Validation errors: {e}"
+            )
+
         launch_json_path = Path(job_folder) / "launch.json"
         with open(launch_json_path, "w") as f:
-            json.dump(launch_json, f, indent=2, sort_keys=True)
+            json.dump(validated_dict, f, indent=2, sort_keys=True)
             f.write("\n")
+
+        logger.info(f"SMTJ launch.json created at {launch_json_path}")
 
     def run(self) -> str:
         """
         Run current stage
         """
+        # Block VERL recipes on slurm - not currently supported
+        model_type = OmegaConf.select(self.cfg, "recipes.run.model_type", default=None)
+        cluster_type = self.get_cluster_type() if hasattr(self, "get_cluster_type") else self.cluster
+        if model_type == "verl" and cluster_type in ("slurm", "bcm"):
+            raise ValueError("VERL recipes are not supported on Slurm clusters.")
+
         # Setup folders and datasets
         self.setup_folder_and_data()
         # Save stage hydra config
@@ -743,6 +808,12 @@ class SMTraining(Training):
             cluster=self.cluster,
             **cluster_parameters,
         )
+
+        # Check for dry_run before launching
+        if self.cfg.get("dry_run", False):
+            logger.info(f"[DRY_RUN] Artifacts generated at: {job_path.folder}")
+            logger.info("[DRY_RUN] Skipping job launch.")
+            return ""
         job_id = launcher.launch(command_groups=command_groups)
 
         if self.cluster == "bcm":
@@ -874,7 +945,7 @@ class SMTraining(Training):
         if cluster_parameters.get("service_account_name") is not None:
             values_template.trainingConfig.serviceAccountName = cluster_parameters["service_account_name"]
         if cluster_parameters.get("custom_labels", None) is not None:
-            values_template.trainingConfig.customLabels = literal_eval(cluster_parameters["custom_labels"])
+            values_template.trainingConfig.customLabels = cluster_parameters["custom_labels"]
         if cluster_parameters.get("label_selector", None) is not None:
             values_template.trainingConfig.labelSelector = cluster_parameters["label_selector"]
         if cluster_parameters.get("queue_name", None) is not None:
@@ -967,20 +1038,45 @@ class SMTraining(Training):
                     if ray_cfg.worker_nodes.get(key):
                         setattr(values_template.rayCluster.workerNodes, key, str(ray_cfg.worker_nodes[key]))
 
-        if (
-            not hasattr(values_template.trainingConfig, "instanceType")
-            or values_template.trainingConfig.instanceType is None
-        ):
-            instance_type = self.cfg.get("instance_type")
-            if instance_type is None:
-                instance_type = self.cfg.cluster.instance_type
+        # Handle instance types separately for job submitter vs head/workers
+        # Get the instance type from recipe/config
+        instance_type = self.cfg.get("instance_type")
+        if instance_type is None:
+            instance_type = self.cfg.cluster.instance_type
 
-            if instance_type and not instance_type.startswith("ml."):
-                instance_type = f"ml.{instance_type}"
+        if instance_type and not instance_type.startswith("ml."):
+            instance_type = f"ml.{instance_type}"
 
-            values_template.trainingConfig.instanceType = instance_type
-        elif not values_template.trainingConfig.instanceType.startswith("ml."):
-            values_template.trainingConfig.instanceType = f"ml.{values_template.trainingConfig.instanceType}"
+        # Set worker instance type (GPU instances from recipe)
+        values_template.trainingConfig.workerInstanceType = instance_type
+
+        # Set CPU instance types for head and job submitter
+        # Check if user has specified CPU instance types in cluster config
+        cpu_instance_type = OmegaConf.select(self.cfg, "cluster.cpu_instance_type")
+        if cpu_instance_type:
+            # Ensure cpu_instance_type is always a list
+            if isinstance(cpu_instance_type, str):
+                values_template.trainingConfig.cpuInstanceTypes = [cpu_instance_type]
+            else:
+                values_template.trainingConfig.cpuInstanceTypes = cpu_instance_type
+        else:
+            # Use default CPU instance types for head/job submitter
+            values_template.trainingConfig.cpuInstanceTypes = [
+                # Compute optimized
+                "ml.c5.large",
+                "ml.c5.xlarge",
+                "ml.c5.2xlarge",
+                "ml.c5.4xlarge",
+                # General purpose
+                "ml.m5.large",
+                "ml.m5.xlarge",
+                "ml.m5.2xlarge",
+                "ml.m5.4xlarge",
+                # Memory optimized
+                "ml.r5.large",
+                "ml.r5.xlarge",
+                "ml.r5.2xlarge",
+            ]
 
         # Note: Verl Config file will be written in write_value_template method
 
@@ -1108,6 +1204,7 @@ class SMTraining(Training):
         render_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info("chart_path: " + str(templates_path))
+
         # Run helm template and capture output
         cmd = [
             "helm",
@@ -1119,11 +1216,22 @@ class SMTraining(Training):
         ]
         subprocess.run(cmd, check=True)
 
+        # Get override spec from template processor for quote removal
+        additional_data = recipe_template_processor.get_additional_data(recipe_file_path)
+        override_spec = {}
+        if additional_data:
+            _, recipe_override_parameters, _ = additional_data
+            override_spec = recipe_override_parameters if recipe_override_parameters else {}
+
         # Walk rendered files and dump into JSON
         launch_json = {}
         for path in sorted(render_dir.rglob("*.yaml"), key=lambda p: p.name):
             content = path.read_text()
 
+            # Remove quotes from numeric parameters in YAML
+            content = remove_quotes_from_numeric_params(content, override_spec)
+
+            # Replace following references in content
             # Replace following references in content. String replace is followed here instead of templatization because
             # for these values the helm rendering process fails if we have templates
             job_name_with_hyphens = self.job_name.replace("_", "-")
@@ -1169,16 +1277,18 @@ class SMTraining(Training):
                 content = content.replace('- "PLACEHOLDER_INSTANCE_TYPE"', '- "{{instance_type}}"')
 
             launch_json[path.name] = content
-            launch_json["training-config.yaml"] = launch_json["training-config.yaml"].replace(
-                f"training-config-{self.job_name}", "training-config-{{name}}"
-            )
 
-        # following train scripts are moved inside the container. Removing them from launch_json
+        launch_json["training-config.yaml"] = launch_json["training-config.yaml"].replace(
+            f"training-config-{self.job_name}", "training-config-{{name}}"
+        )
+
+        # Remove train scripts that are moved inside container
         if "train-script-gpu.yaml" in launch_json:
             del launch_json["train-script-gpu.yaml"]
         if "train-script-trn.yaml" in launch_json:
             del launch_json["train-script-trn.yaml"]
 
+        # Get additional data from recipe processor
         additional_data = recipe_template_processor.get_additional_data(recipe_file_path)
 
         # Check if container is available for this platform
@@ -1186,11 +1296,12 @@ class SMTraining(Training):
             logger.error("Recipe templatization failed because additional_data was returned as None")
             return
 
-        (
-            launch_json["metadata"],
-            launch_json["recipe_override_parameters"],
-            launch_json["regional_parameters"],
-        ) = additional_data
+        metadata_dict, recipe_override_params, regional_params = additional_data
+
+        # Build structured data for validation
+        launch_json["metadata"] = metadata_dict
+        launch_json["recipe_override_parameters"] = recipe_override_params
+        launch_json["regional_parameters"] = regional_params
 
         # Exclude instance_type overridable for verl templates
         # ToDo: Cleanup conditionals like this
@@ -1202,9 +1313,41 @@ class SMTraining(Training):
                 "default": launch_json["metadata"]["InstanceTypes"][0],
             }
 
+        # Validate with Pydantic v2
+        try:
+            launch_type = get_launch_type(recipe_template_processor, self.cluster)
+
+            validated_launch_json = LaunchJsonSchema(
+                launch_type=launch_type,
+                metadata=launch_json["metadata"],
+                recipe_override_parameters=launch_json["recipe_override_parameters"],
+                regional_parameters=launch_json["regional_parameters"],
+                **{
+                    k: v
+                    for k, v in launch_json.items()
+                    if k not in ("metadata", "recipe_override_parameters", "regional_parameters")
+                },  # Helm-rendered *.yaml files — dotted/hyphenated keys can't be kwargs directly
+            )
+            # Convert back to dict for JSON serialization
+            validated_dict = validated_launch_json.model_dump(mode="json", exclude_unset=True)
+
+            logger.info("Launch JSON validation successful")
+
+        except ValidationError as e:
+            logger.error(f"K8s launch JSON not valid: {e}")
+            # Log detailed validation errors
+            for error in e.errors():
+                logger.error(f"  Field: {error['loc']}, Error: {error['msg']}")
+            raise RuntimeError(
+                f"K8s launch.json structure not valid."
+                f"Check the recipe configuration and ensure all required fields are present. "
+                f"Validation errors: {e}"
+            )
+
+        # Write validated JSON to file
         launch_path = templates_path / "launch.json"
         with open(launch_path, "w") as f:
-            json.dump(launch_json, f, indent=2, sort_keys=True)
+            json.dump(validated_dict, f, indent=2, sort_keys=True)
             f.write("\n")
 
         logger.info(f"Helm templates dumped into {launch_path}")

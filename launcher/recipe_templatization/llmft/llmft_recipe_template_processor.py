@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 import json
 from collections import OrderedDict
-from pathlib import Path
 from typing import Optional
 
-from hydra import compose, initialize_config_dir
-from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
 
 from ..base_recipe_template_processor import (
@@ -16,6 +13,8 @@ from ..base_recipe_template_processor import (
 
 class LLMFTRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     """LLMFT-specific recipe template processor."""
+
+    framework_type = "llmft"
 
     def __init__(
         self,
@@ -208,21 +207,6 @@ class LLMFTRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         metadata["InstanceCount"] = recipe_cfg["trainer"]["num_nodes"]
 
         return metadata
-
-    def _load_recipe_config(self, recipe_file_path: str):
-        recipes_collection_dir = Path("./recipes_collection").absolute()
-        hydra_config_searchpath = recipes_collection_dir / "recipes" / "fine-tuning"
-
-        GlobalHydra.instance().clear()
-
-        with initialize_config_dir(version_base=None, config_dir=str(recipes_collection_dir)):
-            searchpath_override = f"hydra.searchpath=[file://{hydra_config_searchpath}]"
-            recipe_override = f"recipes={recipe_file_path}"
-            cfg = compose(config_name="config", overrides=[searchpath_override, recipe_override])
-
-            if "recipes" in cfg and cfg.recipes is not None:
-                return cfg.recipes
-            return cfg
 
     def _extract_peft_type_from_config(self, recipe_cfg) -> Optional[str]:
         """Extract peft type name from recipe configuration."""
