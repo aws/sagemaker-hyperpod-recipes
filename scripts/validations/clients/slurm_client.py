@@ -81,10 +81,11 @@ class SlurmClient:
         self._setup_workdir()
 
     def launch_job(self, command: List[str], timeout_in_min: int = 60):
+        venv_python = f"{self.controller_work_dir}/venv/bin/python3"
+        cmd_str = " ".join(command).replace("python3 ", f"{venv_python} ")
         command = [
             f"cd {self.controller_work_dir}",
-            "source venv/bin/activate",
-            " ".join(command),
+            cmd_str,
         ]
         return self.run(command, timeout_in_min)
 

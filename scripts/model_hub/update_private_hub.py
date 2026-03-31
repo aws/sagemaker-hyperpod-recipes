@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import boto3
@@ -156,63 +157,83 @@ def get_eval_recipe_path(eval_type: str) -> str:
     return eval_recipe_mapping.get(eval_type)
 
 
-def generate_launch_json(recipe_file, recipe_name, output_dir, model_name=None):
-    """Generate launch.json for a recipe using sm_jobs job type."""
+def generate_launch_json(recipe_file, recipe_name, output_dir, model_name=None, job_type="sm_jobs"):
+    """Generate launch.json for a recipe using the specified job type."""
     generator = LaunchJsonGenerator(working_dir=Path.cwd())
     recipe_path = Path(recipe_file).resolve()
 
-    print(f"Generating launch.json for {recipe_name} (sm_jobs)...")
+    print(f"Generating launch.json for {recipe_name} ({job_type})...")
 
     launch_json_path, status = generator.generate_launch_json(
         recipe_path=recipe_path,
-        job_type="sm_jobs",
+        job_type=job_type,
         output_dir=output_dir,
         model_name=model_name,
     )
 
     if status == "success":
-        print(f"  ✓ Generated: {launch_json_path}")
+        print(f"  ✓ Generated ({job_type}): {launch_json_path}")
         return str(launch_json_path)
     elif status == "skipped":
-        print(f"  ⊘ Skipped: Recipe not supported on sm_jobs")
+        print(f"  ⊘ Skipped: Recipe not supported on {job_type}")
         return None
     else:
-        print(f"  ✗ Failed: {status}")
+        print(f"  ✗ Failed ({job_type}): {status}")
         return None
 
 
-def upload_artifacts_to_s3(launch_json_path, recipe_name, s3_bucket, region, version):
-    """Upload recipe artifacts to S3 and return S3 URIs"""
-    with open(launch_json_path, "r") as f:
-        launch_data = json.load(f)
+@dataclass
+class RecipeArtifactPaths:
+    """Paths to the generated launch.json artifacts for a recipe."""
 
-    yaml_content = extract_yaml_content(launch_data)
-    k8s_yaml_content = yaml_content.replace("test_container", "{{container_image}}")
-    sm_jobs_yaml_content = extract_sm_jobs_yaml_content(launch_json_path, recipe_name)
-    override_params = launch_data.get("recipe_override_parameters", {})
+    k8s_launch_json_path: str
+    sm_jobs_launch_json_path: str
+    recipe_name: str
+
+
+@dataclass
+class S3UploadConfig:
+    """Configuration for uploading artifacts to S3."""
+
+    s3_bucket: str
+    region: str
+    version: str
+
+
+def upload_artifacts_to_s3(artifacts: RecipeArtifactPaths, s3_config: S3UploadConfig):
+    """Upload recipe artifacts to S3 and return S3 URIs."""
+    # k8s artifacts from k8s launch.json
+    with open(artifacts.k8s_launch_json_path, "r") as f:
+        k8s_launch_data = json.load(f)
+    k8s_yaml_content = extract_yaml_content(k8s_launch_data)
+    k8s_yaml_content = k8s_yaml_content.replace("test_container", "{{container_image}}")
+    override_params = k8s_launch_data.get("recipe_override_parameters", {})
+
+    # sm_jobs artifacts from sm_jobs launch.json
+    sm_jobs_yaml_content = extract_sm_jobs_yaml_content(artifacts.sm_jobs_launch_json_path, artifacts.recipe_name)
     s3_keys = {
-        "k8s_yaml": f"recipes/{recipe_name}_payload_template_k8s_{version}.yaml",
-        "k8s_json": f"recipes/{recipe_name}_override_params_k8s_{version}.json",
-        "sm_jobs_yaml": f"recipes/{recipe_name}_payload_template_sm_jobs_{version}.yaml",
-        "sm_jobs_json": f"recipes/{recipe_name}_override_params_sm_jobs_{version}.json",
+        "k8s_yaml": f"recipes/{artifacts.recipe_name}_payload_template_k8s_{s3_config.version}.yaml",
+        "k8s_json": f"recipes/{artifacts.recipe_name}_override_params_k8s_{s3_config.version}.json",
+        "sm_jobs_yaml": f"recipes/{artifacts.recipe_name}_payload_template_sm_jobs_{s3_config.version}.yaml",
+        "sm_jobs_json": f"recipes/{artifacts.recipe_name}_override_params_sm_jobs_{s3_config.version}.json",
     }
 
-    s3_client = boto3.client("s3", region_name=region)
+    s3_client = boto3.client("s3", region_name=s3_config.region)
     s3_uris = {}
 
     # Upload k8s artifacts
-    upload_yaml_to_s3(s3_client, k8s_yaml_content, s3_bucket, s3_keys["k8s_yaml"])
-    upload_json_to_s3(s3_client, override_params, s3_bucket, s3_keys["k8s_json"])
+    upload_yaml_to_s3(s3_client, k8s_yaml_content, s3_config.s3_bucket, s3_keys["k8s_yaml"])
+    upload_json_to_s3(s3_client, override_params, s3_config.s3_bucket, s3_keys["k8s_json"])
 
     # Upload sm_jobs artifacts
-    upload_yaml_to_s3(s3_client, sm_jobs_yaml_content, s3_bucket, s3_keys["sm_jobs_yaml"])
-    upload_json_to_s3(s3_client, override_params, s3_bucket, s3_keys["sm_jobs_json"])
+    upload_yaml_to_s3(s3_client, sm_jobs_yaml_content, s3_config.s3_bucket, s3_keys["sm_jobs_yaml"])
+    upload_json_to_s3(s3_client, override_params, s3_config.s3_bucket, s3_keys["sm_jobs_json"])
 
     # Generate S3 URIs
     for key_name, s3_key in s3_keys.items():
-        s3_uris[key_name] = f"s3://{s3_bucket}/{s3_key}"
+        s3_uris[key_name] = f"s3://{s3_config.s3_bucket}/{s3_key}"
 
-    print(f"Uploaded artifacts for recipe={recipe_name} to S3")
+    print(f"Uploaded artifacts for recipe={artifacts.recipe_name} to S3")
     return s3_uris
 
 
@@ -560,20 +581,24 @@ def main():
 
                 processed_models.add(model_id)
 
-        # Generate launch.jsons using LaunchJsonGenerator
-        launch_json_path = generate_launch_json(recipe_file, recipe_name, args.output_dir)
-        if launch_json_path is None:
+        # Generate launch.jsons for both k8s and sm_jobs using LaunchJsonGenerator
+        k8s_launch_json_path = generate_launch_json(recipe_file, recipe_name, args.output_dir, job_type="k8s")
+        sm_jobs_launch_json_path = generate_launch_json(recipe_file, recipe_name, args.output_dir, job_type="sm_jobs")
+        if k8s_launch_json_path is None or sm_jobs_launch_json_path is None:
             print(f"Skipping {recipe_name} - launch.json generation failed or not supported")
             continue
 
-        results["generated_launch_jsons"][recipe_name] = launch_json_path
+        results["generated_launch_jsons"][recipe_name] = {
+            "k8s": k8s_launch_json_path,
+            "sm_jobs": sm_jobs_launch_json_path,
+        }
 
-        s3_uris = upload_artifacts_to_s3(
-            launch_json_path, recipe_name, args.s3_bucket, args.region, version_by_model[model_id]
-        )
+        artifacts = RecipeArtifactPaths(k8s_launch_json_path, sm_jobs_launch_json_path, recipe_name)
+        s3_config = S3UploadConfig(args.s3_bucket, args.region, version_by_model[model_id])
+        s3_uris = upload_artifacts_to_s3(artifacts, s3_config)
         results["uploaded_artifacts"][recipe_name] = s3_uris
 
-        recipe_metadata = process_recipe_metadata(launch_json_path, s3_uris, args.region, args.endpoint)
+        recipe_metadata = process_recipe_metadata(sm_jobs_launch_json_path, s3_uris, args.region, args.endpoint)
         results["recipe_metadata"][recipe_name] = recipe_metadata
 
         if model_id not in recipe_metadata_by_model:
@@ -595,24 +620,30 @@ def main():
 
                 recipe_name = f"open-source-eval-{model_id}-{eval_type}"
 
-                # Use existing generate_launch_json with model_name
-                launch_json_path = generate_launch_json(
-                    eval_recipe_path, recipe_name, args.output_dir, model_name=model_id
+                # Generate both k8s and sm_jobs launch.jsons for eval recipes
+                k8s_launch_json_path = generate_launch_json(
+                    eval_recipe_path, recipe_name, args.output_dir, model_name=model_id, job_type="k8s"
+                )
+                sm_jobs_launch_json_path = generate_launch_json(
+                    eval_recipe_path, recipe_name, args.output_dir, model_name=model_id, job_type="sm_jobs"
                 )
 
-                if launch_json_path is None:
+                if k8s_launch_json_path is None or sm_jobs_launch_json_path is None:
                     print(f"Skipping {recipe_name} - launch.json generation failed")
                     continue
 
-                results["generated_launch_jsons"][recipe_name] = launch_json_path
+                results["generated_launch_jsons"][recipe_name] = {
+                    "k8s": k8s_launch_json_path,
+                    "sm_jobs": sm_jobs_launch_json_path,
+                }
 
-                s3_uris = upload_artifacts_to_s3(
-                    launch_json_path, recipe_name, args.s3_bucket, args.region, version_by_model[model_id]
-                )
+                artifacts = RecipeArtifactPaths(k8s_launch_json_path, sm_jobs_launch_json_path, recipe_name)
+                s3_config = S3UploadConfig(args.s3_bucket, args.region, version_by_model[model_id])
+                s3_uris = upload_artifacts_to_s3(artifacts, s3_config)
                 results["uploaded_artifacts"][recipe_name] = s3_uris
 
                 eval_recipe_metadata = process_eval_recipe_metadata(
-                    launch_json_path, s3_uris, model_id, eval_type, args.region, args.endpoint
+                    sm_jobs_launch_json_path, s3_uris, model_id, eval_type, args.region, args.endpoint
                 )
                 results["recipe_metadata"][recipe_name] = eval_recipe_metadata
 

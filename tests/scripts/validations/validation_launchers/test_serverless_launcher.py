@@ -38,12 +38,11 @@ class TestHubContentOverride(unittest.TestCase):
         self.job_recorder = Mock()
 
     @patch("boto3.Session")
-    @patch("boto3.client")
     @patch("scripts.validations.validation_launchers.serverless_launcher.get_recipes_folder")
     @patch("scripts.validations.validation_launchers.serverless_launcher.JUMPSTART_MODEL_ID_MAP_PATH")
     @patch("builtins.open")
     def test_override_hub_content_always_updates(
-        self, mock_open, mock_map_path, mock_recipes_folder, mock_boto_client, mock_boto_session
+        self, mock_open, mock_map_path, mock_recipes_folder, mock_boto_session
     ):
         """Test that override always pushes local config to hub, even when images already match"""
         mock_recipes_folder.return_value = "/fake/path"
@@ -54,9 +53,9 @@ class TestHubContentOverride(unittest.TestCase):
             {"llama-3-1-8b-instruct": "meta-textgeneration-llama-3-1-8b-instruct"}
         )
 
-        # Mock SageMaker client
+        # Mock SageMaker client via boto_session (used by self.boto_session.client)
         mock_sagemaker = Mock()
-        mock_boto_client.return_value = mock_sagemaker
+        mock_boto_session.return_value.client.return_value = mock_sagemaker
 
         # Hub already has the SAME image (matching config)
         hub_doc = {
@@ -81,12 +80,11 @@ class TestHubContentOverride(unittest.TestCase):
         mock_sagemaker.import_hub_content.assert_called_once()
 
     @patch("boto3.Session")
-    @patch("boto3.client")
     @patch("scripts.validations.validation_launchers.serverless_launcher.get_recipes_folder")
     @patch("scripts.validations.validation_launchers.serverless_launcher.JUMPSTART_MODEL_ID_MAP_PATH")
     @patch("builtins.open")
     def test_override_hub_content_updates_mismatched_image(
-        self, mock_open, mock_map_path, mock_recipes_folder, mock_boto_client, mock_boto_session
+        self, mock_open, mock_map_path, mock_recipes_folder, mock_boto_session
     ):
         """Test that override updates hub content when images differ"""
         mock_recipes_folder.return_value = "/fake/path"
@@ -97,9 +95,9 @@ class TestHubContentOverride(unittest.TestCase):
             {"llama-3-1-8b-instruct": "meta-textgeneration-llama-3-1-8b-instruct"}
         )
 
-        # Mock SageMaker client
+        # Mock SageMaker client via boto_session (used by self.boto_session.client)
         mock_sagemaker = Mock()
-        mock_boto_client.return_value = mock_sagemaker
+        mock_boto_session.return_value.client.return_value = mock_sagemaker
 
         # Hub has an OLD image (mismatched)
         hub_doc = {"RecipeCollection": [{"CustomizationTechnique": "SFT", "SmtjImageUri": "old-image:v1.0.0"}]}
