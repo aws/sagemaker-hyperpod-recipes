@@ -1,6 +1,6 @@
 display_name: "HyperPod Checkpointless Training GPT OSS 120B LoRA on GPU, 2K sequence length"
 version: "1.0.0"
-instance_types: ["ml.p5.48xlarge", "ml.p5e.48xlarge", "ml.p5en.48xlarge"]
+instance_types: ["ml.p5.48xlarge", "ml.p5e.48xlarge"]
 
 run:
   name: openai-gpt-oss-120b
