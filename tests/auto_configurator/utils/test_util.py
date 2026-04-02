@@ -182,3 +182,13 @@ class TestGetSequenceLengthRange:
         result = get_sequence_length_range(auto_config)
 
         assert result == [4096, 8192]
+
+    def test_returns_single_value_as_list(self):
+        from unittest.mock import MagicMock
+
+        auto_config = MagicMock()
+        auto_config.autotune_config.get.return_value = 8192
+
+        result = get_sequence_length_range(auto_config)
+
+        assert result == [8192]

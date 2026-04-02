@@ -75,7 +75,7 @@ class TestOptimizeCandidate:
             mock_open.return_value.__enter__.return_value.readlines.return_value = ["log line 1"]
 
             best_candidate, best_metric, recipe_path = optimize_candidate(
-                mock_optimizer, mock_evaluator, mock_job_runner, candidate
+                mock_optimizer, mock_evaluator, mock_job_runner, candidate, tried_configs=set()
             )
 
             assert best_metric == 500.0
@@ -91,7 +91,7 @@ class TestOptimizeCandidate:
             mock_open.return_value.__enter__.return_value.readlines.return_value = ["log line 1"]
 
             best_candidate, best_metric, recipe_path = optimize_candidate(
-                mock_optimizer, mock_evaluator, mock_job_runner, candidate
+                mock_optimizer, mock_evaluator, mock_job_runner, candidate, tried_configs=set()
             )
 
             assert best_metric == 450.0
@@ -109,7 +109,7 @@ class TestOptimizeCandidate:
             mock_open.return_value.__enter__.return_value.readlines.return_value = ["log line 1"]
 
             best_candidate, best_metric, recipe_path = optimize_candidate(
-                mock_optimizer, mock_evaluator, mock_job_runner, candidate
+                mock_optimizer, mock_evaluator, mock_job_runner, candidate, tried_configs=set()
             )
 
             assert best_metric == 500.0
@@ -121,19 +121,38 @@ class TestOptimizeCandidate:
         """Test that optimization stops immediately on RUN_ERROR"""
         candidate = {"batch_size": 32}
         mock_evaluator.evaluate.return_value = (0, ErrorCode.RUN_ERROR)
+        mock_optimizer.tune_candidate.return_value = ({"batch_size": 16}, False)  # should_retry=False
 
         with patch("builtins.open", create=True) as mock_open:
             mock_open.return_value.__enter__.return_value.readlines.return_value = ["log line 1"]
 
             best_candidate, best_metric, recipe_path = optimize_candidate(
-                mock_optimizer, mock_evaluator, mock_job_runner, candidate
+                mock_optimizer, mock_evaluator, mock_job_runner, candidate, tried_configs=set()
             )
 
-            # Should stop immediately without retrying
+            # Should stop after tune_candidate returns should_retry=False
             assert mock_job_runner.launch.call_count == 1
             assert best_metric == 0
-            # tune_candidate should not be called for RUN_ERROR
-            mock_optimizer.tune_candidate.assert_not_called()
+            # tune_candidate should be called once
+            mock_optimizer.tune_candidate.assert_called_once()
+
+    def test_optimization_stops_on_duplicate_config(self, mock_optimizer, mock_evaluator, mock_job_runner):
+        """Test that optimization stops when trying a duplicate configuration"""
+        candidate = {"batch_size": 32}
+        mock_evaluator.evaluate.side_effect = [(0, ErrorCode.OOM), (450.0, ErrorCode.NO_ISSUE)]
+        # tune_candidate returns the same config, which should be detected as duplicate
+        mock_optimizer.tune_candidate.return_value = ({"batch_size": 32}, True)
+
+        with patch("builtins.open", create=True) as mock_open:
+            mock_open.return_value.__enter__.return_value.readlines.return_value = ["log line 1"]
+
+            best_candidate, best_metric, recipe_path = optimize_candidate(
+                mock_optimizer, mock_evaluator, mock_job_runner, candidate, tried_configs=set()
+            )
+
+            # Should run once, then detect duplicate and stop
+            assert mock_job_runner.launch.call_count == 1
+            assert best_metric == 0
 
 
 class TestFindBestCandidate:
@@ -257,7 +276,7 @@ class TestMainIntegration:
         mock_select.return_value = (mock_optimizer_cls, mock_evaluator_cls)
 
         mock_runner = MagicMock()
-        mock_runner.base_recipe_cfg = OmegaConf.create({})
+        mock_runner.base_recipe = OmegaConf.create({})
         mock_runner_cls.return_value = mock_runner
 
         mock_process.return_value = "/tmp/config.yaml"
@@ -291,7 +310,7 @@ class TestMainIntegration:
         mock_select.return_value = (mock_optimizer_cls, mock_evaluator_cls)
 
         mock_runner = MagicMock()
-        mock_runner.base_recipe_cfg = OmegaConf.create({})
+        mock_runner.base_recipe = OmegaConf.create({})
         mock_runner_cls.return_value = mock_runner
 
         mock_process.return_value = "/tmp/config.yaml"
@@ -323,7 +342,7 @@ class TestMainIntegration:
         mock_select.return_value = (mock_optimizer_cls, mock_evaluator_cls)
 
         mock_runner = MagicMock()
-        mock_runner.base_recipe_cfg = OmegaConf.create({})
+        mock_runner.base_recipe = OmegaConf.create({})
         mock_runner_cls.return_value = mock_runner
 
         mock_process.side_effect = [Exception("Test error"), "/tmp/config.yaml"]

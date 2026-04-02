@@ -36,8 +36,17 @@ _ROOT_DIR = _SCRIPT_DIR.parent.parent
 sys.path.insert(0, str(_ROOT_DIR))
 
 from hyperpod_recipes import list_recipes
+from hyperpod_recipes.recipe import RECIPES_DIR
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "recipes_collection" / "recipes"
+
+# Recipes under these paths are self-contained YAMLs without Hydra composition.
+# They are directly copied to preserve comments.
+DIRECT_COPY_PATHS = [
+    Path(RECIPES_DIR) / "training" / "nova",
+    Path(RECIPES_DIR) / "fine-tuning" / "nova",
+    Path(RECIPES_DIR) / "evaluation" / "nova",
+]
 
 
 class ResolvedRecipeError(Exception):
@@ -51,6 +60,11 @@ def list_resolved_files() -> set[Path]:
             continue
         resolved.add(item)
     return resolved
+
+
+def _is_direct_copy_recipe(recipe) -> bool:
+    """Check if a recipe should be directly copied instead of Hydra-resolved."""
+    return any(recipe.path.startswith(str(p)) for p in DIRECT_COPY_PATHS)
 
 
 def generate_resolved_recipes(write=False):
@@ -68,7 +82,13 @@ def generate_resolved_recipes(write=False):
         output_path = OUTPUT_DIR / f"{recipe.name}.yaml"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         checked_files.add(output_path)
-        expected_content = OmegaConf.to_yaml(recipe.config, sort_keys=True)
+
+        if _is_direct_copy_recipe(recipe):
+            # Nova recipes are self-contained YAMLs without Hydra composition.
+            # Copy directly to preserve comments.
+            expected_content = Path(recipe.path).read_text()
+        else:
+            expected_content = OmegaConf.to_yaml(recipe.config, sort_keys=True)
 
         if write:
             print(f"Writing recipe {output_path}")

@@ -31,7 +31,7 @@ class BaseOptimizer(ABC):
         """
 
     @abstractmethod
-    def tune_candidate(self, candidate: dict, error_code) -> tuple[dict, bool]:
+    def tune_candidate(self, candidate: dict, error_code, tried_configs: set | None = None) -> tuple[dict, bool]:
         """
         Adjust candidate based on error code.
         Returns (adjusted_candidate, should_retry)
@@ -121,7 +121,7 @@ class BaseOptimizer(ABC):
         # Get all parameter values to iterate over
         param_values = []
         for param in tunable_params:
-            if param == "train_batch_size":
+            if param == "micro_train_batch_size":
                 continue  # batch size is computed, not iterated
             values = param_ranges.get(param, [])
             if not isinstance(values, list):
@@ -133,12 +133,10 @@ class BaseOptimizer(ABC):
         for combo in product(*[vals for _, vals in param_values]):
             candidate_params = dict(zip([p for p, _ in param_values], combo))
             candidate_params["max_len"] = max_len
-            candidate_params["train_batch_size"] = self._find_batch_size(candidate_params)
-            if candidate_params["train_batch_size"] == 0:
+            train_batch_size = self._find_batch_size(candidate_params)
+            if train_batch_size == 0:
                 continue
-
-            # Allow subclasses to adjust candidate before validation
-            self._adjust_candidate(candidate_params)
+            candidate_params["micro_train_batch_size"] = train_batch_size
 
             # Validate after batch size is set
             if not self._is_valid_candidate(candidate_params):
@@ -150,29 +148,24 @@ class BaseOptimizer(ABC):
         self.logger.info(f"Generated candidates for max_len {max_len}: {prettify(candidates)}")
         return candidates
 
-    def _adjust_candidate(self, candidate: dict) -> None:
-        """Hook for subclasses to adjust candidate after all candidate is configured
-
-        Override this method to modify candidate parameters before validation.
-        Default implementation does nothing.
-        """
-
     def _find_batch_size(self, candidate: dict) -> int:
-        """Find largest batch size that's multiple of 2 that will fit in memory given candidate"""
+        """Find largest micro batch size that fits in GPU memory.
 
-        train_batch_size = 2
+        Starts from the max valid value (train_batch_size // num_gpus) and halves
+        until estimated memory fits. Returns 1 for borderline fits, 0 if impossible.
+        """
+        num_gpus = self.cfg.trainer.num_nodes * self.cfg.trainer.devices
+        train_batch_size = candidate.get("train_batch_size", self.cfg.training_config.training_args.train_batch_size)
+        micro_train_batch_size = max(1, train_batch_size // num_gpus)
 
-        _, upper_bound = self._estimate_memory_per_gpu(train_batch_size, candidate)
-        while upper_bound < self._gpu_memory:
-            train_batch_size *= 2
-            _, upper_bound = self._estimate_memory_per_gpu(train_batch_size, candidate)
+        while micro_train_batch_size > 1:
+            _, upper_bound = self._estimate_memory_per_gpu(micro_train_batch_size, candidate)
+            if upper_bound < self._gpu_memory:
+                return micro_train_batch_size
+            micro_train_batch_size //= 2
 
-        train_batch_size = max(2, train_batch_size // 2)
-        _, estimated_mem = self._estimate_memory_per_gpu(train_batch_size, candidate)
+        _, estimated_mem = self._estimate_memory_per_gpu(1, candidate)
 
-        if self._gpu_memory < estimated_mem < 5 / 4 * self._gpu_memory:
+        if estimated_mem < 5 / 4 * self._gpu_memory:
             return 1
-        elif estimated_mem > 100:
-            return 0
-        else:
-            return train_batch_size
+        return 0

@@ -16,7 +16,7 @@ defaults:
   - _self_
 
 display_name: GPT OSS 120B GRPO RLVR Fine-Tuning with LoRA
-version: "2.0.0"
+version: "2.1.1"
 instance_types:
 - ml.p5e.48xlarge
 - ml.p5en.48xlarge

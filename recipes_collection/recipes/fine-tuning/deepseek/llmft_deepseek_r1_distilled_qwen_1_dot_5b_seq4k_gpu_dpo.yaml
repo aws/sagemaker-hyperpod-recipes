@@ -187,4 +187,4 @@ training_config:
     use_tensorboard: logs
     use_wandb: null
     weight_decay: 0.0
-version: 2.0.0
+version: 2.1.1

@@ -1,5 +1,5 @@
 display_name: "HyperPod Checkpointless Training Llama 3 70B Pre-Training on GPU, 2K sequence length"
-version: "1.0.0"
+version: "2.1.1"
 instance_types: ["ml.p5.48xlarge", "ml.p5e.48xlarge"]
 
 run:

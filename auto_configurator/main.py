@@ -26,6 +26,7 @@ from auto_configurator.utils.util import (
     AutoConfiguratorLogger,
     OptimizerType,
     copy_file,
+    format_params,
     get_optimizer_type,
     get_sequence_length_range,
     prettify,
@@ -50,6 +51,7 @@ def optimize_candidate(
     evaluator: BaseEvaluator,
     job_runner: AutoConfigRunner,
     candidate: dict,
+    tried_configs: set | None = None,
 ) -> tuple[dict, float, str]:
     """
     Optimize a single candidate configuration by iteratively running jobs and tuning based on errors.
@@ -62,13 +64,14 @@ def optimize_candidate(
         evaluator: Evaluator instance to assess job performance from logs
         job_runner: Runner to launch and monitor training jobs
         candidate: Candidate configuration dict with parameters to optimize
-
+        tried_configs: Set tracking tested configurations to avoid duplicate run attempts
     Returns:
         Tuple of (best_candidate, best_metric, config_path):
             - best_candidate: Configuration dict that achieved best performance
             - best_metric: Best throughput metric (tokens/sec)
             - config_path: Path to the config file for the best candidate
     """
+    tried_configs = tried_configs if tried_configs is not None else set()
 
     best_metric = 0
     best_candidate = candidate.copy()
@@ -78,15 +81,18 @@ def optimize_candidate(
 
     metric, error_code = (-1, None)
     while error_code != ErrorCode.NO_ISSUE:
+        # Check if we've already tried this configuration
+        config_key = format_params(candidate)
+        if config_key in tried_configs:
+            logger.info(f"Already tried configuration {config_key}, stopping optimization")
+            break
+        tried_configs.add(config_key)
+
         recipe_overrides = optimizer.get_recipe_overrides(candidate)
         job_details, _ = job_runner.launch(recipe_overrides)
 
         with open(job_details["log_path"]) as f:
             metric, error_code = evaluator.evaluate(f.readlines())
-
-        if error_code == ErrorCode.RUN_ERROR:
-            logger.error("Run error detected, stopping optimization")
-            break
 
         if error_code in [ErrorCode.NO_ISSUE, ErrorCode.CACHE_FLUSH, ErrorCode.LOW_MEMORY]:
             logger.info(f"Throughput: {metric} tokens/sec")
@@ -99,20 +105,23 @@ def optimize_candidate(
                 logger.info(f"Throughput decreased ({metric} < {best_metric}), stopping optimization")
                 break
 
-        # Let optimizer tune the candidate
-        candidate, should_retry = optimizer.tune_candidate(candidate, error_code)
+        # Let optimizer tune the candidate (unhandled errors like RUN_ERROR
+        # return should_retry=False, stopping optimization for this candidate)
+        logger.info(f"Error code detected: {error_code}")
+        candidate, should_retry = optimizer.tune_candidate(candidate, error_code, tried_configs)
         if not should_retry:
-            logger.info(f"Adjusting candidate, no retry with tuned candidate: {prettify(candidate)}")
+            logger.info(f"Adjusting candidate, no retry with candidate: {prettify(candidate)}")
             break
         else:
-            logger.info(f"Adjusting candidate, retry with tuned candidate: {prettify(candidate)}")
+            logger.info(f"Adjusting candidate, retry with candidate: {prettify(candidate)}")
 
     return (best_candidate, best_metric, config_path)
 
 
 def find_best_candidate(job_runner, optimizer, evaluator, candidates) -> str:
     """Find best candidate by optimizing each one"""
-    results = [optimize_candidate(optimizer, evaluator, job_runner, c) for c in candidates]
+    tried_configs = set()
+    results = [optimize_candidate(optimizer, evaluator, job_runner, c, tried_configs) for c in candidates]
 
     if not results or all(metric == 0 for _, metric, _ in results):
         logger.warning("No valid configurations found")
@@ -183,7 +192,7 @@ def main(cfg):
     optimizer_type = get_optimizer_type(cfg.recipe)
     optimizer_cls, evaluator_cls = select_config_optimizer(optimizer_type)
 
-    optimizer = optimizer_cls(cfg.autotune_config.get(optimizer_type.value), job_runner.base_recipe_cfg, instance_type)
+    optimizer = optimizer_cls(cfg.autotune_config.get(optimizer_type.value), job_runner.base_recipe, instance_type)
     evaluator = evaluator_cls(instance_type)
 
     # Find best recipe for each sequence length

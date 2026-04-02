@@ -15,7 +15,7 @@ defaults:
 - /hydra_config/verl/model_config/llama-3-2-3b-instruct
 - _self_
 display_name: Llama 3.2 3B GRPO RLAIF Fine-Tuning with LoRA
-version: "2.0.0"
+version: "2.1.1"
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge

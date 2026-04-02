@@ -9,9 +9,10 @@ import re
 import time
 import traceback
 
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 
 from auto_configurator.utils.util import prettify
+from hyperpod_recipes import get_recipe
 from scripts.validations.job_recorder import JobRecorder
 from scripts.validations.validation_launchers.base_launcher import BaseLauncher
 from scripts.validations.validation_launchers.launcher_utils import (
@@ -36,7 +37,7 @@ class AutoConfigRunner:
         self.auto_config = auto_cfg
         self.__run_identifier = f"autoconfigurator-{self.auto_config.instance_type.replace('.', '_')}"
 
-        self.cfg = self._generate_base_recipe()
+        self.cfg = self._generate_validation_config()
 
         os.makedirs(self.cfg.base_results_dir, exist_ok=True)
 
@@ -49,30 +50,41 @@ class AutoConfigRunner:
 
         self._job_launcher: BaseLauncher = self.__configure_launcher(platform)
 
-        self.base_recipe_cfg = self.__prepare_base_cfg()
+        self.__base_launch_command = self.__generate_base_launch_command()
+        self.base_recipe = self._get_recipe(self.cfg.recipe)
 
-    def _generate_base_recipe(self, overrides={}):
-        """Generate base recipe"""
+    def _generate_validation_config(self, overrides={}):
+        """Generate validation script config"""
 
         # Merge with auto_config overrides
         return OmegaConf.merge(BASE_CONFIG, self.auto_config, overrides)
 
-    def __prepare_base_cfg(self):
+    def _get_recipe(self, input_file_path):
+        self.logger.info(f"Getting recipe: {input_file_path}")
+
+        try:
+            recipe_id = input_file_path.removesuffix(".yaml")
+
+            return get_recipe(recipe_id).config
+        except Exception as e:
+            error_msg = f"Failed to get recipe: {e}"
+            self.logger.error(error_msg)
+            self.logger.error(f"Full traceback:\n{traceback.format_exc()}")
+            raise e
+
+    def __generate_base_launch_command(self):
         """
-        dry_run to generate base job artifacts
+        Prepare base launch command.
         """
-        self.logger.info(f"Preparing base recipe hydra artifact for {self.cfg.recipe}")
+        self.logger.info(f"Preparing base launch command for {self.cfg.recipe}")
+
         try:
             input_file_path = self.cfg.recipe
             run_info = self._job_launcher._prepare_job(input_file_path)
 
-            self.__base_launch_command = self._job_launcher._build_command(run_info)
-            job_details, _ = self.launch(dryrun=True)
-
-            return self.__load_config(job_details["config_path"])
-
+            return self._job_launcher._build_command(run_info)
         except Exception as e:
-            error_msg = f"Failed to dry run: {e}"
+            error_msg = f"Failed to generate base launch command: {e}"
             self.logger.error(error_msg)
             self.logger.error(f"Full traceback:\n{traceback.format_exc()}")
             raise e
@@ -90,16 +102,6 @@ class AutoConfigRunner:
         config_path = hydra_files[0]  # Take first match
         self.logger.info(f"Found hydra config at {config_path}")
         return config_path
-
-    def __load_config(self, config_path) -> DictConfig:
-        """Load hydra config from artifact directory"""
-        try:
-            cfg = OmegaConf.load(config_path)
-            self.logger.debug(f"Loaded config from {config_path}")
-            return cfg
-        except Exception as e:
-            self.logger.error(f"Failed to load config from {config_path}: {e}")
-            raise
 
     def launch(self, override_commands: list[str] = [], dryrun: bool = False, max_retry=2) -> tuple[dict, bool]:
         """

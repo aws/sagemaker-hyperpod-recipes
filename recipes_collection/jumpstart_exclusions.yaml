@@ -1,0 +1,20 @@
+# JumpStart Recipe Exclusion Patterns
+#
+# Regex patterns for recipes that should NOT be published to JumpStart.
+# Matched against recipe IDs (e.g. "fine-tuning/llama/llmft_llama3_1_8b_...").
+# Uses re.search(), so patterns match anywhere unless anchored with ^ / $.
+#
+# This file replaces the MODEL_ALLOWLIST in the JumpStart Lambda
+# (SageMakerJumpStartHyperPodRecipeScripts/constants.py).
+# The patterns are passed to the Lambda's exclusionPatterns argument
+# (see CR-260699046).
+
+exclusion_patterns:
+  # Nova evaluation recipes on the JumpStart RECIPE_DENYLIST
+  - "multi_modal_benchmark_eval$"
+  - "llm_judge_eval$"
+  - "rubric_llm_judge_eval$"
+  # Full fine-tuning (FFT) recipes are not published to JumpStart
+  - "[_-]fft$"
+  - "full_fine_tuning$"
+  - "gpu_fine_tuning$"

@@ -8,7 +8,7 @@ defaults:
   - _self_
 
 display_name: "DeepSeek R1 Distill Qwen 7B Supervised Fine-Tuning with LoRA on GPU, 4K sequence length"
-version: "2.0.0"
+version: "2.1.1"
 instance_types: ['ml.p4de.24xlarge', 'ml.p4d.24xlarge', 'ml.p5.48xlarge', 'ml.g5.48xlarge', 'ml.g6.48xlarge', 'ml.g5.12xlarge', 'ml.g6.12xlarge', 'ml.g6e.12xlarge']
 
 run:
