@@ -18,6 +18,7 @@ from omegaconf import OmegaConf
 
 from auto_configurator.config_optimizer.llmft_optimizer import LlmftOptimizer
 from auto_configurator.evaluation.base_evaluator import ErrorCode
+from auto_configurator.utils.util import format_params
 
 
 @pytest.fixture
@@ -26,7 +27,7 @@ def mock_recipe_cfg():
         {
             "training_config": {
                 "model_config": {"model_name_or_path": "meta-llama/Llama-3.1-8B-Instruct"},
-                "training_args": {"micro_train_batch_size": 2},
+                "training_args": {"micro_train_batch_size": 2, "train_batch_size": 16},
                 "datasets": {"val_data": {"limit": 100}},
             },
             "trainer": {"devices": 8, "num_nodes": 1},
@@ -58,18 +59,18 @@ class TestTunableParams:
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
         params = optimizer._tunable_params()
 
-        assert params == ["train_batch_size", "sharding_strategy", "gradient_checkpointing", "cpu_offload"]
+        assert params == ["micro_train_batch_size", "sharding_strategy", "gradient_checkpointing", "cpu_offload"]
 
 
 class TestGetRecipeOverrides:
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_get_recipe_overrides(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
         mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 32
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         candidate = {
-            "train_batch_size": 32,
             "micro_train_batch_size": 4,
             "sharding_strategy": "FULL_SHARD",
             "gradient_checkpointing": True,
@@ -79,8 +80,8 @@ class TestGetRecipeOverrides:
 
         overrides = optimizer.get_recipe_overrides(candidate)
 
-        assert "++recipes.training_config.training_args.train_batch_size=32" in overrides
         assert "++recipes.training_config.datasets.train_data.limit=480" in overrides  # 32 * 15 (MAX_STEPS)
+        assert "++recipes.training_config.datasets.val_data.limit=64" in overrides  # 32 * 2
         assert "++recipes.training_config.training_args.micro_train_batch_size=4" in overrides
         assert "++recipes.training_config.training_args.strategy.fsdp_config.sharding_strategy=FULL_SHARD" in overrides
         assert "++recipes.training_config.training_args.gradient_checkpointing=True" in overrides
@@ -93,12 +94,11 @@ class TestGetRecipeOverrides:
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
-        candidate = {"train_batch_size": 32, "unknown_param": "value"}
+        candidate = {"micro_train_batch_size": 4, "unknown_param": "value"}
 
         overrides = optimizer.get_recipe_overrides(candidate)
 
-        assert "++recipes.training_config.training_args.train_batch_size=32" in overrides
-        assert "++recipes.training_config.datasets.train_data.limit=480" in overrides  # 32 * 15 (MAX_STEPS)
+        assert "++recipes.training_config.training_args.micro_train_batch_size=4" in overrides
         assert "unknown_param" not in str(overrides)
 
 
@@ -175,38 +175,14 @@ class TestSetShardingStrategy:
 
 class TestSetGradientCheckpointing:
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_set_gradient_checkpointing_auto_large_model(self, mock_gpu_mem, mock_recipe_cfg):
-        """Test gradient checkpointing for models > 7B"""
+    def test_set_gradient_checkpointing_auto(self, mock_gpu_mem, mock_recipe_cfg):
+        """Test gradient checkpointing auto generates both values"""
         mock_gpu_mem.return_value = 80.0
 
         autotune_config = {"gradient_checkpointing": "auto"}
         optimizer = LlmftOptimizer(autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
         param_ranges = optimizer._generate_parameter_ranges()
 
-        # Llama 3.1 8B is > 7B, should only enable checkpointing
-        assert param_ranges["gradient_checkpointing"] == [True]
-
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_set_gradient_checkpointing_auto_small_model(self, mock_gpu_mem):
-        """Test gradient checkpointing for models <= 7B"""
-        mock_gpu_mem.return_value = 80.0
-
-        cfg = OmegaConf.create(
-            {
-                "training_config": {
-                    "model_config": {"model_name_or_path": "meta-llama/Llama-3.2-1B-Instruct"},
-                    "training_args": {"micro_train_batch_size": 2},
-                    "datasets": {"val_data": {"limit": 100}},
-                },
-                "trainer": {"devices": 8, "num_nodes": 1},
-            }
-        )
-
-        autotune_config = {"gradient_checkpointing": "auto"}
-        optimizer = LlmftOptimizer(autotune_config, cfg, "ml.p5.48xlarge")
-        param_ranges = optimizer._generate_parameter_ranges()
-
-        # Small model should test both True and False
         assert param_ranges["gradient_checkpointing"] == [True, False]
 
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
@@ -336,12 +312,13 @@ class TestIsValidCandidate:
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_is_valid_candidate_valid(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
         mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 32
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         candidate = {
             "sharding_strategy": "FULL_SHARD",
-            "train_batch_size": 32,
+            "micro_train_batch_size": 2,
             "gradient_checkpointing": True,
             "cpu_offload": False,
         }
@@ -351,12 +328,13 @@ class TestIsValidCandidate:
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_is_valid_candidate_invalid_sharding(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
         mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 32
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         candidate = {
             "sharding_strategy": "INVALID",
-            "train_batch_size": 32,
+            "micro_train_batch_size": 2,
             "gradient_checkpointing": True,
             "cpu_offload": False,
         }
@@ -366,12 +344,13 @@ class TestIsValidCandidate:
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_is_valid_candidate_batch_size_too_small(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
         mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 8  # Less than micro (2) * gpus (8) = 16
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         candidate = {
             "sharding_strategy": "FULL_SHARD",
-            "train_batch_size": 1,
+            "micro_train_batch_size": 2,
             "gradient_checkpointing": True,
             "cpu_offload": False,
         }
@@ -383,12 +362,13 @@ class TestIsValidCandidate:
         self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg
     ):
         mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 8  # Less than micro (2) * gpus (8) = 16
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         candidate = {
             "sharding_strategy": "FULL_SHARD",
-            "train_batch_size": 8,  # Less than micro_train_batch_size (2) * num_gpus (8) = 16
+            "micro_train_batch_size": 2,
             "gradient_checkpointing": True,
             "cpu_offload": False,
         }
@@ -398,29 +378,32 @@ class TestIsValidCandidate:
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_is_valid_candidate_batch_size_exceeds_val_limit(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
         mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.datasets.val_data.limit = 10  # Small limit
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 16  # Enough for micro=2
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         candidate = {
             "sharding_strategy": "FULL_SHARD",
-            "train_batch_size": 200,  # Exceeds val_limit of 100
+            "micro_train_batch_size": 2,
             "gradient_checkpointing": True,
             "cpu_offload": False,
         }
 
-        assert optimizer._is_valid_candidate(candidate) is False
+        assert optimizer._is_valid_candidate(candidate) is True  # Validation doesn't check val_limit anymore
 
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_is_valid_candidate_cpu_offload_without_checkpointing(
         self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg
     ):
         mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 32
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         candidate = {
             "sharding_strategy": "FULL_SHARD",
-            "train_batch_size": 32,
+            "micro_train_batch_size": 2,
             "gradient_checkpointing": False,
             "cpu_offload": True,  # Requires gradient_checkpointing=True
         }
@@ -437,7 +420,7 @@ class TestTuneCandidate:
 
         candidate = {
             "sharding_strategy": "NO_SHARD",
-            "train_batch_size": 32,
+            "micro_train_batch_size": 4,
             "gradient_checkpointing": True,
             "cpu_offload": False,
         }
@@ -455,7 +438,7 @@ class TestTuneCandidate:
 
         candidate = {
             "sharding_strategy": "HYBRID_SHARD",
-            "train_batch_size": 32,
+            "micro_train_batch_size": 4,
             "gradient_checkpointing": True,
             "cpu_offload": False,
         }
@@ -468,30 +451,34 @@ class TestTuneCandidate:
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_tune_candidate_oom_reduce_batch_size(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
         mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 32  # Enough for micro=4
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         candidate = {
             "sharding_strategy": "FULL_SHARD",
-            "train_batch_size": 32,
+            "micro_train_batch_size": 4,
             "gradient_checkpointing": True,
             "cpu_offload": False,
         }
 
-        adjusted, should_retry = optimizer.tune_candidate(candidate, ErrorCode.OOM)
+        # Pass tried_configs to prevent trying FULL_SHARD again (already at max sharding)
+        tried_configs = {format_params(candidate)}
+        adjusted, should_retry = optimizer.tune_candidate(candidate, ErrorCode.OOM, tried_configs)
 
         assert should_retry is True
-        assert adjusted["train_batch_size"] == 16
+        assert adjusted["micro_train_batch_size"] == 2
 
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_tune_candidate_low_memory(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
         mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 32  # Enough for micro=4
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         candidate = {
             "sharding_strategy": "HYBRID_SHARD",
-            "train_batch_size": 16,
+            "micro_train_batch_size": 2,
             "gradient_checkpointing": True,
             "cpu_offload": False,
         }
@@ -499,23 +486,240 @@ class TestTuneCandidate:
         adjusted, should_retry = optimizer.tune_candidate(candidate, ErrorCode.LOW_MEMORY)
 
         assert should_retry is True
-        assert adjusted["train_batch_size"] == 32
-        assert adjusted["sharding_strategy"] == "FULL_SHARD"
+        assert adjusted["micro_train_batch_size"] == 4
 
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_tune_candidate_no_adjustment(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 8  # Exactly micro (1) * gpus (8)
+
+        optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+
+        candidate = {
+            "sharding_strategy": "FULL_SHARD",
+            "micro_train_batch_size": 1,
+            "gradient_checkpointing": True,
+            "cpu_offload": False,
+        }
+
+        # Pass tried_configs to prevent trying FULL_SHARD and checkpointing=True again
+        # When batch is 1, dividing by 2 gives 0, which is now caught by validation
+        tried_configs = {format_params(candidate)}
+        adjusted, should_retry = optimizer.tune_candidate(candidate, ErrorCode.OOM, tried_configs)
+
+        assert should_retry is False
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_tune_candidate_oom_reduce_batch_after_max_sharding(
+        self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg
+    ):
+        """OOM at max sharding should reduce batch size (GC not toggled)"""
+        mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 32
+
+        optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+
+        candidate = {
+            "sharding_strategy": "FULL_SHARD",
+            "micro_train_batch_size": 4,
+            "gradient_checkpointing": False,
+            "cpu_offload": False,
+        }
+
+        # FULL_SHARD→FULL_SHARD already tried, so it falls through to reduce batch
+        tried_configs = {format_params({**candidate, "sharding_strategy": "FULL_SHARD"})}
+        adjusted, should_retry = optimizer.tune_candidate(candidate, ErrorCode.OOM, tried_configs)
+
+        assert should_retry is True
+        assert adjusted["micro_train_batch_size"] == 2
+        assert adjusted["gradient_checkpointing"] is False  # GC unchanged
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_tune_candidate_low_memory_decrease_sharding(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        """LOW_MEMORY should decrease sharding before disabling checkpointing"""
+        mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 16
+
+        optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+
+        candidate = {
+            "sharding_strategy": "FULL_SHARD",
+            "micro_train_batch_size": 4,  # 4*2=8 > train_batch_size/gpus, can't increase
+            "gradient_checkpointing": True,
+            "cpu_offload": False,
+        }
+
+        adjusted, should_retry = optimizer.tune_candidate(candidate, ErrorCode.LOW_MEMORY)
+
+        assert should_retry is True
+        # Should try decreasing sharding first, not disabling checkpointing
+        assert adjusted["sharding_strategy"] == "HYBRID_SHARD"
+        assert adjusted["gradient_checkpointing"] is True
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_tune_candidate_low_memory_no_gc_toggle(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        """LOW_MEMORY at minimum sharding should not toggle GC"""
+        mock_gpu_mem.return_value = 80.0
+        mock_recipe_cfg.training_config.training_args.train_batch_size = 16
+
+        optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+
+        candidate = {
+            "sharding_strategy": "NO_SHARD",
+            "micro_train_batch_size": 4,
+            "gradient_checkpointing": True,
+            "cpu_offload": False,
+        }
+
+        # NO_SHARD→NO_SHARD already tried (at minimum sharding), batch can't increase
+        tried_configs = {format_params({**candidate, "sharding_strategy": "NO_SHARD"})}
+        adjusted, should_retry = optimizer.tune_candidate(candidate, ErrorCode.LOW_MEMORY, tried_configs)
+
+        assert should_retry is False
+        assert adjusted["gradient_checkpointing"] is True  # GC unchanged
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_tune_candidate_run_error_no_retry(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
         mock_gpu_mem.return_value = 80.0
 
         optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         candidate = {
             "sharding_strategy": "FULL_SHARD",
-            "train_batch_size": 2,  # Can't reduce further
+            "micro_train_batch_size": 4,
             "gradient_checkpointing": True,
             "cpu_offload": False,
         }
 
-        adjusted, should_retry = optimizer.tune_candidate(candidate, ErrorCode.OOM)
+        adjusted, should_retry = optimizer.tune_candidate(candidate, ErrorCode.RUN_ERROR)
 
         assert should_retry is False
         assert adjusted == candidate
+
+
+class TestEstimateMemoryPerGpu:
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_estimate_full_shard(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        mock_gpu_mem.return_value = 80.0
+
+        optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+
+        candidate = {"sharding_strategy": "FULL_SHARD", "gradient_checkpointing": False, "max_len": 4096}
+        lower, upper = optimizer._estimate_memory_per_gpu(1, candidate)
+
+        assert lower > 0
+        assert upper > lower
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_estimate_hybrid_shard(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        mock_gpu_mem.return_value = 80.0
+
+        optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+
+        candidate_full = {"sharding_strategy": "FULL_SHARD", "gradient_checkpointing": False, "max_len": 4096}
+        candidate_hybrid = {"sharding_strategy": "HYBRID_SHARD", "gradient_checkpointing": False, "max_len": 4096}
+
+        _, upper_full = optimizer._estimate_memory_per_gpu(1, candidate_full)
+        _, upper_hybrid = optimizer._estimate_memory_per_gpu(1, candidate_hybrid)
+
+        # HYBRID_SHARD uses more memory than FULL_SHARD
+        assert upper_hybrid > upper_full
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_estimate_hybrid_shard_uses_gpus_per_node(self, mock_gpu_mem, mock_autotune_config):
+        """HYBRID_SHARD should shard by gpus_per_node, not total gpus"""
+        mock_gpu_mem.return_value = 80.0
+
+        multi_node_cfg = OmegaConf.create(
+            {
+                "training_config": {
+                    "model_config": {"model_name_or_path": "meta-llama/Llama-3.1-8B-Instruct"},
+                    "training_args": {"micro_train_batch_size": 2, "train_batch_size": 16},
+                    "datasets": {"val_data": {"limit": 100}},
+                },
+                "trainer": {"devices": 8, "num_nodes": 4},
+            }
+        )
+
+        optimizer = LlmftOptimizer(mock_autotune_config, multi_node_cfg, "ml.p5.48xlarge")
+
+        candidate_hybrid = {"sharding_strategy": "HYBRID_SHARD", "gradient_checkpointing": False, "max_len": 4096}
+        candidate_shard_grad = {"sharding_strategy": "SHARD_GRAD_OP", "gradient_checkpointing": False, "max_len": 4096}
+
+        _, upper_hybrid = optimizer._estimate_memory_per_gpu(1, candidate_hybrid)
+        _, upper_shard_grad = optimizer._estimate_memory_per_gpu(1, candidate_shard_grad)
+
+        # HYBRID_SHARD shards by 8 (per node), SHARD_GRAD_OP shards by 32 (all gpus)
+        # So HYBRID_SHARD should use more memory on multi-node
+        assert upper_hybrid > upper_shard_grad
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_estimate_hybrid_shard_equals_shard_grad_op_single_node(
+        self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg
+    ):
+        """On single node, HYBRID_SHARD and SHARD_GRAD_OP should estimate the same memory"""
+        mock_gpu_mem.return_value = 80.0
+
+        optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+
+        candidate_hybrid = {"sharding_strategy": "HYBRID_SHARD", "gradient_checkpointing": False, "max_len": 4096}
+        candidate_shard_grad = {"sharding_strategy": "SHARD_GRAD_OP", "gradient_checkpointing": False, "max_len": 4096}
+
+        _, upper_hybrid = optimizer._estimate_memory_per_gpu(1, candidate_hybrid)
+        _, upper_shard_grad = optimizer._estimate_memory_per_gpu(1, candidate_shard_grad)
+
+        assert upper_hybrid == upper_shard_grad
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_estimate_with_gradient_checkpointing(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        mock_gpu_mem.return_value = 80.0
+
+        optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+
+        candidate_no_gc = {"sharding_strategy": "FULL_SHARD", "gradient_checkpointing": False, "max_len": 4096}
+        candidate_gc = {"sharding_strategy": "FULL_SHARD", "gradient_checkpointing": True, "max_len": 4096}
+
+        _, upper_no_gc = optimizer._estimate_memory_per_gpu(1, candidate_no_gc)
+        _, upper_gc = optimizer._estimate_memory_per_gpu(1, candidate_gc)
+
+        # Gradient checkpointing should reduce memory
+        assert upper_gc < upper_no_gc
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_estimate_no_shard(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        mock_gpu_mem.return_value = 80.0
+
+        optimizer = LlmftOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+
+        candidate_hybrid = {"sharding_strategy": "HYBRID_SHARD", "gradient_checkpointing": False, "max_len": 4096}
+        candidate_no = {"sharding_strategy": "NO_SHARD", "gradient_checkpointing": False, "max_len": 4096}
+
+        _, upper_hybrid = optimizer._estimate_memory_per_gpu(1, candidate_hybrid)
+        _, upper_no = optimizer._estimate_memory_per_gpu(1, candidate_no)
+
+        # NO_SHARD uses more memory than HYBRID_SHARD
+        assert upper_no > upper_hybrid
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_estimate_moe_activation_factor(self, mock_gpu_mem, mock_autotune_config):
+        """MoE models should scale FFN activation by num_experts_per_tok"""
+        mock_gpu_mem.return_value = 80.0
+
+        moe_cfg = OmegaConf.create(
+            {
+                "training_config": {
+                    "model_config": {"model_name_or_path": "openai/gpt-oss-20b"},
+                    "training_args": {"micro_train_batch_size": 2, "train_batch_size": 16},
+                    "datasets": {"val_data": {"limit": 100}},
+                },
+                "trainer": {"devices": 8, "num_nodes": 1},
+            }
+        )
+
+        optimizer = LlmftOptimizer(mock_autotune_config, moe_cfg, "ml.p5.48xlarge")
+
+        candidate = {"sharding_strategy": "FULL_SHARD", "gradient_checkpointing": False, "max_len": 4096}
+        lower, upper = optimizer._estimate_memory_per_gpu(1, candidate)
+
+        assert lower > 0
+        assert upper > lower

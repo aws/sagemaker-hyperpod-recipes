@@ -8,7 +8,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 2.5 72B Supervised Fine-Tuning with LoRA on GPU, 4K sequence length"
-version: "2.0.0"
+version: "2.1.1"
 instance_types: ['ml.p4de.24xlarge', 'ml.p5.48xlarge']
 
 run:

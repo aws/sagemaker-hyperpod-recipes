@@ -28,6 +28,7 @@ class BaseEvaluator(ABC):
         """Check if line indicates OOM error"""
         return (
             "torch.cuda.OutOfMemoryError" in line
+            or "OutOfMemoryError : CUDA out of memory" in line
             or "CUDA error: out of memory" in line
             or "Failed to CUDA calloc async" in line
             or "Cuda failure 2 'out of memory'" in line

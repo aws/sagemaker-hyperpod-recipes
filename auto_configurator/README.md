@@ -21,7 +21,7 @@ The Auto Configurator helps you find optimal training configurations without man
 
 For LLMFT recipes, the following parameters can be auto-tuned:
 
-- `train_batch_size` - Training batch size per GPU
+- `micro_train_batch_size` - Training batch size per GPU
 - `gradient_checkpointing` - Enable/disable gradient checkpointing (boolean)
 - `sharding_strategy` - FSDP sharding strategy (FULL_SHARD, HYBRID_SHARD, NO_SHARD)
 - `cpu_offload` - Enable/disable CPU offloading (boolean)
@@ -32,18 +32,18 @@ Each parameter supports three configuration modes:
 
 1. **Auto mode**: Set to `auto` to let the optimizer determine the best value, e.g.
    ```yaml
-   train_batch_size: auto
+   micro_train_batch_size: auto
    ```
 
 2. **Fixed value**: Specify a single value to use that configuration, e.g.
    ```yaml
-   train_batch_size: 16
+   micro_train_batch_size: 16
    sharding_strategy: "FULL_SHARD"
    ```
 
 3. **Range of values**: Provide a list to test multiple configurations, e.g.
    ```yaml
-   train_batch_size: [16, 32, 64]
+   micro_train_batch_size: [16, 32, 64]
    sharding_strategy: ["FULL_SHARD", "HYBRID_SHARD"]
    gradient_checkpointing: [true, false]
    cpu_offload: [true, false]
@@ -69,7 +69,7 @@ autotune_config:
     - "ml.p5.48xlarge"
 
   llmft:
-    train_batch_size: auto
+    micro_train_batch_size: auto
     gradient_checkpointing: auto
     sharding_strategy: auto
     cpu_offload: auto

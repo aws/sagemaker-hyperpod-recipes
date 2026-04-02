@@ -1,0 +1,134 @@
+defaults:
+  - /hydra_config/verl-0_7_0/default
+  - _self_
+
+display_name: Qwen 3 32B GRPO RLVR Fine-Tuning with LoRA
+version: 2.1.1
+instance_types:
+  - ml.p5.48xlarge
+  - ml.p4de.24xlarge
+run:
+    model_type: verl
+    name: verl-grpo-qwen-3-32b-lora
+    results_dir: ${base_results_dir}/${.name}
+trainer:
+  num_nodes: 1
+
+ray_cluster:
+  head_node:
+    cpu: '16'
+    cpuLimit: null
+    gpu: '0'
+    memory: 32Gi
+    memoryLimit: null
+  worker_nodes:
+    cpu: '48'
+    cpuLimit: null
+    gpu: '8'
+    memory: 144Gi
+    memoryLimit: null
+    replicas: 1
+
+training_config:
+  # Algorithm: switch from GAE (upstream default) to GRPO
+  algorithm:
+    adv_estimator: grpo
+    norm_adv_by_std_in_grpo: true
+
+  actor_rollout_ref:
+    hybrid_engine: true
+    nccl_timeout: 600
+
+    # Actor overrides
+    actor:
+      use_kl_loss: true
+      use_dynamic_bsz: true
+      ppo_micro_batch_size_per_gpu: null
+      ppo_max_token_len_per_gpu: 20480
+      strategy: fsdp2
+      optim:
+        lr: 1.0e-05
+
+    # Reference model overrides
+    ref:
+      log_prob_max_token_len_per_gpu: 20480
+      log_prob_use_dynamic_bsz: true
+      entropy_from_logits_with_chunking: true
+      fsdp_config:
+        param_offload: true
+        fsdp_size: -1
+
+    # Rollout overrides (vLLM engine)
+    rollout:
+      name: vllm
+      prompt_length: 1024
+      response_length: 2048
+      tensor_model_parallel_size: 4
+      log_prob_max_token_len_per_gpu: 20480
+      enable_chunked_prefill: true
+      layered_summon: true
+      merge_lora_for_inference: false
+
+    # Model config (Qwen 3 32B + LoRA)
+    model:
+      path: Qwen/Qwen3-32B
+      trust_remote_code: false
+      enable_gradient_checkpointing: true
+      use_remove_padding: true
+      lora_rank: 32
+      lora_alpha: 64
+      target_modules: all-linear
+      is_saving_checkpoint_in_lora: true
+      patch_full_model: false
+      patched_model_path: null
+
+  # Trainer overrides
+  trainer:
+    project_name: verl-grpo-rlvr
+    experiment_name: qwen-3-32b-lora
+    logger:
+      - console
+      - mlflow
+    resume_mode: resume_path
+    resume_from_path: null
+    test_freq: 5
+    total_epochs: 2
+    save_freq: 20
+    default_local_dir: /opt/ml/model
+    merge_lora_on_final_save: true
+
+  # Data overrides
+  data:
+    max_prompt_length: 1024
+    max_response_length: 2048
+    val_batch_size: null
+    train_val_split_ratio: 0.9  # add this alongside existing data fields
+    apply_chat_template_kwargs:
+      enable_thinking: true
+    auto_convert_format: false
+    shuffle: false
+
+  # Reward model overrides
+  reward_model:
+    enable: false
+    rollout:
+      name: vllm
+
+  # Reward manager (RLVR)
+  reward_manager:
+    _target_: verl.trainer.config.config.RewardManagerConfig
+    source: register
+    name: naive
+    module:
+      _target_: verl.trainer.config.config.ModuleConfig
+      path: null
+      name: custom_reward_manager
+
+  custom_reward_function:
+    lambda_arn: ''
+    path: ''
+    name: ''
+
+  mlflow:
+    run_id: ''
+    tracking_uri: ''

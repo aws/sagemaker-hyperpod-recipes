@@ -93,13 +93,35 @@ class SlurmClient:
         command = [cmd.replace(str(get_project_root()), self.controller_work_dir) for cmd in command]
 
         self.logger.info(f"Executing command: {command}")
-        command.append("echo Done")
 
-        cmd_str = " && ".join(command)
+        # AWS-StartInteractiveCommand hangs indefinitely when the inner command
+        # exits non-zero. Work around this by always exiting 0 from bash and
+        # embedding the real exit code in stdout for the caller to check.
+        inner_cmd = " && ".join(command)
+        cmd_str = f'{inner_cmd}; CMD_EXIT=$?; echo "SSM_CMD_EXIT=$CMD_EXIT"; exit 0'
 
         bash_wrapped = f"/bin/bash -c {shlex.quote(cmd_str)}"
 
-        return self.__ssm_execute([bash_wrapped], timeout_in_min)
+        result = self.__ssm_execute([bash_wrapped], timeout_in_min)
+
+        # Parse the real exit code from stdout
+        if result and result.stdout:
+            for line in reversed(result.stdout.strip().split("\n")):
+                line = line.strip()
+                if line.startswith("SSM_CMD_EXIT="):
+                    try:
+                        exit_code = int(line.split("=", 1)[1])
+                    except (ValueError, IndexError):
+                        break
+                    if exit_code != 0:
+                        self.logger.error(f"Remote command failed with exit code {exit_code}")
+                        self.logger.error(f"STDOUT: {result.stdout[:2000]}")
+                        raise subprocess.CalledProcessError(
+                            exit_code, inner_cmd, output=result.stdout, stderr=result.stderr
+                        )
+                    break
+
+        return result
 
     def __ssm_execute(self, command: List[str], timeout_in_min: int = 5):
         parameters = json.dumps({"command": [" ".join(command)]})
@@ -129,6 +151,10 @@ class SlurmClient:
             )
             self.logger.debug(f"Process output: {process.stdout}")
             return process
+        except subprocess.TimeoutExpired as e:
+            self.logger.error(f"SSM session timed out after {timeout_in_min} minutes")
+            self.logger.error(f"Partial STDOUT: {e.stdout[:2000] if e.stdout else 'None'}")
+            raise
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Command failed with error: {e.stderr}")
             raise
@@ -142,8 +168,8 @@ class SlurmClient:
     def _clean_remote_dir(self):
         try:
             self.run([f"rm -rf {self.controller_work_dir}"])
-        except subprocess.CalledProcessError as e:
-            self.logger.warning(f"Failed to clean remote working directory: {self.controller_work_dir}")
+        except Exception as e:
+            self.logger.warning(f"Failed to clean remote working directory: {self.controller_work_dir}: {e}")
 
     def __del__(self):
         self.cleanup()
