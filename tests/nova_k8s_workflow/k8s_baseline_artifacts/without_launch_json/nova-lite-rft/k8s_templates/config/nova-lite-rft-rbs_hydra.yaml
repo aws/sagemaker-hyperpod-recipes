@@ -1,23 +1,26 @@
 run:
-  data_s3_path: s3://example-bucket/train.jsonl
-  generation_replicas: 2
-  mlflow_experiment_name: my-rft-experiment
-  mlflow_run_name: my-rft-run
-  mlflow_tracking_uri: ''
-  model_name_or_path: nova-lite-2/prod
-  model_type: amazon.nova-2-lite-v1:0:256k
   name: nova-lite-rft
+  model_type: amazon.nova-2-lite-v1:0:256k
+  model_name_or_path: nova-lite-2/prod
+  data_s3_path: s3://example-bucket/train.jsonl
   output_s3_path: ''
   replicas: 2
-  reward_lambda_arn: ''
+  generation_replicas: 2
   rollout_worker_replicas: 1
+  reward_lambda_arn: ''
+  mlflow_tracking_uri: ''
+  mlflow_experiment_name: my-rft-experiment
+  mlflow_run_name: my-rft-run
 training_config:
+  max_length: 10240
+  global_batch_size: 256
+  reasoning_effort: high
   data:
     shuffle: false
-  global_batch_size: 256
-  max_length: 10240
-  reasoning_effort: high
   rollout:
+    rollout_strategy:
+      type: off_policy_async
+      age_tolerance: 2
     advantage_strategy:
       number_generation: 8
     generator:
@@ -29,20 +32,17 @@ training_config:
       api_endpoint:
         lambda_arn: ''
         lambda_concurrency_limit: 100
-    rollout_strategy:
-      age_tolerance: 2
-      type: off_policy_async
   trainer:
+    max_steps: 100
+    save_steps: 100
+    save_top_k: 5
+    refit_freq: 4
     clip_ratio_high: 0.2
     ent_coeff: 0.001
     loss_scale: 1
-    max_steps: 100
     optim_config:
-      adam_beta1: 0.9
-      adam_beta2: 0.95
       lr: 7.0e-07
       weight_decay: 0.0
-    refit_freq: 4
-    save_steps: 100
-    save_top_k: 5
+      adam_beta1: 0.9
+      adam_beta2: 0.95
   task_type: storm_rbs

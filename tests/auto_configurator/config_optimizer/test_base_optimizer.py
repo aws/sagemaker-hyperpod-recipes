@@ -48,7 +48,10 @@ class ConcreteOptimizer(BaseOptimizer):
 def mock_recipe_cfg():
     return OmegaConf.create(
         {
-            "training_config": {"model_config": {"model_name_or_path": "meta-llama/Llama-3.1-8B-Instruct"}},
+            "training_config": {
+                "model_config": {"model_name_or_path": "meta-llama/Llama-3.1-8B-Instruct"},
+                "training_args": {"train_batch_size": 16, "micro_train_batch_size": 2},
+            },
             "trainer": {"devices": 8, "num_nodes": 1},
         }
     )
@@ -222,6 +225,91 @@ class TestFindBatchSize:
         batch_size = optimizer._find_batch_size({})
         assert batch_size == 0
 
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_find_batch_size_starts_at_max_valid(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        """_find_batch_size should start from train_batch_size // num_gpus"""
+        mock_gpu_mem.return_value = 80.0
+
+        checked_sizes = []
+
+        class TrackingOptimizer(ConcreteOptimizer):
+            def _estimate_memory_per_gpu(self, train_batch_size, candidate):
+                checked_sizes.append(train_batch_size)
+                return 0, train_batch_size * 5.0  # 5 GB per sample
+
+        mock_recipe_cfg.training_config.training_args = OmegaConf.create(
+            {"train_batch_size": 64, "micro_train_batch_size": 2}
+        )
+        optimizer = TrackingOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+        # 64 // 8 = 8, so should start at 8 and halve down
+        optimizer._find_batch_size({"max_len": 4096})
+
+        assert checked_sizes[0] == 8
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_find_batch_size_halves_until_fits(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        """_find_batch_size should halve until memory fits"""
+        mock_gpu_mem.return_value = 80.0
+
+        class ScalingOptimizer(ConcreteOptimizer):
+            def _estimate_memory_per_gpu(self, train_batch_size, candidate):
+                return 0, train_batch_size * 20.0  # 20 GB per sample
+
+        mock_recipe_cfg.training_config.training_args = OmegaConf.create(
+            {"train_batch_size": 64, "micro_train_batch_size": 2}
+        )
+        optimizer = ScalingOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+        # 8*20=160 > 80, 4*20=80 >= 80, 2*20=40 < 80 → returns 2
+        result = optimizer._find_batch_size({"max_len": 4096})
+
+        assert result == 2
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_find_batch_size_returns_max_when_all_fit(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        """_find_batch_size should return max valid size when all fit in memory"""
+        mock_gpu_mem.return_value = 80.0
+
+        class SmallMemOptimizer(ConcreteOptimizer):
+            def _estimate_memory_per_gpu(self, train_batch_size, candidate):
+                return 0, train_batch_size * 1.0  # 1 GB per sample
+
+        mock_recipe_cfg.training_config.training_args = OmegaConf.create(
+            {"train_batch_size": 32, "micro_train_batch_size": 2}
+        )
+        optimizer = SmallMemOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+        # 32 // 8 = 4, 4*1=4 < 80 → returns 4 immediately
+        result = optimizer._find_batch_size({"max_len": 4096})
+
+        assert result == 4
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_find_batch_size_borderline_returns_1(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        """_find_batch_size returns 1 when batch=1 exceeds GPU memory but within 25%"""
+        mock_gpu_mem.return_value = 80.0
+
+        class BorderlineOptimizer(ConcreteOptimizer):
+            def _estimate_memory_per_gpu(self, train_batch_size, candidate):
+                return 0, 95.0  # Over 80 but under 100 (5/4 * 80)
+
+        optimizer = BorderlineOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+        result = optimizer._find_batch_size({"max_len": 4096})
+
+        assert result == 1
+
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
+    def test_find_batch_size_way_over_returns_0(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+        """_find_batch_size returns 0 when even batch=1 far exceeds GPU memory"""
+        mock_gpu_mem.return_value = 80.0
+
+        class HugeMemOptimizer(ConcreteOptimizer):
+            def _estimate_memory_per_gpu(self, train_batch_size, candidate):
+                return 0, 150.0  # Way over 100 (5/4 * 80)
+
+        optimizer = HugeMemOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
+        result = optimizer._find_batch_size({"max_len": 4096})
+
+        assert result == 0
+
 
 class TestGenerateCandidateConfigurations:
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
@@ -238,20 +326,20 @@ class TestGenerateCandidateConfigurations:
 
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_generate_candidate_configurations_skips_train_batch_size(self, mock_gpu_mem, mock_recipe_cfg):
-        """Test that train_batch_size in tunable_params is skipped during iteration"""
+        """Test that micro_train_batch_size in tunable_params is skipped during iteration"""
         mock_gpu_mem.return_value = 80.0
 
         class OptimizerWithBatchSize(ConcreteOptimizer):
             def _tunable_params(self):
-                return ["param1", "train_batch_size", "param2"]
+                return ["param1", "micro_train_batch_size", "param2"]
 
-        autotune_config = {"param1": "auto", "train_batch_size": "auto", "param2": "auto"}
+        autotune_config = {"param1": "auto", "micro_train_batch_size": "auto", "param2": "auto"}
         optimizer = OptimizerWithBatchSize(autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
         candidates = optimizer.generate_candidate_configurations(max_len=2048)
 
-        # Should still generate candidates and compute train_batch_size
+        # Should still generate candidates and compute micro_train_batch_size
         assert len(candidates) > 0
-        assert all("train_batch_size" in c for c in candidates)
+        assert all("micro_train_batch_size" in c for c in candidates)
 
     @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
     def test_generate_candidate_configurations_with_non_list_value(self, mock_gpu_mem, mock_recipe_cfg):

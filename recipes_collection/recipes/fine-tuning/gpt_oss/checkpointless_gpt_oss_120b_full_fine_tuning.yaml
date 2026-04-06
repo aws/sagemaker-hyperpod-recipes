@@ -141,4 +141,4 @@ trainer:
   num_sanity_val_steps: 0
   use_distributed_sampler: false
   val_check_interval: 5000
-version: 1.0.0
+version: 2.1.1

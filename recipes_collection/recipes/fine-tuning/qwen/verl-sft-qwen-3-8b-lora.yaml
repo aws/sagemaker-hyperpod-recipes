@@ -37,7 +37,7 @@ training_config:
     entropy_from_logits_with_chunking: false
     forward_only: false
     forward_prefetch: true
-    fsdp_size: -1
+    fsdp_size: 8
     full_determinism: false
     model_dtype: bf16
     offload_policy: false
@@ -114,7 +114,7 @@ training_config:
         name: npu
       nsys:
         _target_: verl.utils.profiler.config.NsightToolConfig
-        discrete: ${oc.select:global_profiler.global_tool_config.nsys.discrete}
+        discrete: ${oc.select:recipes.training_config.global_profiler.global_tool_config.nsys.discrete}
         name: nsight
       torch:
         _target_: verl.utils.profiler.config.TorchProfilerToolConfig
@@ -125,8 +125,8 @@ training_config:
       torch_memory:
         _target_: verl.utils.profiler.config.TorchMemoryToolConfig
         name: torch_memory
-        stack_depth: ${oc.select:global_profiler.global_tool_config.torch_memory.stack_depth,32}
-        trace_alloc_max_entries: ${oc.select:global_profiler.global_tool_config.torch_memory.trace_alloc_max_entries,100000}
+        stack_depth: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.stack_depth,32}
+        trace_alloc_max_entries: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.trace_alloc_max_entries,100000}
   trainer:
     default_hdfs_dir: null
     default_local_dir: /opt/ml/model
@@ -147,4 +147,4 @@ training_config:
     test_freq: -1
     total_epochs: 1
     total_training_steps: null
-version: 1.0.0
+version: 2.1.1

@@ -237,5 +237,11 @@ def get_sequence_length_range(auto_config):
 
     if seq_lengths == AUTO:
         return [2**i for i in range(12, 18)]  # 4K to 128K: [2048, 4096, 8192, 16384, 32768, 65536, 131072]
+    elif not isinstance(seq_lengths, list):
+        return [seq_lengths]
+    else:
+        return seq_lengths
 
-    return seq_lengths
+
+def format_params(params: dict):
+    return tuple(sorted((k, str(v)) for k, v in params.items()))

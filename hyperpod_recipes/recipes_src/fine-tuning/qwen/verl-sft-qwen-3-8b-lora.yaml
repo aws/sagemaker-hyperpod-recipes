@@ -1,18 +1,18 @@
 defaults:
-  - /hydra_config/verl-0.7.0/sft/default
-  - /hydra_config/verl-0.7.0/sft/data/default
-  - /hydra_config/verl-0.7.0/model/hf_model
-  - /hydra_config/verl-0.7.0/engine/fsdp
-  - /hydra_config/verl-0.7.0/optim/fsdp
-  - /hydra_config/verl-0.7.0/sft/trainer/default
-  - /hydra_config/verl-0.7.0/profiler/profiler
-  - /hydra_config/verl-0.7.0/sft/checkpoint/default
-  - /hydra_config/verl-0.7.0/sft/peft/lora
-  - /hydra_config/verl-0.7.0/sft/model_config/qwen-3-8b
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/sft/peft/lora
+  - /hydra_config/verl-0_7_0/sft/model_config/qwen-3-8b
   - _self_
 
 display_name: "Qwen 3 8B SFT Fine-Tuning with LoRA"
-version: "1.0.0"
+version: "2.1.1"
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge", "ml.p4d.24xlarge"]
 
 run:

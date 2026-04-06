@@ -10,6 +10,8 @@ class LlmftEvaluator(BaseEvaluator):
     MEMORY_REGEX = re.compile(r"'mem_peak_alloc_max':\s*([\d.]+)", re.IGNORECASE)
     ERROR_EXITING_REGEX = re.compile(r"Error: .+?\. Exiting the training", re.IGNORECASE)
 
+    ERROR_PATTERNS = ["exception occurred during training", "training related exception occurred"]
+
     def _is_max_memory(self, line: str) -> bool:
         """
         Example:
@@ -28,7 +30,7 @@ class LlmftEvaluator(BaseEvaluator):
         """Check if line indicates run error"""
         return (
             "srun: error" in line.lower()
-            or "exception occurred during training" in line.lower()
+            or (any(pattern in line.lower() for pattern in self.ERROR_PATTERNS) and not self._is_out_of_memory(line))
             or "cuda error: unknown error" in line.lower()
             or bool(self.ERROR_EXITING_REGEX.search(line))
         )

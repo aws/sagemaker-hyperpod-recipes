@@ -12,7 +12,7 @@ autotune_config:
     - "ml.p5.48xlarge"
 
   llmft:
-    train_batch_size: auto
+    micro_train_batch_size: auto
     gradient_checkpointing: auto
     sharding_strategy: auto
     cpu_offload: auto

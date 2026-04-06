@@ -1,0 +1,4 @@
+# @package recipes.training_config
+defaults:
+  - ppo_trainer
+  - _self_

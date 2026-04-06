@@ -167,6 +167,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process JumpStart Lambda response and update CloudWatch")
     parser.add_argument("--metadata", required=True, help="Recipe metadata JSON string")
     parser.add_argument("--lambda-name", required=True, help="Lambda function name")
+    parser.add_argument(
+        "--exclusions",
+        nargs="*",
+        required=False,
+        help="Exclusion patterns, default patterns in recipes_collection/jumpstart_exclusions.yaml",
+    )
     args = parser.parse_args()
 
     logger.info("=== Script Configuration ===")
@@ -182,7 +188,27 @@ if __name__ == "__main__":
     )
 
     lambda_client = boto3.client("lambda", region_name=region, config=config)
-    recipe_metadata = args.metadata
+
+    # Inject exclusion patterns into metadata
+    metadata = json.loads(args.metadata)
+    if args.exclusions is not None:
+        patterns = args.exclusions
+    else:
+        import yaml
+
+        default_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "recipes_collection",
+            "jumpstart_exclusions.yaml",
+        )
+        if os.path.exists(default_path):
+            with open(default_path) as f:
+                patterns = (yaml.safe_load(f) or {}).get("exclusion_patterns", [])
+        else:
+            patterns = []
+    if patterns:
+        metadata["exclusionPatterns"] = patterns
+    recipe_metadata = json.dumps(metadata)
 
     response = call_lambda(lambda_client, args.lambda_name, recipe_metadata)
     print(f"Lambda response: {response}")

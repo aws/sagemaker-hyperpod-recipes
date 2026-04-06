@@ -480,6 +480,7 @@ def start_execution(model_groups, launcher):
 # Launcher utils
 def construct_slurm_launch_command(cfg, run_info):
     launch_command = get_launch_command(cfg, run_info)
+    # launch_command.extend(["cluster=slurm", "cluster_type=slurm"])
     return launch_command
 
 

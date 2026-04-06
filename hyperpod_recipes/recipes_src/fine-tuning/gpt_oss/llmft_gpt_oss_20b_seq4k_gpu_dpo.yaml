@@ -8,7 +8,7 @@ defaults:
   - _self_
 
 display_name: "GPT OSS 20B Direct Preference Optimization on GPU, 4K sequence length"
-version: "1.1.0"
+version: "2.1.1"
 instance_types: ['ml.p5.48xlarge', 'ml.p5e.48xlarge', 'ml.p5en.48xlarge']
 
 run:
