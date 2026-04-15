@@ -93,28 +93,36 @@
   "nova_lite_1_0_p5_p4d_gpu_dpo": {
     "display_name": "Nova Lite DPO on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
   "nova_lite_1_0_p5_p4d_gpu_lora_dpo": {
     "display_name": "Nova Lite LoRA DPO on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
   "nova_lite_1_0_p5_p4d_gpu_lora_sft": {
     "display_name": "Nova Lite LoRA SFT on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
   "nova_lite_1_0_p5_p4d_gpu_sft": {
     "display_name": "Nova Lite SFT on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
@@ -177,7 +185,8 @@
     "display_name": "Nova Lite LoRA SFT on P5 GPU",
     "instance_types": [
       "ml.p5.48xlarge",
-      "ml.p5en.48xlarge"
+      "ml.p5en.48xlarge",
+      "ml.p4d.24xlarge"
     ],
     "version": "2.0.1"
   },
@@ -193,7 +202,8 @@
     "display_name": "Nova Lite SFT on P5 GPU",
     "instance_types": [
       "ml.p5.48xlarge",
-      "ml.p5en.48xlarge"
+      "ml.p5en.48xlarge",
+      "ml.p4d.24xlarge"
     ],
     "version": "2.0.1"
   },
@@ -314,28 +324,36 @@
   "nova_micro_1_0_p5_p4d_gpu_dpo": {
     "display_name": "Nova Micro DPO on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
   "nova_micro_1_0_p5_p4d_gpu_lora_dpo": {
     "display_name": "Nova Micro LoRA DPO on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
   "nova_micro_1_0_p5_p4d_gpu_lora_sft": {
     "display_name": "Nova Micro LoRA SFT on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
   "nova_micro_1_0_p5_p4d_gpu_sft": {
     "display_name": "Nova Micro SFT on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
@@ -350,6 +368,13 @@
     "display_name": "Nova Premier Data Distillation on CPU",
     "instance_types": [
       "ml.r5.24xlarge"
+    ],
+    "version": "1.0.1"
+  },
+  "nova_pro_1_0_p4d_gpu_dpo": {
+    "display_name": "Nova Pro DPO on GPU",
+    "instance_types": [
+      "ml.p4d.24xlarge"
     ],
     "version": "1.0.1"
   },
@@ -391,7 +416,8 @@
   "nova_pro_1_0_p5_gpu_dpo": {
     "display_name": "Nova Pro DPO on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
@@ -405,21 +431,26 @@
   "nova_pro_1_0_p5_gpu_sft": {
     "display_name": "Nova Pro SFT on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
   "nova_pro_1_0_p5_p4d_gpu_lora_dpo": {
     "display_name": "Nova Pro LoRA DPO on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },
   "nova_pro_1_0_p5_p4d_gpu_lora_sft": {
     "display_name": "Nova Pro LoRA SFT on GPU",
     "instance_types": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "version": "1.0.1"
   },

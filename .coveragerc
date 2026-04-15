@@ -7,4 +7,4 @@ omit =
 
 [report]
 #Fix unit test coverage and increase to 85. commit: 19b365e8c048cd7bdbe64f9fa07310f2cc9402b8
-fail_under = 79
+fail_under = 80

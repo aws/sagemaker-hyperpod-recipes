@@ -86,7 +86,7 @@ class TestSlurmClientRun:
 
         mock_root.return_value = "/local/project"
         mock_process = Mock()
-        mock_process.stdout = "Done"
+        mock_process.stdout = "Done\nSSM_CMD_EXIT=0"
         mock_subprocess.return_value = mock_process
 
         client = SlurmClient(slurm_config, boto_session=mock_boto_session)

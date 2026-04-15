@@ -1,0 +1,54 @@
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/sft/peft/lora
+  - /hydra_config/verl-0_7_0/sft/model_config/qwen-3-dot-5-4b
+  - _self_
+
+display_name: "Qwen 3.5 4B SFT LoRA Fine-Tuning"
+version: 2.0.0
+instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge", "ml.p4d.24xlarge"]
+
+run:
+  name: verl-sft-qwen-3-dot-5-4b-lora
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  data:
+    train_batch_size: 64
+    micro_batch_size_per_gpu: 8
+    max_length: 4096
+    max_token_len_per_gpu: 16384
+    truncation: right
+    train_max_samples: -1
+    val_max_samples: -1
+
+  model:
+    lora_rank: 32
+    lora_alpha: 64
+
+  engine:
+    strategy: fsdp2
+    model_dtype: bf16
+    forward_prefetch: true
+
+  optim:
+    lr: 2.0e-4
+    weight_decay: 0.001
+    betas: [0.9, 0.95]
+    lr_scheduler_type: cosine
+
+  trainer:
+    project_name: verl_sft_qwen3_5_4b
+    experiment_name: qwen3_5_4b_sft_fsdp_lora_tatqa
+    total_epochs: 1
+    max_ckpt_to_keep: 3
+    resume_mode: resume_path

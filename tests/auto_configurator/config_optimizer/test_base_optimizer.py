@@ -63,21 +63,22 @@ def mock_autotune_config():
 
 
 class TestInit:
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_init(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
-        mock_gpu_mem.return_value = 80.0
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_init(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
+        mock_gpu_info.return_value = (80.0, 8)
 
         optimizer = ConcreteOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
         assert optimizer._gpu_memory == 80.0
+        assert optimizer._gpu_count == 8
         assert optimizer.cfg == mock_recipe_cfg
         assert optimizer.num_params > 0
 
 
 class TestComputeNumParams:
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_compute_num_params(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
-        mock_gpu_mem.return_value = 80.0
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_compute_num_params(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
+        mock_gpu_info.return_value = (80.0, 8)
 
         optimizer = ConcreteOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
@@ -85,10 +86,10 @@ class TestComputeNumParams:
         assert optimizer.num_params > 7_000_000_000
         assert optimizer.num_params < 9_000_000_000
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_compute_num_params_with_moe(self, mock_gpu_mem, mock_autotune_config):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_compute_num_params_with_moe(self, mock_gpu_info, mock_autotune_config):
         """Test _compute_num_params with MoE model"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         # Use a model with MoE - GPT-OSS has MoE
         cfg = OmegaConf.create(
@@ -105,9 +106,9 @@ class TestComputeNumParams:
 
 
 class TestLoadModelParams:
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_load_model_params(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
-        mock_gpu_mem.return_value = 80.0
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_load_model_params(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
+        mock_gpu_info.return_value = (80.0, 8)
 
         optimizer = ConcreteOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
         model_params = optimizer._load_model_params()
@@ -116,9 +117,9 @@ class TestLoadModelParams:
         assert model_params.hidden_width == 4096
         assert model_params.num_layers == 32
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_load_model_params_unknown_model(self, mock_gpu_mem, mock_autotune_config):
-        mock_gpu_mem.return_value = 80.0
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_load_model_params_unknown_model(self, mock_gpu_info, mock_autotune_config):
+        mock_gpu_info.return_value = (80.0, 8)
 
         cfg = OmegaConf.create(
             {
@@ -132,20 +133,20 @@ class TestLoadModelParams:
 
 
 class TestIsValidAutoconfig:
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_is_valid_autoconfig_with_non_tunable_param(self, mock_gpu_mem, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_is_valid_autoconfig_with_non_tunable_param(self, mock_gpu_info, mock_recipe_cfg):
         """Test _is_valid_autoconfig raises KeyError for non-tunable params"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         autotune_config = {"non_tunable_param": "auto"}
 
         with pytest.raises(KeyError, match="non_tunable_param is not a tunable parameter"):
             ConcreteOptimizer(autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_is_valid_autoconfig_with_non_tunable_param_list(self, mock_gpu_mem, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_is_valid_autoconfig_with_non_tunable_param_list(self, mock_gpu_info, mock_recipe_cfg):
         """Test _is_valid_autoconfig raises KeyError for non-tunable params with ListConfig"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         from omegaconf import ListConfig
 
@@ -154,10 +155,10 @@ class TestIsValidAutoconfig:
         with pytest.raises(KeyError, match="non_tunable_param is not a tunable parameter"):
             ConcreteOptimizer(autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_is_valid_autoconfig_with_tunable_param_auto(self, mock_gpu_mem, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_is_valid_autoconfig_with_tunable_param_auto(self, mock_gpu_info, mock_recipe_cfg):
         """Test _is_valid_autoconfig succeeds with tunable param set to auto"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         autotune_config = {"param1": "auto"}
 
@@ -165,10 +166,10 @@ class TestIsValidAutoconfig:
         optimizer = ConcreteOptimizer(autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
         optimizer._is_valid_autoconfig()
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_is_valid_autoconfig_with_tunable_param_int(self, mock_gpu_mem, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_is_valid_autoconfig_with_tunable_param_int(self, mock_gpu_info, mock_recipe_cfg):
         """Test _is_valid_autoconfig succeeds with tunable param as int"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         autotune_config = {"param1": 123}
 
@@ -176,10 +177,10 @@ class TestIsValidAutoconfig:
         optimizer = ConcreteOptimizer(autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
         optimizer._is_valid_autoconfig()
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_is_valid_autoconfig_with_tunable_param_list(self, mock_gpu_mem, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_is_valid_autoconfig_with_tunable_param_list(self, mock_gpu_info, mock_recipe_cfg):
         """Test _is_valid_autoconfig succeeds with tunable param as ListConfig"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         from omegaconf import ListConfig
 
@@ -191,10 +192,10 @@ class TestIsValidAutoconfig:
 
 
 class TestFindBatchSize:
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_find_batch_size_edge_cases(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_find_batch_size_edge_cases(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
         """Test _find_batch_size edge cases"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         class EdgeCaseOptimizer(ConcreteOptimizer):
             def __init__(self, *args, memory_scenario="normal", **kwargs):
@@ -225,10 +226,10 @@ class TestFindBatchSize:
         batch_size = optimizer._find_batch_size({})
         assert batch_size == 0
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_find_batch_size_starts_at_max_valid(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_find_batch_size_starts_at_max_valid(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
         """_find_batch_size should start from train_batch_size // num_gpus"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         checked_sizes = []
 
@@ -246,10 +247,10 @@ class TestFindBatchSize:
 
         assert checked_sizes[0] == 8
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_find_batch_size_halves_until_fits(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_find_batch_size_halves_until_fits(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
         """_find_batch_size should halve until memory fits"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         class ScalingOptimizer(ConcreteOptimizer):
             def _estimate_memory_per_gpu(self, train_batch_size, candidate):
@@ -264,10 +265,10 @@ class TestFindBatchSize:
 
         assert result == 2
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_find_batch_size_returns_max_when_all_fit(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_find_batch_size_returns_max_when_all_fit(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
         """_find_batch_size should return max valid size when all fit in memory"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         class SmallMemOptimizer(ConcreteOptimizer):
             def _estimate_memory_per_gpu(self, train_batch_size, candidate):
@@ -282,10 +283,10 @@ class TestFindBatchSize:
 
         assert result == 4
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_find_batch_size_borderline_returns_1(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_find_batch_size_borderline_returns_1(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
         """_find_batch_size returns 1 when batch=1 exceeds GPU memory but within 25%"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         class BorderlineOptimizer(ConcreteOptimizer):
             def _estimate_memory_per_gpu(self, train_batch_size, candidate):
@@ -296,10 +297,10 @@ class TestFindBatchSize:
 
         assert result == 1
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_find_batch_size_way_over_returns_0(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_find_batch_size_way_over_returns_0(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
         """_find_batch_size returns 0 when even batch=1 far exceeds GPU memory"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         class HugeMemOptimizer(ConcreteOptimizer):
             def _estimate_memory_per_gpu(self, train_batch_size, candidate):
@@ -312,9 +313,9 @@ class TestFindBatchSize:
 
 
 class TestGenerateCandidateConfigurations:
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_generate_candidate_configurations(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
-        mock_gpu_mem.return_value = 80.0
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_generate_candidate_configurations(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
+        mock_gpu_info.return_value = (80.0, 8)
 
         optimizer = ConcreteOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")
         candidates = optimizer.generate_candidate_configurations(max_len=2048)
@@ -324,10 +325,10 @@ class TestGenerateCandidateConfigurations:
         assert all("max_len" in c for c in candidates)
         assert all(c["max_len"] == 2048 for c in candidates)
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_generate_candidate_configurations_skips_train_batch_size(self, mock_gpu_mem, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_generate_candidate_configurations_skips_train_batch_size(self, mock_gpu_info, mock_recipe_cfg):
         """Test that micro_train_batch_size in tunable_params is skipped during iteration"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         class OptimizerWithBatchSize(ConcreteOptimizer):
             def _tunable_params(self):
@@ -341,10 +342,10 @@ class TestGenerateCandidateConfigurations:
         assert len(candidates) > 0
         assert all("micro_train_batch_size" in c for c in candidates)
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_generate_candidate_configurations_with_non_list_value(self, mock_gpu_mem, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_generate_candidate_configurations_with_non_list_value(self, mock_gpu_info, mock_recipe_cfg):
         """Test that non-list values in parameter ranges are converted to lists"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         class OptimizerWithNonListValue(ConcreteOptimizer):
             def _generate_parameter_ranges(self):
@@ -358,10 +359,10 @@ class TestGenerateCandidateConfigurations:
         assert len(candidates) > 0
         assert all(c["param1"] == 5 for c in candidates)
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_generate_candidate_with_invalid_candidate(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_generate_candidate_with_invalid_candidate(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
         """Test that invalid candidates are skipped"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         class InvalidCandidateOptimizer(ConcreteOptimizer):
             def _is_valid_candidate(self, candidate):
@@ -373,10 +374,10 @@ class TestGenerateCandidateConfigurations:
 
         assert len(candidates) == 0
 
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_generate_candidate_with_zero_batch_size(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_generate_candidate_with_zero_batch_size(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
         """Test that candidates with zero batch size are skipped"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         class ZeroBatchOptimizer(ConcreteOptimizer):
             def _find_batch_size(self, candidate):

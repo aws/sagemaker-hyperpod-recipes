@@ -88,7 +88,7 @@ training_config:
       ppo_mini_batch_size: 32
       shuffle: false
       strategy: fsdp2
-      ulysses_sequence_parallel_size: 1
+      ulysses_sequence_parallel_size: 2
       use_dynamic_bsz: true
       use_fused_kernels: false
       use_kl_loss: true
@@ -135,7 +135,7 @@ training_config:
       log_prob_micro_batch_size_per_gpu: 16
       log_prob_use_dynamic_bsz: true
       strategy: fsdp2
-      ulysses_sequence_parallel_size: 1
+      ulysses_sequence_parallel_size: 2
       use_torch_compile: true
     rollout:
       agent:
@@ -166,7 +166,7 @@ training_config:
       log_prob_micro_batch_size_per_gpu: 16
       log_prob_use_dynamic_bsz: true
       max_model_len: null
-      max_num_batched_tokens: 24576
+      max_num_batched_tokens: 32768
       max_num_seqs: 1024
       merge_lora_for_inference: true
       mode: sync
@@ -185,8 +185,8 @@ training_config:
         use_inference_chat_template: false
       'n': 8
       name: vllm
-      prompt_length: 4096
-      response_length: 20480
+      prompt_length: 16384
+      response_length: 16384
       temperature: 1.0
       tensor_model_parallel_size: 2
       top_k: -1
@@ -303,8 +303,8 @@ training_config:
     filter_overlong_prompts: true
     filter_overlong_prompts_workers: 1
     image_key: images
-    max_prompt_length: 4096
-    max_response_length: 20480
+    max_prompt_length: 16384
+    max_response_length: 16384
     prompt_key: prompt
     return_full_prompt: false
     return_multi_modal_inputs: true
@@ -445,4 +445,4 @@ training_config:
       cuda-memory-usage: 'true'
       kill: none
       trace: cuda,nvtx,cublas,ucx
-version: 2.1.1
+version: 2.2.1

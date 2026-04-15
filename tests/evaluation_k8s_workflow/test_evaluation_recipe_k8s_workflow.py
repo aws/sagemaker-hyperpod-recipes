@@ -108,9 +108,9 @@ def test_deterministic_eval_recipe_smtj_workflow_with_launch_json(mock_load_host
         "base_results_dir={}".format(artifacts_dir),
         "container=test_container",
         "cluster_type=sm_jobs",
-        "+sm_jobs_config.output_path=s3://test-bucket/results",
-        "+sm_jobs_config.inputs.s3.data=s3://test-bucket/data",
-        "+sm_jobs_config.wait=true",
+        "+cluster.sm_jobs_config.output_path=s3://test-bucket/results",
+        "+cluster.sm_jobs_config.inputs.s3.data=s3://test-bucket/data",
+        "+cluster.sm_jobs_config.wait=true",
         "launch_json=true",
     ]
 

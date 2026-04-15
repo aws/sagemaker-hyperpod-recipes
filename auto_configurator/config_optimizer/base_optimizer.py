@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 from itertools import product
 
 from auto_configurator.utils.util import (
-    MODEL_ARCHITECTURES,
     ModelParams,
-    get_gpu_memory_gb,
+    get_gpu_info,
+    load_model_params,
     prettify,
 )
 
@@ -15,7 +15,7 @@ class BaseOptimizer(ABC):
 
     def __init__(self, autotune_config, recipe_cfg, instance_type):
         self._autotune_cfg = autotune_config
-        self._gpu_memory: float = get_gpu_memory_gb(instance_type)
+        self._gpu_memory, self._gpu_count = get_gpu_info(instance_type)
         self.cfg = recipe_cfg
 
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -60,12 +60,8 @@ class BaseOptimizer(ABC):
     def _load_model_params(self) -> ModelParams:
         """Load model architecture params from MODEL_ARCHITECTURES mapping"""
         model_path = self.cfg.training_config.model_config.model_name_or_path
-
-        for key in MODEL_ARCHITECTURES:
-            if key in model_path:
-                return MODEL_ARCHITECTURES[key].model_copy()
-
-        raise ValueError(f"Unknown model: {model_path}. Add to MODEL_ARCHITECTURES in constants.py")
+        hf_token = self.cfg.get("run", {}).get("hf_access_token", None)
+        return load_model_params(model_path, hf_token=hf_token)
 
     def _compute_num_params(self) -> int:
         """Compute number of parameters from model config"""
@@ -154,7 +150,7 @@ class BaseOptimizer(ABC):
         Starts from the max valid value (train_batch_size // num_gpus) and halves
         until estimated memory fits. Returns 1 for borderline fits, 0 if impossible.
         """
-        num_gpus = self.cfg.trainer.num_nodes * self.cfg.trainer.devices
+        num_gpus = self.cfg.trainer.num_nodes * self._gpu_count
         train_batch_size = candidate.get("train_batch_size", self.cfg.training_config.training_args.train_batch_size)
         micro_train_batch_size = max(1, train_batch_size // num_gpus)
 

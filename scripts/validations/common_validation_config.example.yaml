@@ -1,7 +1,7 @@
 # # Config file with common config information for validation scripts
 # # Edit this file with your custom content for custom validations
 
-platform: "K8" # SLURM, K8 OR SMJOBS, OR SERVERLESS
+platform: "SMJOBS" # SLURM, K8, SMJOBS, SERVERLESS, EVAL
 
 # Add the recipe file paths or folder paths which you'd like to test in the below list
 # Follow the same format as followed in launcher_scripts for the path where we start the
@@ -292,6 +292,55 @@ git:
 # This is the name of a sleeper pod that we can use to copy stuff between the cluster and the local machine
 k8:
   sleeper_deployment: "hp-recipe-validator-sleeper"
+
+# ============================================================================
+# EVALUATION CONFIGURATION
+# ============================================================================
+#
+# Usage:
+#   1. Set platform: "EVAL"
+#   2. Set recipe_list to the eval recipe:
+#      recipe_list: ["evaluation/open-source/open_source_deterministic_eval.yaml"]
+#   3. Fill in eval_config below with eval_jobs list
+#   4. Run: python scripts/validations/validation_script_runner.py
+#
+# MULTI-JOB SUPPORT:
+#   eval_jobs is a list — each entry launches a separate eval job with its own
+#   model weights, base model name, and optional parameter overrides.
+#   All jobs run in parallel. Each gets a unique 5-char run ID appended to
+#   eval_results_dir to prevent result collisions between runs.
+#   Shared defaults (task, strategy, etc.) are set at the eval_config level
+#   and can be overridden per-job.
+#
+#   Set training_recipe to the training recipe that produced the model weights.
+#   This is used to get the val dataset.
+#
+#   NOTE: If using qen_qa and using custom dataset has to be jsonl no paraquet support
+#   Set data_s3_path explicitly to override auto-resolution.
+eval_config:
+  # Shared defaults (applied to all eval jobs unless overridden per-job)
+  container_image: "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:latest"
+  task: "gen_qa"          # Evaluation benchmark task (e.g., mmlu, hellaswag, arc, etc.)
+  strategy: ""    # Evaluation strategy (e.g., zs_cot = zero-shot chain-of-thought)
+  metric: "all"     # Metric to compute
+  subtask: ""            # Specific subtask (e.g., "abstract_algebra" for MMLU)
+  eval_results_dir: ""
+  eval_tensorboard_results_dir: ""
+  exp_dir: ""            # Local experiment directory (defaults to results/eval_experiments/)
+
+  # List of eval jobs — each with its own model weights and optional overrides
+  eval_jobs:
+    - model_weights_s3_path: "s3://hyperpod-recipes-validation-artifacts/test_output_folder/testrun/huggingface-llm-qwen3-5-9b/LORA/SFT/ml.p4de.24xlarge/verl-sft-qwen-3-dot-5-9b-lora-thood-2026-03-27-07-38-25-484/output/model/checkpoints/hf_merged/"
+      base_model_name: "huggingface-reasoning-qwen3-8b"
+      training_recipe: "fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_sft_lora.yaml"
+      container_image: "855988369404.dkr.ecr.us-west-2.amazonaws.com/jainudai-dev:eval-image"
+      task: "mmlu"
+      metric: "accuracy"
+      # data_s3_path: ""  (Set data_s3_path explicitly to override auto-resolution.)
+    - model_weights_s3_path: "s3://hyperpod-recipes-validation-artifacts/test_output_folder/testrun/huggingface-llm-qwen2-5-7b-instruct/LORA/RLVR/ml.p4d.24xlarge/verl-grpo-qwen-2-dot-5-7b-instruct-lora-2026-03-24-22-24-05-298/output/model/checkpoints/hf_merged/"
+      base_model_name: "huggingface-llm-qwen2-5-7b-instruct"
+      training_recipe: "fine-tuning/qwen/verl-grpo-rlvr-qwen-2-dot-5-7b-instruct-lora.yaml"
+      # All other fields (task, strategy, etc.) inherited from shared defaults above
 
 # Keywords to determine which recipes should have throughput computed
 # Recipes matching these keywords will have throughput calculated and reported
@@ -807,3 +856,7 @@ recipe_structure_config:
       recipe_overrides.training_config.datasets.val_data.file_path: "{val_data_dir}"
       recipe_overrides.training_config.model_config.model_name_or_path: "{local_model_name_or_path}"
       additional_estimator_kwargs.image_uri: "{container_path}"
+
+slurm_client_config:
+  target_id: "sagemaker-cluster:h6zl0lb45i6z_controller-i-0f5fb4651f2c731d3"
+  cluster_region: "ap-south-1"

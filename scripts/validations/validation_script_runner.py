@@ -71,8 +71,13 @@ def run_validation(cfg, fileList=None, save_model_files=True, instance_type=None
         return None
 
     # Group recipes by model
-    model_groups = group_recipes_by_model(input_file_list)
-    logging.info(f"Found {len(model_groups)} model groups")
+    # For EVAL platform, skip model grouping since eval recipes don't match training recipe_type_config
+    if cfg.platform == "EVAL":
+        model_groups = {"eval": input_file_list}
+        logging.info(f"EVAL platform - bypassing model grouping, {len(input_file_list)} recipe(s) in eval group")
+    else:
+        model_groups = group_recipes_by_model(input_file_list)
+        logging.info(f"Found {len(model_groups)} model groups")
 
     # Initiate launcher object and start execution
     launcher = select_validation_launcher(cfg.platform)(jobRecorder, cfg)
@@ -85,9 +90,10 @@ def run_validation(cfg, fileList=None, save_model_files=True, instance_type=None
     return jobRecorder
 
 
-# Default mock instance type for serverless/pysdk_finetune platforms (instance type is not used but required for config)
+# Default mock instance type for serverless/pysdk_finetune/eval platforms (instance type is not used but required for config)
 SERVERLESS_MOCK_INSTANCE_TYPE = "serverless_mock_instance_type"
 PYSDK_FINETUNE_MOCK_INSTANCE_TYPE = "pysdk_finetune_mock_instance_type"
+EVAL_MOCK_INSTANCE_TYPE = "eval_mock_instance_type"
 
 
 def split_recipes_into_batches(recipe_list, batch_size):
@@ -162,7 +168,10 @@ def run_recipe_batch_validation(
 
         for recipe_file in recipe_batch:
             # Determine instance types for this recipe
-            if cli_instance_types:
+            platform = getattr(cfg, "platform", "")
+            if platform in ("EVAL"):
+                recipe_instance_types = ["mock"]  # actual handling is in run_validation_for_all_instance_types
+            elif cli_instance_types:
                 recipe_instance_types = cli_instance_types
             elif default_instance_types:
                 recipe_instance_types = default_instance_types
@@ -246,6 +255,15 @@ def run_validation_for_all_instance_types(cfg, fileList=None, save_model_files=T
         cfg_copy = copy.deepcopy(cfg)
         job_recorder = run_validation(cfg_copy, fileList, save_model_files, PYSDK_FINETUNE_MOCK_INSTANCE_TYPE)
         return {PYSDK_FINETUNE_MOCK_INSTANCE_TYPE: job_recorder}
+
+    if cfg.platform == "EVAL":
+        logging.info(
+            f"EVAL platform detected - instance types are determined by the eval script. "
+            f"Running validation once with mock instance type: {EVAL_MOCK_INSTANCE_TYPE}"
+        )
+        cfg_copy = copy.deepcopy(cfg)
+        job_recorder = run_validation(cfg_copy, fileList, save_model_files, EVAL_MOCK_INSTANCE_TYPE)
+        return {EVAL_MOCK_INSTANCE_TYPE: job_recorder}
 
     # Get instance type list from config
     instance_type_list = list(cfg.instance_type_list) if hasattr(cfg, "instance_type_list") else []

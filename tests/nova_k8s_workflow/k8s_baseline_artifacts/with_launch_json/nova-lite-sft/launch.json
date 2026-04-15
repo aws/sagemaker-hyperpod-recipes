@@ -9,7 +9,9 @@
     "nova_model_name": "nova-micro/prod",
     "Hardware": "GPU",
     "InstanceTypes": [
-      "ml.p5.48xlarge"
+      "ml.p5.48xlarge",
+      "ml.p4d.24xlarge",
+      "ml.p5en.48xlarge"
     ],
     "Type": "FineTuning",
     "CustomizationTechnique": "dpo",
@@ -159,7 +161,9 @@
       "type": "string",
       "required": false,
       "enum": [
-        "ml.p5.48xlarge"
+        "ml.p5.48xlarge",
+        "ml.p4d.24xlarge",
+        "ml.p5en.48xlarge"
       ],
       "default": "ml.p5.48xlarge"
     }
@@ -169,7 +173,9 @@
       "prod": {
         "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
         "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
+        "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
+        "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
       },
       "gamma": {
         "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
@@ -180,7 +186,8 @@
         "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest",
         "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/init-container-repo:latest",
         "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/init-container-repo:latest",
-        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/init-container-repo:latest"
+        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/init-container-repo:latest",
+        "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/init-container-repo:latest"
       },
       "gamma": {
         "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest"
@@ -190,7 +197,9 @@
       "prod": {
         "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
         "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+        "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
+        "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
       },
       "gamma": {
         "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"

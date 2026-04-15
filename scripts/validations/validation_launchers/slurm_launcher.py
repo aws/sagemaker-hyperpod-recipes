@@ -172,8 +172,9 @@ class SlurmValidationLauncher(BaseLauncher):
 
     def _collect_job_logs(self, log_file: str) -> str:
         if self.slurm_client:
-            logs = self.slurm_client.run([f"cat {log_file}"]).stdout
-            self.logger.info(f"Job logs: {logs}")
+            logs = self.slurm_client.download_remote_file(log_file)
+            self.logger.info(f"Job logs (first 2000 chars): {logs[:2000]}")
+            self.logger.info(f"Job logs (last 3000 chars): {logs[-3000:]}")
         else:
             logs = " ".join(open(log_file, "r").readlines())
         return logs

@@ -1,6 +1,11 @@
 from enum import Enum
 
-RFT_REGION_ACCOUNT_MAP = {"us-east-1": "708977205387", "ap-northeast-1": "878185805882"}
+RFT_REGION_ACCOUNT_MAP = {
+    "us-east-1": "708977205387",
+    "ap-northeast-1": "878185805882",
+    "eu-central-1": "874160969292",
+    "eu-west-2": "470633809225",
+}
 
 
 class RFTJobType(Enum):

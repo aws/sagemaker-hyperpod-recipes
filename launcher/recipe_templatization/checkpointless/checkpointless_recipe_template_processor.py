@@ -39,7 +39,8 @@ class CheckpointlessRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         recipe_name = recipe_file_path.split("/")[-1] if "/" in recipe_file_path else recipe_file_path
 
         # Map recipe patterns to template names
-        if "fine_tuning" in recipe_name:
+        # Match LoRA recipes (e.g. checkpointless_gpt_oss_120b_lora) as fine-tuning
+        if "fine_tuning" in recipe_name or "lora" in recipe_name:
             template_name = "checkpointless_fine_tuning"
         elif "pretrain" in recipe_name:
             template_name = "checkpointless_pretrain"
@@ -68,13 +69,21 @@ class CheckpointlessRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         metadata["DisplayName"] = display_name
 
         # Determine job type
-        if "fine_tuning" in recipe_file_name:
+        # Match LoRA recipes as FineTuning (same as template matching above)
+        if "fine_tuning" in recipe_file_name or "lora" in recipe_file_name:
             metadata["Type"] = "FineTuning"
         else:
             metadata["Type"] = "PreTraining"
 
-        # Extract sequence length
+        # Extract sequence length from recipe name (e.g. seq4k), falling back to
+        # the recipe config for recipes without it in the filename (e.g. checkpointless_llama3_70b_pretrain)
         sequence_length = self.extract_sequence_length(metadata["Name"])
+        if sequence_length is None:
+            seq_len = recipe_cfg.get("data", {}).get("seq_length", None) or recipe_cfg.get("model", {}).get(
+                "config", {}
+            ).get("seq_length", None)
+            if seq_len is not None:
+                sequence_length = self.format_sequence_length(int(seq_len))
         assert sequence_length is not None, f"Sequence length not found for recipe: {recipe_file_name}"
         metadata["SequenceLength"] = sequence_length
 

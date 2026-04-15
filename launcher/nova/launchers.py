@@ -301,6 +301,8 @@ class NovaK8SLauncher:
         job_name = self._job_name.replace("_", "-")
 
         extra_helm_args = ""
+        if self.cfg.cluster.get("kube_context"):
+            extra_helm_args += f" --kube-context {self.cfg.cluster['kube_context']}"
         if self.cfg.cluster.get("namespace"):
             extra_helm_args += f" --namespace {self.cfg.cluster['namespace']}"
 

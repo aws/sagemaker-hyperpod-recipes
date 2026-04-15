@@ -183,58 +183,18 @@ if __name__ == "__main__":
 """
 
     def _process_sm_jobs_config(self):
-        """Generate SM Jobs configuration file."""
-        sm_jobs_config = {
-            "recipe_overrides": {},
-            "inputs": {"s3": {}},
-            "output_path": "s3://your-bucket/evaluation-results",
-            "wait": False,
-            "additional_estimator_kwargs": {
-                "instance_count": 1,
-                "volume_size": 100,
-                "max_run": 86400,  # 24 hours
-                "keep_alive_period_in_seconds": 0,
-                "container_log_level": logging.INFO,
-                "source_dir": None,
-                "entry_point": None,
-                "dependencies": None,
-                "code_location": None,
-                "git_config": None,
-                "checkpoint_s3_uri": None,
-                "checkpoint_local_path": None,
-                "enable_cloudwatch_metrics": False,
-                "enable_sagemaker_metrics": False,
-                "enable_network_isolation": False,
-                "use_spot_instances": False,
-                "max_wait": None,
-                "spot_instance_type": None,
-                "tags": None,
-                "subnets": None,
-                "security_group_ids": None,
-                "model_uri": None,
-                "model_channel_name": "model",
-                "metric_definitions": None,
-                "encrypt_inter_container_traffic": False,
-                "use_compiled_model": False,
-                "train_use_spot_instances": False,
-                "train_max_wait": None,
-                "train_spot_instance_type": None,
-                "train_volume_kms_key": None,
-                "train_vpc_config": None,
-                "train_max_run": None,
-            },
-        }
+        """Write SM Jobs configuration from Hydra-resolved config.
 
-        # Add evaluation-specific configurations
-        if hasattr(self.cfg, "recipes") and hasattr(self.cfg.recipes, "run"):
-            if hasattr(self.cfg.recipes.run, "model_name_or_path"):
-                sm_jobs_config["inputs"]["s3"]["model"] = self.cfg.recipes.run.model_name_or_path
-            if hasattr(self.cfg.recipes.run, "data_s3_path"):
-                sm_jobs_config["inputs"]["s3"]["data"] = self.cfg.recipes.run.data_s3_path
+        All values (output_path, inputs, image_uri, etc.) are set via Hydra
+        overrides in eval_launcher._build_eval_command and resolved by the
+        time this method runs. We just save the resolved config to disk.
+        """
+        sm_jobs_config = self.cfg.cluster.get("sm_jobs_config")
+        if not sm_jobs_config:
+            raise ValueError("sm_jobs_config is required for sm_jobs cluster type")
 
-        # Write SM Jobs config
         sm_jobs_config_path = self._output_dir / "sm_jobs_template" / "sm_jobs_config.yaml"
-        OmegaConf.save(OmegaConf.create(sm_jobs_config), sm_jobs_config_path)
+        OmegaConf.save(config=sm_jobs_config, f=sm_jobs_config_path)
 
     def _create_sm_jobs_script(self) -> Path:
         """Create the main launcher script for SM Jobs."""

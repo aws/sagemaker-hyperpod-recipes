@@ -11,7 +11,7 @@ from typing import Dict
 from scripts.validations.validation_launchers.path_utils import get_project_root
 
 from .base_launcher import BaseLauncher
-from .launcher_utils import _resolve_general_pod_name
+from .launcher_utils import _resolve_general_pod_name, pre_launch_setup
 
 HP_PYTORCH_JOB_RESOURCE_NAME = "hyperpodpytorchjob"
 RAY_JOBS_RESOURCE_NAME = "rayjobs"
@@ -29,20 +29,42 @@ def _is_verl_ray_job(input_file_path: str) -> bool:
 class K8sValidationLauncher(BaseLauncher):
     """Kubernetes-specific job launcher"""
 
+    def __init__(self, job_recorder, config):
+        """
+        Initialize K8s launcher.
+
+        Args:
+            job_recorder: Job recorder instance
+            config: Configuration object
+        """
+        super().__init__(job_recorder, config)
+        cluster_context_map = config.get("k8", {}).get("cluster_context_map", {})
+        context_override = cluster_context_map.get(config.instance_type, None)
+        self._context_override = []
+        if context_override:
+            self.logger.info(f"Resuming with context override: {context_override}")
+            self._context_override = ["--context", context_override]
+        else:
+            self.logger.info("Resuming with default context")
+
+    def _prepare_job(self, input_file_path: str) -> dict:
+        run_info = pre_launch_setup(self.config, input_file_path, context_override=self._context_override)
+        run_info["fsx_run_id"] = uuid.uuid4().hex[:8]
+        if self._context_override:
+            run_info["kube_context"] = self._context_override[1]
+        return run_info
+
     def launch_job(self, input_file_path: str) -> bool:
         """Override base launch_job to add FSx checkpoint dir cleanup after job completion."""
         fsx_cleanup_path = None
         try:
             run_info = self._prepare_job(input_file_path)
 
-            fsx_run_id = uuid.uuid4().hex[:8]
-            run_info["fsx_run_id"] = fsx_run_id
-
             launch_command = self._build_command(run_info)
 
             fsx_base_path = self._get_fsx_checkpoint_path(input_file_path)
             if fsx_base_path:
-                fsx_cleanup_path = os.path.join(fsx_base_path, fsx_run_id)
+                fsx_cleanup_path = os.path.join(fsx_base_path, run_info["fsx_run_id"])
 
             launch_output = self._execute_command(launch_command)
             job_details = self._parse_output(input_file_path, launch_output)
@@ -79,14 +101,14 @@ class K8sValidationLauncher(BaseLauncher):
         Args:
             fsx_path: FSx directory path to remove
         """
-        general_pod = _resolve_general_pod_name(self.config, env=self.aws_env)
+        general_pod = _resolve_general_pod_name(self.config, env=self.aws_env, context_override=self._context_override)
         if not general_pod:
             self.logger.warning("Could not resolve sleeper pod; skipping FSx cleanup")
             return
         self.logger.info(f"Cleaning up FSx checkpoint directory: {fsx_path} via pod {general_pod}")
         try:
             subprocess.run(
-                ["kubectl", "exec", general_pod, "--", "rm", "-rf", fsx_path],
+                ["kubectl", *self._context_override, "exec", general_pod, "--", "rm", "-rf", fsx_path],
                 capture_output=True,
                 text=True,
                 check=True,
@@ -215,7 +237,7 @@ class K8sValidationLauncher(BaseLauncher):
     def _collect_pod_logs(self, job_name: str, pod_name: str, is_verl: bool = False, training_error_limit: int = 3):
         """Collect and save pod logs"""
 
-        logs_command = ["kubectl", "logs", "-f", pod_name]
+        logs_command = ["kubectl", *self._context_override, "logs", "-f", pod_name]
         if is_verl:
             logs_command += ["-n", RAY_TRAINING_NAMESPACE]
 
@@ -243,7 +265,11 @@ class K8sValidationLauncher(BaseLauncher):
 
                     if any(
                         s in line.lower()
-                        for s in ["exception occurred during training:", "training related exception occurred"]
+                        for s in [
+                            "exception occurred during training:",
+                            "training related exception occurred",
+                            "nccl warn cuda failure",
+                        ]
                     ):
                         error_count += 1
                         self.logger.info(f"Detected error in {job_name}: {line}")
@@ -263,6 +289,7 @@ class K8sValidationLauncher(BaseLauncher):
         self.logger.debug(f"Waiting for pod {pod_name} to reach status {status}")
         wait_command = [
             "kubectl",
+            *self._context_override,
             "wait",
             f"--for=jsonpath={{.status.phase}}={status}",
             f"pod/{pod_name}",
@@ -291,7 +318,7 @@ class K8sValidationLauncher(BaseLauncher):
     def _get_job_status(self, job_name: str, is_verl: bool) -> str:
         """Get job status string."""
         resource_name = self._get_resource_name(is_verl)
-        cmd = ["kubectl", "get", resource_name, job_name, "-o"]
+        cmd = ["kubectl", *self._context_override, "get", resource_name, job_name, "-o"]
 
         if is_verl:
             cmd += ["jsonpath={.status.jobStatus}", "-n", RAY_TRAINING_NAMESPACE]
@@ -305,7 +332,7 @@ class K8sValidationLauncher(BaseLauncher):
         resource_name = self._get_resource_name(is_verl)
         self.logger.info(f"Waiting for job {job_name} to reach {status}")
 
-        cmd = ["kubectl", "wait", f"{resource_name}/{job_name}", f"--timeout={timeout}"]
+        cmd = ["kubectl", *self._context_override, "wait", f"{resource_name}/{job_name}", f"--timeout={timeout}"]
         try:
             if is_verl:
                 # RayJobs use jobDeploymentStatus, not conditions
@@ -331,7 +358,7 @@ class K8sValidationLauncher(BaseLauncher):
 
     def describe_resource(self, resource_type: str, resource_name: str, is_verl: bool = False):
         try:
-            cmd = ["kubectl", "describe", resource_type, resource_name]
+            cmd = ["kubectl", *self._context_override, "describe", resource_type, resource_name]
             if is_verl:
                 cmd.extend(["-n", RAY_TRAINING_NAMESPACE])
 
@@ -349,7 +376,7 @@ class K8sValidationLauncher(BaseLauncher):
     def clean_up_resource(self, resource, job_name: str, is_verl: bool = False):
         self.logger.info(f"Cleaning up {resource} job: {job_name}")
         try:
-            cmd = ["kubectl", "delete", resource, job_name]
+            cmd = ["kubectl", *self._context_override, "delete", resource, job_name]
             if is_verl:
                 cmd.extend(["-n", RAY_TRAINING_NAMESPACE])
 
@@ -362,7 +389,15 @@ class K8sValidationLauncher(BaseLauncher):
         self.logger.info(f"Fetching pods for job: {job_name}")
 
         try:
-            cmd = ["kubectl", "get", "pods", "--no-headers", "-o", "custom-columns=:metadata.name"]
+            cmd = [
+                "kubectl",
+                *self._context_override,
+                "get",
+                "pods",
+                "--no-headers",
+                "-o",
+                "custom-columns=:metadata.name",
+            ]
             if is_verl:
                 cmd.extend(["-n", RAY_TRAINING_NAMESPACE])
 
@@ -402,7 +437,7 @@ class K8sValidationLauncher(BaseLauncher):
             for pod in pod_names:
                 try:
                     result = subprocess.run(
-                        ["kubectl", "logs", pod],
+                        ["kubectl", *self._context_override, "logs", pod],
                         capture_output=True,
                         text=True,
                         timeout=10,

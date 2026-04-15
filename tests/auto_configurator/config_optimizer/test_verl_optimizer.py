@@ -35,10 +35,10 @@ def mock_autotune_config():
 
 
 class TestVerlOptimizer:
-    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_memory_gb")
-    def test_init_fails_due_to_not_implemented(self, mock_gpu_mem, mock_autotune_config, mock_recipe_cfg):
+    @patch("auto_configurator.config_optimizer.base_optimizer.get_gpu_info")
+    def test_init_fails_due_to_not_implemented(self, mock_gpu_info, mock_autotune_config, mock_recipe_cfg):
         """VERL optimizer cannot be instantiated because methods are not implemented"""
-        mock_gpu_mem.return_value = 80.0
+        mock_gpu_info.return_value = (80.0, 8)
 
         with pytest.raises(NotImplementedError):
             VerlOptimizer(mock_autotune_config, mock_recipe_cfg, "ml.p5.48xlarge")

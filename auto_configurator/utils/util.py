@@ -9,6 +9,7 @@ from pathlib import Path
 
 import boto3
 from pydantic import BaseModel
+from transformers import AutoConfig
 
 MAX_STEPS = 15
 BYTE_TO_GB = 1e-9
@@ -19,6 +20,8 @@ class AutoConfiguratorLogger:
     def __init__(self):
         # Suppress verbose logs before any imports that use boto3
         logging.getLogger("botocore").setLevel(logging.ERROR)
+        logging.getLogger("httpx").setLevel(logging.WARNING)
+        logging.getLogger("huggingface_hub").setLevel(logging.WARNING)
 
         _logger = logging.getLogger("AutoConfigurator")
         _logger.setLevel(logging.DEBUG)
@@ -76,8 +79,7 @@ class ModelParams(BaseModel):
 #  - moe: Whether model uses Mixture of Experts (infer from architecture)
 #  - num_local_experts: Number of expert networks (MoE models only)
 #  - num_experts_per_tok: Experts activated per token (MoE models only)
-#
-# FIXME: Dynamic loading from HuggingFace AutoConfig
+# These are gated models which require hf token
 MODEL_ARCHITECTURES: dict[str, ModelParams] = {
     "meta-llama/Llama-3.1-8B-Instruct": ModelParams(
         vocab_size=128256,
@@ -198,6 +200,56 @@ MODEL_ARCHITECTURES: dict[str, ModelParams] = {
 }
 
 
+_model_params_cache: dict[str, ModelParams] = {}
+
+
+def load_model_params(model_path: str, hf_token=None) -> ModelParams:
+    """Load model params from HuggingFace AutoConfig, falling back to static map."""
+    if model_path in _model_params_cache:
+        return _model_params_cache[model_path].model_copy()
+
+    try:
+        logger = logging.getLogger("AutoConfigurator")
+        logger.info(f"Fetching model config HuggingFace: {model_path}")
+        cfg = AutoConfig.from_pretrained(
+            model_path, trust_remote_code=True, token=hf_token if hf_token else os.environ.get("HF_TOKEN", None)
+        )
+
+        # Multimodal models (e.g. Llama Vision) nest params under text_config
+        if hasattr(cfg, "text_config"):
+            cfg = cfg.text_config
+
+        num_local_experts = getattr(cfg, "num_local_experts", None)
+        num_experts_per_tok = getattr(cfg, "num_experts_per_tok", None)
+        is_moe = num_local_experts is not None and num_local_experts > 1
+
+        params = ModelParams(
+            vocab_size=cfg.vocab_size,
+            hidden_width=cfg.hidden_size,
+            num_heads=cfg.num_attention_heads,
+            num_key_value_heads=getattr(cfg, "num_key_value_heads", cfg.num_attention_heads),
+            num_layers=cfg.num_hidden_layers,
+            intermediate_size=cfg.intermediate_size,
+            max_context_width=cfg.max_position_embeddings,
+            moe=is_moe,
+            num_local_experts=num_local_experts if is_moe else None,
+            num_experts_per_tok=num_experts_per_tok if is_moe else None,
+        )
+        _model_params_cache[model_path] = params
+        return params.model_copy()
+    except Exception as e:
+        logger.warning(
+            f"Failed to load model config from HuggingFace for {model_path}: {e}. Falling back to static map."
+        )
+        for key in MODEL_ARCHITECTURES:
+            if key in model_path:
+                return MODEL_ARCHITECTURES[key].model_copy()
+
+        raise ValueError(
+            f"Unknown model: {model_path}. Not in MODEL_ARCHITECTURES and failed to load from HuggingFace: {e}"
+        )
+
+
 def get_gpu_memory_gb(instance_type: str) -> float:
     """Get GPU memory in GB for an instance type
 
@@ -207,14 +259,28 @@ def get_gpu_memory_gb(instance_type: str) -> float:
     Returns:
         GPU memory per GPU in GB
     """
+    memory_gb, _ = get_gpu_info(instance_type)
+    return memory_gb
+
+
+def get_gpu_info(instance_type: str) -> tuple[float, int]:
+    """Get GPU memory and count for an instance type.
+
+    Args:
+        instance_type: EC2 or SageMaker instance type (e.g., 'p5.48xlarge' or 'ml.p5.48xlarge')
+
+    Returns:
+        (gpu_memory_gb, gpu_count) tuple
+    """
     ec2_type = instance_type.replace("ml.", "")
 
     ec2 = boto3.client("ec2", region_name=os.environ.get("AWS_DEFAULT_REGION", "us-west-2"))
     response = ec2.describe_instance_types(InstanceTypes=[ec2_type])
     gpu_info = response["InstanceTypes"][0]["GpuInfo"]
     memory_mib = gpu_info["Gpus"][0]["MemoryInfo"]["SizeInMiB"]
+    gpu_count = gpu_info["TotalGpuMemoryInMiB"] // memory_mib
 
-    return memory_mib / 1024
+    return memory_mib / 1024, gpu_count
 
 
 def prettify(obj):

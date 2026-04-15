@@ -1010,6 +1010,25 @@ class SMTraining(Training):
             if trainer_cfg.get("n_gpus_per_node"):
                 values_template.rayCluster.workerNodes.gpu = str(trainer_cfg.n_gpus_per_node)
 
+        # For verl 0.7.0+ recipes (identified by presence of global_profiler),
+        # set CUDA visibility env vars so that all GPUs are visible to every Ray worker.
+        # By default Ray auto-sets CUDA_VISIBLE_DEVICES per worker to a single GPU,
+        # but vLLM (used in verl rollout) requires visibility of all GPUs on the node.
+        # RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES=1 prevents Ray from restricting
+        # GPU visibility, and CUDA_VISIBLE_DEVICES is explicitly set to all GPUs.
+        training_config = OmegaConf.select(self.cfg, "recipes.training_config")
+        is_verl_070 = training_config is not None and training_config.get("global_profiler") is not None
+        if is_verl_070:
+            n_gpus = int(values_template.rayCluster.workerNodes.gpu)
+            cuda_devices = ",".join(str(i) for i in range(n_gpus))
+            if not OmegaConf.is_missing(values_template.trainingConfig, "envVars"):
+                env_vars = OmegaConf.to_container(values_template.trainingConfig.envVars, resolve=True)
+            else:
+                env_vars = {}
+            env_vars["RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES"] = "1"
+            env_vars["CUDA_VISIBLE_DEVICES"] = cuda_devices
+            values_template.trainingConfig.envVars = env_vars
+
         # Map data directories (from recipe training_config)
         data_cfg = OmegaConf.select(self.cfg, "recipes.training_config.data")
 
@@ -1125,6 +1144,10 @@ class SMTraining(Training):
     def _generate_verl_config(self, job_path):
         """Generate VERL config file for K8s Ray jobs"""
         verl_config = self._generate_verl_config_base()
+
+        # Resolve all interpolations before writing, since the runtime config
+        # won't have the full recipes.training_config prefix available
+        OmegaConf.resolve(verl_config)
 
         # Write config file to k8s_template directory
         config_path = Path(job_path) / "k8s_template" / "verl_config.yaml"

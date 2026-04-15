@@ -158,8 +158,8 @@ def valid_run_name(run_name) -> str:
     if run_name is None:
         return "my-example-run" + f"{random_hash}"
 
-    # Truncate original name to align with k8s naming requirements
-    return run_name[:47] + f"{random_hash}"
+    # Truncate original name to align with k8s naming requirements (max 40 chars including suffix)
+    return run_name[:34] + f"{random_hash}"
 
 
 def preprocess_config(cfg) -> Tuple[bool, bool]:
