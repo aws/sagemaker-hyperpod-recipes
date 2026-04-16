@@ -182,6 +182,8 @@ class EvaluationK8SLauncher:
         job_name = self._job_name.replace("_", "-")
 
         extra_helm_args = ""
+        if self.cfg.cluster.get("kube_context"):
+            extra_helm_args += f" --kube-context {self.cfg.cluster['kube_context']}"
         if self.cfg.cluster.get("namespace"):
             extra_helm_args += f" --namespace {self.cfg.cluster['namespace']}"
 
@@ -271,7 +273,7 @@ class EvaluationK8SLauncher:
             "Type": "Evaluation",
             "Hardware": "GPU",
             "InstanceTypes": [self.instance_type],
-            "Versions": ["1.0"],
+            "Versions": ["2.0.1"],
         }
         launch_json["metadata"] = metadata
 

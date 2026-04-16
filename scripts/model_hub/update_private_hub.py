@@ -207,9 +207,12 @@ def upload_artifacts_to_s3(artifacts: RecipeArtifactPaths, s3_config: S3UploadCo
         k8s_launch_data = json.load(f)
     k8s_yaml_content = extract_yaml_content(k8s_launch_data)
     k8s_yaml_content = k8s_yaml_content.replace("test_container", "{{container_image}}")
-    override_params = k8s_launch_data.get("recipe_override_parameters", {})
+    k8s_override_params = k8s_launch_data.get("recipe_override_parameters", {})
 
     # sm_jobs artifacts from sm_jobs launch.json
+    with open(artifacts.sm_jobs_launch_json_path, "r") as f:
+        sm_jobs_launch_data = json.load(f)
+    sm_jobs_override_params = sm_jobs_launch_data.get("recipe_override_parameters", {})
     sm_jobs_yaml_content = extract_sm_jobs_yaml_content(artifacts.sm_jobs_launch_json_path, artifacts.recipe_name)
     s3_keys = {
         "k8s_yaml": f"recipes/{artifacts.recipe_name}_payload_template_k8s_{s3_config.version}.yaml",
@@ -223,11 +226,11 @@ def upload_artifacts_to_s3(artifacts: RecipeArtifactPaths, s3_config: S3UploadCo
 
     # Upload k8s artifacts
     upload_yaml_to_s3(s3_client, k8s_yaml_content, s3_config.s3_bucket, s3_keys["k8s_yaml"])
-    upload_json_to_s3(s3_client, override_params, s3_config.s3_bucket, s3_keys["k8s_json"])
+    upload_json_to_s3(s3_client, k8s_override_params, s3_config.s3_bucket, s3_keys["k8s_json"])
 
     # Upload sm_jobs artifacts
     upload_yaml_to_s3(s3_client, sm_jobs_yaml_content, s3_config.s3_bucket, s3_keys["sm_jobs_yaml"])
-    upload_json_to_s3(s3_client, override_params, s3_config.s3_bucket, s3_keys["sm_jobs_json"])
+    upload_json_to_s3(s3_client, sm_jobs_override_params, s3_config.s3_bucket, s3_keys["sm_jobs_json"])
 
     # Generate S3 URIs
     for key_name, s3_key in s3_keys.items():
@@ -337,7 +340,7 @@ def process_eval_recipe_metadata(
         "DisplayName": display_name,
         "Name": recipe_name,
         "Type": "Evaluation",
-        "Versions": ["1.0"],
+        "Versions": ["2.0.1"],
         "Hardware": hardware,
         "SupportedInstanceTypes": instance_types,
         "EvaluationType": eval_type_name,

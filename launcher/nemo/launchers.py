@@ -55,6 +55,8 @@ class SMK8SLauncher(K8SLauncher):
         job_name = self.job_name.replace("_", "-")
 
         extra_helm_args = ""
+        if self.parameters.get("kube_context", None):
+            extra_helm_args += f" --kube-context {self.parameters['kube_context']}"
         if self.parameters.get("namespace", None):
             extra_helm_args += f" --namespace {self.parameters['namespace']}"
 

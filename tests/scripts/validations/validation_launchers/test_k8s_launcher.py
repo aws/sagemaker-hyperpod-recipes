@@ -15,7 +15,27 @@ def mock_config():
     config.base_results_dir = "/tmp/results"
     config.platform = "K8"
     config.assume_role_arn = None
+    config.instance_type = "ml.p5.48xlarge"
     config.get = Mock(side_effect=lambda key, default=None: "/tmp/results" if key == "base_results_dir" else default)
+    return config
+
+
+@pytest.fixture
+def mock_config_with_context():
+    config = Mock()
+    config.base_results_dir = "/tmp/results"
+    config.platform = "K8"
+    config.assume_role_arn = None
+    config.instance_type = "ml.p5.48xlarge"
+
+    def config_get(key, default=None):
+        if key == "base_results_dir":
+            return "/tmp/results"
+        if key == "k8":
+            return {"cluster_context_map": {"ml.p5.48xlarge": "arn:aws:eks:us-west-2:123456:cluster/my-cluster"}}
+        return default
+
+    config.get = Mock(side_effect=config_get)
     return config
 
 
@@ -27,6 +47,11 @@ def mock_job_recorder():
 @pytest.fixture
 def launcher(mock_config, mock_job_recorder):
     return K8sValidationLauncher(mock_job_recorder, mock_config)
+
+
+@pytest.fixture
+def launcher_with_context(mock_config_with_context, mock_job_recorder):
+    return K8sValidationLauncher(mock_job_recorder, mock_config_with_context)
 
 
 class TestParseOutput:
@@ -546,3 +571,234 @@ class TestGetJobStatus:
         assert "jsonpath={.status.jobStatus}" in mock_run.call_args[0][0]
         assert "-n" in mock_run.call_args[0][0]
         assert "ray-training" in mock_run.call_args[0][0]
+
+
+class TestContextOverrideInit:
+    """Tests for __init__ context override resolution."""
+
+    def test_no_context_override(self, launcher):
+        assert launcher._context_override == []
+
+    def test_context_override_from_config(self, launcher_with_context):
+        assert launcher_with_context._context_override == [
+            "--context",
+            "arn:aws:eks:us-west-2:123456:cluster/my-cluster",
+        ]
+
+    def test_context_override_unmatched_instance_type(self, mock_job_recorder):
+        config = Mock()
+        config.base_results_dir = "/tmp/results"
+        config.platform = "K8"
+        config.assume_role_arn = None
+        config.instance_type = "ml.g5.48xlarge"
+        config.get = Mock(
+            side_effect=lambda key, default=None: {"cluster_context_map": {"ml.p5.48xlarge": "some-context"}}
+            if key == "k8"
+            else default
+        )
+        launcher = K8sValidationLauncher(mock_job_recorder, config)
+        assert launcher._context_override == []
+
+
+class TestContextOverrideInKubectl:
+    """Tests that context override is injected into kubectl commands."""
+
+    @patch("subprocess.run")
+    def test_describe_resource_with_context(self, mock_run, launcher_with_context):
+        mock_run.return_value = Mock(stdout="details")
+        launcher_with_context.describe_resource("pod", "test-pod")
+        cmd = mock_run.call_args[0][0]
+        assert cmd[:4] == ["kubectl", "--context", "arn:aws:eks:us-west-2:123456:cluster/my-cluster", "describe"]
+
+    @patch("subprocess.run")
+    def test_describe_resource_without_context(self, mock_run, launcher):
+        mock_run.return_value = Mock(stdout="details")
+        launcher.describe_resource("pod", "test-pod")
+        cmd = mock_run.call_args[0][0]
+        assert cmd == ["kubectl", "describe", "pod", "test-pod"]
+
+    @patch("subprocess.run")
+    def test_clean_up_resource_with_context(self, mock_run, launcher_with_context):
+        mock_run.return_value = Mock()
+        launcher_with_context.clean_up_resource("pytorchjob", "test-job")
+        cmd = mock_run.call_args[0][0]
+        assert "--context" in cmd
+        assert cmd[1:3] == ["--context", "arn:aws:eks:us-west-2:123456:cluster/my-cluster"]
+
+    @patch("subprocess.run")
+    def test_get_pods_with_context(self, mock_run, launcher_with_context):
+        mock_run.return_value = Mock(stdout="test-job-worker-0\n")
+        launcher_with_context.get_pods("test-job")
+        cmd = mock_run.call_args[0][0]
+        assert cmd[1:3] == ["--context", "arn:aws:eks:us-west-2:123456:cluster/my-cluster"]
+
+    @patch("subprocess.run")
+    def test_get_job_status_with_context(self, mock_run, launcher_with_context):
+        mock_run.return_value = Mock(stdout="Completed True")
+        launcher_with_context._get_job_status("test-job", is_verl=False)
+        cmd = mock_run.call_args[0][0]
+        assert cmd[1:3] == ["--context", "arn:aws:eks:us-west-2:123456:cluster/my-cluster"]
+
+    @patch("subprocess.run")
+    def test_wait_for_pod_status_with_context(self, mock_run, launcher_with_context):
+        mock_run.return_value = Mock()
+        launcher_with_context._wait_for_pod_status("test-pod", "Running")
+        cmd = mock_run.call_args[0][0]
+        assert cmd[1:3] == ["--context", "arn:aws:eks:us-west-2:123456:cluster/my-cluster"]
+
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("os.makedirs")
+    @patch("subprocess.Popen")
+    def test_collect_pod_logs_with_context(self, mock_popen, mock_makedirs, mock_file, launcher_with_context):
+        mock_proc = Mock()
+        mock_proc.stdout = ["line1\n"]
+        mock_proc.wait.return_value = None
+        mock_popen.return_value = mock_proc
+        launcher_with_context._collect_pod_logs("test-job", "test-pod", False)
+        cmd = mock_popen.call_args[0][0]
+        assert cmd[1:3] == ["--context", "arn:aws:eks:us-west-2:123456:cluster/my-cluster"]
+
+
+class TestContextOverrideInRunInfo:
+    """Tests that kube_context is injected into run_info during _prepare_job."""
+
+    def test_kube_context_injected_into_run_info(self, launcher_with_context):
+        with patch(
+            "scripts.validations.validation_launchers.k8s_launcher.pre_launch_setup",
+            return_value={"some": "info"},
+        ):
+            run_info = launcher_with_context._prepare_job("test.yaml")
+            assert run_info["kube_context"] == "arn:aws:eks:us-west-2:123456:cluster/my-cluster"
+            assert "fsx_run_id" in run_info
+
+    def test_kube_context_not_injected_without_override(self, launcher):
+        with patch(
+            "scripts.validations.validation_launchers.k8s_launcher.pre_launch_setup",
+            return_value={"some": "info"},
+        ):
+            run_info = launcher._prepare_job("test.yaml")
+            assert "kube_context" not in run_info
+            assert "fsx_run_id" in run_info
+
+    def test_fsx_run_id_is_unique_across_calls(self, launcher):
+        with patch(
+            "scripts.validations.validation_launchers.k8s_launcher.pre_launch_setup",
+            side_effect=lambda *a, **kw: {"some": "info"},
+        ):
+            run_info_1 = launcher._prepare_job("test.yaml")
+            run_info_2 = launcher._prepare_job("test.yaml")
+            assert run_info_1["fsx_run_id"] != run_info_2["fsx_run_id"]
+
+    def test_context_override_passed_to_pre_launch_setup(self, launcher_with_context):
+        with patch(
+            "scripts.validations.validation_launchers.k8s_launcher.pre_launch_setup",
+            return_value={"some": "info"},
+        ) as mock_setup:
+            launcher_with_context._prepare_job("test.yaml")
+            mock_setup.assert_called_once_with(
+                launcher_with_context.config,
+                "test.yaml",
+                context_override=["--context", "arn:aws:eks:us-west-2:123456:cluster/my-cluster"],
+            )
+
+
+class TestLaunchJob:
+    """Tests for launch_job end-to-end paths."""
+
+    def test_launch_job_success_with_fsx_cleanup(self, launcher, mock_job_recorder):
+        launcher.config.fsx_checkpoint_override = [Mock(recipe_list=["test.yaml"], fsx_path="/fsx/checkpoints")]
+        with patch.object(
+            launcher, "_prepare_job", return_value={"some": "info", "fsx_run_id": "abc12345"}
+        ), patch.object(launcher, "_build_command", return_value=["cmd"]), patch.object(
+            launcher, "_execute_command", return_value=Mock()
+        ), patch.object(
+            launcher, "_parse_output", return_value={"job_name": "j", "pod_name": "p", "output_folder_path": "/out"}
+        ), patch.object(
+            launcher, "_monitor_job", return_value=True
+        ), patch.object(
+            launcher, "_cleanup_fsx_directory"
+        ) as mock_cleanup:
+            result = launcher.launch_job("test.yaml")
+            assert result is True
+            mock_cleanup.assert_called_once()
+            assert "/fsx/checkpoints/" in mock_cleanup.call_args[0][0]
+
+    def test_launch_job_exception_records_failure(self, launcher, mock_job_recorder):
+        with patch.object(launcher, "_prepare_job", side_effect=RuntimeError("boom")):
+            result = launcher.launch_job("test.yaml")
+            assert result is False
+            mock_job_recorder.update_job.assert_called_once()
+            assert mock_job_recorder.update_job.call_args[1]["status"] == "Failed"
+
+
+class TestGetFsxCheckpointPath:
+    def test_returns_none_when_no_override(self, launcher):
+        launcher.config.fsx_checkpoint_override = None
+        assert launcher._get_fsx_checkpoint_path("test.yaml") is None
+
+    def test_returns_path_when_recipe_matches(self, launcher):
+        launcher.config.fsx_checkpoint_override = [Mock(recipe_list=["test.yaml"], fsx_path="/fsx/ckpt")]
+        assert launcher._get_fsx_checkpoint_path("test.yaml") == "/fsx/ckpt"
+
+    def test_returns_none_when_recipe_not_in_list(self, launcher):
+        launcher.config.fsx_checkpoint_override = [Mock(recipe_list=["other.yaml"], fsx_path="/fsx/ckpt")]
+        assert launcher._get_fsx_checkpoint_path("test.yaml") is None
+
+
+class TestCleanupFsxDirectory:
+    @patch(
+        "scripts.validations.validation_launchers.k8s_launcher._resolve_general_pod_name", return_value="sleeper-pod"
+    )
+    @patch("subprocess.run")
+    def test_cleanup_success(self, mock_run, mock_resolve, launcher):
+        mock_run.return_value = Mock()
+        launcher._cleanup_fsx_directory("/fsx/checkpoints/abc")
+        mock_run.assert_called_once()
+        cmd = mock_run.call_args[0][0]
+        assert "exec" in cmd
+        assert "/fsx/checkpoints/abc" in cmd
+
+    @patch("scripts.validations.validation_launchers.k8s_launcher._resolve_general_pod_name", return_value="")
+    def test_cleanup_skipped_when_no_pod(self, mock_resolve, launcher):
+        launcher._cleanup_fsx_directory("/fsx/checkpoints/abc")
+        # Should not raise, just log warning
+
+    @patch(
+        "scripts.validations.validation_launchers.k8s_launcher._resolve_general_pod_name", return_value="sleeper-pod"
+    )
+    @patch("subprocess.run", side_effect=subprocess.CalledProcessError(1, "cmd", stderr="error"))
+    def test_cleanup_handles_kubectl_error(self, mock_run, mock_resolve, launcher):
+        launcher._cleanup_fsx_directory("/fsx/checkpoints/abc")
+        # Should not raise, just log warning
+
+
+class TestWaitForPodStatusVerl:
+    @patch("subprocess.run")
+    def test_wait_for_pod_status_verl_namespace(self, mock_run, launcher):
+        mock_run.return_value = Mock()
+        launcher._wait_for_pod_status("verl-pod", "Running", is_verl=True)
+        cmd = mock_run.call_args[0][0]
+        assert "-n" in cmd
+        assert "ray-training" in cmd
+
+
+class TestWaitForJobStatusDescribeFails:
+    @patch("subprocess.run")
+    def test_describe_fails_silently_on_wait_error(self, mock_run, launcher):
+        mock_run.side_effect = [
+            subprocess.CalledProcessError(1, "cmd", stderr="timeout"),  # wait fails
+            subprocess.CalledProcessError(1, "cmd", stderr="not found"),  # describe fails
+            Mock(),  # clean_up_resource
+        ]
+        with pytest.raises(subprocess.CalledProcessError):
+            launcher._wait_for_job_status("test-job", is_verl=False)
+
+
+class TestCleanUpResourceVerl:
+    @patch("subprocess.run")
+    def test_clean_up_resource_verl_namespace(self, mock_run, launcher):
+        mock_run.return_value = Mock()
+        launcher.clean_up_resource("rayjobs", "verl-job", is_verl=True)
+        cmd = mock_run.call_args[0][0]
+        assert "-n" in cmd
+        assert "ray-training" in cmd

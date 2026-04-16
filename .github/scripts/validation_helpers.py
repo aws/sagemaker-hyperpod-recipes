@@ -25,9 +25,10 @@ PLATFORM_INSTANCE_CONSTRAINTS = {
         "ml.g6.12xlarge",
         "ml.g6e.12xlarge",
     ],
+    "SERVERLESS": ["serverless"],
 }
 
-PLATFORMS = ["K8", "SLURM", "SMJOBS"]
+PLATFORMS = ["K8", "SLURM", "SMJOBS", "SERVERLESS"]
 RECIPES_PREFIX = "recipes_collection/recipes/"
 
 

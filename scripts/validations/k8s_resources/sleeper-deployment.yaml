@@ -16,15 +16,15 @@ spec:
     spec:
       containers:
         - name: sleeper
-          image: public.ecr.aws/amazonlinux/amazonlinux:latest
-          command: ["/bin/sh", "-c", "while true; do sleep 3600; done"]
+          image: python:3.11-slim
+          command: ["/bin/sh", "-c", "apt-get update && apt-get install -y --no-install-recommends tar curl jq unzip && curl -sL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscli.zip && unzip -q /tmp/awscli.zip -d /tmp && /tmp/aws/install && rm -rf /tmp/aws /tmp/awscli.zip && pip install --no-cache-dir huggingface-hub && while true; do sleep 3600; done"]
           resources:
             requests:
               cpu: "100m"
-              memory: "128Mi"
+              memory: "4Gi"
             limits:
-              cpu: "200m"
-              memory: "256Mi"
+              cpu: "500m"
+              memory: "8Gi"
           volumeMounts:
             - name: fsx-volume
               mountPath: /data

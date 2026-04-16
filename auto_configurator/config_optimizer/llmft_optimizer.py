@@ -53,6 +53,11 @@ class LlmftOptimizer(BaseOptimizer):
         recipe_overrides.append(f"++recipes.training_config.datasets.train_data.limit={train_batch_size * MAX_STEPS}")
         recipe_overrides.append(f"++recipes.training_config.datasets.val_data.limit={train_batch_size * 2}")
 
+        # Override GPU count: recipes.trainer.devices is read by the recipe config,
+        # trainer.devices is read by the launcher for the Helm template k8s resource requests.
+        recipe_overrides.append(f"++recipes.trainer.devices={self._gpu_count}")
+        recipe_overrides.append(f"++trainer.devices={self._gpu_count}")
+
         return recipe_overrides
 
     def __set_sharding_strategy(self, params):
@@ -101,7 +106,7 @@ class LlmftOptimizer(BaseOptimizer):
 
         if cfg_value == "auto":
             # Estimate parameter memory per GPU (bf16 = 2 bytes per param)
-            num_gpus = self.cfg.trainer.num_nodes * self.cfg.trainer.devices
+            num_gpus = self.cfg.trainer.num_nodes * self._gpu_count
             params_memory_per_gpu = (self.num_params * 2) / num_gpus / 1e9
 
             # If params alone use >50% of GPU memory, test with offload
@@ -124,7 +129,7 @@ class LlmftOptimizer(BaseOptimizer):
             return False
 
         # Check gradient accumulation is valid (>= 1)
-        num_gpus = self.cfg.trainer.num_nodes * self.cfg.trainer.devices
+        num_gpus = self.cfg.trainer.num_nodes * self._gpu_count
 
         train_batch_size = candidate.get("train_batch_size", self.cfg.training_config.training_args.train_batch_size)
         micro_train_batch_size = candidate.get("micro_train_batch_size", 0)
@@ -207,7 +212,7 @@ class LlmftOptimizer(BaseOptimizer):
         """
 
         model_cfg = self._load_model_params()
-        num_gpus = self.cfg.trainer.num_nodes * self.cfg.trainer.devices
+        num_gpus = self.cfg.trainer.num_nodes * self._gpu_count
         sharding_strategy = candidate_params.get("sharding_strategy")
         seq_length = candidate_params["max_len"]
 
@@ -253,7 +258,7 @@ class LlmftOptimizer(BaseOptimizer):
             optimizer_memory = bytes_optimizer * self.num_params / num_gpus * BYTE_TO_GB
         elif sharding_strategy == "HYBRID_SHARD":
             # HYBRID_SHARD: shards optimizer + gradients within a node, replicates parameters
-            gpus_per_node = self.cfg.trainer.devices
+            gpus_per_node = self._gpu_count
             parameters_memory = bytes_weight * self.num_params * BYTE_TO_GB
             gradients_memory = bytes_gradient * self.num_params / gpus_per_node * BYTE_TO_GB
             optimizer_memory = bytes_optimizer * self.num_params / gpus_per_node * BYTE_TO_GB

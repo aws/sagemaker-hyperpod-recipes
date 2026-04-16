@@ -100,8 +100,9 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         recipe_metadata_helpers = self.matched_template_group["recipe_metadata_helpers"]
 
         # Check for verl-0.7.0
-        # This checks using a new field added in verl-0.7.0 configs to determine the recipe type
-        is_verl_0_7_0 = "profiler" in recipe_cfg.training_config
+        # SFT 0.7.0 recipes have "profiler" directly under training_config,
+        # while RL 0.7.0 recipes (GRPO/PPO) have "global_profiler" instead.
+        is_verl_0_7_0 = "profiler" in recipe_cfg.training_config or "global_profiler" in recipe_cfg.training_config
         self._verl_regional_key = "verl-0.7.0" if is_verl_0_7_0 else "verl"
         logger.debug(f"Detected verl recipe version: {self._verl_regional_key}")
 

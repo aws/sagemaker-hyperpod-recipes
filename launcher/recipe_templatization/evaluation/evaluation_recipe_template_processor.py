@@ -104,7 +104,7 @@ class EvaluationRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         metadata["Model_ID"] = base_model_name
         metadata["Type"] = "Evaluation"
         metadata["EvaluationType"] = self.get_evaluation_type(recipe_file_path)
-        metadata["Versions"] = ["1.0"]
+        metadata["Versions"] = ["2.0.1"]
 
         # Extract recipe name from recipe_file_path for hosting config
         recipe_name = self.get_recipe_name_from_path(recipe_file_path)

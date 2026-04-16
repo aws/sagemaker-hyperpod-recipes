@@ -512,7 +512,11 @@ class K8SLauncher(Launcher):
         helm_charts = paths.folder / "k8s_template"
         job_name = self.job_name.replace("_", "-")
 
-        return f"#!/bin/bash\nhelm install {job_name} {helm_charts}\n"
+        extra_helm_args = ""
+        if self.parameters.get("kube_context", None):
+            extra_helm_args += f" --kube-context {self.parameters['kube_context']}"
+
+        return f"#!/bin/bash\nhelm install{extra_helm_args} {job_name} {helm_charts}\n"
 
 
 @functools.lru_cache()

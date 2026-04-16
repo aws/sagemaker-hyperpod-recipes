@@ -1,0 +1,8 @@
+# @package recipes
+# Qwen 3.5 4B model configuration for verl-0.7.0 SFT
+training_config:
+  model:
+    path: Qwen/Qwen3.5-4B
+    trust_remote_code: true
+    use_liger: true
+    use_fused_kernels: false

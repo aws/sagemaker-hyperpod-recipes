@@ -1,0 +1,163 @@
+display_name: Qwen 3.5 9B SFT LoRA Fine-Tuning
+instance_types:
+- ml.p5.48xlarge
+run:
+  model_type: verl
+  name: verl-sft-qwen-3-dot-5-9b-lora
+  results_dir: ${base_results_dir}/${.name}
+trainer:
+  devices: 8
+  num_nodes: 1
+training_config:
+  checkpoint:
+    _target_: verl.trainer.config.CheckpointConfig
+    load_contents:
+    - model
+    - optimizer
+    - extra
+    - hf_model
+    save_contents:
+    - model
+    - optimizer
+    - extra
+    - hf_model
+    save_only_adapter_if_lora: true
+  data:
+    custom_cls:
+      name: null
+      path: null
+    ignore_input_ids_mismatch: false
+    max_length: 4096
+    max_token_len_per_gpu: 16384
+    messages_key: messages
+    micro_batch_size_per_gpu: 4
+    pad_mode: no_padding
+    train_batch_size: 32
+    train_files: null
+    train_max_samples: -1
+    train_val_split_ratio: 1.0
+    truncation: right
+    use_dynamic_bsz: true
+    val_files: null
+    val_max_samples: -1
+  engine:
+    _target_: verl.workers.config.FSDPEngineConfig
+    dtype: bfloat16
+    entropy_checkpointing: false
+    entropy_from_logits_with_chunking: false
+    forward_only: false
+    forward_prefetch: true
+    fsdp_size: 8
+    full_determinism: false
+    model_dtype: bf16
+    offload_policy: false
+    optimizer_offload: false
+    param_offload: false
+    reshard_after_forward: true
+    seed: 42
+    strategy: fsdp2
+    ulysses_sequence_parallel_size: 1
+    use_orig_params: false
+    use_torch_compile: true
+    wrap_policy:
+      min_num_params: 0
+  mlflow:
+    run_id: ''
+    tracking_uri: ''
+  model:
+    _target_: verl.workers.config.HFModelConfig
+    custom_chat_template: null
+    enable_activation_offload: false
+    enable_gradient_checkpointing: true
+    exclude_modules: null
+    external_lib: null
+    fused_kernel_options:
+      impl_backend: torch
+    hf_config_path: null
+    lora_adapter_path: null
+    lora_alpha: 64
+    lora_rank: 32
+    override_config: {}
+    path: Qwen/Qwen3.5-9B
+    target_modules: all-linear
+    tiled_mlp:
+      enabled: false
+      num_shards: 4
+    tokenizer_path: null
+    trust_remote_code: true
+    use_fused_kernels: false
+    use_liger: true
+    use_remove_padding: true
+    use_shm: false
+  optim:
+    _target_: verl.workers.config.FSDPOptimizerConfig
+    betas:
+    - 0.9
+    - 0.95
+    clip_grad: 1.0
+    lr: 0.0002
+    lr_scheduler_type: cosine
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.0
+    min_lr_ratio: 0.0
+    num_cycles: 0.5
+    optimizer: AdamW
+    optimizer_impl: torch.optim
+    override_optimizer_config: null
+    total_training_steps: -1
+    warmup_style: null
+    weight_decay: 0.001
+  profiler:
+    _target_: verl.utils.profiler.ProfilerConfig
+    all_ranks: false
+    enable: false
+    ranks: []
+    save_path: outputs/profile
+    tool: torch
+    tool_config:
+      npu:
+        _target_: verl.utils.profiler.config.NPUToolConfig
+        analysis: true
+        contents: []
+        discrete: false
+        level: level0
+        name: npu
+      nsys:
+        _target_: verl.utils.profiler.config.NsightToolConfig
+        discrete: ${oc.select:recipes.training_config.global_profiler.global_tool_config.nsys.discrete}
+        name: nsight
+      torch:
+        _target_: verl.utils.profiler.config.TorchProfilerToolConfig
+        manual_save: true
+        name: torch
+        step_end: null
+        step_start: 0
+      torch_memory:
+        _target_: verl.utils.profiler.config.TorchMemoryToolConfig
+        name: torch_memory
+        stack_depth: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.stack_depth,32}
+        trace_alloc_max_entries: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.trace_alloc_max_entries,100000}
+  trainer:
+    default_hdfs_dir: null
+    default_local_dir: /opt/ml/model
+    device: cuda
+    experiment_name: qwen3_5_9b_sft_fsdp_lora_tatqa
+    logger:
+    - console
+    - mlflow
+    - tensorboard
+    max_ckpt_to_keep: 3
+    merge_lora_on_final_save: true
+    n_gpus_per_node: 8
+    nnodes: 1
+    profile_interval:
+    - -1
+    - -1
+    project_name: verl_sft_qwen3_5_9b
+    resume_from_path: null
+    resume_mode: resume_path
+    save_freq: after_each_epoch
+    test_freq: -1
+    total_epochs: 1
+    total_training_steps: null
+version: 2.0.0

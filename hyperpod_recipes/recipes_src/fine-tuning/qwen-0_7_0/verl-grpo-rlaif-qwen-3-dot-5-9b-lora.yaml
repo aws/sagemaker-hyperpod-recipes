@@ -1,0 +1,195 @@
+defaults:
+  - /hydra_config/verl-0_7_0/default
+  - _self_
+
+display_name: Qwen 3.5 9B GRPO RLAIF Fine-Tuning with LoRA
+version: 2.0.0
+instance_types:
+  - ml.p5en.48xlarge
+  - ml.p5e.48xlarge
+run:
+    model_type: verl
+    name: verl-grpo-qwen-3-dot-5-9b-lora
+    results_dir: ${base_results_dir}/${.name}
+trainer:
+  num_nodes: 1
+
+ray_cluster:
+  head_node:
+    cpu: '16'
+    cpuLimit: null
+    gpu: '0'
+    memory: 32Gi
+    memoryLimit: null
+  worker_nodes:
+    cpu: '48'
+    cpuLimit: null
+    gpu: '8'
+    memory: 144Gi
+    memoryLimit: null
+    replicas: 1
+
+training_config:
+  # Algorithm: switch from GAE (upstream default) to GRPO
+  algorithm:
+    adv_estimator: grpo
+    norm_adv_by_std_in_grpo: true
+    rollout_correction:
+      rollout_is: sequence
+      rollout_is_threshold: 3
+
+  actor_rollout_ref:
+    hybrid_engine: true
+    nccl_timeout: 600
+
+    # Actor overrides
+    actor:
+      use_kl_loss: false
+      kl_loss_coef: 0
+      use_dynamic_bsz: true
+      clip_ratio_high: 0.28
+      ppo_micro_batch_size_per_gpu: null
+      ulysses_sequence_parallel_size: 1
+      ppo_max_token_len_per_gpu: 32768
+      strategy: fsdp2
+      optim:
+        lr: 1.0e-05
+        warmup_style: null
+      fsdp_config:
+        fsdp_size: 8
+        strategy: fsdp2
+        wrap_policy:
+          transformer_layer_cls_to_wrap:
+            - Qwen3_5DecoderLayer
+            - Qwen3_5VisionBlock
+
+    # Reference model overrides
+    ref:
+      log_prob_use_dynamic_bsz: true
+      entropy_from_logits_with_chunking: true
+      log_prob_max_token_len_per_gpu: 16384
+      fsdp_config:
+        param_offload: true
+        strategy: fsdp2
+        wrap_policy:
+          transformer_layer_cls_to_wrap:
+            - Qwen3_5DecoderLayer
+            - Qwen3_5VisionBlock
+
+    # Rollout overrides (vLLM engine)
+    rollout:
+      name: vllm
+      prompt_length: 16384
+      response_length: 16384
+      tensor_model_parallel_size: 2
+      log_prob_max_token_len_per_gpu: 32768
+      enable_chunked_prefill: true
+      layered_summon: true
+      merge_lora_for_inference: true
+      calculate_log_probs: true
+      max_model_len: 32768
+      max_num_batched_tokens: 8192
+      val_kwargs:
+        'n': 1
+      prometheus:
+        served_model_name: Qwen/Qwen3.5-9B
+      engine_kwargs:
+        vllm:
+          gdn_prefill_backend: triton
+
+
+
+    # Model config (Qwen 3.5 9B + LoRA)
+    model:
+      patch_full_model: false
+      patched_model_path: null
+      path: Qwen/Qwen3.5-9B
+      trust_remote_code: false
+      enable_gradient_checkpointing: true
+      use_remove_padding: true
+      lora_rank: 32
+      lora_alpha: 64
+      target_modules: all-linear
+      is_saving_checkpoint_in_lora: true
+      exclude_modules: .*visual.*
+
+
+
+  # Trainer overrides
+  trainer:
+    custom_rollout:
+      name: None
+      path: None
+    project_name: verl-grpo-rlaif
+    experiment_name: qwen-3-dot-5-9b-lora
+    logger:
+      - console
+      - mlflow
+    resume_mode: resume_path
+    resume_from_path: null
+    test_freq: 10
+    total_epochs: 1
+    save_freq: 20
+    default_local_dir: /opt/ml/model
+    merge_lora_on_final_save: true
+    use_custom_rollouts: false
+
+  # Data overrides
+  data:
+    max_prompt_length: 16384
+    max_response_length: 16384
+    val_batch_size: null
+    train_val_split_ratio: 0.9  # add this alongside existing data fields
+    apply_chat_template_kwargs:
+      enable_thinking: true
+    auto_convert_format: false
+    shuffle: false
+    return_raw_chat: true
+
+  # Reward model overrides
+  reward_model:
+    enable: false
+    strategy: fsdp2
+    launch_reward_fn_async: true
+    use_reward_loop: false
+    reward_manager: batch
+    rollout:
+      name: vllm
+      gpu_memory_utilization: 0.5
+    model:
+      input_tokenizer: Qwen/Qwen3.5-9B
+    reward_kwargs:
+      kwargs:
+        aws_region_name: null
+        llmj_prompt_template_path: /opt/ml/code/verl/summarize.jinja
+        max_workers: 100
+        model_id: bedrock/openai.gpt-oss-120b-1:0
+        num_retries: 5
+        range:
+        - 0.0
+        - 1.0
+        sampling_params:
+          max_completion_tokens: 2048
+          reasoning_effort: null
+          temperature: 0.0
+          top_p: 0.9
+      reward_fn_name: llmj
+
+  # Reward manager (RLAIF)
+  reward_manager:
+    _target_: verl.trainer.config.config.RewardManagerConfig
+    source: register
+    name: batch
+    module:
+      _target_: verl.trainer.config.config.ModuleConfig
+      path: null
+      name: custom_reward_manager
+
+  custom_reward_function:
+    lambda_arn: ''
+    path: ''
+    name: ''
+
+  mlflow:
+    run_id: ''
+    tracking_uri: ''

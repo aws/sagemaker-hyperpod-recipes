@@ -71,5 +71,17 @@
     "verl-grpo-qwen-3-4b-fft": "huggingface-reasoning-qwen3-4b",
     "verl-grpo-qwen-3-8b-fft": "huggingface-reasoning-qwen3-8b",
     "verl-grpo-qwen-3-14b-fft": "huggingface-reasoning-qwen3-14b",
-    "verl-grpo-qwen-3-32b-fft": "huggingface-reasoning-qwen3-32b"
+    "verl-grpo-qwen-3-32b-fft": "huggingface-reasoning-qwen3-32b",
+    "verl-grpo-qwen-3-dot-5-4b-lora": "huggingface-vlm-qwen3-5-4b",
+    "verl-grpo-qwen-3-dot-5-4b-fft": "huggingface-vlm-qwen3-5-4b",
+    "verl-grpo-qwen-3-dot-5-9b-lora": "huggingface-vlm-qwen3-5-9b",
+    "verl-grpo-qwen-3-dot-5-9b-fft": "huggingface-vlm-qwen3-5-9b",
+    "verl-grpo-qwen-3-dot-5-27b-lora": "huggingface-vlm-qwen3-5-27b",
+    "verl-grpo-qwen-3-dot-5-27b-fft": "huggingface-vlm-qwen3-5-27b",
+    "verl-sft-qwen-3-dot-5-4b-lora": "huggingface-vlm-qwen3-5-4b",
+    "verl-sft-qwen-3-dot-5-4b-fft": "huggingface-vlm-qwen3-5-4b",
+    "verl-sft-qwen-3-dot-5-9b-lora": "huggingface-vlm-qwen3-5-9b",
+    "verl-sft-qwen-3-dot-5-9b-fft": "huggingface-vlm-qwen3-5-9b",
+    "verl-sft-qwen-3-dot-5-27b-lora": "huggingface-vlm-qwen3-5-27b",
+    "verl-sft-qwen-3-dot-5-27b-fft": "huggingface-vlm-qwen3-5-27b"
 }

@@ -80,14 +80,50 @@ class SlurmClient:
         self._validate_platform_auth()
         self._setup_workdir()
 
+    def download_remote_file(self, remote_path: str) -> str:
+        """Download a file from the remote controller via S3 and return its contents.
+
+        This avoids streaming large file contents through SSM, which can cause
+        the session to drop when the output volume overwhelms the WebSocket
+        data channel.
+
+        Args:
+            remote_path: Absolute path to the file on the remote controller.
+
+        Returns:
+            The file contents as a string.
+        """
+        unique_suffix = uuid.uuid4().hex[:8]
+        filename = f"{unique_suffix}_{os.path.basename(remote_path)}"
+        s3_key = f"{self.s3_artifact_key_prefix}/transfer/{filename}"
+        local_path = os.path.join(self.local_work_dir, filename)
+
+        self.run([f"aws s3 cp {remote_path} s3://{self.s3_artifact_bucket}/{s3_key} --quiet"])
+
+        # Download from S3 to local
+        self.s3_client.download_file(self.s3_artifact_bucket, s3_key, local_path)
+
+        with open(local_path, "r", errors="replace") as f:
+            return f.read()
+
     def launch_job(self, command: List[str], timeout_in_min: int = 60):
         venv_python = f"{self.controller_work_dir}/venv/bin/python3"
         cmd_str = " ".join(command).replace("python3 ", f"{venv_python} ")
+        job_uid = uuid.uuid4().hex[:8]
+        log_file = f"{self.controller_work_dir}/launch_job_{job_uid}.log"
+
+        # Redirect all output to a log file to prevent SSM session flooding.
         command = [
             f"cd {self.controller_work_dir}",
-            cmd_str,
+            f"{cmd_str} > {log_file} 2>&1",
         ]
-        return self.run(command, timeout_in_min)
+        self.run(command, timeout_in_min)
+
+        # Transfer the log file back via S3 and return as CompletedProcess
+        stdout_content = self.download_remote_file(log_file)
+        self.logger.info(f"launch_job output (first 3000 chars): {stdout_content[:3000]}")
+
+        return subprocess.CompletedProcess(args=cmd_str, returncode=0, stdout=stdout_content, stderr="")
 
     def run(self, command: List[str], timeout_in_min: int = 5):
         command = [cmd.replace(str(get_project_root()), self.controller_work_dir) for cmd in command]
@@ -105,10 +141,12 @@ class SlurmClient:
         result = self.__ssm_execute([bash_wrapped], timeout_in_min)
 
         # Parse the real exit code from stdout
+        found_exit_code = False
         if result and result.stdout:
             for line in reversed(result.stdout.strip().split("\n")):
                 line = line.strip()
                 if line.startswith("SSM_CMD_EXIT="):
+                    found_exit_code = True
                     try:
                         exit_code = int(line.split("=", 1)[1])
                     except (ValueError, IndexError):
@@ -120,6 +158,19 @@ class SlurmClient:
                             exit_code, inner_cmd, output=result.stdout, stderr=result.stderr
                         )
                     break
+
+        if not found_exit_code:
+            self.logger.error(
+                "SSM session terminated before command completed (no exit code marker found). "
+                "This typically happens when the session drops due to output flooding or timeout."
+            )
+            self.logger.error(f"STDOUT: {result.stdout[:2000] if result and result.stdout else 'None'}")
+            raise subprocess.CalledProcessError(
+                1,
+                inner_cmd,
+                output=result.stdout if result else "",
+                stderr=result.stderr if result else "",
+            )
 
         return result
 
@@ -149,7 +200,7 @@ class SlurmClient:
                 timeout=timeout_in_min * 60,
                 env=self.process_env,
             )
-            self.logger.debug(f"Process output: {process.stdout}")
+            self.logger.info(f"Process output: {process.stdout[:3000]}")
             return process
         except subprocess.TimeoutExpired as e:
             self.logger.error(f"SSM session timed out after {timeout_in_min} minutes")
@@ -180,7 +231,6 @@ class SlurmClient:
             self.run([f"mkdir -p {self.controller_work_dir}"])
             self.__sync_repository()
 
-            # Detect Python version and install matching venv package
             py_ver_cmd = "python3 -c \"import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')\""
             venv_pkg_cmd = (
                 f"PY_VER=$({py_ver_cmd}) && "
@@ -192,7 +242,7 @@ class SlurmClient:
                 [
                     venv_pkg_cmd,
                     f"python3 -m venv {self.controller_work_dir}/venv --copies",
-                    f"{self.controller_work_dir}/venv/bin/pip3 install -r {self.controller_work_dir}/requirements.txt",
+                    f"{self.controller_work_dir}/venv/bin/pip3 install -r {self.controller_work_dir}/requirements.txt > {self.controller_work_dir}/pip_install.log 2>&1",
                 ]
             )
 
@@ -202,8 +252,15 @@ class SlurmClient:
                     f"{self.controller_work_dir}/venv/bin/python3 -c 'import omegaconf; import hydra; print(f\"omegaconf={{omegaconf.__version__}}, hydra={{hydra.__version__}}\")'",
                 ]
             )
+            self.logger.info("Remote environment setup completed successfully")
+
         except Exception as e:
             self.logger.error(f"Setup failed: {e}")
+            # Dump full pip install log on failure for debugging
+            try:
+                self.run([f"tail -5 {self.controller_work_dir}/pip_install.log 2>/dev/null || echo 'No pip log'"])
+            except Exception:
+                pass
             self.cleanup()
             raise e
 
@@ -219,7 +276,7 @@ class SlurmClient:
         self.logger.info(f"Successfully uploaded to at s3://{self.s3_artifact_bucket}/{s3_key}")
 
         setup_commands = [
-            f"aws s3 cp s3://{self.s3_artifact_bucket}/{s3_key} {self.controller_work_dir}/repo.tar.gz",
+            f"aws s3 cp s3://{self.s3_artifact_bucket}/{s3_key} {self.controller_work_dir}/repo.tar.gz --quiet",
             f"tar -xzf {self.controller_work_dir}/repo.tar.gz -C {self.controller_work_dir}",
             f"rm {self.controller_work_dir}/repo.tar.gz",
         ]

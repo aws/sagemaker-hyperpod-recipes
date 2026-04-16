@@ -3,6 +3,7 @@
 pullPolicy: Always # policy to pull container, can be Always, IfNotPresent and Never
 restartPolicy: Never # restart policy
 namespace: default # the namespace to submit job
+kube_context: null # optional: kubectl/helm context override for job submission
 # create customized labels for the PytorchJob and Pods deployed jobs.
 # Example:
 #   custom_labels:

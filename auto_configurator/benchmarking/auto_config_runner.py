@@ -6,6 +6,7 @@ Integrates with validation launcher infrastructure.
 import logging
 import os
 import re
+import threading
 import time
 import traceback
 
@@ -30,6 +31,8 @@ DRY_RUN_ARTIFACT_PATTERN = re.compile(r"\[DRY_RUN\]\s+Artifacts generated at:\s*
 
 class AutoConfigRunner:
     """Runs training jobs for auto-configurator benchmarking"""
+
+    _recipe_lock = threading.Lock()
 
     def __init__(self, auto_cfg):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -65,7 +68,8 @@ class AutoConfigRunner:
         try:
             recipe_id = input_file_path.removesuffix(".yaml")
 
-            return get_recipe(recipe_id).config
+            with AutoConfigRunner._recipe_lock:
+                return get_recipe(recipe_id).config
         except Exception as e:
             error_msg = f"Failed to get recipe: {e}"
             self.logger.error(error_msg)

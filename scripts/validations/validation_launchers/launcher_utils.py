@@ -285,8 +285,12 @@ def validate_platform_auth(cfg) -> bool:
             # PYSDK_FINETUNE uses SageMaker PySDK trainers (SFTTrainer, DPOTrainer, etc.) to launch training jobs
             return True
 
+        case "EVAL":
+            # EVAL uses the eval launcher to launch SageMaker Training Jobs for evaluation
+            return True
+
         case _:
-            logging.info("Valid environment (SLURM, K8, SMJOBS, SERVERLESS, PYSDK_FINETUNE) not found")
+            logging.info("Valid environment (SLURM, K8, SMJOBS, SERVERLESS, PYSDK_FINETUNE, EVAL) not found")
             return False
 
 
@@ -484,36 +488,69 @@ def construct_slurm_launch_command(cfg, run_info):
     return launch_command
 
 
-def _resolve_general_pod_name(cfg, env=None) -> str:
-    """Resolve the running sleeper pod from its Deployment label selector."""
+_SLEEPER_YAML = Path(__file__).resolve().parent.parent / "k8s_resources" / "sleeper-deployment.yaml"
+
+
+def _get_running_sleeper_pod(deployment, env=None, context_override=None):
+    """Return the name of a running pod for the given deployment, or empty string.
+
+    Raises subprocess.CalledProcessError if kubectl fails.
+    """
+    ctx = context_override or []
+    result = subprocess.run(
+        [
+            "kubectl",
+            *ctx,
+            "get",
+            "pods",
+            "-l",
+            f"app={deployment}",
+            "--field-selector=status.phase=Running",
+            "--no-headers",
+            "-o",
+            "custom-columns=:metadata.name",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        env=env,
+    )
+    pods = [p.strip() for p in result.stdout.split("\n") if p.strip()]
+    return pods[0] if pods else ""
+
+
+def _resolve_general_pod_name(cfg, env=None, context_override=None) -> str:
+    """Resolve the running sleeper pod from its Deployment label selector.
+
+    If no running pod is found, automatically deploys the sleeper and waits for it.
+    """
     deployment = getattr(cfg.k8, "sleeper_deployment", "")
     if not deployment:
         raise ValueError("k8.sleeper_deployment is required but not set in config. ")
+    ctx = context_override or []
     try:
-        result = subprocess.run(
-            [
-                "kubectl",
-                "get",
-                "pods",
-                "-l",
-                f"app={deployment}",
-                "--field-selector=status.phase=Running",
-                "--no-headers",
-                "-o",
-                "custom-columns=:metadata.name",
-            ],
-            capture_output=True,
-            text=True,
+        pod = _get_running_sleeper_pod(deployment, env=env, context_override=ctx)
+        if pod:
+            logging.info(f"Resolved sleeper pod: {pod}")
+            return pod
+
+        logging.info(f"No running sleeper pod found for deployment '{deployment}', deploying...")
+        if not _SLEEPER_YAML.exists():
+            logging.warning(f"Sleeper YAML not found at {_SLEEPER_YAML}")
+            return ""
+        subprocess.run(["kubectl", *ctx, "apply", "-f", str(_SLEEPER_YAML)], check=True, env=env, timeout=30)
+        subprocess.run(
+            ["kubectl", *ctx, "wait", "pod", "-l", f"app={deployment}", "--for=condition=Ready", "--timeout=120s"],
             check=True,
             env=env,
         )
-        pods = [p.strip() for p in result.stdout.split("\n") if p.strip()]
-        if pods:
-            logging.info(f"Resolved sleeper pod: {pods[0]}")
-            return pods[0]
-        logging.warning(f"No running pod found for deployment: {deployment}")
+
+        pod = _get_running_sleeper_pod(deployment, env=env, context_override=ctx)
+        if pod:
+            logging.info(f"Resolved sleeper pod after deploy: {pod}")
+            return pod
     except subprocess.CalledProcessError as e:
-        logging.warning(f"Failed to resolve sleeper pod for deployment '{deployment}': {e.stderr}")
+        logging.warning(f"Failed to resolve sleeper pod deployment '{deployment}': {e.stderr}")
     return ""
 
 
@@ -534,6 +571,9 @@ def construct_k8_launch_command(cfg, run_info):
             f"+cluster.general_pod={run_info['k8_general_pod']}",
         ]
     )
+
+    if run_info.get("kube_context"):
+        launch_command.append(f"+cluster.kube_context={run_info['kube_context']}")
 
     return launch_command
 
@@ -583,6 +623,12 @@ def construct_smjobs_launch_command(cfg, run_info):
     if hasattr(cfg, "smjobs") and hasattr(cfg.smjobs, "output_kms_key") and cfg.smjobs.output_kms_key:
         launch_command.append(
             f"+cluster.sm_jobs_config.additional_estimator_kwargs.output_kms_key={cfg.smjobs.output_kms_key}"
+        )
+
+    # Add training plan for capacity reservation if configured
+    if hasattr(cfg, "smjobs") and hasattr(cfg.smjobs, "training_plan_arn") and cfg.smjobs.training_plan_arn:
+        launch_command.append(
+            f"+cluster.sm_jobs_config.additional_estimator_kwargs.training_plan={cfg.smjobs.training_plan_arn}"
         )
 
     launch_command.append("'cluster.sm_jobs_config.wait=False'")
@@ -1093,7 +1139,7 @@ def _get_recipe_launch_commands(cfg, run_info, platform):
 
 # This function gets the values for all the relevant experiment
 # variables similar to the once used in launcher scripts
-def pre_launch_setup(cfg, input_file_path):
+def pre_launch_setup(cfg, input_file_path, context_override=None):
     """
     Set up run parameters for a recipe using config-driven approach.
 
@@ -1108,7 +1154,7 @@ def pre_launch_setup(cfg, input_file_path):
     # Extract model name using config-driven approach
     hf_model_name = _extract_model_name_from_recipe(cfg, input_file_path, recipe_cfg)
 
-    run_info = get_job_parameters(cfg, input_file_path, hf_model_name)
+    run_info = get_job_parameters(cfg, input_file_path, hf_model_name, context_override=context_override)
     run_info["input_file_path"] = input_file_path
 
     run_name = _get_run_name_from_recipe(recipe_cfg)
@@ -1119,7 +1165,7 @@ def pre_launch_setup(cfg, input_file_path):
 
 
 # Fetch all parameters used in a Hyperpod recipe launcher_scripts
-def get_job_parameters(cfg, input_file_path, hf_model_name):
+def get_job_parameters(cfg, input_file_path, hf_model_name, context_override=None):
     """
     Extract job parameters from config based on recipe type and platform.
 
@@ -1207,7 +1253,7 @@ def get_job_parameters(cfg, input_file_path, hf_model_name):
         "training_dir": "",
         "entry_module": entry_module,
         "use_default_repo": use_default_repo,
-        "k8_general_pod": _resolve_general_pod_name(cfg) if platform == "k8" else "",
+        "k8_general_pod": _resolve_general_pod_name(cfg, context_override=context_override) if platform == "k8" else "",
         "instance_type": cfg.instance_type,
         "s3_models_path": s3_models_path,
         "s3_output_path": s3_output_path,
@@ -1499,6 +1545,9 @@ def delete_dir(path: str | Path) -> None:
 
 
 def select_validation_launcher(cfg_platform):
+    from scripts.validations.validation_launchers.eval_launcher import (
+        EvalValidationLauncher,
+    )
     from scripts.validations.validation_launchers.k8s_launcher import (
         K8sValidationLauncher,
     )
@@ -1523,5 +1572,7 @@ def select_validation_launcher(cfg_platform):
             return ServerlessValidationLauncher
         case "PYSDK_FINETUNE":
             return SageMakerJobsValidationLauncher
+        case "EVAL":
+            return EvalValidationLauncher
         case _:
             raise ValueError(f"Unknown platform: {cfg_platform}")

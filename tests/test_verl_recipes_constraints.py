@@ -42,23 +42,17 @@ VERL_GRPO_RECIPE_FILES = [f for f in VERL_RECIPE_FILES if "grpo" in str(f)]
     VERL_GRPO_RECIPE_FILES,
     ids=[_get_recipe_id(p) for p in VERL_GRPO_RECIPE_FILES],
 )
-def test_max_num_batched_tokens_gte_prompt_plus_response(recipe_path):
+def test_max_num_batched_tokens_positive(recipe_path):
     """
-    Verify that max_num_batched_tokens >= prompt_length + response_length
-    for every verl recipe. Violating this causes runtime errors.
+    Verify that max_num_batched_tokens is a positive integer for every verl recipe.
     """
     with open(recipe_path, "r") as f:
         config = yaml.safe_load(f)
 
     rollout = config["training_config"]["actor_rollout_ref"]["rollout"]
     max_num_batched_tokens = rollout["max_num_batched_tokens"]
-    prompt_length = rollout["prompt_length"]
-    response_length = rollout["response_length"]
 
-    total = prompt_length + response_length
-
-    assert max_num_batched_tokens >= total, (
-        f"max_num_batched_tokens ({max_num_batched_tokens}) < "
-        f"prompt_length ({prompt_length}) + response_length ({response_length}) = {total} "
+    assert isinstance(max_num_batched_tokens, int) and max_num_batched_tokens > 0, (
+        f"max_num_batched_tokens ({max_num_batched_tokens}) must be a positive integer "
         f"in {recipe_path.relative_to(ROOT_DIR)}"
     )

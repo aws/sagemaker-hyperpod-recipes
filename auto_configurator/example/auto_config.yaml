@@ -5,11 +5,21 @@ platform: "K8"
 # path from inside recipes_collection/recipes/
 recipe: "fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_sft_fft.yaml"
 
+k8:
+  cluster_context_map:
+    ml.p5.48xlarge: arn:aws:eks:ap-south-1:855988369404:cluster/sagemaker-hyperpod-eks-cluster
+    ml.p4d.24xlarge: arn:aws:eks:us-west-2:855988369404:cluster/integ-cluster
+
 autotune_config:
   sequence_lengths: auto
 
-  instance_type_list:     # FIXME - this needs to support auto, not currently functional
-    - "ml.p5.48xlarge"
+  instance_type_list: auto
+    # - ml.p4d.24xlarge
+    # - ml.p4de.24xlarge
+    # - ml.p5.48xlarge
+    # - ml.g5.12xlarge
+    # - ml.g5.48xlarge
+    # - ml.g6.48xlarge
 
   llmft:
     micro_train_batch_size: auto

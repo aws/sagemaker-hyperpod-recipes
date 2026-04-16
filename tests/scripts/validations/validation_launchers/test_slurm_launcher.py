@@ -234,13 +234,12 @@ class TestSlurmValidationLauncherCollectLogs:
 
         mock_client_instance = Mock()
         mock_slurm_client.return_value = mock_client_instance
-        mock_process = Mock()
-        mock_process.stdout = "remote log content"
-        mock_client_instance.run.return_value = mock_process
+        mock_client_instance.download_remote_file.return_value = "remote log content"
 
         launcher = SlurmValidationLauncher(mock_job_recorder, mock_config_remote)
         logs = launcher._collect_job_logs("/path/to/log.txt")
 
+        mock_client_instance.download_remote_file.assert_called_once_with("/path/to/log.txt")
         assert logs == "remote log content"
 
 

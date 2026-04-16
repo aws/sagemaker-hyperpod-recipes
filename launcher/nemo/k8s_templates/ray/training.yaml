@@ -83,6 +83,12 @@ spec:
               value: {{ .Values.trainingConfig.trainDir | quote }}
             - name: VAL_FILES
               value: {{ .Values.trainingConfig.valDir | quote }}
+            {{- if .Values.trainingConfig.envVars }}
+            {{- range $key, $value := .Values.trainingConfig.envVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
             volumeMounts:
             - name: training-config
               mountPath: /config
@@ -179,6 +185,12 @@ spec:
             env:
             - name: MLFLOW_TRACKING_URI
               value: ""
+            {{- if .Values.trainingConfig.envVars }}
+            {{- range $key, $value := .Values.trainingConfig.envVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
             volumeMounts:
             {{- if .Values.trainingConfig.persistentVolumeClaims }}
             {{- range .Values.trainingConfig.persistentVolumeClaims }}

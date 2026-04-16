@@ -39,7 +39,7 @@ SUPPORTED_OPEN_SOURCE_EVAL_RECIPES = {
 }
 
 
-def identify_recipe_type(recipe_name: str) -> str:
+def identify_recipe_type(recipe_name: str, metadata: Optional[Dict] = None) -> str:
     """
     Identify recipe type from recipe name.
 
@@ -57,6 +57,13 @@ def identify_recipe_type(recipe_name: str) -> str:
     if recipe_name_with_hyphens in SUPPORTED_OPEN_SOURCE_EVAL_RECIPES:
         return "open_source_eval"
 
+    # Use metadata Type to disambiguate models used for both eval and training
+    metadata_type = (metadata or {}).get("Type", "")
+    if metadata_type == "Evaluation":
+        if "nova" in recipe_name_lower:
+            return "nova_eval"
+        return "open_source_eval"
+
     # Check for evaluation recipes first (more specific)
     if "eval" in recipe_name_lower:
         if "nova" in recipe_name_lower:
@@ -67,7 +74,7 @@ def identify_recipe_type(recipe_name: str) -> str:
     # Check for training recipes
     if "llmft" in recipe_name_lower or "llm_finetuning" in recipe_name_lower:
         return "llmft"
-    elif "verl" in recipe_name_lower:
+    elif "verl" in recipe_name_lower or "vlm" in recipe_name_lower:
         return "verl"
     elif "nova" in recipe_name_lower:
         return "nova_training"
@@ -697,7 +704,8 @@ def validate_launch_json_content(launch_json: Dict, platform: str, recipe_name: 
         return errors
 
     # Identify recipe type
-    recipe_type = identify_recipe_type(recipe_name)
+    metadata = launch_json.get("metadata", {})
+    recipe_type = identify_recipe_type(recipe_name, metadata)
 
     # Validate based on platform
     if platform == "k8s":

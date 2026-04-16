@@ -40,7 +40,7 @@ def get_jumpstart_model_id(model_name):
 def download_model(cfg):
     if cfg.get("training_config", None) != None and cfg.cluster_type in ["k8s", "slurm"]:
         model_name_or_path = cfg.get("local_model_name_or_path", None)
-        if model_name_or_path == None or "verl" in cfg["recipes"]["run"]["name"]:
+        if model_name_or_path == None:
             return
 
         if cfg.cluster_type == "k8s":
@@ -49,7 +49,10 @@ def download_model(cfg):
             if jumpstart_model_id is None:
                 logging.error(f"Cannot download model: '{model_name_or_path}' not found in JumpStart model ID map")
                 return
-            download_model_on_k8s(cfg.cluster.general_pod, jumpstart_model_id, model_name_or_path)
+            kube_context = cfg.cluster.get("kube_context", None)
+            download_model_on_k8s(
+                cfg.cluster.general_pod, jumpstart_model_id, model_name_or_path, kube_context=kube_context
+            )
         else:
             # Try different possible paths for hf_access_token
             model_name_or_path_li = model_name_or_path.split("/")
@@ -98,16 +101,21 @@ def download_model_from_hf(cfg, hf_access_token, model_name, save_path):
 
 
 def download_model_on_k8s(
-    pod_name, jumpstart_model_id, save_path, script_path="/data/hp-recipe-validator/k8s_download_model.py"
+    pod_name,
+    jumpstart_model_id,
+    save_path,
+    script_path="/data/hp-recipe-validator/k8s_download_model.py",
+    kube_context=None,
 ):
     """Copy script to pod and execute model download from S3"""
+    ctx = ["--context", kube_context] if kube_context else []
     try:
         # Copy script to pod
-        copy_script_to_pod(pod_name, script_path)
+        copy_script_to_pod(pod_name, script_path, kube_context=kube_context)
 
         # Execute download script on pod
         logging.info(f"Downloading {jumpstart_model_id} on pod {pod_name}...")
-        cmd = ["kubectl", "exec", pod_name, "--", "python3", script_path, jumpstart_model_id, save_path]
+        cmd = ["kubectl", *ctx, "exec", pod_name, "--", "python3", script_path, jumpstart_model_id, save_path]
 
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
@@ -121,8 +129,9 @@ def download_model_on_k8s(
         return False
 
 
-def copy_script_to_pod(pod_name, remote_path):
+def copy_script_to_pod(pod_name, remote_path, kube_context=None):
     """Copy k8s_download_model.py to pod"""
+    ctx = ["--context", kube_context] if kube_context else []
     script_path = os.path.join(os.path.dirname(__file__), "k8s_download_model.py")
-    subprocess.run(["kubectl", "cp", script_path, f"{pod_name}:{remote_path}"], check=True)
-    print(f"Copied script to {pod_name}:{remote_path}")
+    subprocess.run(["kubectl", *ctx, "cp", script_path, f"{pod_name}:{remote_path}"], check=True)
+    logging.info(f"Copied script to {pod_name}:{remote_path}")

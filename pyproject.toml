@@ -67,6 +67,7 @@ addopts = [
     "--cov=launcher/",
     "--cov=hyperpod_recipes/",
     "--cov=auto_configurator/",
+    "--cov=scripts/validations/validation_launchers/k8s_launcher.py",
     # uncomment this line to see a detailed HTML test coverage report instead of the usual summary table output to stdout.
     # "--cov-report=html"
 ]

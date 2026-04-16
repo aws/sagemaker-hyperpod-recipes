@@ -34,6 +34,7 @@ class BaseEvaluator(ABC):
             or "Cuda failure 2 'out of memory'" in line
             or "cuDNN Error: CUDNN_STATUS_BAD_PARAM" in line
             or "CUBLAS_STATUS_ALLOC_FAILED" in line
+            or ("NCCL WARN Cuda failure" in line and "out of memory" in line)
         )
 
     def _is_cache_flush(self, line: str) -> bool:
