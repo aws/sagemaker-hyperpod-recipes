@@ -26,7 +26,7 @@ This repository contains **v2.0.0** of Amazon SageMaker HyperPod recipes, which 
 - **Llama**: 3.1, 3.2, 3.3 (1B - 90B), 4 Scout (17B)
 - **DeepSeek R1 Distilled**: Llama (8B, 70B), Qwen (1.5B, 7B, 14B, 32B)
 - **GPT-OSS**: 20B, 120B
-- **Qwen**: 2.5 (0.5B - 72B), 3 (0.6B - 32B)
+- **Qwen**: 2.5 (0.5B - 72B), 3 (0.6B - 32B), 3.5 (4B - 27B)
 
 ### Supported Techniques
 
@@ -59,7 +59,7 @@ Advanced fine-tuning framework with optimized implementations for:
 #### VERL (Versatile Reinforcement Learning)
 Reinforcement learning framework using the GRPO algorithm for:
 - Llama models (3.1, 3.2, 3.3)
-- Qwen models (2.5, 3)
+- Qwen models (2.5, 3, 3.5)
 - DeepSeek R1 Distilled models
 - GPT-OSS models
 - Techniques: RLAIF and RLVR, both available with Full Fine-Tuning or LoRA
@@ -146,8 +146,9 @@ When using the SageMaker HyperPod recipes, you can either create your own traini
 The following container images are available for different recipe types:
 
 - **For LLMFT recipes**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0`
-- **For VERL recipes (EKS)**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks`
-- **For VERL recipes (SageMaker Training Jobs)**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj`
+- **For VERL 0.5.0 recipes (EKS)**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks`
+- **For VERL 0.5.0 recipes (SageMaker Training Jobs)**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj`
+- **For VERL 0.7.0 recipes**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj`
 
 To use a container image for training, modify the `recipes_collection/config.yaml` file with your chosen container image:
 
