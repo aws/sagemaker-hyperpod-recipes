@@ -154,7 +154,7 @@ class TestGetJobParametersSleeperPod(unittest.TestCase):
             "fine-tuning/llama/llmft_llama3_3_70b_instruct_seq4k_gpu_sft_fft.yaml",
             "meta-llama/Llama-3.3-70B-Instruct",
         )
-        mock_resolve_pod.assert_called_once_with(cfg, context_override=None)
+        mock_resolve_pod.assert_called_once_with(cfg, context_override=None, env=None)
         self.assertEqual(result["k8_general_pod"], "sleeper-pod-abc123")
 
     @patch(
@@ -172,7 +172,7 @@ class TestGetJobParametersSleeperPod(unittest.TestCase):
             "meta-llama/Llama-3.3-70B-Instruct",
             context_override=ctx,
         )
-        mock_resolve_pod.assert_called_once_with(cfg, context_override=ctx)
+        mock_resolve_pod.assert_called_once_with(cfg, context_override=ctx, env=None)
         self.assertEqual(result["k8_general_pod"], "sleeper-pod-ctx456")
 
 

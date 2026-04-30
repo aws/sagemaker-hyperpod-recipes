@@ -1,0 +1,732 @@
+{
+    "_comment": [
+        "Override Parameter Type Consistency Baseline",
+        "",
+        "This file defines the expected type_family for every override parameter",
+        "within each template category (fine_tuning, evaluation, checkpointless).",
+        "",
+        "Fields:",
+        "  type_family: The expected type family ('numeric', 'string', 'boolean').",
+        "               'numeric' covers integer, float, and number types.",
+        "  frameworks:  List of frameworks where this parameter appears.",
+        "",
+        "The test ensures that within each category, a parameter's type family",
+        "is consistent across all frameworks. For example, 'learning_rate' must",
+        "be numeric in llmft, verl, and nova - it cannot be string in one and",
+        "numeric in another.",
+        "",
+        "To auto-update this file when adding new parameters:",
+        "  GOLDEN_TEST_WRITE=1 pytest tests/launcher/recipe_templatization/test_override_param_type_consistency.py"
+    ],
+    "checkpointless": {
+        "dataset_path": {
+            "type_family": "string",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "global_batch_size": {
+            "type_family": "numeric",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "instance_count": {
+            "type_family": "numeric",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "instance_types": {
+            "type_family": "string",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "learning_rate": {
+            "type_family": "numeric",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "log_directory": {
+            "type_family": "string",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "log_every_n_steps": {
+            "type_family": "numeric",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "max_steps": {
+            "type_family": "numeric",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "model_name": {
+            "type_family": "string",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "namespace": {
+            "type_family": "string",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "num_nodes": {
+            "type_family": "numeric",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "results_directory": {
+            "type_family": "string",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "sequence_length": {
+            "type_family": "numeric",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "time_limit": {
+            "type_family": "string",
+            "frameworks": [
+                "checkpointless"
+            ]
+        },
+        "val_check_interval": {
+            "type_family": "numeric",
+            "frameworks": [
+                "checkpointless"
+            ]
+        }
+    },
+    "evaluation": {
+        "aggregation": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "base_model_inference_data_s3_path": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "base_model_name": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "custom_metrics": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "data_s3_path": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "eval_tensorboard_results_dir": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "evaluation_metric": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "inference_data_s3_path": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "instance_count": {
+            "type_family": "numeric",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "judge_model_id": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "kms_key_id": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "lambda_arn": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "lambda_type": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "llmaj_metrics": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "max_model_len": {
+            "type_family": "numeric",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "max_new_tokens": {
+            "type_family": "numeric",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "metric": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "mlflow_experiment_name": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "mlflow_run_id": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "mlflow_run_name": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "mlflow_tracking_uri": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "model_name_or_path": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "name": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "namespace": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "output_path": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "output_s3_path": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "postprocessing": {
+            "type_family": "boolean",
+            "frameworks": [
+                "evaluation"
+            ]
+        },
+        "preset_reward_function": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "strategy": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "subtask": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "task": {
+            "type_family": "string",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "temperature": {
+            "type_family": "numeric",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "top_k": {
+            "type_family": "numeric",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        },
+        "top_p": {
+            "type_family": "numeric",
+            "frameworks": [
+                "evaluation",
+                "nova"
+            ]
+        }
+    },
+    "fine_tuning": {
+        "adam_beta": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "nova"
+            ]
+        },
+        "clip_ratio": {
+            "type_family": "numeric",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "clip_ratio_high": {
+            "type_family": "numeric",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "clip_ratio_low": {
+            "type_family": "numeric",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "customer_bucket": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "data_path": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "data_s3_path": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "dataset_max_len": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft"
+            ]
+        },
+        "fine_tuned_model": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "global_batch_size": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "nova",
+                "verl"
+            ]
+        },
+        "gradient_clipping": {
+            "type_family": "boolean",
+            "frameworks": [
+                "llmft"
+            ]
+        },
+        "gradient_clipping_threshold": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft"
+            ]
+        },
+        "judge_model_id": {
+            "type_family": "string",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "judge_prompt_template": {
+            "type_family": "string",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "kl_loss_coef": {
+            "type_family": "numeric",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "kms_key": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "learning_rate": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "nova",
+                "verl"
+            ]
+        },
+        "learning_rate_ratio": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "logging_steps": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft"
+            ]
+        },
+        "lora_alpha": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "nova",
+                "verl"
+            ]
+        },
+        "lora_dropout": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft"
+            ]
+        },
+        "lora_rank": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "lr_scheduler": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "lr_warmup_steps_ratio": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "max_context_length": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "max_epochs": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "nova",
+                "verl"
+            ]
+        },
+        "max_length": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "max_prompt_length": {
+            "type_family": "numeric",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "max_response_length": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "nova"
+            ]
+        },
+        "max_steps": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "merge_weights": {
+            "type_family": "boolean",
+            "frameworks": [
+                "llmft"
+            ]
+        },
+        "min_lr": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova",
+                "verl"
+            ]
+        },
+        "mlflow_experiment_name": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "mlflow_run_id": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "mlflow_run_name": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "mlflow_tracking_uri": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "nova",
+                "verl"
+            ]
+        },
+        "model_name_or_path": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "name": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "nova",
+                "verl"
+            ]
+        },
+        "namespace": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "nova",
+                "verl"
+            ]
+        },
+        "number_generation": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "output_path": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "output_s3_path": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "preset_reward_function": {
+            "type_family": "string",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "reasoning_enabled": {
+            "type_family": "boolean",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "replicas": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "results_directory": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "resume_from_path": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "reward_lambda_arn": {
+            "type_family": "string",
+            "frameworks": [
+                "nova",
+                "verl"
+            ]
+        },
+        "rollout_n": {
+            "type_family": "numeric",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "rollout_temperature": {
+            "type_family": "numeric",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "save_steps": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "seed": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft"
+            ]
+        },
+        "temperature": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "train_val_split_ratio": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "training_data_name": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft"
+            ]
+        },
+        "use_kl_loss": {
+            "type_family": "boolean",
+            "frameworks": [
+                "verl"
+            ]
+        },
+        "validation_data_name": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft"
+            ]
+        },
+        "validation_data_path": {
+            "type_family": "string",
+            "frameworks": [
+                "llmft",
+                "verl"
+            ]
+        },
+        "validation_s3_path": {
+            "type_family": "string",
+            "frameworks": [
+                "nova"
+            ]
+        },
+        "warmup_steps": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova",
+                "verl"
+            ]
+        },
+        "weight_decay": {
+            "type_family": "numeric",
+            "frameworks": [
+                "llmft",
+                "nova",
+                "verl"
+            ]
+        }
+    }
+}

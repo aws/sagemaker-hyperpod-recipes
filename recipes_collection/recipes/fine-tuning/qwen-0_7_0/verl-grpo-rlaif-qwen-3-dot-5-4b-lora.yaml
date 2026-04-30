@@ -1,7 +1,6 @@
 display_name: Qwen 3.5 4B GRPO RLAIF Fine-Tuning with LoRA
 instance_types:
 - ml.p5.48xlarge
-- ml.p4de.24xlarge
 ray_cluster:
   head_node:
     cpu: '16'
@@ -59,8 +58,8 @@ training_config:
         full_determinism: false
         model_dtype: bfloat16
         offload_policy: false
-        optimizer_offload: false
-        param_offload: false
+        optimizer_offload: true
+        param_offload: true
         reshard_after_forward: true
         seed: 42
         strategy: fsdp2
@@ -104,9 +103,9 @@ training_config:
         loss_mode: vanilla
         ppo_kl_coef: 0.1
       ppo_epochs: 1
-      ppo_max_token_len_per_gpu: 16384
+      ppo_max_token_len_per_gpu: 32768
       ppo_micro_batch_size: null
-      ppo_micro_batch_size_per_gpu: null
+      ppo_micro_batch_size_per_gpu: 1
       ppo_mini_batch_size: 32
       profiler:
         _target_: verl.utils.profiler.ProfilerConfig
@@ -144,9 +143,9 @@ training_config:
       tau_neg: 1.05
       tau_pos: 1.0
       ulysses_sequence_parallel_size: 1
-      use_dynamic_bsz: true
+      use_dynamic_bsz: false
       use_fused_kernels: ${oc.select:recipes.training_config.actor_rollout_ref.model.use_fused_kernels,false}
-      use_kl_loss: false
+      use_kl_loss: true
       use_remove_padding: ${oc.select:recipes.training_config.actor_rollout_ref.model.use_remove_padding,false}
       use_torch_compile: true
     hybrid_engine: true
@@ -209,8 +208,8 @@ training_config:
           - Qwen3_5VisionBlock
       log_prob_max_token_len_per_gpu: 16384
       log_prob_micro_batch_size: null
-      log_prob_micro_batch_size_per_gpu: null
-      log_prob_use_dynamic_bsz: true
+      log_prob_micro_batch_size_per_gpu: 1
+      log_prob_use_dynamic_bsz: false
       profiler:
         _target_: verl.utils.profiler.ProfilerConfig
         all_ranks: false
@@ -276,12 +275,12 @@ training_config:
       ignore_eos: false
       layered_summon: true
       load_format: safetensors
-      log_prob_max_token_len_per_gpu: 16384
+      log_prob_max_token_len_per_gpu: 32768
       log_prob_micro_batch_size: null
-      log_prob_micro_batch_size_per_gpu: null
-      log_prob_use_dynamic_bsz: ${oc.select:recipes.training_config.actor_rollout_ref.actor.use_dynamic_bsz,true}
+      log_prob_micro_batch_size_per_gpu: 1
+      log_prob_use_dynamic_bsz: false
       logprobs_mode: processed_logprobs
-      max_model_len: null
+      max_model_len: 32768
       max_num_batched_tokens: 8192
       max_num_seqs: 1024
       merge_lora_for_inference: true
@@ -319,10 +318,10 @@ training_config:
         file: /tmp/ray/session_latest/metrics/prometheus/prometheus.yml
         port: 9090
         served_model_name: Qwen/Qwen3.5-4B
-      prompt_length: 1024
+      prompt_length: 16384
       quantization: null
       quantization_config_file: null
-      response_length: 4096
+      response_length: 16384
       skip_dump_dir: /tmp/rollout_dump
       skip_rollout: false
       skip_tokenizer_init: true
@@ -499,8 +498,8 @@ training_config:
     filter_overlong_prompts_workers: 1
     image_key: images
     image_patch_size: 14
-    max_prompt_length: 1024
-    max_response_length: 4096
+    max_prompt_length: 16384
+    max_response_length: 16384
     prompt_key: prompt
     return_full_prompt: false
     return_multi_modal_inputs: true
@@ -697,4 +696,4 @@ training_config:
     validation_data_dir: null
   transfer_queue:
     enable: false
-version: 2.0.0
+version: 2.1.0

@@ -364,6 +364,14 @@ def build_argument_parser(parser):
         "with recipes within each batch running in parallel. If not set (None), all recipes run in a single parallel batch. "
         "Example: --recipe_batch_size 5 will process 5 recipes at a time.",
     )
+    parser.add_argument(
+        "--convergence",
+        action="store_true",
+        default=False,
+        help="Run training to convergence instead of smoke-test validation. "
+        "Uses convergence_validation section from config for runtime overrides (platform, instance_type). "
+        "Recipe comes from --fileList argument. Training limits are skipped and convergence datasets are used.",
+    )
     return parser
 
 
@@ -736,6 +744,7 @@ def _add_fsx_run_info(cfg, run_info):
     recipe_type_info = _get_recipe_type_info(cfg, run_info["input_file_path"])
     model_config_key = recipe_type_info["model_config_key"]
     recipe_type = recipe_type_info["recipe_type"]
+    recipe_structure = recipe_type_info["recipe_structure"]
 
     # Get model_parent_folder from smjobs_fsx config
     if hasattr(cfg.models, model_config_key):
@@ -747,6 +756,19 @@ def _add_fsx_run_info(cfg, run_info):
                 run_info["model_parent_folder"] = model_parent_folder
                 # Update local_model_name_or_path with FSx path
                 run_info["local_model_name_or_path"] = os.path.join(model_parent_folder, run_info["hf_model_name"])
+
+    # Use convergence dataset mapping if convergence mode is enabled
+    is_convergence = getattr(cfg, "is_convergence", False)
+    if is_convergence:
+        convergence_recipe_type = f"{recipe_structure}_convergence"
+        if hasattr(cfg, "recipe_dataset_mapping") and convergence_recipe_type in cfg.recipe_dataset_mapping:
+            recipe_type = convergence_recipe_type
+            logging.info(f"Convergence mode (FSx): using dataset mapping '{recipe_type}'")
+        else:
+            logging.warning(
+                f"Convergence dataset mapping '{convergence_recipe_type}' not found, "
+                f"falling back to base recipe type '{recipe_type}'"
+            )
 
     # Get dataset paths from smjobs_fsx section
     if hasattr(cfg, "recipe_dataset_mapping") and recipe_type in cfg.recipe_dataset_mapping:
@@ -1076,6 +1098,13 @@ def _extract_model_name_from_recipe(cfg, input_file_path, recipe_cfg):
     return current
 
 
+def should_skip_command(cmd, is_convergence_mode, training_limit_patterns):
+    """Skip training limit commands during convergence training"""
+    if not is_convergence_mode:
+        return False
+    return any(pattern in cmd for pattern in training_limit_patterns)
+
+
 def _get_recipe_launch_commands(cfg, run_info, platform):
     """
     Get recipe-structure-specific launch commands from config.
@@ -1115,11 +1144,23 @@ def _get_recipe_launch_commands(cfg, run_info, platform):
 
     commands = []
 
+    # Check if convergence mode is enabled to skip training limits
+    is_convergence = getattr(cfg, "is_convergence", False)
+
+    # Training limit patterns to skip in convergence mode
+    training_limit_patterns = [
+        ".limit=",  # Matches train_data.limit=200, val_data.limit=50, etc.
+        ".max_epochs=",  # Matches training_args.max_epochs=1
+    ]
     # Add common commands (platform-independent)
     if hasattr(structure_config.launch_commands, "common"):
         for cmd_template in structure_config.launch_commands.common:
             try:
-                commands.append(cmd_template.format(**run_info))
+                formatted_cmd = cmd_template.format(**run_info)
+                if should_skip_command(formatted_cmd, is_convergence, training_limit_patterns):
+                    logging.info(f"Convergence mode: skipping training limit command: {formatted_cmd}")
+                    continue
+                commands.append(formatted_cmd)
             except KeyError as e:
                 raise RuntimeError(f"Missing variable {e} for command template '{cmd_template}'.")
 
@@ -1128,7 +1169,11 @@ def _get_recipe_launch_commands(cfg, run_info, platform):
         platform_commands = getattr(structure_config.launch_commands, platform)
         for cmd_template in platform_commands:
             try:
-                commands.append(cmd_template.format(**run_info))
+                formatted_cmd = cmd_template.format(**run_info)
+                if should_skip_command(formatted_cmd, is_convergence, training_limit_patterns):
+                    logging.info(f"Convergence mode: skipping training limit command: {formatted_cmd}")
+                    continue
+                commands.append(formatted_cmd)
             except KeyError as e:
                 raise RuntimeError(
                     f"Missing variable {e} for command template '{cmd_template}' in recipe structure '{recipe_structure}'"
@@ -1139,7 +1184,7 @@ def _get_recipe_launch_commands(cfg, run_info, platform):
 
 # This function gets the values for all the relevant experiment
 # variables similar to the once used in launcher scripts
-def pre_launch_setup(cfg, input_file_path, context_override=None):
+def pre_launch_setup(cfg, input_file_path, context_override=None, env=None):
     """
     Set up run parameters for a recipe using config-driven approach.
 
@@ -1154,7 +1199,7 @@ def pre_launch_setup(cfg, input_file_path, context_override=None):
     # Extract model name using config-driven approach
     hf_model_name = _extract_model_name_from_recipe(cfg, input_file_path, recipe_cfg)
 
-    run_info = get_job_parameters(cfg, input_file_path, hf_model_name, context_override=context_override)
+    run_info = get_job_parameters(cfg, input_file_path, hf_model_name, context_override=context_override, env=env)
     run_info["input_file_path"] = input_file_path
 
     run_name = _get_run_name_from_recipe(recipe_cfg)
@@ -1165,7 +1210,7 @@ def pre_launch_setup(cfg, input_file_path, context_override=None):
 
 
 # Fetch all parameters used in a Hyperpod recipe launcher_scripts
-def get_job_parameters(cfg, input_file_path, hf_model_name, context_override=None):
+def get_job_parameters(cfg, input_file_path, hf_model_name, context_override=None, env=None):
     """
     Extract job parameters from config based on recipe type and platform.
 
@@ -1253,7 +1298,9 @@ def get_job_parameters(cfg, input_file_path, hf_model_name, context_override=Non
         "training_dir": "",
         "entry_module": entry_module,
         "use_default_repo": use_default_repo,
-        "k8_general_pod": _resolve_general_pod_name(cfg, context_override=context_override) if platform == "k8" else "",
+        "k8_general_pod": _resolve_general_pod_name(cfg, context_override=context_override, env=env)
+        if platform == "k8"
+        else "",
         "instance_type": cfg.instance_type,
         "s3_models_path": s3_models_path,
         "s3_output_path": s3_output_path,

@@ -4,6 +4,7 @@ import subprocess
 import traceback
 from abc import ABC
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
 from typing import Dict
 
 import boto3
@@ -19,6 +20,26 @@ from scripts.validations.validation_launchers.launcher_utils import (
 class BaseLauncher(ABC):
     """Abstract base class for platform-specific job launchers"""
 
+    REFRESH_THRESHOLD_MINUTES = 15  # Refresh when this many minutes remain
+
+    @staticmethod
+    def assume_role_credentials(role_arn, session_name, logger):
+        """Call STS AssumeRole and return (credentials_dict, expiry, boto3.Session)."""
+        logger.info(f"Assuming role {role_arn} (session: {session_name})")
+        sts_client = boto3.client("sts")
+        assumed_role = sts_client.assume_role(
+            RoleArn=role_arn,
+            RoleSessionName=session_name,
+        )
+        creds = assumed_role["Credentials"]
+        expiry = creds["Expiration"]
+        session = boto3.Session(
+            aws_access_key_id=creds["AccessKeyId"],
+            aws_secret_access_key=creds["SecretAccessKey"],
+            aws_session_token=creds["SessionToken"],
+        )
+        return creds, expiry, session
+
     def __init__(self, job_recorder, config):
         self.job_recorder = job_recorder
         self.config = config
@@ -33,21 +54,15 @@ class BaseLauncher(ABC):
         self.logger.propagate = False  # Prevent duplicate logging
 
         assume_role_arn = getattr(config, "assume_role_arn", None)
+        self._assume_role_arn = assume_role_arn
         if assume_role_arn:
-            sts_client = boto3.client("sts")
-            self.logger.info(f"Creating assumed session for {assume_role_arn}")
-
-            assumed_role = sts_client.assume_role(
-                RoleArn=assume_role_arn, RoleSessionName=f"{config.platform.lower()}-validation-session"
-            )
-            credentials = assumed_role["Credentials"]
-            self.boto_session = boto3.Session(
-                aws_access_key_id=credentials["AccessKeyId"],
-                aws_secret_access_key=credentials["SecretAccessKey"],
-                aws_session_token=credentials["SessionToken"],
+            creds, self._credentials_expiry, self.boto_session = self.assume_role_credentials(
+                role_arn=assume_role_arn,
+                session_name=f"{config.platform.lower()}-validation-session",
+                logger=self.logger,
             )
         else:
-            self.logger.info(f"Creating default boto session")
+            self.logger.info("Creating default boto session")
             self.boto_session = boto3.Session()
 
         credentials = self.boto_session.get_credentials()
@@ -61,6 +76,27 @@ class BaseLauncher(ABC):
                     "AWS_SESSION_TOKEN": credentials.token if credentials.token else "",
                 }
             )
+
+    def _refresh_credentials_if_needed(self):
+        if not self._assume_role_arn or not self._credentials_expiry:
+            return
+
+        now = datetime.now(timezone.utc)
+        if (self._credentials_expiry - now) < timedelta(minutes=self.REFRESH_THRESHOLD_MINUTES):
+            self.logger.info("Credentials expiring soon, refreshing assumed role session...")
+            creds, self._credentials_expiry, self.boto_session = self.assume_role_credentials(
+                role_arn=self._assume_role_arn,
+                session_name=f"{self.config.platform.lower()}-validation-refresh",
+                logger=self.logger,
+            )
+            self.aws_env.update(
+                {
+                    "AWS_ACCESS_KEY_ID": creds["AccessKeyId"],
+                    "AWS_SECRET_ACCESS_KEY": creds["SecretAccessKey"],
+                    "AWS_SESSION_TOKEN": creds["SessionToken"],
+                }
+            )
+            self.logger.info("✓ Credentials refreshed successfully")
 
     def launch_model_group(self, model_name, recipes):
         """Launch all jobs in parallel"""
@@ -113,11 +149,26 @@ class BaseLauncher(ABC):
         """Build platform-specific launch command"""
         match self.config.platform:
             case "SMJOBS":
-                return construct_smjobs_launch_command(self.config, run_info)
+                command = construct_smjobs_launch_command(self.config, run_info)
             case "SLURM":
-                return construct_slurm_launch_command(self.config, run_info)
+                command = construct_slurm_launch_command(self.config, run_info)
             case "K8":
-                return construct_k8_launch_command(self.config, run_info)
+                command = construct_k8_launch_command(self.config, run_info)
+            case _:
+                command = []
+
+        # Append convergence training overrides if present
+        # These override smoke-test limits (e.g., max_epochs=1, data limit=200)
+        # with convergence params (e.g., total_epochs=15, no data limits)
+        convergence_overrides = getattr(self.config, "_convergence_overrides", None)
+        if convergence_overrides:
+            self.logger.info("Applying convergence training overrides:")
+            for key, value in convergence_overrides.items():
+                override = f"{key}={value}"
+                command.append(override)
+                self.logger.info(f"  {override}")
+
+        return command
 
     def _parse_output(self, input_file_path: str, launch_output) -> Dict:
         """Parse launch output to extract job details"""
@@ -125,12 +176,14 @@ class BaseLauncher(ABC):
     def _monitor_job(self, input_file_path: str, job_details: Dict, poll_sec: int = 60) -> bool:
         """Monitor job until completion"""
 
-    def _execute_command(self, command: list):
+    def _execute_command(self, command: list, cwd=None):
         """Execute launch command"""
         try:
             # Join command list into string and use shell=True to handle special chars in Hydra overrides
             cmd_str = " ".join(command)
-            process = subprocess.run(cmd_str, capture_output=True, text=True, check=True, shell=True)
+            process = subprocess.run(
+                cmd_str, capture_output=True, text=True, check=True, shell=True, cwd=cwd, env=self.aws_env
+            )
             return process
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Error executing command: {e.stderr}")

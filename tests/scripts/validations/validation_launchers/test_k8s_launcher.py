@@ -187,6 +187,28 @@ class TestMonitorJobPyTorch:
 
             assert result is False
 
+    @patch("subprocess.run")
+    @patch("time.sleep")
+    @patch("threading.Thread")
+    def test_monitor_job_refreshes_credentials(self, mock_thread, mock_sleep, mock_run, launcher, mock_job_recorder):
+        """Verify _refresh_credentials_if_needed is called during monitoring."""
+        job_details = {
+            "job_name": "test-job",
+            "pod_name": "test-pod",
+            "output_folder_path": "/tmp/output",
+        }
+        mock_log_thread = Mock()
+        mock_log_thread.is_alive.return_value = True
+        mock_thread.return_value = mock_log_thread
+
+        with patch.object(launcher, "_get_job_status", return_value="Completed"), patch.object(
+            launcher, "clean_up_resource"
+        ), patch("os.path.exists", return_value=False), patch.object(
+            launcher, "_refresh_credentials_if_needed"
+        ) as mock_refresh:
+            launcher._monitor_job("test_recipe.yaml", job_details)
+            mock_refresh.assert_called()
+
 
 class TestMonitorJobVERL:
     """Tests for _monitor_job with VERL jobs"""
@@ -315,6 +337,26 @@ class TestCollectPodLogs:
         logs = launcher._collect_pod_logs("test-job", "test-pod", False, training_error_limit=3)
 
         # Should stop after 3 errors
+        assert "normal log" in logs
+        mock_proc.terminate.assert_called_once()
+
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("os.makedirs")
+    @patch("subprocess.Popen")
+    def test_collect_pod_logs_hydra_error(self, mock_popen, mock_makedirs, mock_file, launcher):
+        mock_proc = Mock()
+        mock_proc.stdout = [
+            "normal log\n",
+            "Error executing job with overrides: []\n",
+            "more logs\n",
+            "Error executing job with overrides: []\n",
+            "Error executing job with overrides: []\n",
+        ]
+        mock_proc.wait.return_value = None
+        mock_popen.return_value = mock_proc
+
+        logs = launcher._collect_pod_logs("test-job", "test-pod", False, training_error_limit=3)
+
         assert "normal log" in logs
         mock_proc.terminate.assert_called_once()
 
@@ -699,6 +741,7 @@ class TestContextOverrideInRunInfo:
                 launcher_with_context.config,
                 "test.yaml",
                 context_override=["--context", "arn:aws:eks:us-west-2:123456:cluster/my-cluster"],
+                env=launcher_with_context.aws_env,
             )
 
 

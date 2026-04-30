@@ -239,6 +239,61 @@ datasets:
       val_data_name: "docmath_val"
       val_data_dir: "/data/hp-recipe-validator/datasets/docmath/val.jsonl"
 
+  # ============================================================================
+  # CONVERGENCE DATASETS (Full-size datasets for convergence training runs)
+  # ============================================================================
+  # These use the larger/full versions of datasets on FSx for training to convergence,
+  # as opposed to the smaller/sample datasets used for smoke-test validation above.
+  # Convergence runs use smjobs_fsx, so .jsonl format is preferred where available.
+
+  pokemon_convergence:
+    # Full pokemon dataset (not the sample_100 subset)
+    smjobs_fsx:
+      train_data_name: "pokemon-train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/pokemon/train"
+      val_data_name: "pokemon-val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/pokemon/validation"
+
+  gsm8k_convergence:
+    # Full gsm8k train.jsonl (7.9MB) instead of train_small.jsonl (1.1MB)
+    smjobs_fsx:
+      train_data_name: "gsm8k_train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/gsm8k/train.jsonl"
+      val_data_name: "gsm8k_val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/gsm8k/test.parquet"
+
+  panda_convergence:
+    # Full PandaLM dataset (5.7MB train) instead of PandaLMSmall (869KB train)
+    smjobs_fsx:
+      train_data_name: "panda_train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/PandaLM/train_with_question.jsonl"
+      val_data_name: "panda_val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/PandaLM/val_test_with_question.jsonl"
+
+  tatqa_convergence:
+    # Full tatqa dataset (same files, already full-size)
+    smjobs_fsx:
+      train_data_name: "tatqa_train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/tatqa/zc_train_10k.jsonl"
+      val_data_name: "tatqa_val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/tatqa/zc_test.jsonl"
+
+  tat_qa-sft-openai-parquet_convergence:
+    # Full tat_qa-sft-openai-parquet with zc_train_10k.parquet for train (no jsonl available for parquet format)
+    smjobs_fsx:
+      train_data_name: "tatqa_train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/tat_qa-sft-openai-parquet/zc_train_10k.parquet"
+      val_data_name: "tatqa_val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/tat_qa-sft-openai-parquet/zc_test.parquet"
+
+  ultra_feedback_convergence:
+    # Full ultra_feedback dataset (1.4GB train, 76MB val - already full-size)
+    smjobs_fsx:
+      train_data_name: "ultra-feedback-train"
+      train_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_train.jsonl"
+      val_data_name: "ultra-feedback-val"
+      val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/ultra_feedback/preference_dataset_val.jsonl"
+
 # Contains the datasets available based on recipe type and platform. Add new entries to the `datasets` field and update here
 # for usage in validation runs
 recipe_dataset_mapping:
@@ -266,6 +321,18 @@ recipe_dataset_mapping:
     slurm: ["ultra_feedback"]
     k8: ["ultra_feedback"]
     smjobs: ["ultra_feedback"]
+  vision_convergence:
+    smjobs: ["pokemon_convergence"]
+  verl_sft_convergence:
+    smjobs: ["tat_qa-sft-openai-parquet_convergence"]
+  verl_rlvr_convergence:
+    smjobs: ["gsm8k_convergence"]
+  verl_rlaif_convergence:
+    smjobs: ["panda_convergence"]
+  sft_convergence:
+    smjobs: ["tatqa_convergence"]
+  dpo_convergence:
+    smjobs: ["ultra_feedback_convergence"]
 
 # Specify HuggingFace access token here if the models are gated
 hf:
@@ -455,6 +522,36 @@ pysdk_finetune_dataset_mapping:
   DPO: "s3://hyperpod-recipes-validation-artifacts/datasets/ultra_feedback/preference_dataset_train.jsonl"
   RLVR: "s3://hyperpod-recipes-validation-artifacts/datasets/gsm8k/train_small.parquet"
   RLAIF: "s3://hyperpod-recipes-validation-artifacts/datasets/panda/train_with_question.jsonl"
+
+# ============================================================================
+# CONVERGENCE TRAINING CONFIGURATION
+# ============================================================================
+# Run full-dataset training to convergence (as opposed to smoke-test validation).
+#
+# Unlike smoke-test validations, convergence training:
+# - Uses the recipe's training parameters AS-IS (epochs, limits, etc.)
+# - Only overrides runtime/infrastructure settings (output paths, compression, datasets)
+# - Selects full datasets via the {recipe_type}_convergence mappings
+#
+# PHILOSOPHY:
+# - Recipes should already have correct training params (epochs, learning rate, etc.)
+# - Validation framework only controls WHERE to save, WHICH dataset, and HOW to compress
+#
+# ADDING A NEW CONVERGENCE JOB:
+#   1. Ensure your recipe has the correct training parameters (epochs, limits, etc.)
+#   2. Add an entry under convergence_validation.jobs with recipe, platform, instance_type
+#   3. Add a {recipe_type}_convergence dataset mapping if using full datasets
+#
+# RUNNING:
+#   python scripts/validations/validation_script_runner.py --convergence
+#   python scripts/validations/validation_script_runner.py --convergence --convergence_job verl_rlvr_qwen_7b_gsm8k
+convergence_validation:
+  # Global runtime overrides applied to ALL convergence jobs
+  # These should ONLY be infrastructure/runtime settings, NOT training parameters
+  runtime_overrides:
+    "++cluster.sm_jobs_config.additional_estimator_kwargs.disable_output_compression": "True"
+    platform: "SMJOBS"
+    instance_type: "ml.p5.48xlarge"
 
 # ============================================================================
 # ADDITIONAL LAUNCH CONFIG (Regex-based recipe matching)
@@ -733,6 +830,7 @@ recipe_structure_config:
 
       slurm:  # Slurm-specific commands
         - "++cluster.container_mounts.0=/fsx:/fsx"
+        - "recipes.training_config.training_args.training_dir={base_results_dir}/training_output"
 
       k8:  # K8-specific commands
         - "+cluster.ray.enabled=true"
@@ -812,6 +910,7 @@ recipe_structure_config:
 
       slurm:  # SLURM-specific commands
         - "++cluster.container_mounts.0=/fsx:/fsx"
+        - "recipes.training_config.training_args.training_dir={base_results_dir}/training_output"
 
       smjobs:  # SM Jobs-specific commands (S3 mode)
         - "+model.model_type=llm_finetuning_aws"

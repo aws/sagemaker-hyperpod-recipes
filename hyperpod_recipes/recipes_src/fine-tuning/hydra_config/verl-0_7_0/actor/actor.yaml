@@ -126,7 +126,7 @@ checkpoint:
 
   # What to include in saved checkpoints
   # with 'hf_model' you can save whole model as hf format, now only use sharded model checkpoint to save space
-  save_contents: ['model', 'optimizer', 'extra']
+  save_contents: ['model', 'optimizer', 'extra', 'hf_model']
 
   # For more flexibility, you can specify the contents to load from the checkpoint.
   # .xxx refers to the local variable xxx from the same level of hierarchy similar to python pkg

@@ -3,3 +3,12 @@ _target_: verl.trainer.config.CheckpointConfig
 
 save_contents:
 - model
+- optimizer
+- extra
+- hf_model
+load_contents:
+- model
+- optimizer
+- extra
+- hf_model
+save_only_adapter_if_lora: true

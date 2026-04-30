@@ -34,6 +34,7 @@ training_config:
         - model
         - optimizer
         - extra
+        - hf_model
       clip_ratio: 0.2
       clip_ratio_c: 3.0
       clip_ratio_high: 0.2
@@ -676,4 +677,4 @@ training_config:
     validation_data_dir: null
   transfer_queue:
     enable: false
-version: 2.1.1
+version: 2.2.0

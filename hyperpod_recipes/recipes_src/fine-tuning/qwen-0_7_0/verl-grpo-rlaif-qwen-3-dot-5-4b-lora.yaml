@@ -3,10 +3,9 @@ defaults:
   - _self_
 
 display_name: Qwen 3.5 4B GRPO RLAIF Fine-Tuning with LoRA
-version: 2.0.0
+version: 2.1.0
 instance_types:
   - ml.p5.48xlarge
-  - ml.p4de.24xlarge
 run:
     model_type: verl
     name: verl-grpo-qwen-3-dot-5-4b-lora
@@ -44,18 +43,21 @@ training_config:
 
     # Actor overrides
     actor:
-      use_kl_loss: false
+      use_kl_loss: true
       kl_loss_coef: 0
-      use_dynamic_bsz: true
+      use_dynamic_bsz: false
       clip_ratio_high: 0.28
-      ppo_micro_batch_size_per_gpu: null
-      ppo_max_token_len_per_gpu: 16384
+      ppo_micro_batch_size_per_gpu: 1
+      ulysses_sequence_parallel_size: 1
+      ppo_max_token_len_per_gpu: 32768
       strategy: fsdp2
       optim:
         lr: 1.0e-05
         warmup_style: null
       fsdp_config:
         fsdp_size: 8
+        optimizer_offload: true
+        param_offload: true
         strategy: fsdp2
         wrap_policy:
           transformer_layer_cls_to_wrap:
@@ -64,9 +66,10 @@ training_config:
 
     # Reference model overrides
     ref:
-      log_prob_use_dynamic_bsz: true
+      log_prob_use_dynamic_bsz: false
       entropy_from_logits_with_chunking: true
       log_prob_max_token_len_per_gpu: 16384
+      log_prob_micro_batch_size_per_gpu: 1
       fsdp_config:
         param_offload: true
         strategy: fsdp2
@@ -78,14 +81,18 @@ training_config:
     # Rollout overrides (vLLM engine)
     rollout:
       name: vllm
-      prompt_length: 1024
-      response_length: 4096
+      prompt_length: 16384
+      response_length: 16384
       tensor_model_parallel_size: 2
-      log_prob_max_token_len_per_gpu: 16384
+      log_prob_use_dynamic_bsz: false
+      log_prob_max_token_len_per_gpu: 32768
+      log_prob_micro_batch_size_per_gpu: 1
       enable_chunked_prefill: true
       layered_summon: true
       merge_lora_for_inference: true
       calculate_log_probs: true
+      max_model_len: 32768
+      max_num_batched_tokens: 8192
       val_kwargs:
         'n': 1
       prometheus:
@@ -132,8 +139,8 @@ training_config:
 
   # Data overrides
   data:
-    max_prompt_length: 1024
-    max_response_length: 4096
+    max_prompt_length: 16384
+    max_response_length: 16384
     val_batch_size: null
     train_val_split_ratio: 0.9  # add this alongside existing data fields
     apply_chat_template_kwargs:

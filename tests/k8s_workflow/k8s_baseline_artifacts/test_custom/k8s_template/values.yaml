@@ -44,6 +44,7 @@ trainingConfig:
     TORCH_NCCL_ASYNC_ERROR_HANDLING: '1'
     TORCH_DIST_INIT_BARRIER: '1'
     CUDA_DEVICE_MAX_CONNECTIONS: '1'
+    INSTANCE_TYPE: p5.48xlarge
   elastic_policy:
     is_elastic: false
     min_nodes: -1

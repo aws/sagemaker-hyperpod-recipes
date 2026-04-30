@@ -74,7 +74,12 @@
                     },
                     "model": {
                         "optim": {
-                            "lr": "{{learning_rate}}"
+                            "lr": "{{learning_rate}}",
+                            "weight_decay": "{{weight_decay}}",
+                            "sched": {
+                                "warmup_steps": "{{warmup_steps}}",
+                                "min_lr": "{{min_lr}}"
+                            }
                         },
                         "peft": {
                             "lora_tuning": {
@@ -90,19 +95,50 @@
                 "replicas": {
                     "type": "integer",
                     "required": true,
-                    "enum": [1, 2, 4, 6, 8, 12, 16, 24],
+                    "enum": [
+                        1,
+                        2,
+                        4,
+                        6,
+                        8,
+                        12,
+                        16,
+                        24
+                    ],
                     "default": 1,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
-                                "nova_lite_1_0_g5_g6_12x_gpu_lora_sft": [1],
-                                "nova_lite_1_0_g5_g6_48x_gpu_lora_sft": [1],
-                                "nova_lite_1_0_p5_p4d_gpu_lora_sft": [4, 8, 16],
-                                "nova_micro_1_0_g5_g6_12x_gpu_lora_sft": [1],
-                                "nova_micro_1_0_g5_g6_48x_gpu_lora_sft": [1],
-                                "nova_micro_1_0_p5_p4d_gpu_lora_sft": [2, 4, 8],
-                                "nova_pro_1_0_p5_p4d_gpu_lora_sft": [6, 12, 24],
-                                "default": [1]
+                                "nova_lite_1_0_g5_g6_12x_gpu_lora_sft": [
+                                    1
+                                ],
+                                "nova_lite_1_0_g5_g6_48x_gpu_lora_sft": [
+                                    1
+                                ],
+                                "nova_lite_1_0_p5_p4d_gpu_lora_sft": [
+                                    4,
+                                    8,
+                                    16
+                                ],
+                                "nova_micro_1_0_g5_g6_12x_gpu_lora_sft": [
+                                    1
+                                ],
+                                "nova_micro_1_0_g5_g6_48x_gpu_lora_sft": [
+                                    1
+                                ],
+                                "nova_micro_1_0_p5_p4d_gpu_lora_sft": [
+                                    2,
+                                    4,
+                                    8
+                                ],
+                                "nova_pro_1_0_p5_p4d_gpu_lora_sft": [
+                                    6,
+                                    12,
+                                    24
+                                ],
+                                "default": [
+                                    1
+                                ]
                             }
                         },
                         "default": {
@@ -148,7 +184,7 @@
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 2
                 },
                 "learning_rate": {
@@ -156,11 +192,11 @@
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 0.00001
+                    "default": 1e-05
                 },
                 "lora_alpha": {
                     "type": "integer",
-                    "required": false,
+                    "required": true,
                     "enum": [
                         32,
                         64,
@@ -204,6 +240,27 @@
                     "type": "string",
                     "required": false,
                     "default": ""
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 100,
+                    "default": 10
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-07,
+                    "max": 1.0,
+                    "default": 1e-06
                 }
             },
             "recipe_metadata_helpers": {
@@ -243,30 +300,51 @@
                 "training_config": {
                     "global_batch_size": "{{global_batch_size}}",
                     "max_steps": "{{max_steps}}",
-                    "save_steps": "{{max_steps}}",
+                    "save_steps": "{{save_steps}}",
                     "reasoning_enabled": "{{reasoning_enabled}}",
-                        "optim_config": {
-                            "lr": "{{learning_rate}}"
-                        },
-                        "peft": {
-                            "lora_tuning": {
-                                "alpha": "{{lora_alpha}}",
-                                "lora_plus_lr_ratio": "{{learning_rate_ratio}}"
-                            }
+                    "lr_scheduler": {
+                        "warmup_steps": "{{warmup_steps}}",
+                        "min_lr": "{{min_lr}}"
+                    },
+                    "optim_config": {
+                        "lr": "{{learning_rate}}",
+                        "weight_decay": "{{weight_decay}}"
+                    },
+                    "peft": {
+                        "lora_tuning": {
+                            "alpha": "{{lora_alpha}}",
+                            "lora_plus_lr_ratio": "{{learning_rate_ratio}}"
                         }
+                    },
+                    "model_importance_score": {
+                        "fine_tuned_model": "{{fine_tuned_model}}"
+                    }
                 }
             },
             "recipe_override_parameters": {
                 "replicas": {
                     "type": "integer",
                     "required": true,
-                    "enum": [4,8],
+                    "enum": [
+                        4,
+                        8
+                    ],
                     "default": 4,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
-                                "nova_lite_2_0_p5_gpu_lora_sft": [4, 8, 16, 32],
-                                "default": [4, 8, 16, 32]
+                                "nova_lite_2_0_p5_gpu_lora_sft": [
+                                    4,
+                                    8,
+                                    16,
+                                    32
+                                ],
+                                "default": [
+                                    4,
+                                    8,
+                                    16,
+                                    32
+                                ]
                             }
                         },
                         "default": {
@@ -323,16 +401,31 @@
                         }
                     }
                 },
+                "save_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100000,
+                    "default": 10,
+                    "conditional_constraints": {
+                        "default": {
+                            "Name": {
+                                "nova_lite_2_0_p5_gpu_lora_sft": 10,
+                                "default": 10
+                            }
+                        }
+                    }
+                },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 0.00001
+                    "default": 1e-05
                 },
                 "lora_alpha": {
                     "type": "integer",
-                    "required": false,
+                    "required": true,
                     "enum": [
                         32,
                         64,
@@ -376,6 +469,34 @@
                     "type": "string",
                     "required": false,
                     "default": ""
+                },
+                "fine_tuned_model": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 1.0
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 100,
+                    "default": 15
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-07,
+                    "max": 1.0,
+                    "default": 1e-06
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
                 }
             },
             "recipe_metadata_helpers": {
@@ -415,10 +536,18 @@
                 "training_config": {
                     "global_batch_size": "{{global_batch_size}}",
                     "max_steps": "{{max_steps}}",
-                    "save_steps": "{{max_steps}}",
+                    "save_steps": "{{save_steps}}",
                     "reasoning_enabled": "{{reasoning_enabled}}",
+                    "lr_scheduler": {
+                        "warmup_steps": "{{warmup_steps}}",
+                        "min_lr": "{{min_lr}}"
+                    },
                     "optim_config": {
-                        "lr": "{{learning_rate}}"
+                        "lr": "{{learning_rate}}",
+                        "weight_decay": "{{weight_decay}}"
+                    },
+                    "model_importance_score": {
+                        "fine_tuned_model": "{{fine_tuned_model}}"
                     }
                 }
             },
@@ -426,13 +555,26 @@
                 "replicas": {
                     "type": "integer",
                     "required": true,
-                    "enum": [4,8],
+                    "enum": [
+                        4,
+                        8
+                    ],
                     "default": 4,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
-                                "nova_lite_2_0_p5_gpu_sft": [4, 8, 16, 32],
-                                "default": [4, 8, 16, 32]
+                                "nova_lite_2_0_p5_gpu_sft": [
+                                    4,
+                                    8,
+                                    16,
+                                    32
+                                ],
+                                "default": [
+                                    4,
+                                    8,
+                                    16,
+                                    32
+                                ]
                             }
                         },
                         "default": {
@@ -489,12 +631,27 @@
                         }
                     }
                 },
+                "save_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100000,
+                    "default": 100,
+                    "conditional_constraints": {
+                        "default": {
+                            "Name": {
+                                "nova_lite_2_0_p5_gpu_sft": 100,
+                                "default": 100
+                            }
+                        }
+                    }
+                },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 0.00001
+                    "default": 1e-05
                 },
                 "namespace": {
                     "type": "string",
@@ -522,6 +679,34 @@
                     "type": "string",
                     "required": false,
                     "default": ""
+                },
+                "fine_tuned_model": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 1.0
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 100,
+                    "default": 15
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-07,
+                    "max": 1.0,
+                    "default": 1e-06
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
                 }
             },
             "recipe_metadata_helpers": {
@@ -562,7 +747,12 @@
                     },
                     "model": {
                         "optim": {
-                            "lr": "{{learning_rate}}"
+                            "lr": "{{learning_rate}}",
+                            "weight_decay": "{{weight_decay}}",
+                            "sched": {
+                                "warmup_steps": "{{warmup_steps}}",
+                                "min_lr": "{{min_lr}}"
+                            }
                         },
                         "dpo_cfg": {
                             "beta": "{{adam_beta}}"
@@ -581,18 +771,47 @@
                 "replicas": {
                     "type": "integer",
                     "required": true,
-                    "enum": [1, 2, 4, 6, 8, 12, 16, 24],
+                    "enum": [
+                        1,
+                        2,
+                        4,
+                        6,
+                        8,
+                        12,
+                        16,
+                        24
+                    ],
                     "default": 1,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
-                                "nova_lite_1_0_g5_g6_48x_gpu_lora_dpo": [1],
-                                "nova_lite_1_0_p5_p4d_gpu_lora_dpo": [4, 8, 16],
-                                "nova_micro_1_0_g5_g6_12x_gpu_lora_dpo": [1],
-                                "nova_micro_1_0_g5_g6_48x_gpu_lora_dpo": [1],
-                                "nova_micro_1_0_p5_p4d_gpu_lora_dpo": [2, 4, 8],
-                                "nova_pro_1_0_p5_p4d_gpu_lora_dpo": [6, 12, 24],
-                                "default": [1]
+                                "nova_lite_1_0_g5_g6_48x_gpu_lora_dpo": [
+                                    1
+                                ],
+                                "nova_lite_1_0_p5_p4d_gpu_lora_dpo": [
+                                    4,
+                                    8,
+                                    16
+                                ],
+                                "nova_micro_1_0_g5_g6_12x_gpu_lora_dpo": [
+                                    1
+                                ],
+                                "nova_micro_1_0_g5_g6_48x_gpu_lora_dpo": [
+                                    1
+                                ],
+                                "nova_micro_1_0_p5_p4d_gpu_lora_dpo": [
+                                    2,
+                                    4,
+                                    8
+                                ],
+                                "nova_pro_1_0_p5_p4d_gpu_lora_dpo": [
+                                    6,
+                                    12,
+                                    24
+                                ],
+                                "default": [
+                                    1
+                                ]
                             }
                         },
                         "default": {
@@ -637,7 +856,7 @@
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 2
                 },
                 "learning_rate": {
@@ -645,7 +864,7 @@
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 0.00001
+                    "default": 1e-05
                 },
                 "adam_beta": {
                     "type": "float",
@@ -656,7 +875,7 @@
                 },
                 "lora_alpha": {
                     "type": "integer",
-                    "required": false,
+                    "required": true,
                     "enum": [
                         32,
                         64,
@@ -700,6 +919,27 @@
                     "type": "string",
                     "required": false,
                     "default": ""
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 100,
+                    "default": 10
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-07,
+                    "max": 1.0,
+                    "default": 1e-06
                 }
             },
             "recipe_metadata_helpers": {
@@ -743,7 +983,12 @@
                     },
                     "model": {
                         "optim": {
-                            "lr": "{{learning_rate}}"
+                            "lr": "{{learning_rate}}",
+                            "weight_decay": "{{weight_decay}}",
+                            "sched": {
+                                "warmup_steps": "{{warmup_steps}}",
+                                "min_lr": "{{min_lr}}"
+                            }
                         }
                     }
                 }
@@ -752,16 +997,41 @@
                 "replicas": {
                     "type": "integer",
                     "required": true,
-                    "enum": [1, 2, 4, 6, 8, 12, 16, 24],
+                    "enum": [
+                        1,
+                        2,
+                        4,
+                        6,
+                        8,
+                        12,
+                        16,
+                        24
+                    ],
                     "default": 1,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
-                                "nova_lite_1_0_p5_p4d_gpu_sft": [4, 8, 16],
-                                "nova_micro_1_0_g5_g6_48x_gpu_sft": [1],
-                                "nova_micro_1_0_p5_p4d_gpu_sft": [2, 4, 8],
-                                "nova_pro_1_0_p5_gpu_sft": [6, 12, 24],
-                                "default": [1]
+                                "nova_lite_1_0_p5_p4d_gpu_sft": [
+                                    4,
+                                    8,
+                                    16
+                                ],
+                                "nova_micro_1_0_g5_g6_48x_gpu_sft": [
+                                    1
+                                ],
+                                "nova_micro_1_0_p5_p4d_gpu_sft": [
+                                    2,
+                                    4,
+                                    8
+                                ],
+                                "nova_pro_1_0_p5_gpu_sft": [
+                                    6,
+                                    12,
+                                    24
+                                ],
+                                "default": [
+                                    1
+                                ]
                             }
                         },
                         "default": {
@@ -804,7 +1074,7 @@
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 2
                 },
                 "learning_rate": {
@@ -812,7 +1082,7 @@
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 0.000005
+                    "default": 5e-06
                 },
                 "namespace": {
                     "type": "string",
@@ -840,6 +1110,27 @@
                     "type": "string",
                     "required": false,
                     "default": ""
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 100,
+                    "default": 10
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-07,
+                    "max": 1.0,
+                    "default": 1e-06
                 }
             },
             "recipe_metadata_helpers": {
@@ -880,7 +1171,12 @@
                     },
                     "model": {
                         "optim": {
-                            "lr": "{{learning_rate}}"
+                            "lr": "{{learning_rate}}",
+                            "weight_decay": "{{weight_decay}}",
+                            "sched": {
+                                "warmup_steps": "{{warmup_steps}}",
+                                "min_lr": "{{min_lr}}"
+                            }
                         },
                         "dpo_cfg": {
                             "beta": "{{adam_beta}}"
@@ -892,16 +1188,42 @@
                 "replicas": {
                     "type": "integer",
                     "required": true,
-                    "enum": [1, 2, 4, 6, 8, 12, 16, 24],
+                    "enum": [
+                        1,
+                        2,
+                        4,
+                        6,
+                        8,
+                        12,
+                        16,
+                        24
+                    ],
                     "default": 1,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
-                                "nova_lite_1_0_p5_p4d_gpu_dpo": [4, 8, 16],
-                                "nova_micro_1_0_p5_p4d_gpu_dpo": [2, 4, 8],
-                                "nova_pro_1_0_p4d_gpu_dpo": [12, 24],
-                                "nova_pro_1_0_p5_gpu_dpo": [6, 12, 24],
-                                "default": [1]
+                                "nova_lite_1_0_p5_p4d_gpu_dpo": [
+                                    4,
+                                    8,
+                                    16
+                                ],
+                                "nova_micro_1_0_p5_p4d_gpu_dpo": [
+                                    2,
+                                    4,
+                                    8
+                                ],
+                                "nova_pro_1_0_p4d_gpu_dpo": [
+                                    12,
+                                    24
+                                ],
+                                "nova_pro_1_0_p5_gpu_dpo": [
+                                    6,
+                                    12,
+                                    24
+                                ],
+                                "default": [
+                                    1
+                                ]
                             }
                         },
                         "default": {
@@ -945,7 +1267,7 @@
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 3
                 },
                 "learning_rate": {
@@ -953,7 +1275,7 @@
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 0.00001
+                    "default": 1e-05
                 },
                 "adam_beta": {
                     "type": "float",
@@ -988,6 +1310,27 @@
                     "type": "string",
                     "required": false,
                     "default": ""
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 100,
+                    "default": 10
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-07,
+                    "max": 1.0,
+                    "default": 1e-06
                 }
             },
             "recipe_metadata_helpers": {
@@ -1066,14 +1409,16 @@
                                 "nova-textgeneration-micro": [
                                     256
                                 ],
-                                "nova-textgeneration-lite": [160],
+                                "nova-textgeneration-lite": [
+                                    160
+                                ],
                                 "nova-textgeneration-pro": [
                                     160
                                 ]
                             }
                         },
                         "default": {
-                             "Model_ID": {
+                            "Model_ID": {
                                 "nova-textgeneration-micro": 256,
                                 "nova-textgeneration-lite": 160,
                                 "nova-textgeneration-pro": 160
@@ -1086,7 +1431,7 @@
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 0.000003
+                    "default": 3e-06
                 },
                 "replicas": {
                     "type": "integer",
@@ -1103,14 +1448,16 @@
                                 "nova-textgeneration-micro": [
                                     2
                                 ],
-                                "nova-textgeneration-lite": [2],
+                                "nova-textgeneration-lite": [
+                                    2
+                                ],
                                 "nova-textgeneration-pro": [
                                     6
                                 ]
                             }
                         },
                         "default": {
-                             "Model_ID": {
+                            "Model_ID": {
                                 "nova-textgeneration-micro": 2,
                                 "nova-textgeneration-lite": 2,
                                 "nova-textgeneration-pro": 6
@@ -1302,7 +1649,7 @@
                 },
                 "temperature": {
                     "type": "float",
-                    "required": false,
+                    "required": true,
                     "min": 0.0,
                     "max": 2.0,
                     "default": 0.0
@@ -1406,7 +1753,7 @@
                 },
                 "temperature": {
                     "type": "float",
-                    "required": false,
+                    "required": true,
                     "min": 0.0,
                     "max": 2.0,
                     "default": 0.0
@@ -1510,7 +1857,7 @@
                 },
                 "temperature": {
                     "type": "float",
-                    "required": false,
+                    "required": true,
                     "min": 0.0,
                     "max": 2.0,
                     "default": 0.0
@@ -1613,7 +1960,7 @@
                 },
                 "temperature": {
                     "type": "float",
-                    "required": false,
+                    "required": true,
                     "min": 0.0,
                     "max": 2.0,
                     "default": 0.0
@@ -1710,7 +2057,7 @@
                 },
                 "temperature": {
                     "type": "float",
-                    "required": false,
+                    "required": true,
                     "min": 0.0,
                     "max": 2.0,
                     "default": 0.0
@@ -1818,7 +2165,7 @@
                 },
                 "temperature": {
                     "type": "float",
-                    "required": false,
+                    "required": true,
                     "min": 0.0,
                     "max": 2.0,
                     "default": 0.0
@@ -1941,7 +2288,7 @@
                 },
                 "temperature": {
                     "type": "float",
-                    "required": false,
+                    "required": true,
                     "min": 0.0,
                     "max": 2.0,
                     "default": 0.0
@@ -2023,15 +2370,41 @@
                 "replicas": {
                     "type": "integer",
                     "required": true,
-                    "enum": [2, 4, 6, 8, 12, 16, 24, 32],
+                    "enum": [
+                        2,
+                        4,
+                        6,
+                        8,
+                        12,
+                        16,
+                        24,
+                        32
+                    ],
                     "default": 2,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
-                                "nova_lite_1_0_p5x16_gpu_pretrain": [4, 8, 16, 32],
-                                "nova_micro_1_0_p5x8_gpu_pretrain": [2, 4, 8, 16, 32],
-                                "nova_pro_1_0_p5x24_gpu_pretrain": [6, 12, 24],
-                                "default": [2]
+                                "nova_lite_1_0_p5x16_gpu_pretrain": [
+                                    4,
+                                    8,
+                                    16,
+                                    32
+                                ],
+                                "nova_micro_1_0_p5x8_gpu_pretrain": [
+                                    2,
+                                    4,
+                                    8,
+                                    16,
+                                    32
+                                ],
+                                "nova_pro_1_0_p5x24_gpu_pretrain": [
+                                    6,
+                                    12,
+                                    24
+                                ],
+                                "default": [
+                                    2
+                                ]
                             }
                         },
                         "default": {
@@ -2074,7 +2447,7 @@
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 1
                 },
                 "learning_rate": {
@@ -2082,7 +2455,7 @@
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 0.00001
+                    "default": 1e-05
                 },
                 "namespace": {
                     "type": "string",
@@ -2145,7 +2518,7 @@
                     "trainer": {
                         "max_steps": "{{max_steps}}"
                     },
-                    "optim":{
+                    "optim": {
                         "lr": "{{learning_rate}}"
                     }
                 }
@@ -2154,13 +2527,29 @@
                 "replicas": {
                     "type": "integer",
                     "required": true,
-                    "enum": [2, 4, 6, 8, 12, 16, 24, 32],
+                    "enum": [
+                        2,
+                        4,
+                        6,
+                        8,
+                        12,
+                        16,
+                        24,
+                        32
+                    ],
                     "default": 2,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
-                                "nova_lite_2_0_p5x8_gpu_pretrain": [4, 8, 16, 32],
-                                "default": [8]
+                                "nova_lite_2_0_p5x8_gpu_pretrain": [
+                                    4,
+                                    8,
+                                    16,
+                                    32
+                                ],
+                                "default": [
+                                    8
+                                ]
                             }
                         },
                         "default": {
@@ -2214,7 +2603,7 @@
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 0.00001
+                    "default": 1e-05
                 },
                 "namespace": {
                     "type": "string",
@@ -2287,7 +2676,7 @@
                     },
                     "trainer": {
                         "max_steps": "{{max_steps}}",
-                        "save_steps": "{{max_steps}}",
+                        "save_steps": "{{save_steps}}",
                         "optim_config": {
                             "lr": "{{learning_rate}}"
                         },
@@ -2324,15 +2713,20 @@
                 "replicas": {
                     "type": "integer",
                     "required": true,
-                    "enum": [2, 4, 8, 16],
+                    "enum": [
+                        2,
+                        4,
+                        8,
+                        16
+                    ],
                     "default": 2
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 0.00000001,
+                    "min": 1e-08,
                     "max": 0.001,
-                    "default": 0.0000007
+                    "default": 7e-07
                 },
                 "max_steps": {
                     "type": "integer",
@@ -2359,7 +2753,11 @@
                 "lora_alpha": {
                     "type": "integer",
                     "required": true,
-                    "enum": [16, 32, 64],
+                    "enum": [
+                        16,
+                        32,
+                        64
+                    ],
                     "default": 32
                 },
                 "global_batch_size": {
@@ -2402,6 +2800,13 @@
                     "type": "string",
                     "required": false,
                     "default": ""
+                },
+                "save_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 10
                 }
             },
             "recipe_metadata_helpers": {
@@ -2415,7 +2820,9 @@
                     "lora": "LoRA"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p5.48xlarge"]
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
                 }
             }
         },
@@ -2446,7 +2853,7 @@
                     },
                     "trainer": {
                         "max_steps": "{{max_steps}}",
-                        "save_steps": "{{max_steps}}",
+                        "save_steps": "{{save_steps}}",
                         "optim_config": {
                             "lr": "{{learning_rate}}"
                         }
@@ -2472,7 +2879,12 @@
                 "replicas": {
                     "type": "integer",
                     "required": true,
-                    "enum": [2, 4, 8, 16],
+                    "enum": [
+                        2,
+                        4,
+                        8,
+                        16
+                    ],
                     "default": 4
                 },
                 "reward_lambda_arn": {
@@ -2483,9 +2895,9 @@
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 0.00000001,
+                    "min": 1e-08,
                     "max": 0.001,
-                    "default": 0.0000007
+                    "default": 7e-07
                 },
                 "max_steps": {
                     "type": "integer",
@@ -2549,6 +2961,13 @@
                     "type": "string",
                     "required": false,
                     "default": ""
+                },
+                "save_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 10
                 }
             },
             "recipe_metadata_helpers": {
@@ -2559,7 +2978,9 @@
                     "rft": "rft"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p5.48xlarge"]
+                    "gpu": [
+                        "ml.p5.48xlarge"
+                    ]
                 }
             }
         },
@@ -2574,8 +2995,8 @@
                     "global_batch_size": "{{global_batch_size}}",
                     "max_length": "{{max_length}}",
                     "trainer": {
-                        "max_steps":"{{max_steps}}",
-                        "save_steps":"{{max_steps}}",
+                        "max_steps": "{{max_steps}}",
+                        "save_steps": "{{save_steps}}",
                         "optim_config": {
                             "lr": "{{learning_rate}}"
                         },
@@ -2614,9 +3035,9 @@
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 0.0000001,
+                    "min": 1e-07,
                     "max": 0.001,
-                    "default": 0.00001
+                    "default": 1e-05
                 },
                 "max_steps": {
                     "type": "integer",
@@ -2635,7 +3056,7 @@
                 },
                 "lora_alpha": {
                     "type": "integer",
-                    "required": false,
+                    "required": true,
                     "enum": [
                         16,
                         32,
@@ -2663,6 +3084,13 @@
                     "min": 0.0,
                     "max": 100.0,
                     "default": 64.0
+                },
+                "save_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 10
                 }
             },
             "recipe_metadata_helpers": {
@@ -2676,7 +3104,10 @@
                     "lora": "LoRA"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p5.48xlarge", "ml.p5en.48xlarge"]
+                    "gpu": [
+                        "ml.p5.48xlarge",
+                        "ml.p5en.48xlarge"
+                    ]
                 }
             }
         },
@@ -2699,7 +3130,7 @@
                     },
                     "trainer": {
                         "max_steps": "{{max_steps}}",
-                        "save_steps": "{{max_steps}}",
+                        "save_steps": "{{save_steps}}",
                         "optim_config": {
                             "lr": "{{learning_rate}}"
                         }
@@ -2725,9 +3156,9 @@
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 0.0000001,
+                    "min": 1e-07,
                     "max": 0.001,
-                    "default": 0.00001
+                    "default": 1e-05
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -2749,7 +3180,7 @@
                     "min": 5,
                     "max": 100000,
                     "default": 10,
-                       "conditional_constraints": {
+                    "conditional_constraints": {
                         "default": {
                             "Name": {
                                 "nova_lite_v2_smtj_p5_p5en_gpu_rft": 10,
@@ -2757,6 +3188,13 @@
                             }
                         }
                     }
+                },
+                "save_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 10
                 }
             },
             "recipe_metadata_helpers": {
@@ -2767,7 +3205,9 @@
                     "rft": "rft"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p5en.48xlarge"]
+                    "gpu": [
+                        "ml.p5en.48xlarge"
+                    ]
                 }
             }
         }

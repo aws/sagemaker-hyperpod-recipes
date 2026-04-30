@@ -114,6 +114,6 @@ class TestDownloadModelVerl:
     @patch("utils.model_utils.download_model_on_k8s")
     @patch("utils.model_utils.get_jumpstart_model_id", return_value="some-jumpstart-id")
     def test_verl_sft_recipe_downloads_model(self, mock_js_id, mock_download):
-        cfg = _make_cfg("k8s", run_name="verl-sft-qwen-3-8b-lora")
+        cfg = _make_cfg("k8s", run_name="verl-sft-qwen-3-dot-5-4b-lora")
         download_model(cfg)
         mock_download.assert_called_once()

@@ -48,7 +48,9 @@ class K8sValidationLauncher(BaseLauncher):
             self.logger.info("Resuming with default context")
 
     def _prepare_job(self, input_file_path: str) -> dict:
-        run_info = pre_launch_setup(self.config, input_file_path, context_override=self._context_override)
+        run_info = pre_launch_setup(
+            self.config, input_file_path, context_override=self._context_override, env=self.aws_env
+        )
         run_info["fsx_run_id"] = uuid.uuid4().hex[:8]
         if self._context_override:
             run_info["kube_context"] = self._context_override[1]
@@ -189,6 +191,7 @@ class K8sValidationLauncher(BaseLauncher):
         resource_name = RAY_JOBS_RESOURCE_NAME if is_verl else HP_PYTORCH_JOB_RESOURCE_NAME
         while True:
             try:
+                self._refresh_credentials_if_needed()
                 # Check job status
                 status = self._get_job_status(job_name, is_verl)
 
@@ -269,6 +272,7 @@ class K8sValidationLauncher(BaseLauncher):
                             "exception occurred during training:",
                             "training related exception occurred",
                             "nccl warn cuda failure",
+                            "error executing job with overrides",
                         ]
                     ):
                         error_count += 1

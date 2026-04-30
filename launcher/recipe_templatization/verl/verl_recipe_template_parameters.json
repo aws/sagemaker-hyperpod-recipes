@@ -25,14 +25,30 @@
                     "actor_rollout_ref": {
                         "actor": {
                             "optim": {
-                                "lr": "{{learning_rate}}"
-                            }
+                                "lr": "{{learning_rate}}",
+                                "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                                "weight_decay": "{{weight_decay}}",
+                                "lr_warmup_steps": "{{warmup_steps}}",
+                                "min_lr_ratio": "{{min_lr}}"
+                            },
+                            "clip_ratio": "{{clip_ratio}}",
+                            "kl_loss_coef": "{{kl_loss_coef}}",
+                            "clip_ratio_high": "{{clip_ratio_high}}",
+                            "clip_ratio_low": "{{clip_ratio_low}}",
+                            "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
-                            "prompt_length": "{{max_prompt_length}}"
+                            "prompt_length": "{{max_prompt_length}}",
+                            "n": "{{rollout_n}}",
+                            "temperature": "{{rollout_temperature}}",
+                            "val_kwargs": {
+                                "temperature": "{{temperature}}"
+                            }
                         },
                         "model": {
-                            "path": "{{model_name_or_path}}"
+                            "path": "{{model_name_or_path}}",
+                            "lora_rank": "{{lora_rank}}",
+                            "lora_alpha": "{{lora_alpha}}"
                         }
                     },
                     "data": {
@@ -83,21 +99,28 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 1.0e-07,
-                    "max": 1.0e-03,
-                    "default": 1.0e-05
+                    "min": 1e-07,
+                    "max": 0.001,
+                    "default": 1e-05
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 3
                 },
                 "model_name_or_path": {
@@ -108,7 +131,12 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [128, 256, 512, 1024],
+                    "enum": [
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
                     "default": 128
                 },
                 "max_prompt_length": {
@@ -126,7 +154,12 @@
                 "judge_prompt_template": {
                     "type": "string",
                     "required": false,
-                    "enum": ["/opt/ml/code/verl/cot.jinja", "/opt/ml/code/verl/evaluate.jinja", "/opt/ml/code/verl/faithfulness.jinja", "/opt/ml/code/verl/summarize.jinja"],
+                    "enum": [
+                        "/opt/ml/code/verl/cot.jinja",
+                        "/opt/ml/code/verl/evaluate.jinja",
+                        "/opt/ml/code/verl/faithfulness.jinja",
+                        "/opt/ml/code/verl/summarize.jinja"
+                    ],
                     "default": "/opt/ml/code/verl/summarize.jinja"
                 },
                 "train_val_split_ratio": {
@@ -150,6 +183,111 @@
                     "default": "default",
                     "required": true,
                     "type": "string"
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.01
+                },
+                "clip_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.1,
+                    "max": 1.5,
+                    "default": 0.2
+                },
+                "kl_loss_coef": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 0.1,
+                    "default": 0.001
+                },
+                "rollout_n": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        1,
+                        2,
+                        4,
+                        8,
+                        16,
+                        32
+                    ],
+                    "default": 8
+                },
+                "rollout_temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.01,
+                    "max": 2.0,
+                    "default": 1.0
+                },
+                "lora_rank": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 32
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 64
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": -1,
+                    "max": 100,
+                    "default": -1
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "clip_ratio_high": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 0.5,
+                    "default": 0.28
+                },
+                "clip_ratio_low": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 0.5,
+                    "default": 0.2
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0
+                },
+                "use_kl_loss": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": false
                 }
             },
             "recipe_metadata_helpers": {
@@ -160,7 +298,10 @@
                     "grpo": "GRPO"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
                 }
             }
         },
@@ -179,14 +320,30 @@
                     "actor_rollout_ref": {
                         "actor": {
                             "optim": {
-                                "lr": "{{learning_rate}}"
-                            }
+                                "lr": "{{learning_rate}}",
+                                "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                                "weight_decay": "{{weight_decay}}",
+                                "lr_warmup_steps": "{{warmup_steps}}",
+                                "min_lr_ratio": "{{min_lr}}"
+                            },
+                            "clip_ratio": "{{clip_ratio}}",
+                            "kl_loss_coef": "{{kl_loss_coef}}",
+                            "clip_ratio_high": "{{clip_ratio_high}}",
+                            "clip_ratio_low": "{{clip_ratio_low}}",
+                            "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
-                            "prompt_length": "{{max_prompt_length}}"
+                            "prompt_length": "{{max_prompt_length}}",
+                            "n": "{{rollout_n}}",
+                            "temperature": "{{rollout_temperature}}",
+                            "val_kwargs": {
+                                "temperature": "{{temperature}}"
+                            }
                         },
                         "model": {
-                            "path": "{{model_name_or_path}}"
+                            "path": "{{model_name_or_path}}",
+                            "lora_rank": "{{lora_rank}}",
+                            "lora_alpha": "{{lora_alpha}}"
                         }
                     },
                     "data": {
@@ -229,10 +386,15 @@
                 "preset_reward_function": {
                     "type": "string",
                     "required": true,
-                    "enum": ["", "gsm8k", "prime_code", "prime_math"],
+                    "enum": [
+                        "",
+                        "gsm8k",
+                        "prime_code",
+                        "prime_math"
+                    ],
                     "default": ""
                 },
-                "reward_lambda_arn":{
+                "reward_lambda_arn": {
                     "type": "string",
                     "required": false,
                     "default": ""
@@ -249,21 +411,28 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 1.0e-07,
-                    "max": 1.0e-03,
-                    "default": 1.0e-05
+                    "min": 1e-07,
+                    "max": 0.001,
+                    "default": 1e-05
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 3
                 },
                 "model_name_or_path": {
@@ -274,7 +443,12 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [128, 256, 512, 1024],
+                    "enum": [
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
                     "default": 128
                 },
                 "max_prompt_length": {
@@ -300,6 +474,111 @@
                     "type": "string",
                     "required": false,
                     "default": ""
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.01
+                },
+                "clip_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.1,
+                    "max": 1.5,
+                    "default": 0.2
+                },
+                "kl_loss_coef": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 0.1,
+                    "default": 0.001
+                },
+                "rollout_n": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        1,
+                        2,
+                        4,
+                        8,
+                        16,
+                        32
+                    ],
+                    "default": 8
+                },
+                "rollout_temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.01,
+                    "max": 2.0,
+                    "default": 1.0
+                },
+                "lora_rank": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 32
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 64
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": -1,
+                    "max": 100,
+                    "default": -1
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "clip_ratio_high": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 0.5,
+                    "default": 0.28
+                },
+                "clip_ratio_low": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 0.5,
+                    "default": 0.2
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0
+                },
+                "use_kl_loss": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": false
                 }
             },
             "recipe_metadata_helpers": {
@@ -310,7 +589,10 @@
                     "grpo": "GRPO"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
                 },
                 "preset_reward_function": {
                     "gsm8k": "Exact match (gsm8k)",
@@ -334,11 +616,25 @@
                     "actor_rollout_ref": {
                         "actor": {
                             "optim": {
-                                "lr": "{{learning_rate}}"
-                            }
+                                "lr": "{{learning_rate}}",
+                                "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                                "weight_decay": "{{weight_decay}}",
+                                "lr_warmup_steps": "{{warmup_steps}}",
+                                "min_lr_ratio": "{{min_lr}}"
+                            },
+                            "clip_ratio": "{{clip_ratio}}",
+                            "kl_loss_coef": "{{kl_loss_coef}}",
+                            "clip_ratio_high": "{{clip_ratio_high}}",
+                            "clip_ratio_low": "{{clip_ratio_low}}",
+                            "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
-                            "prompt_length": "{{max_prompt_length}}"
+                            "prompt_length": "{{max_prompt_length}}",
+                            "n": "{{rollout_n}}",
+                            "temperature": "{{rollout_temperature}}",
+                            "val_kwargs": {
+                                "temperature": "{{temperature}}"
+                            }
                         },
                         "model": {
                             "path": "{{model_name_or_path}}"
@@ -392,21 +688,28 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 1.0e-07,
-                    "max": 1.0e-03,
-                    "default": 1.0e-05
+                    "min": 1e-07,
+                    "max": 0.001,
+                    "default": 1e-05
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 3
                 },
                 "model_name_or_path": {
@@ -417,7 +720,12 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [128, 256, 512, 1024],
+                    "enum": [
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
                     "default": 128
                 },
                 "max_prompt_length": {
@@ -435,7 +743,12 @@
                 "judge_prompt_template": {
                     "type": "string",
                     "required": false,
-                    "enum": ["/opt/ml/code/verl/cot.jinja", "/opt/ml/code/verl/evaluate.jinja", "/opt/ml/code/verl/faithfulness.jinja", "/opt/ml/code/verl/summarize.jinja"],
+                    "enum": [
+                        "/opt/ml/code/verl/cot.jinja",
+                        "/opt/ml/code/verl/evaluate.jinja",
+                        "/opt/ml/code/verl/faithfulness.jinja",
+                        "/opt/ml/code/verl/summarize.jinja"
+                    ],
                     "default": "/opt/ml/code/verl/summarize.jinja"
                 },
                 "train_val_split_ratio": {
@@ -459,6 +772,87 @@
                     "default": "default",
                     "required": true,
                     "type": "string"
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.01
+                },
+                "clip_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.1,
+                    "max": 1.5,
+                    "default": 0.2
+                },
+                "kl_loss_coef": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 0.1,
+                    "default": 0.001
+                },
+                "rollout_n": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        1,
+                        2,
+                        4,
+                        8,
+                        16,
+                        32
+                    ],
+                    "default": 8
+                },
+                "rollout_temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.01,
+                    "max": 2.0,
+                    "default": 1.0
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": -1,
+                    "max": 100,
+                    "default": -1
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "clip_ratio_high": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 0.5,
+                    "default": 0.28
+                },
+                "clip_ratio_low": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 0.5,
+                    "default": 0.2
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0
+                },
+                "use_kl_loss": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": false
                 }
             },
             "recipe_metadata_helpers": {
@@ -469,7 +863,10 @@
                     "grpo": "GRPO"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
                 }
             }
         },
@@ -486,15 +883,23 @@
                         "resume_from_path": "{{resume_from_path}}"
                     },
                     "model": {
-                        "path": "{{model_name_or_path}}"
+                        "path": "{{model_name_or_path}}",
+                        "lora_rank": "{{lora_rank}}",
+                        "lora_alpha": "{{lora_alpha}}"
                     },
                     "optim": {
-                        "lr": "{{learning_rate}}"
+                        "lr": "{{learning_rate}}",
+                        "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "lr_warmup_steps": "{{warmup_steps}}",
+                        "min_lr_ratio": "{{min_lr}}",
+                        "lr_scheduler_type": "{{lr_scheduler}}"
                     },
                     "data": {
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -530,21 +935,21 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 1.0e-07,
-                    "max": 1.0e-03,
-                    "default": 1.0e-05
+                    "min": 1e-07,
+                    "max": 0.001,
+                    "default": 1e-05
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 3
                 },
                 "model_name_or_path": {
@@ -555,7 +960,14 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [32, 64, 128, 256, 512, 1024],
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
                     "default": 32
                 },
                 "mlflow_tracking_uri": {
@@ -572,6 +984,74 @@
                     "default": "default",
                     "required": true,
                     "type": "string"
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.001
+                },
+                "lora_rank": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 32
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 64
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": -1,
+                    "max": 100,
+                    "default": -1
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ]
                 }
             },
             "recipe_metadata_helpers": {
@@ -582,7 +1062,10 @@
                     "sft": "SFT"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
                 }
             }
         },
@@ -602,12 +1085,18 @@
                         "path": "{{model_name_or_path}}"
                     },
                     "optim": {
-                        "lr": "{{learning_rate}}"
+                        "lr": "{{learning_rate}}",
+                        "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "lr_warmup_steps": "{{warmup_steps}}",
+                        "min_lr_ratio": "{{min_lr}}",
+                        "lr_scheduler_type": "{{lr_scheduler}}"
                     },
                     "data": {
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -643,21 +1132,21 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 1.0e-07,
-                    "max": 1.0e-03,
-                    "default": 1.0e-05
+                    "min": 1e-07,
+                    "max": 0.001,
+                    "default": 1e-05
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 3
                 },
                 "model_name_or_path": {
@@ -668,7 +1157,14 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [32, 64, 128, 256, 512, 1024],
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
                     "default": 32
                 },
                 "mlflow_tracking_uri": {
@@ -685,6 +1181,50 @@
                     "default": "default",
                     "required": true,
                     "type": "string"
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.001
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": -1,
+                    "max": 100,
+                    "default": -1
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ]
                 }
             },
             "recipe_metadata_helpers": {
@@ -695,7 +1235,10 @@
                     "sft": "SFT"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
                 }
             }
         },
@@ -714,11 +1257,25 @@
                     "actor_rollout_ref": {
                         "actor": {
                             "optim": {
-                                "lr": "{{learning_rate}}"
-                            }
+                                "lr": "{{learning_rate}}",
+                                "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                                "weight_decay": "{{weight_decay}}",
+                                "lr_warmup_steps": "{{warmup_steps}}",
+                                "min_lr_ratio": "{{min_lr}}"
+                            },
+                            "clip_ratio": "{{clip_ratio}}",
+                            "kl_loss_coef": "{{kl_loss_coef}}",
+                            "clip_ratio_high": "{{clip_ratio_high}}",
+                            "clip_ratio_low": "{{clip_ratio_low}}",
+                            "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
-                            "prompt_length": "{{max_prompt_length}}"
+                            "prompt_length": "{{max_prompt_length}}",
+                            "n": "{{rollout_n}}",
+                            "temperature": "{{rollout_temperature}}",
+                            "val_kwargs": {
+                                "temperature": "{{temperature}}"
+                            }
                         },
                         "model": {
                             "path": "{{model_name_or_path}}"
@@ -764,10 +1321,15 @@
                 "preset_reward_function": {
                     "type": "string",
                     "required": true,
-                    "enum": ["", "gsm8k", "prime_code", "prime_math"],
+                    "enum": [
+                        "",
+                        "gsm8k",
+                        "prime_code",
+                        "prime_math"
+                    ],
                     "default": ""
                 },
-                "reward_lambda_arn":{
+                "reward_lambda_arn": {
                     "type": "string",
                     "required": false,
                     "default": ""
@@ -784,21 +1346,28 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 1.0e-07,
-                    "max": 1.0e-03,
-                    "default": 1.0e-05
+                    "min": 1e-07,
+                    "max": 0.001,
+                    "default": 1e-05
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 3
                 },
                 "model_name_or_path": {
@@ -809,7 +1378,13 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [64, 128, 256, 512, 1024],
+                    "enum": [
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
                     "default": 128
                 },
                 "max_prompt_length": {
@@ -835,6 +1410,87 @@
                     "type": "string",
                     "required": false,
                     "default": ""
+                },
+                "clip_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.1,
+                    "max": 1.5,
+                    "default": 0.2
+                },
+                "kl_loss_coef": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 0.1,
+                    "default": 0.001
+                },
+                "rollout_n": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        1,
+                        2,
+                        4,
+                        8,
+                        16,
+                        32
+                    ],
+                    "default": 8
+                },
+                "rollout_temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.01,
+                    "max": 2.0,
+                    "default": 1.0
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.01
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": -1,
+                    "max": 100,
+                    "default": -1
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "clip_ratio_high": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 0.5,
+                    "default": 0.28
+                },
+                "clip_ratio_low": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 0.5,
+                    "default": 0.2
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0
+                },
+                "use_kl_loss": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": false
                 }
             },
             "recipe_metadata_helpers": {
@@ -845,7 +1501,10 @@
                     "grpo": "GRPO"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
                 },
                 "preset_reward_function": {
                     "gsm8k": "Exact match (gsm8k)",

@@ -1,0 +1,232 @@
+{
+  "enable_remote_debug": false,
+  "launch_overrides": null,
+  "max_run": 1800,
+  "metadata": {
+    "CustomizationTechnique": "SFT",
+    "DisplayName": "Qwen 3.5 4B SFT LoRA Fine-Tuning",
+    "Hardware": "GPU",
+    "HostingConfigs": [
+      {
+        "ComputeResourceRequirements": {
+          "MinMemoryRequiredInMb": 1024000,
+          "NumberOfAcceleratorDevicesRequired": 8,
+          "NumberOfCpuCoresRequired": 100
+        },
+        "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+        "Environment": {
+          "OPTION_ASYNC_MODE": "true",
+          "OPTION_ENABLE_LORA": "true",
+          "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+          "OPTION_MAX_CPU_LORAS": "64",
+          "OPTION_MAX_LORAS": "8",
+          "OPTION_MAX_ROLLING_BATCH_SIZE": "1",
+          "OPTION_ROLLING_BATCH": "disable",
+          "OPTION_TENSOR_PARALLEL_DEGREE": "8",
+          "SAGEMAKER_ENABLE_LOAD_AWARE": "1",
+          "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "128"
+        },
+        "InstanceType": "ml.p5.48xlarge",
+        "Profile": "Default"
+      }
+    ],
+    "InstanceCount": 1,
+    "InstanceTypes": [
+      "ml.p5.48xlarge",
+      "ml.p4de.24xlarge",
+      "ml.p4d.24xlarge"
+    ],
+    "Model_ID": "huggingface-vlm-qwen3-5-4b",
+    "Name": "verl-sft-qwen-3-dot-5-4b-lora",
+    "OutputConfig": {
+      "SageMakerInferenceRecipeName": "default"
+    },
+    "Peft": "LoRA",
+    "RecipeFilePath": "recipes/fine-tuning/qwen-0_7_0/verl-sft-qwen-3-dot-5-4b-lora.yaml",
+    "SequenceLength": "4K",
+    "ServerlessMeteringType": "Token-based",
+    "Type": "FineTuning",
+    "Versions": [
+      "2.1.0"
+    ]
+  },
+  "output_path": "s3://test_path",
+  "recipe_override_parameters": {
+    "data_path": {
+      "default": null,
+      "required": true,
+      "type": "string"
+    },
+    "global_batch_size": {
+      "default": 64,
+      "enum": [
+        64,
+        128,
+        256,
+        512,
+        1024
+      ],
+      "required": true,
+      "type": "integer"
+    },
+    "learning_rate": {
+      "default": 0.0002,
+      "max": 0.001,
+      "min": 1e-07,
+      "required": true,
+      "type": "float"
+    },
+    "lora_alpha": {
+      "default": 64,
+      "enum": [
+        16,
+        32,
+        64,
+        128,
+        256
+      ],
+      "required": true,
+      "type": "integer"
+    },
+    "lora_rank": {
+      "default": 32,
+      "enum": [
+        8,
+        16,
+        32,
+        64,
+        128
+      ],
+      "required": true,
+      "type": "integer"
+    },
+    "lr_scheduler": {
+      "default": "cosine",
+      "enum": [
+        "cosine",
+        "constant"
+      ],
+      "required": true,
+      "type": "string"
+    },
+    "lr_warmup_steps_ratio": {
+      "default": 0.0,
+      "max": 1,
+      "min": 0,
+      "required": true,
+      "type": "float"
+    },
+    "max_epochs": {
+      "default": 1,
+      "max": 100,
+      "min": 1,
+      "required": true,
+      "type": "integer"
+    },
+    "min_lr": {
+      "default": 0.0,
+      "max": 1.0,
+      "min": 0.0,
+      "required": true,
+      "type": "float"
+    },
+    "mlflow_run_id": {
+      "default": "",
+      "required": false,
+      "type": "string"
+    },
+    "mlflow_tracking_uri": {
+      "default": "",
+      "required": false,
+      "type": "string"
+    },
+    "model_name_or_path": {
+      "default": "Qwen/Qwen3.5-4B",
+      "required": true,
+      "type": "string"
+    },
+    "name": {
+      "default": "verl-sft-qwen-3-dot-5-4b-lora",
+      "required": true,
+      "type": "string"
+    },
+    "output_path": {
+      "default": "/opt/ml/model",
+      "required": true,
+      "type": "string"
+    },
+    "results_directory": {
+      "default": "",
+      "required": true,
+      "type": "string"
+    },
+    "resume_from_path": {
+      "default": null,
+      "required": false,
+      "type": "string"
+    },
+    "train_val_split_ratio": {
+      "default": 1.0,
+      "max": 1.0,
+      "min": 0.0,
+      "required": false,
+      "type": "float"
+    },
+    "validation_data_path": {
+      "default": null,
+      "required": true,
+      "type": "string"
+    },
+    "warmup_steps": {
+      "default": -1,
+      "max": 100,
+      "min": -1,
+      "required": true,
+      "type": "integer"
+    },
+    "weight_decay": {
+      "default": 0.001,
+      "max": 1.0,
+      "min": 0.0,
+      "required": true,
+      "type": "float"
+    }
+  },
+  "regional_parameters": {
+    "serverless_sku": {
+      "beta": {
+        "us-west-2": "USW2-ServerlessTraining:FineTuning-SFT-LORA-huggingface-vlm-qwen3-5-4b"
+      },
+      "gamma": {
+        "us-east-1": "USE1-ServerlessTraining:FineTuning-SFT-LORA-huggingface-vlm-qwen3-5-4b",
+        "us-west-2": "USW2-ServerlessTraining:FineTuning-SFT-LORA-huggingface-vlm-qwen3-5-4b"
+      },
+      "prod": {
+        "ap-northeast-1": "APN1-ServerlessTraining:FineTuning-SFT-LORA-huggingface-vlm-qwen3-5-4b",
+        "eu-west-1": "EU-ServerlessTraining:FineTuning-SFT-LORA-huggingface-vlm-qwen3-5-4b",
+        "us-east-1": "USE1-ServerlessTraining:FineTuning-SFT-LORA-huggingface-vlm-qwen3-5-4b",
+        "us-west-2": "USW2-ServerlessTraining:FineTuning-SFT-LORA-huggingface-vlm-qwen3-5-4b"
+      }
+    },
+    "smtj_regional_ecr_uri": {
+      "beta": {
+        "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
+      },
+      "gamma": {
+        "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj",
+        "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
+      },
+      "prod": {
+        "ap-northeast-1": "356859066553.dkr.ecr.ap-northeast-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj",
+        "eu-west-1": "942446708630.dkr.ecr.eu-west-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj",
+        "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj",
+        "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
+      }
+    }
+  },
+  "tensorboard_config": {
+    "container_logs_path": "/opt/ml/output/tensorboard",
+    "output_path": "s3://test_tensorboard_path"
+  },
+  "training_recipe.yaml": "display_name: Qwen 3.5 4B SFT LoRA Fine-Tuning\ninstance_types:\n- ml.p5.48xlarge\n- ml.p4de.24xlarge\n- ml.p4d.24xlarge\nrun:\n  model_type: verl\n  name: '{{name}}'\n  results_dir: '{{results_directory}}'\ntrainer:\n  devices: 8\n  num_nodes: 1\ntraining_config:\n  checkpoint:\n    _target_: verl.trainer.config.CheckpointConfig\n    load_contents:\n    - model\n    - optimizer\n    - extra\n    - hf_model\n    save_contents:\n    - model\n    - optimizer\n    - extra\n    - hf_model\n    save_only_adapter_if_lora: true\n  data:\n    custom_cls:\n      name: null\n      path: null\n    ignore_input_ids_mismatch: false\n    max_length: 4096\n    max_token_len_per_gpu: 16384\n    messages_key: messages\n    micro_batch_size_per_gpu: 8\n    pad_mode: no_padding\n    train_batch_size: '{{global_batch_size}}'\n    train_files: '{{data_path}}'\n    train_max_samples: -1\n    train_val_split_ratio: '{{train_val_split_ratio}}'\n    truncation: right\n    use_dynamic_bsz: true\n    val_files: '{{validation_data_path}}'\n    val_max_samples: -1\n  engine:\n    _target_: verl.workers.config.FSDPEngineConfig\n    dtype: bfloat16\n    entropy_checkpointing: false\n    entropy_from_logits_with_chunking: false\n    forward_only: false\n    forward_prefetch: true\n    fsdp_size: 8\n    full_determinism: false\n    model_dtype: bf16\n    offload_policy: false\n    optimizer_offload: false\n    param_offload: false\n    reshard_after_forward: true\n    seed: 42\n    strategy: fsdp2\n    ulysses_sequence_parallel_size: 1\n    use_orig_params: false\n    use_torch_compile: true\n    wrap_policy:\n      min_num_params: 0\n  mlflow:\n    run_id: '{{mlflow_run_id}}'\n    tracking_uri: '{{mlflow_tracking_uri}}'\n  model:\n    _target_: verl.workers.config.HFModelConfig\n    custom_chat_template: null\n    enable_activation_offload: false\n    enable_gradient_checkpointing: true\n    exclude_modules: null\n    external_lib: null\n    fused_kernel_options:\n      impl_backend: torch\n    hf_config_path: null\n    lora_adapter_path: null\n    lora_alpha: '{{lora_alpha}}'\n    lora_rank: '{{lora_rank}}'\n    override_config: {}\n    path: '{{model_name_or_path}}'\n    target_modules: all-linear\n    tiled_mlp:\n      enabled: false\n      num_shards: 4\n    tokenizer_path: null\n    trust_remote_code: true\n    use_fused_kernels: false\n    use_liger: true\n    use_remove_padding: true\n    use_shm: false\n  optim:\n    _target_: verl.workers.config.FSDPOptimizerConfig\n    betas:\n    - 0.9\n    - 0.95\n    clip_grad: 1.0\n    lr: '{{learning_rate}}'\n    lr_scheduler_type: '{{lr_scheduler}}'\n    lr_warmup_steps: '{{warmup_steps}}'\n    lr_warmup_steps_ratio: '{{lr_warmup_steps_ratio}}'\n    min_lr_ratio: '{{min_lr}}'\n    num_cycles: 0.5\n    optimizer: AdamW\n    optimizer_impl: torch.optim\n    override_optimizer_config: null\n    total_training_steps: -1\n    warmup_style: null\n    weight_decay: '{{weight_decay}}'\n  profiler:\n    _target_: verl.utils.profiler.ProfilerConfig\n    all_ranks: false\n    enable: false\n    ranks: []\n    save_path: outputs/profile\n    tool: torch\n    tool_config:\n      npu:\n        _target_: verl.utils.profiler.config.NPUToolConfig\n        analysis: true\n        contents: []\n        discrete: false\n        level: level0\n        name: npu\n      nsys:\n        _target_: verl.utils.profiler.config.NsightToolConfig\n        discrete: null\n        name: nsight\n      torch:\n        _target_: verl.utils.profiler.config.TorchProfilerToolConfig\n        manual_save: true\n        name: torch\n        step_end: null\n        step_start: 0\n      torch_memory:\n        _target_: verl.utils.profiler.config.TorchMemoryToolConfig\n        name: torch_memory\n        stack_depth: 32\n        trace_alloc_max_entries: 100000\n  trainer:\n    default_hdfs_dir: null\n    default_local_dir: '{{output_path}}'\n    device: cuda\n    experiment_name: qwen3_5_4b_sft_fsdp_lora_tatqa\n    logger:\n    - console\n    - mlflow\n    - tensorboard\n    max_ckpt_to_keep: 3\n    merge_lora_on_final_save: true\n    n_gpus_per_node: 8\n    nnodes: 1\n    profile_interval:\n    - -1\n    - -1\n    project_name: verl_sft_qwen3_5_4b\n    resume_from_path: '{{resume_from_path}}'\n    resume_mode: resume_path\n    save_freq: after_each_epoch\n    test_freq: -1\n    total_epochs: '{{max_epochs}}'\n    total_training_steps: null\n  trainer_callbacks:\n  - _target_: metering_callback.MeteringCallback\n    output_path: /opt/ml/metering\nversion: 2.1.0\n"
+}

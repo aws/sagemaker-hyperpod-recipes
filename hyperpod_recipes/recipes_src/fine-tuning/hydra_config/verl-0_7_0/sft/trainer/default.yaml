@@ -9,8 +9,10 @@ experiment_name: verl-sft
 
 logger:
 - console
+- mlflow
+- tensorboard
 
-save_freq: -1
+save_freq: after_each_epoch
 
 test_freq: -1
 
@@ -33,3 +35,5 @@ device: cuda
 profile_interval:
 - -1
 - -1
+
+merge_lora_on_final_save: true

@@ -3,6 +3,7 @@
 import logging
 import sys
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -90,6 +91,7 @@ class TestBaseLauncherInit(unittest.TestCase):
                 "AccessKeyId": "ASIA_TEST_KEY_ID",
                 "SecretAccessKey": "test_secret_key",
                 "SessionToken": "test_session_token",
+                "Expiration": "2099-01-01T00:00:00Z",
             }
         }
 
@@ -112,9 +114,9 @@ class TestBaseLauncherInit(unittest.TestCase):
         # Verify STS client was created
         mock_boto_client.assert_called_once_with("sts")
 
-        # Verify assume_role was called with correct parameters
         mock_sts_client.assume_role.assert_called_once_with(
-            RoleArn=assume_role_arn, RoleSessionName="test_platform-validation-session"
+            RoleArn=assume_role_arn,
+            RoleSessionName="test_platform-validation-session",
         )
 
         # Verify boto session was created with assumed credentials
@@ -151,6 +153,7 @@ class TestBaseLauncherInit(unittest.TestCase):
                 "AccessKeyId": "ASIA_TEST",
                 "SecretAccessKey": "test_secret",
                 "SessionToken": "test_token",
+                "Expiration": "2099-01-01T00:00:00Z",
             }
         }
 
@@ -230,6 +233,7 @@ class TestBaseLauncherInit(unittest.TestCase):
                 "AccessKeyId": "ASIA_TEST",
                 "SecretAccessKey": "test_secret",
                 "SessionToken": "test_token",
+                "Expiration": "2099-01-01T00:00:00Z",
             }
         }
 
@@ -292,6 +296,142 @@ class TestBaseLauncherInit(unittest.TestCase):
         # Assert - aws_env should exist but may not have AWS credentials
         self.assertIsNotNone(launcher.aws_env)
         self.assertIsInstance(launcher.aws_env, dict)
+
+
+class TestCredentialRefresh(unittest.TestCase):
+    """Test suite for _refresh_credentials_if_needed()."""
+
+    def _create_launcher_with_assumed_role(self, expiry):
+        """Helper: create a ConcreteLauncher with mocked assumed-role credentials."""
+        with patch("boto3.client") as mock_client, patch("boto3.Session"):
+            mock_sts = MagicMock()
+            mock_client.return_value = mock_sts
+            mock_sts.assume_role.return_value = {
+                "Credentials": {
+                    "AccessKeyId": "ORIG_KEY",
+                    "SecretAccessKey": "ORIG_SECRET",
+                    "SessionToken": "ORIG_TOKEN",
+                    "Expiration": expiry,
+                }
+            }
+            config = OmegaConf.create(
+                {
+                    "platform": "SERVERLESS",
+                    "assume_role_arn": "arn:aws:iam::123456789012:role/TestRole",
+                }
+            )
+            launcher = ConcreteLauncher(MagicMock(), config)
+        return launcher
+
+    @patch("scripts.validations.validation_launchers.base_launcher.boto3.client")
+    def test_refresh_when_credentials_expiring_soon(self, mock_boto_client):
+        """Credentials within REFRESH_THRESHOLD_MINUTES of expiry should trigger a refresh."""
+        new_expiry = datetime.now(timezone.utc) + timedelta(hours=4)
+        mock_sts = MagicMock()
+        mock_boto_client.return_value = mock_sts
+        mock_sts.assume_role.return_value = {
+            "Credentials": {
+                "AccessKeyId": "NEW_KEY",
+                "SecretAccessKey": "NEW_SECRET",
+                "SessionToken": "NEW_TOKEN",
+                "Expiration": new_expiry,
+            }
+        }
+
+        launcher = self._create_launcher_with_assumed_role(
+            expiry=datetime.now(timezone.utc) + timedelta(minutes=10)  # within 15 min threshold
+        )
+
+        launcher._refresh_credentials_if_needed()
+
+        # STS assume_role should have been called
+        mock_sts.assume_role.assert_called_once()
+        call_kwargs = mock_sts.assume_role.call_args[1]
+        self.assertNotIn("DurationSeconds", call_kwargs)
+        # Credentials should be updated
+        self.assertEqual(launcher.aws_env["AWS_ACCESS_KEY_ID"], "NEW_KEY")
+        self.assertEqual(launcher.aws_env["AWS_SECRET_ACCESS_KEY"], "NEW_SECRET")
+        self.assertEqual(launcher.aws_env["AWS_SESSION_TOKEN"], "NEW_TOKEN")
+        # Expiry should be updated
+        self.assertEqual(launcher._credentials_expiry, new_expiry)
+
+    @patch("scripts.validations.validation_launchers.base_launcher.boto3.client")
+    def test_no_refresh_when_credentials_still_fresh(self, mock_boto_client):
+        """Credentials with >REFRESH_THRESHOLD_MINUTES remaining should NOT trigger a refresh."""
+        launcher = self._create_launcher_with_assumed_role(
+            expiry=datetime.now(timezone.utc) + timedelta(hours=2)  # 2 hours left — well above 15 min
+        )
+
+        launcher._refresh_credentials_if_needed()
+
+        # STS should NOT be called
+        mock_boto_client.return_value.assume_role.assert_not_called()
+
+    def test_no_refresh_when_no_assume_role_arn(self):
+        """Without an assumed role, refresh should be a no-op."""
+        config = OmegaConf.create({"platform": "TEST_PLATFORM"})
+        launcher = ConcreteLauncher(MagicMock(), config)
+        launcher._assume_role_arn = None
+        launcher._credentials_expiry = None
+
+        # Should not raise
+        launcher._refresh_credentials_if_needed()
+
+    def test_no_refresh_when_no_expiry_stored(self):
+        """If _credentials_expiry is None (defensive), refresh should be a no-op."""
+        config = OmegaConf.create({"platform": "TEST_PLATFORM"})
+        launcher = ConcreteLauncher(MagicMock(), config)
+        launcher._assume_role_arn = "arn:aws:iam::123456789012:role/TestRole"
+        launcher._credentials_expiry = None
+
+        # Should not raise
+        launcher._refresh_credentials_if_needed()
+
+    @patch("scripts.validations.validation_launchers.base_launcher.boto3.client")
+    def test_refresh_updates_boto_session(self, mock_boto_client):
+        """Refresh should create a new boto3.Session with fresh credentials."""
+        new_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+        mock_sts = MagicMock()
+        mock_boto_client.return_value = mock_sts
+        mock_sts.assume_role.return_value = {
+            "Credentials": {
+                "AccessKeyId": "REFRESHED_KEY",
+                "SecretAccessKey": "REFRESHED_SECRET",
+                "SessionToken": "REFRESHED_TOKEN",
+                "Expiration": new_expiry,
+            }
+        }
+
+        launcher = self._create_launcher_with_assumed_role(
+            expiry=datetime.now(timezone.utc) + timedelta(minutes=1)  # almost expired
+        )
+        old_session = launcher.boto_session
+
+        with patch("scripts.validations.validation_launchers.base_launcher.boto3.Session") as mock_session:
+            mock_new_session = MagicMock()
+            mock_session.return_value = mock_new_session
+
+            launcher._refresh_credentials_if_needed()
+
+            # New session should have been created
+            mock_session.assert_called_once_with(
+                aws_access_key_id="REFRESHED_KEY",
+                aws_secret_access_key="REFRESHED_SECRET",
+                aws_session_token="REFRESHED_TOKEN",
+            )
+            self.assertEqual(launcher.boto_session, mock_new_session)
+
+    @patch("scripts.validations.validation_launchers.base_launcher.boto3.client")
+    def test_refresh_at_exact_boundary(self, mock_boto_client):
+        """Credentials expiring just above REFRESH_THRESHOLD_MINUTES should NOT trigger refresh."""
+        launcher = self._create_launcher_with_assumed_role(
+            expiry=datetime.now(timezone.utc) + timedelta(minutes=BaseLauncher.REFRESH_THRESHOLD_MINUTES, seconds=1)
+        )
+
+        launcher._refresh_credentials_if_needed()
+
+        # Should NOT be called — threshold + 1 sec is still safe
+        mock_boto_client.return_value.assume_role.assert_not_called()
 
 
 if __name__ == "__main__":
