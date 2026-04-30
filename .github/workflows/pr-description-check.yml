@@ -1,0 +1,74 @@
+# Validates that PR descriptions are properly filled in and not left as template placeholders.
+# This check runs on PR open, edit, and new commits.
+# To enforce as a merge blocker, a repo admin must add "check-description"
+# as a required status check in branch protection rules.
+
+name: PR Description Check
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  check-description:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR description
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const errors = [];
+
+            // Check for unfilled template placeholders
+            const placeholders = [
+              'Explain the motivation',
+              'List your changes',
+              'Explain how the changes were tested'
+            ];
+
+            for (const placeholder of placeholders) {
+              if (body.includes(placeholder)) {
+                errors.push(`Still contains placeholder text: "${placeholder}"`);
+              }
+            }
+
+            // Check that Description section has real content (not just the heading)
+            const descMatch = body.match(/## Description\s*\n([\s\S]*?)(?=###|$)/);
+            if (!descMatch || descMatch[1].replace(/###.*$/gm, '').trim().length < 10) {
+              errors.push('"Description" section needs actual content (min 10 chars)');
+            }
+
+            // Check Motivation has content beyond placeholder
+            const motivationMatch = body.match(/### Motivation\s*\n([\s\S]*?)(?=###|$)/);
+            if (!motivationMatch || motivationMatch[1].trim().length < 10) {
+              errors.push('"Motivation" section needs actual content (min 10 chars)');
+            }
+
+            // Check Changes has content beyond placeholder
+            const changesMatch = body.match(/### Changes\s*\n([\s\S]*?)(?=###|$)/);
+            if (!changesMatch || changesMatch[1].replace(/\*\s*List your changes/g, '').trim().length < 10) {
+              errors.push('"Changes" section needs actual content (min 10 chars)');
+            }
+
+            // Check Testing has content beyond placeholder
+            const testingMatch = body.match(/### Testing\s*\n([\s\S]*?)(?=##|$)/);
+            if (!testingMatch || testingMatch[1].trim().length < 10) {
+              errors.push('"Testing" section needs actual content (min 10 chars)');
+            }
+
+            if (errors.length > 0) {
+              const message = [
+                '## ❌ PR Description Check Failed\n',
+                'Please fill in all required sections of the PR template:\n',
+                ...errors.map(e => `- ${e}`),
+                '\nEdit your PR description and this check will re-run automatically.'
+              ].join('\n');
+
+              core.setFailed(message);
+            } else {
+              console.log('✅ PR description looks good!');
+            }

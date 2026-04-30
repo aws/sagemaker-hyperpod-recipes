@@ -28,6 +28,10 @@ PLATFORM_INSTANCE_CONSTRAINTS = {
     "SERVERLESS": ["serverless"],
 }
 
+# Convergence contraints
+CONVERGENCE_PLATFORMS = ["SMJOBS"]
+CONVERGENCE_INSTANCE_CONSTRAINT = ["ml.p4d.24xlarge"]
+
 PLATFORMS = ["K8", "SLURM", "SMJOBS", "SERVERLESS"]
 RECIPES_PREFIX = "recipes_collection/recipes/"
 
@@ -86,6 +90,7 @@ def create_validation_matrix(
     custom_instances: list = None,
     custom_platform: list = None,
     custom_dataset: str = None,
+    convergence_mode: bool = False,
     batch_size: int = 15,
     max_workers: int = 5,
 ) -> dict:
@@ -99,12 +104,19 @@ def create_validation_matrix(
         custom_instances: Optional list of instances (overrides all instance logic)
         custom_platform: Optional list of platforms (overrides default list of 3)
         custom_dataset: Optional dataset name
+        convergence_mode: If True, create single batch for convergence training (forces SMJOBS platform)
         batch_size: Max runs per batch (default 15)
         max_workers: Upper limit on number of workers to scale up (default 5)
 
     Returns:
         dict with batches, num_batches, total_runs
     """
+    # Convergence mode overrides
+    if convergence_mode:
+        print("🔧 Convergence mode enabled")
+        custom_platform = CONVERGENCE_PLATFORMS
+        custom_instances = CONVERGENCE_INSTANCE_CONSTRAINT
+
     if custom_recipes:
         recipes = custom_recipes
     else:
@@ -140,6 +152,38 @@ def create_validation_matrix(
                         "instance_type": instance_type,
                     }
                 )
+
+    # For convergence mode, create a single batch with all runs
+    if convergence_mode:
+        if not matrix:
+            return {"batches": [], "num_batches": 0, "total_runs": 0, "overflow_runs": 0}
+
+        batches = [
+            {
+                "batch_id": 1,
+                "platform": matrix[0]["platform"],
+                "runs": [{"recipe": entry["recipe"], "instance_type": entry["instance_type"]} for entry in matrix],
+            }
+        ]
+        print(f"Convergence mode: Created 1 batch with {len(matrix)} runs")
+
+        result = {
+            "batches": batches,
+            "num_batches": 1,
+            "total_runs": len(matrix),
+            "overflow_runs": 0,
+        }
+
+        github_output = os.getenv("GITHUB_OUTPUT")
+        if github_output:
+            with open(github_output, "a") as f:
+                f.write("num_batches=1\n")
+                f.write("has_overflow=false\n")
+                f.write("batches_json<<EOF\n")
+                f.write(json.dumps(batches) + "\n")
+                f.write("EOF\n")
+
+        return result
 
     batches = _batch_by_platform(matrix, batch_size)
 
@@ -336,6 +380,9 @@ def main():
     create_parser.add_argument("--recipes", help="Comma-separated recipe list (optional)")
     create_parser.add_argument("--instances", help="Comma-separated instance types (optional)")
     create_parser.add_argument("--platform", help="Comma-separated platform list (optional)")
+    create_parser.add_argument(
+        "--convergence", action="store_true", help="Convergence mode (single batch, forces SMJOBS)"
+    )
     create_parser.add_argument("--batch-size", type=int, default=25)
     create_parser.add_argument(
         "--max-workers", type=int, default=5, help="Upper limit on number of workers to scale up"
@@ -370,6 +417,7 @@ def main():
             custom_recipes=custom_recipes,
             custom_instances=custom_instances,
             custom_platform=custom_platform,
+            convergence_mode=args.convergence,
             batch_size=args.batch_size,
             max_workers=args.max_workers,
         )

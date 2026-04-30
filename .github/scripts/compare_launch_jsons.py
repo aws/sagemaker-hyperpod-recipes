@@ -60,11 +60,11 @@ def normalize_json_for_comparison(data):
       - deepseek-r1-distilled-llama-8b-6aqt6 -> deepseek-r1-distilled-llama-8b
       - deepseek-r1-distilled-llama-8b-86s5x -> deepseek-r1-distilled-llama-8b
     """
-    hash_pattern = re.compile(r'(-[a-z0-9]{5})(?=_hydra\.yaml|"|\s|$)')
+    hash_pattern = re.compile(r'(-[a-z0-9]{5})(?=_|"|\'|\s|$|/|,|:|\}|\])')
 
     def normalize_value(obj):
         if isinstance(obj, dict):
-            return {k: normalize_value(v) for k, v in obj.items()}
+            return {hash_pattern.sub("", k): normalize_value(v) for k, v in obj.items()}
         elif isinstance(obj, list):
             return [normalize_value(item) for item in obj]
         elif isinstance(obj, str):
@@ -131,22 +131,43 @@ def compare_launch_jsons(current_results, old_results):
     return {"new": new_recipes, "changed": changed_recipes, "unchanged": unchanged_recipes, "removed": removed_recipes}
 
 
-def get_recipe_version(recipe_file, working_dir=None):
-    """Extract version from a recipe YAML file."""
-    file_path = recipe_file
-    if working_dir:
-        file_path = os.path.join(working_dir, recipe_file)
+def get_recipe_file_path(recipe_key):
+    """Extract the actual file path from a recipe key.
 
-    try:
-        with open(file_path, "r") as f:
-            content = f.read()
+    Eval recipes use composite keys like 'path/to/recipe.yaml:model_name'.
+    This strips the ':model_name' suffix to get the real file path.
+    """
+    if ":" in recipe_key:
+        return recipe_key.split(":")[0]
+    return recipe_key
 
-        version_match = re.search(r'^version:\s*["\']?(\d+\.\d+\.\d+)["\']?\s*$', content, re.MULTILINE)
-        if version_match:
-            return version_match.group(1)
-    except Exception as e:
-        print(f"  Warning: Could not read version from {recipe_file}: {e}")
 
+def get_version_from_launch_json_results(recipe_key, results_dict):
+    """Extract version from the generated launch.json metadata.
+
+    This is the canonical version source — all recipe types (llmft, verl, nova,
+    evaluation) write their version to launch.json metadata.Versions[0] during
+    generation.
+
+    Args:
+        recipe_key: The recipe key in results_dict
+        results_dict: Dict mapping recipe_key -> {job_type: launch_json_path}
+
+    Returns:
+        Version string (e.g. "2.0.1") or None if not found
+    """
+    paths = results_dict.get(recipe_key, {})
+    for job_type, launch_json_path in paths.items():
+        if launch_json_path is None:
+            continue
+        try:
+            with open(str(launch_json_path), "r") as f:
+                data = json.load(f)
+            versions = data.get("metadata", {}).get("Versions", [])
+            if versions:
+                return str(versions[0])
+        except Exception as e:
+            print(f"  Warning: Could not read version from launch.json for {recipe_key}: {e}")
     return None
 
 
@@ -248,8 +269,9 @@ def main():
         normalized_key = k.replace(project_root + "/", "")
         current_results_normalized[normalized_key] = v
 
-        # Get version from current branch's recipe
-        current_versions[normalized_key] = get_recipe_version(normalized_key, working_dir=project_root)
+        # Get version from generated launch.json metadata (canonical source for all recipe types)
+        # Note: use original key 'k' (absolute path) to match current_results keys
+        current_versions[normalized_key] = get_version_from_launch_json_results(k, current_results)
 
     # Step 3: Setup worktree for release branch
     print(f"\n[3/5] Setting up worktree for '{args.release_branch}' branch...")
@@ -283,8 +305,9 @@ def main():
             normalized_key = k.replace(temp_dir + "/", "")
             old_results_normalized[normalized_key] = v
 
-            # Get version from release branch's recipe
-            release_versions[normalized_key] = get_recipe_version(normalized_key, working_dir=temp_dir)
+            # Get version from generated launch.json metadata (canonical source for all recipe types)
+            # Note: use original key 'k' (absolute path) to match old_results keys
+            release_versions[normalized_key] = get_version_from_launch_json_results(k, old_results)
 
         release_success_count = sum(
             1 for result in old_results_normalized.values() for path in result.values() if path is not None
@@ -303,6 +326,12 @@ def main():
     # Step 5: Compare results
     print(f"\n[5/5] Comparing launch.jsons...")
     comparison = compare_launch_jsons(current_results_normalized, old_results_normalized)
+
+    # Always save comparison results so downstream steps can read them
+    results_file = os.path.join(args.output_dir, "comparison_results.json")
+    with open(results_file, "w") as f:
+        json.dump(comparison, f, indent=2)
+    print(f"\n  Results saved to: {results_file}")
 
     # If skip-version-check, exit early without version validation
     if args.skip_version_check:
@@ -392,12 +421,11 @@ def main():
     print(f"  Unchanged:        {len(comparison['unchanged'])}")
     print(f"  Removed:          {len(comparison['removed'])}")
 
-    results_file = os.path.join(args.output_dir, "comparison_results.json")
+    # Update comparison results with version bump details
     comparison["needs_version_bump"] = [r[0] for r in recipes_needing_bump]
     comparison["version_already_bumped"] = [r[0] for r in recipes_already_bumped]
     with open(results_file, "w") as f:
         json.dump(comparison, f, indent=2)
-    print(f"\n  Results saved to: {results_file}")
 
     # Exit with error code if there are recipes needing bumps and fail_on_changes is set
     if recipes_needing_bump and args.fail_on_changes:

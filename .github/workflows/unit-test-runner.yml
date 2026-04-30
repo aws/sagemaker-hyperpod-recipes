@@ -17,6 +17,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive # Checkout submodules as well
+          fetch-depth: 0 # Full history for diff-cover branch comparison
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -28,7 +29,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install --no-cache-dir --no-deps sagemaker
           pip install -r requirements.txt
+          pip install transformers diff-cover
 
       - name: Run unit tests
         run: |
           python -m pytest -vv
+
+      - name: Check coverage on new lines
+        if: github.event_name == 'pull_request'
+        run: |
+          diff-cover coverage.xml --compare-branch=origin/${{ github.base_ref }} --fail-under=90

@@ -40,6 +40,19 @@ def get_version_from_launch_json(recipe_name, launch_json_dir):
     return None
 
 
+def parse_changed_file_entry(entry):
+    """Parse a changed file entry, handling eval composite keys.
+
+    Eval recipes use composite keys like 'path/to/recipe.yaml:model_name'.
+    Returns (file_path, model_name) tuple. model_name is None for non-eval recipes.
+    """
+    entry = entry.strip()
+    if ":" in entry:
+        parts = entry.split(":", 1)
+        return parts[0], parts[1]
+    return entry, None
+
+
 def main():
     changed_files = os.environ.get("CHANGED_FILES", "").strip().split("\n")
     launch_json_dir = os.environ.get("LAUNCH_JSON_DIR", "")
@@ -52,14 +65,22 @@ def main():
 
     updated_recipes = []
 
-    for file_path in changed_files:
-        file_path = file_path.strip()
-        if not file_path or not file_path.endswith(".yaml"):
+    for entry in changed_files:
+        entry = entry.strip()
+        if not entry:
+            continue
+
+        file_path, model_name = parse_changed_file_entry(entry)
+
+        if not file_path.endswith(".yaml"):
             continue
 
         if os.path.exists(file_path):
             metadata = get_recipe_metadata(file_path, launch_json_dir)
             if metadata:
+                # For eval recipes with model_name, include the model in metadata
+                if model_name:
+                    metadata["model_name"] = model_name
                 updated_recipes.append(metadata)
         else:
             print(f"File deleted: {file_path}")

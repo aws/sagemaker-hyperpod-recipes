@@ -1,0 +1,86 @@
+name: HP Recipe validation on SMTJ Serverful
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: AWS region
+        required: true
+        default: us-west-2
+      branch:
+        description: Branch to checkout and run validation from
+        required: true
+        default: indrakv-add-tier3-fft-recipes
+      file_list:
+        description: Comma-separated list of recipe files (e.g., "fine-tuning/llama/recipe1.yaml,fine-tuning/llama/recipe2.yaml")
+        required: false
+        default: ""
+      regex:
+        description: Regex pattern to match recipe filenames (e.g., "verl.*llama", "grpo", "llama.*sft"). Ignored if file_list is provided.
+        required: false
+        default: ""
+      instance_types:
+        description: Comma-separated list of instance types (e.g., "ml.p4d.24xlarge,ml.p5.48xlarge")
+        required: false
+        default: ""
+
+permissions:
+  id-token: write     # needed for OIDC → STS
+  contents: read      # checkout/read repo
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          submodules: recursive
+
+      - name: Configure AWS creds via OIDC
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::855988369404:role/Hyperpod-Recipes-Staging-Integ-Test-Role
+          aws-region: ${{ github.event.inputs.region }}
+          role-session-name: gha-s3-list-${{ github.run_id }}
+
+      - name: Who am I (sanity)
+        run: aws sts get-caller-identity
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install --no-cache-dir sagemaker==2.*
+          pip install -r launcher/nemo/nemo_framework_launcher/requirements.txt
+
+      - name: Build validation command
+        id: build_cmd
+        run: |
+          CMD="python scripts/validations/validation_script_runner.py"
+
+          # Add file list if provided (takes priority over regex)
+          if [ -n "${{ github.event.inputs.file_list }}" ]; then
+            CMD="$CMD --fileList ${{ github.event.inputs.file_list }}"
+          # Add regex if provided and file_list not set
+          elif [ -n "${{ github.event.inputs.regex }}" ]; then
+            CMD="$CMD --regex '${{ github.event.inputs.regex }}'"
+          fi
+
+          # Add instance types if provided
+          if [ -n "${{ github.event.inputs.instance_types }}" ]; then
+            CMD="$CMD --instance_types '${{ github.event.inputs.instance_types }}'"
+          fi
+
+          echo "cmd=$CMD" >> $GITHUB_OUTPUT
+          echo "Running command: $CMD"
+
+      - name: Run recipe validation on the SMJOBS platform
+        run: |
+          ${{ steps.build_cmd.outputs.cmd }}
