@@ -64,7 +64,15 @@
                 "training_config": {
                     "model_config": {
                         "model_name_or_path": "{{model_name_or_path}}",
-                        "lora_checkpoint_file_path" : "{{resume_from_path}}"
+                        "lora_checkpoint_file_path": "{{resume_from_path}}",
+                        "peft_config": {
+                            "r": "{{lora_rank}}",
+                            "lora_alpha": "{{lora_alpha}}",
+                            "lora_dropout": "{{lora_dropout}}"
+                        },
+                        "generation_cfg": {
+                            "temperature": "{{temperature}}"
+                        }
                     },
                     "datasets": {
                         "train_data": {
@@ -83,7 +91,15 @@
                         "training_dir": "{{output_path}}",
                         "resume_checkpoint_path": "{{resume_from_path}}",
                         "learning_rate": "{{learning_rate}}",
-                        "lr_warmup_ratio": "{{lr_warmup_ratio}}"
+                        "lr_scheduler": "{{lr_scheduler}}",
+                        "lr_warmup_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "gradient_clipping": "{{gradient_clipping}}",
+                        "max_len": "{{dataset_max_len}}",
+                        "seed": "{{seed}}",
+                        "logging_steps": "{{logging_steps}}",
+                        "merge_weights": "{{merge_weights}}",
+                        "gradient_clipping_threshold": "{{gradient_clipping_threshold}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -131,7 +147,7 @@
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 5,
                     "conditional_constraints": {
                         "default": {
@@ -145,22 +161,109 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [8, 16, 32, 64, 128, 256, 512, 1024],
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
                     "default": 8
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 5.0e-07,
-                    "max": 1.0e-04,
-                    "default": 1.0e-04
+                    "min": 5e-07,
+                    "max": 0.0001,
+                    "default": 0.0001
                 },
-                "lr_warmup_ratio": {
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ]
+                },
+                "lr_warmup_steps_ratio": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
                     "default": 0.1
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "gradient_clipping": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 256,
+                    "max": 131072,
+                    "default": 4096
+                },
+                "seed": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 2147483647,
+                    "default": 42
+                },
+                "logging_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1
+                },
+                "lora_rank": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 16
+                },
+                "lora_dropout": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.05
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 32
+                },
+                "merge_weights": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -186,13 +289,27 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
                     "default": "default"
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.6
+                },
+                "gradient_clipping_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 5.0,
+                    "default": 1.0
                 }
             },
             "recipe_metadata_helpers": {
@@ -203,7 +320,12 @@
                     "lora": "LoRA"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p4d.24xlarge",
+                        "ml.p5.48xlarge",
+                        "ml.g5.48xlarge"
+                    ]
                 }
             }
         },
@@ -216,7 +338,15 @@
                 "training_config": {
                     "model_config": {
                         "model_name_or_path": "{{model_name_or_path}}",
-                        "lora_checkpoint_file_path" : "{{resume_from_path}}"
+                        "lora_checkpoint_file_path": "{{resume_from_path}}",
+                        "peft_config": {
+                            "r": "{{lora_rank}}",
+                            "lora_alpha": "{{lora_alpha}}",
+                            "lora_dropout": "{{lora_dropout}}"
+                        },
+                        "generation_cfg": {
+                            "temperature": "{{temperature}}"
+                        }
                     },
                     "datasets": {
                         "train_data": {
@@ -236,7 +366,15 @@
                         "training_dir": "{{output_path}}",
                         "resume_checkpoint_path": "{{resume_from_path}}",
                         "learning_rate": "{{learning_rate}}",
-                        "lr_warmup_ratio": "{{lr_warmup_ratio}}"
+                        "lr_scheduler": "{{lr_scheduler}}",
+                        "lr_warmup_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "gradient_clipping": "{{gradient_clipping}}",
+                        "max_len": "{{dataset_max_len}}",
+                        "seed": "{{seed}}",
+                        "logging_steps": "{{logging_steps}}",
+                        "merge_weights": "{{merge_weights}}",
+                        "gradient_clipping_threshold": "{{gradient_clipping_threshold}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -284,7 +422,7 @@
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 3,
                     "conditional_constraints": {
                         "default": {
@@ -298,17 +436,31 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [16, 32, 64, 128],
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
                     "default": 16
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 5.0e-07,
-                    "max": 1.0e-04,
-                    "default": 1.0e-04
+                    "min": 5e-07,
+                    "max": 0.0001,
+                    "default": 0.0001
                 },
-                "lr_warmup_ratio": {
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ]
+                },
+                "lr_warmup_steps_ratio": {
                     "type": "float",
                     "required": true,
                     "min": 0,
@@ -320,7 +472,76 @@
                     "required": true,
                     "min": 0.001,
                     "max": 0.1,
-                    "default": 0.01
+                    "default": 0.1
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "gradient_clipping": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 256,
+                    "max": 131072,
+                    "default": 4096
+                },
+                "seed": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 2147483647,
+                    "default": 42
+                },
+                "logging_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1
+                },
+                "lora_rank": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 16
+                },
+                "lora_dropout": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.05
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 32
+                },
+                "merge_weights": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -346,13 +567,27 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
                     "default": "default"
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.6
+                },
+                "gradient_clipping_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 5.0,
+                    "default": 1.0
                 }
             },
             "recipe_metadata_helpers": {
@@ -363,7 +598,12 @@
                     "lora": "LoRA"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p4d.24xlarge",
+                        "ml.p5.48xlarge",
+                        "ml.g5.48xlarge"
+                    ]
                 }
             }
         },
@@ -376,7 +616,10 @@
                 "training_config": {
                     "model_config": {
                         "model_name_or_path": "{{model_name_or_path}}",
-                        "lora_checkpoint_file_path" : "{{resume_from_path}}"
+                        "lora_checkpoint_file_path": "{{resume_from_path}}",
+                        "generation_cfg": {
+                            "temperature": "{{temperature}}"
+                        }
                     },
                     "datasets": {
                         "train_data": {
@@ -395,7 +638,14 @@
                         "training_dir": "{{output_path}}",
                         "resume_checkpoint_path": "{{resume_from_path}}",
                         "learning_rate": "{{learning_rate}}",
-                        "lr_warmup_ratio": "{{lr_warmup_ratio}}"
+                        "lr_scheduler": "{{lr_scheduler}}",
+                        "lr_warmup_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "gradient_clipping": "{{gradient_clipping}}",
+                        "max_len": "{{dataset_max_len}}",
+                        "seed": "{{seed}}",
+                        "logging_steps": "{{logging_steps}}",
+                        "gradient_clipping_threshold": "{{gradient_clipping_threshold}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -443,7 +693,7 @@
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 1,
                     "conditional_constraints": {
                         "default": {
@@ -457,22 +707,69 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [16, 32, 64, 128],
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
                     "default": 16
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 5.0e-07,
-                    "max": 1.0e-04,
-                    "default": 1.0e-04
+                    "min": 5e-07,
+                    "max": 0.0001,
+                    "default": 0.0001
                 },
-                "lr_warmup_ratio": {
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ]
+                },
+                "lr_warmup_steps_ratio": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
                     "default": 0.1
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "gradient_clipping": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 256,
+                    "max": 131072,
+                    "default": 4096
+                },
+                "seed": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 2147483647,
+                    "default": 42
+                },
+                "logging_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -498,13 +795,27 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
                     "default": "default"
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.6
+                },
+                "gradient_clipping_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 5.0,
+                    "default": 1.0
                 }
             },
             "recipe_metadata_helpers": {
@@ -512,7 +823,12 @@
                     "sft": "SFT"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p4d.24xlarge",
+                        "ml.p5.48xlarge",
+                        "ml.g5.48xlarge"
+                    ]
                 }
             }
         },
@@ -526,7 +842,8 @@
                     "model_config": {
                         "model_name_or_path": "{{model_name_or_path}}",
                         "generation_cfg": {
-                            "max_new_tokens": "{{max_response_length}}"
+                            "max_new_tokens": "{{max_response_length}}",
+                            "temperature": "{{temperature}}"
                         }
                     },
                     "datasets": {
@@ -546,7 +863,14 @@
                         "training_dir": "{{output_path}}",
                         "resume_checkpoint_path": "{{resume_from_path}}",
                         "learning_rate": "{{learning_rate}}",
-                        "lr_warmup_ratio": "{{lr_warmup_ratio}}"
+                        "lr_scheduler": "{{lr_scheduler}}",
+                        "lr_warmup_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "gradient_clipping": "{{gradient_clipping}}",
+                        "max_len": "{{dataset_max_len}}",
+                        "seed": "{{seed}}",
+                        "logging_steps": "{{logging_steps}}",
+                        "gradient_clipping_threshold": "{{gradient_clipping_threshold}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -594,7 +918,7 @@
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 5,
                     "conditional_constraints": {
                         "default": {
@@ -608,22 +932,73 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [8, 16, 32, 64, 128, 256, 512, 1024],
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
                     "default": 8
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 5.0e-07,
-                    "max": 1.0e-04,
-                    "default": 1.0e-04
+                    "min": 5e-07,
+                    "max": 0.0001,
+                    "default": 0.0001
                 },
-                "lr_warmup_ratio": {
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ]
+                },
+                "lr_warmup_steps_ratio": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
                     "default": 0.1
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "gradient_clipping": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 256,
+                    "max": 131072,
+                    "default": 4096
+                },
+                "seed": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 2147483647,
+                    "default": 42
+                },
+                "logging_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1
                 },
                 "max_response_length": {
                     "type": "integer",
@@ -656,13 +1031,27 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
                     "default": "default"
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.6
+                },
+                "gradient_clipping_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 5.0,
+                    "default": 1.0
                 }
             },
             "recipe_metadata_helpers": {
@@ -673,7 +1062,12 @@
                     "lora": "LoRA"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p4d.24xlarge",
+                        "ml.p5.48xlarge",
+                        "ml.g5.48xlarge"
+                    ]
                 }
             }
         },
@@ -687,7 +1081,8 @@
                     "model_config": {
                         "model_name_or_path": "{{model_name_or_path}}",
                         "generation_cfg": {
-                            "max_new_tokens": "{{max_response_length}}"
+                            "max_new_tokens": "{{max_response_length}}",
+                            "temperature": "{{temperature}}"
                         }
                     },
                     "datasets": {
@@ -708,7 +1103,14 @@
                         "training_dir": "{{output_path}}",
                         "resume_checkpoint_path": "{{resume_from_path}}",
                         "learning_rate": "{{learning_rate}}",
-                        "lr_warmup_ratio": "{{lr_warmup_ratio}}"
+                        "lr_scheduler": "{{lr_scheduler}}",
+                        "lr_warmup_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "gradient_clipping": "{{gradient_clipping}}",
+                        "max_len": "{{dataset_max_len}}",
+                        "seed": "{{seed}}",
+                        "logging_steps": "{{logging_steps}}",
+                        "gradient_clipping_threshold": "{{gradient_clipping_threshold}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -756,7 +1158,7 @@
                     "type": "integer",
                     "required": true,
                     "min": 1,
-                    "max": 30,
+                    "max": 100,
                     "default": 3,
                     "conditional_constraints": {
                         "default": {
@@ -770,17 +1172,31 @@
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [16, 32, 64, 128],
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
                     "default": 16
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 5.0e-07,
-                    "max": 1.0e-04,
-                    "default": 1.0e-04
+                    "min": 5e-07,
+                    "max": 0.0001,
+                    "default": 0.0001
                 },
-                "lr_warmup_ratio": {
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ]
+                },
+                "lr_warmup_steps_ratio": {
                     "type": "float",
                     "required": true,
                     "min": 0,
@@ -792,7 +1208,40 @@
                     "required": true,
                     "min": 0.001,
                     "max": 0.1,
-                    "default": 0.01
+                    "default": 0.1
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0
+                },
+                "gradient_clipping": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 256,
+                    "max": 131072,
+                    "default": 4096
+                },
+                "seed": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 2147483647,
+                    "default": 42
+                },
+                "logging_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1
                 },
                 "max_response_length": {
                     "type": "integer",
@@ -825,13 +1274,27 @@
                 },
                 "resume_from_path": {
                     "type": "string",
-                    "required": true,
+                    "required": false,
                     "default": ""
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
                     "default": "default"
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.6
+                },
+                "gradient_clipping_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 5.0,
+                    "default": 1.0
                 }
             },
             "recipe_metadata_helpers": {
@@ -842,7 +1305,12 @@
                     "lora": "LoRA"
                 },
                 "hardware_types": {
-                    "gpu": ["ml.p4de.24xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge", "ml.g5.48xlarge"]
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p4d.24xlarge",
+                        "ml.p5.48xlarge",
+                        "ml.g5.48xlarge"
+                    ]
                 }
             }
         }

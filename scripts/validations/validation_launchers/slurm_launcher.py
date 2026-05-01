@@ -27,6 +27,9 @@ class SlurmValidationLauncher(BaseLauncher):
             slurm_client_config = self.config.slurm_client_config
 
             self.slurm_client = SlurmClient(slurm_client_config, logger=self.logger, boto_session=self.boto_session)
+            if self._assume_role_arn:
+                self.slurm_client._assume_role_arn = self._assume_role_arn
+                self.slurm_client._credentials_expiry = self._credentials_expiry
         else:
             self.logger.info("Initializing Slurm launcher with local execution")
 
@@ -41,8 +44,6 @@ class SlurmValidationLauncher(BaseLauncher):
             )
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Error executing command: {e.stderr}")
-            if self.slurm_client:
-                self.slurm_client.cleanup()
             raise e
 
     @staticmethod
@@ -156,9 +157,11 @@ class SlurmValidationLauncher(BaseLauncher):
         except Exception as e:
             self.logger.error(f"Error monitoring job: {e}")
 
-        # Cleanup
+        # Cancel the slurm job and clean up only this job's output folder.
+        # Do NOT call slurm_client.cleanup() here — that destroys the shared
+        # working directory on the controller, breaking other parallel jobs.
         self._cancel_job(job_id)
-        self.slurm_client.cleanup() if self.slurm_client else True
+        self._cleanup_job_folder(output_folder_path)
 
         status = "Complete" if job_successful else "Failed"
         self.job_recorder.update_job(
@@ -169,6 +172,19 @@ class SlurmValidationLauncher(BaseLauncher):
             tokens_throughput=tokens_per_sec if tokens_per_sec else "N/A",
         )
         return job_successful
+
+    def _cleanup_job_folder(self, output_folder_path: str) -> None:
+        """Remove only this job's output folder on the remote controller."""
+        if not output_folder_path or not self.slurm_client:
+            return
+        # output_folder_path points to the submission script file; its parent is the job folder
+        from pathlib import PurePosixPath
+
+        job_folder = str(PurePosixPath(output_folder_path).parent)
+        try:
+            self.slurm_client.run([f"rm -rf {job_folder}"])
+        except Exception as e:
+            self.logger.warning(f"Failed to clean job folder {job_folder}: {e}")
 
     def _collect_job_logs(self, log_file: str) -> str:
         if self.slurm_client:

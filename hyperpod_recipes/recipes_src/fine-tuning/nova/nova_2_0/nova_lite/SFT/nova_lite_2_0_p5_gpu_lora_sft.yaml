@@ -32,3 +32,6 @@ training_config:
     lora_tuning:
       alpha: 64                    # Scaling factor for LoRA weights ( options: 32, 64, 96, 128, 160, 192),
       lora_plus_lr_ratio: 64.0     # LoRA+ learning rate scaling factor (1.0–70.0)
+
+  model_importance_score:          # This block allows you to configure model merge from fine tuned checkpoint to the input checkpoint
+    fine_tuned_model: 1.0          # Weightage of the fine tuned checkpoint in the model merge, must be between 0.0 and 1.0. Set it to 1.0 to effectively disable model merging.

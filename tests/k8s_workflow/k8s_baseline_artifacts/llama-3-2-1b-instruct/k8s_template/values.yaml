@@ -40,6 +40,7 @@ trainingConfig:
     NCCL_DEBUG: WARN
     SLURM_NTASKS_PER_NODE: 8
     CUDA_VISIBLE_DEVICES: 0,1,2,3,4,5,6,7
+    INSTANCE_TYPE: p5.48xlarge
   elastic_policy:
     is_elastic: false
     min_nodes: -1

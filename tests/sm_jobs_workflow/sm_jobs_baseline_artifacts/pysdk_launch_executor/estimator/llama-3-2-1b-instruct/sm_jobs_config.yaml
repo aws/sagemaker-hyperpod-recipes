@@ -16,3 +16,6 @@ additional_estimator_kwargs:
   max_run: 1800
   enable_remote_debug: false
 recipe_overrides: null
+environment:
+  NCCL_DEBUG: WARN
+  NEMO_LAUNCHER_DEBUG: '1'

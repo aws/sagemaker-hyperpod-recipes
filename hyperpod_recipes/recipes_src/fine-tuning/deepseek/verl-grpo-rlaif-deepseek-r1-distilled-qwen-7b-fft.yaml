@@ -15,7 +15,7 @@ defaults:
 - /hydra_config/verl/model_config/deepseek-r1-distill-qwen-7b
 - _self_
 display_name: Deepseek R1 Distilled Qwen 7B GRPO RLAIF Fine-Tuning
-version: 1.0.0
+version: 1.1.0
 instance_types:
 - ml.p4d.24xlarge
 - ml.p4de.24xlarge

@@ -24,6 +24,7 @@ core.*
 coverage_html_report/
 .coverage
 .coverage.*
+coverage.xml
 .cache
 *.cover
 .hypothesis/

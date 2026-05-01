@@ -26,6 +26,7 @@ trainingConfig:
     NEMO_LAUNCHER_DEBUG: 1
     SLURM_NTASKS_PER_NODE: 8
     CUDA_VISIBLE_DEVICES: 0,1,2,3,4,5,6,7
+    INSTANCE_TYPE: p4de.24xlarge
   persistentVolumeClaims:
   - null
   volumes: null

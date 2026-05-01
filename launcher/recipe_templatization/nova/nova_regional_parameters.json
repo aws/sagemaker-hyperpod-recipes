@@ -7,8 +7,7 @@
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest",
                     "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/init-container-repo:latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/init-container-repo:latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/init-container-repo:latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/init-container-repo:latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/init-container-repo:latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest"
@@ -23,9 +22,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest"
@@ -37,9 +34,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest"
@@ -66,9 +61,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-V2-latest"
@@ -80,9 +73,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-V2-latest"
@@ -109,9 +100,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -123,9 +112,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -152,9 +139,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -166,9 +151,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -195,9 +178,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
@@ -209,9 +190,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
@@ -238,9 +217,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
@@ -252,9 +229,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
@@ -281,9 +256,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
@@ -296,9 +269,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
                 }
             }
         },
@@ -310,9 +281,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
@@ -327,9 +296,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -341,9 +308,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -370,9 +335,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -384,9 +347,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -413,9 +374,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -427,9 +386,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -456,9 +413,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -470,9 +425,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -499,9 +452,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -513,9 +464,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -543,9 +492,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
@@ -573,9 +520,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -602,9 +547,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -616,9 +559,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -645,9 +586,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -659,9 +598,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -688,9 +625,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
@@ -702,9 +637,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
@@ -731,9 +664,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
@@ -745,9 +676,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
@@ -774,9 +703,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
@@ -786,9 +713,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
@@ -803,9 +728,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest"
@@ -815,9 +738,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest"
@@ -827,9 +748,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest"
@@ -839,9 +758,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest"
@@ -851,9 +768,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest"
@@ -863,9 +778,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest"
@@ -880,9 +793,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-TRAIN-V2-latest"
@@ -892,9 +803,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-GENERATION-V2-latest"
@@ -904,9 +813,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-STORM-V2-latest"
@@ -916,9 +823,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-server-V2-latest"
@@ -928,9 +833,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-NATS-reloader-V2-latest"
@@ -940,9 +843,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-RFT-REDIS-V2-latest"
@@ -957,9 +858,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
@@ -974,9 +873,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -988,9 +885,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -1017,9 +912,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -1031,9 +924,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -1060,9 +951,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -1074,9 +963,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -1103,9 +990,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -1117,9 +1002,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -1146,9 +1029,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -1160,9 +1041,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -1190,9 +1069,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
@@ -1220,9 +1097,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
@@ -1249,9 +1124,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -1263,9 +1136,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -1292,9 +1163,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-SFT-latest"
@@ -1306,9 +1175,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-SFT-latest"
@@ -1335,9 +1202,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
@@ -1349,9 +1214,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
@@ -1378,9 +1241,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
@@ -1392,9 +1253,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
@@ -1421,9 +1280,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-DPO-latest"
@@ -1435,9 +1292,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-DPO-latest"
@@ -1464,9 +1319,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRAIN-latest"
@@ -1479,9 +1332,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SMHP-PPO-TRT-latest"
                 }
             }
         },
@@ -1493,9 +1344,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:HP-CPT-latest"
@@ -1511,9 +1360,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST"
@@ -1527,9 +1374,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -1541,9 +1386,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -1570,9 +1413,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -1584,9 +1425,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -1613,9 +1452,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -1627,9 +1464,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -1656,9 +1491,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -1670,9 +1503,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -1699,9 +1530,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -1713,9 +1542,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -1742,9 +1569,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -1756,9 +1581,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
@@ -1786,9 +1609,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-distillation-repo:SM-TJ-DISTILL-LATEST"
                 },
                 "gamma": {}
             }
@@ -1800,9 +1621,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-CPT-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-CPT-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-CPT-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-HP-CPT-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-HP-CPT-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-HP-CPT-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-HP-CPT-V2-latest"
@@ -1818,9 +1637,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest"
@@ -1835,9 +1652,7 @@
                 "prod": {
                     "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest",
                     "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest",
-                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest",
-                    "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest",
-                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest"
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest"
                 },
                 "gamma": {
                     "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-fine-tune-repo:SM-TJ-RFT-V2-latest"

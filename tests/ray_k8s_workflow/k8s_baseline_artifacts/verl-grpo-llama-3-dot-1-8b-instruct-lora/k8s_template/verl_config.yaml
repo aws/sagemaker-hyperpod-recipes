@@ -12,10 +12,10 @@ actor_rollout_ref:
       - model
       - optimizer
       - extra
-    clip_ratio: 0.2
+    clip_ratio: '{{clip_ratio}}'
     clip_ratio_c: 3.0
-    clip_ratio_high: 0.2
-    clip_ratio_low: 0.2
+    clip_ratio_high: '{{clip_ratio_high}}'
+    clip_ratio_low: '{{clip_ratio_low}}'
     entropy_advantage: false
     entropy_advantage_alpha: 0.4
     entropy_advantage_kappa: 2
@@ -34,19 +34,19 @@ actor_rollout_ref:
       wrap_policy:
         min_num_params: 0
     grad_clip: 1.0
-    kl_loss_coef: 0.001
+    kl_loss_coef: '{{kl_loss_coef}}'
     kl_loss_type: low_var_kl
     loss_agg_mode: token-mean
     optim:
       _target_: verl.workers.config.FSDPOptimizerConfig
       lr: '{{learning_rate}}'
-      lr_warmup_steps: -1
-      lr_warmup_steps_ratio: 0.0
-      min_lr_ratio: 0.0
+      lr_warmup_steps: '{{warmup_steps}}'
+      lr_warmup_steps_ratio: '{{lr_warmup_steps_ratio}}'
+      min_lr_ratio: '{{min_lr}}'
       num_cycles: 0.5
       total_training_steps: -1
       warmup_style: constant
-      weight_decay: 0.01
+      weight_decay: '{{weight_decay}}'
     policy_loss:
       _target_: verl.workers.config.PolicyLossConfig
       clip_cov_lb: 1.0
@@ -65,7 +65,7 @@ actor_rollout_ref:
     ulysses_sequence_parallel_size: 1
     use_dynamic_bsz: true
     use_fused_kernels: false
-    use_kl_loss: true
+    use_kl_loss: '{{use_kl_loss}}'
     use_remove_padding: true
     use_torch_compile: true
   hybrid_engine: true
@@ -79,8 +79,8 @@ actor_rollout_ref:
     fused_kernel_options:
       impl_backend: torch
     is_saving_checkpoint_in_lora: true
-    lora_alpha: 64
-    lora_rank: 32
+    lora_alpha: '{{lora_alpha}}'
+    lora_rank: '{{lora_rank}}'
     override_config: {}
     path: '{{model_name_or_path}}'
     target_modules: all-linear
@@ -158,11 +158,11 @@ actor_rollout_ref:
       tool_config_path: null
       tool_response_truncate_side: middle
       use_inference_chat_template: false
-    'n': 8
+    'n': '{{rollout_n}}'
     name: vllm
     prompt_length: '{{max_prompt_length}}'
     response_length: 1024
-    temperature: 1.0
+    temperature: '{{rollout_temperature}}'
     tensor_model_parallel_size: 2
     top_k: -1
     top_p: 1
@@ -173,7 +173,7 @@ actor_rollout_ref:
     val_kwargs:
       do_sample: false
       'n': 1
-      temperature: 0
+      temperature: '{{temperature}}'
       top_k: -1
       top_p: 1.0
 algorithm:

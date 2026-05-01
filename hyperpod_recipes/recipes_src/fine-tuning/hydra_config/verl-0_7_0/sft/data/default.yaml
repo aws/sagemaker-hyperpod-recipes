@@ -21,6 +21,8 @@ max_token_len_per_gpu: 8192
 
 ignore_input_ids_mismatch: false
 
+train_val_split_ratio: 1.0
+
 custom_cls:
   path: null
   name: null

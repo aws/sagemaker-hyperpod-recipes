@@ -178,3 +178,67 @@ def test_trainer_callbacks_in_openweights_finetuning_recipes(subtests):
                     break
 
             assert metering_callback_found, f"Recipe {recipe_rel_path} missing MeteringCallback in trainer_callbacks"
+
+
+def test_metering_callbacks_in_verl_sft_recipes(subtests):
+    """
+    Test that every Verl SFT fine-tuning recipe has the required MeteringCallback.
+
+    Verl SFT recipes store callbacks at a different path than LLMFT recipes:
+        training_config:
+          trainer_callbacks:
+            - _target_: metering_callback.MeteringCallback
+              output_path: /opt/ml/metering
+
+    """
+    finetuning_dir = RECIPES_DIR / "fine-tuning"
+    recipe_files = list(finetuning_dir.rglob("*.yaml"))
+
+    verl_sft_recipes_found = 0
+
+    for recipe_path in recipe_files:
+        if not recipe_path.is_file():
+            continue
+
+        recipe_name_lower = recipe_path.name.lower()
+
+        # Only target verl SFT recipes
+        if "verl" not in recipe_name_lower or "sft" not in recipe_name_lower:
+            continue
+
+        recipe_rel_path = str(recipe_path.relative_to(RECIPES_DIR))
+        verl_sft_recipes_found += 1
+
+        with subtests.test(msg=f"metering_callback in {recipe_rel_path}"):
+            with open(recipe_path) as f:
+                recipe_data = yaml.safe_load(f)
+
+            assert "training_config" in recipe_data, f"Recipe {recipe_rel_path} missing 'training_config' section"
+
+            trainer_callbacks = recipe_data["training_config"].get("trainer_callbacks")
+
+            assert (
+                trainer_callbacks is not None
+            ), f"Recipe {recipe_rel_path} missing 'training_config.trainer_callbacks' field"
+            assert isinstance(trainer_callbacks, list), f"Recipe {recipe_rel_path} trainer_callbacks should be a list"
+            assert (
+                len(trainer_callbacks) >= 1
+            ), f"Recipe {recipe_rel_path} trainer_callbacks should have at least one entry"
+
+            metering_callback_found = False
+            for callback in trainer_callbacks:
+                if callback.get("_target_") == "metering_callback.MeteringCallback":
+                    metering_callback_found = True
+                    assert callback.get("output_path") == "/opt/ml/metering", (
+                        f"Recipe {recipe_rel_path} MeteringCallback should have "
+                        f"output_path='/opt/ml/metering', got '{callback.get('output_path')}'"
+                    )
+                    break
+
+            assert (
+                metering_callback_found
+            ), f"Recipe {recipe_rel_path} missing MeteringCallback in training_config.trainer_callbacks"
+
+    assert verl_sft_recipes_found > 0, (
+        "No Verl SFT recipes found under recipes_collection/recipes/fine-tuning/ — " "check recipe directory structure"
+    )

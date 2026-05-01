@@ -3,6 +3,7 @@ Slurm client to support remote slurm execution.
 Executes commands remotely via SSM start-session.
 """
 
+import datetime
 import json
 import logging
 import os
@@ -18,6 +19,7 @@ import boto3
 import pathspec
 from omegaconf import MISSING
 
+from scripts.validations.validation_launchers.base_launcher import BaseLauncher
 from scripts.validations.validation_launchers.path_utils import get_project_root
 
 
@@ -64,6 +66,8 @@ class SlurmClient:
         self.target_id = config.target_id
         self.region = config.cluster_region
         self.boto_session = boto_session
+        self._assume_role_arn = None
+        self._credentials_expiry = None
 
         # Store AWS credentials from assumed session for CLI usage
         credentials = self.boto_session.get_credentials()
@@ -174,7 +178,30 @@ class SlurmClient:
 
         return result
 
+    def _refresh_credentials_if_needed(self):
+        """Re-assume role if credentials are near expiry."""
+        if not self._assume_role_arn or not self._credentials_expiry:
+            return
+        now = datetime.datetime.now(datetime.timezone.utc)
+        if self._credentials_expiry - now > datetime.timedelta(minutes=BaseLauncher.REFRESH_THRESHOLD_MINUTES):
+            return
+
+        creds, self._credentials_expiry, self.boto_session = BaseLauncher.assume_role_credentials(
+            role_arn=self._assume_role_arn,
+            session_name="slurm-validation-refresh",
+            logger=self.logger,
+        )
+        self.process_env.update(
+            {
+                "AWS_ACCESS_KEY_ID": creds["AccessKeyId"],
+                "AWS_SECRET_ACCESS_KEY": creds["SecretAccessKey"],
+                "AWS_SESSION_TOKEN": creds["SessionToken"],
+            }
+        )
+        self.s3_client = self.boto_session.client("s3")
+
     def __ssm_execute(self, command: List[str], timeout_in_min: int = 5):
+        self._refresh_credentials_if_needed()
         parameters = json.dumps({"command": [" ".join(command)]})
 
         ssm_command = [

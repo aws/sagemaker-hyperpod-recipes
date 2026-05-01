@@ -151,7 +151,7 @@ def test_sm_jobs_workflow_with_launch_json_verl_sft(mock_load_hosting):
 
     artifacts_dir = create_temp_directory("test_sm_jobs_workflow_with_launch_json_verl_sft")
     overrides = [
-        "recipes=fine-tuning/qwen/verl-sft-qwen-3-8b-lora",
+        "recipes=fine-tuning/qwen-0_7_0/verl-sft-qwen-3-dot-5-4b-lora",
         "cluster=sm_jobs",
         "cluster_type=sm_jobs",
         "instance_type=p5.48xlarge",
@@ -175,7 +175,7 @@ def test_sm_jobs_workflow_with_launch_json_verl_sft(mock_load_hosting):
     main(sample_sm_jobs_config)
 
     baseline_artifacts_dir = "/tests/sm_jobs_workflow/sm_jobs_baseline_artifacts/with_launch_json"
-    compare_artifacts(["/qwen-3-8b/launch.json"], artifacts_dir, baseline_artifacts_dir)
+    compare_artifacts(["/verl-sft-qwen-3-dot-5-4b-lora/launch.json"], artifacts_dir, baseline_artifacts_dir)
 
 
 @patch(

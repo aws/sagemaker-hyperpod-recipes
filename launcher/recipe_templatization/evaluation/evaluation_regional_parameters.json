@@ -24,8 +24,6 @@
         "us-east-1": "763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:latest",
         "us-west-2": "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:latest",
         "eu-west-1": "763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:latest",
-        "eu-central-1": "763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:latest",
-        "ap-southeast-2": "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:latest",
         "ap-northeast-1": "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:latest"
       },
       "gamma": {
@@ -42,8 +40,6 @@
           "us-east-1": "USE1",
           "us-west-2": "USW2",
           "eu-west-1": "EUW1",
-          "eu-central-1": "EUC1",
-          "ap-southeast-2": "APS2",
           "ap-northeast-1": "APN1"
         },
         "gamma": {
@@ -80,8 +76,6 @@
         "us-east-1": "763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:latest",
         "us-west-2": "763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:latest",
         "eu-west-1": "763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:latest",
-        "eu-central-1": "763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:latest",
-        "ap-southeast-2": "763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:latest",
         "ap-northeast-1": "763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:latest"
       },
       "gamma":{
@@ -98,8 +92,6 @@
           "us-east-1": "USE1",
           "us-west-2": "USW2",
           "eu-west-1": "EUW1",
-          "eu-central-1": "EUC1",
-          "ap-southeast-2": "APS2",
           "ap-northeast-1": "APN1"
         },
         "gamma": {

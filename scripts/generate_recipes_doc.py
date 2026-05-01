@@ -90,12 +90,16 @@ class Recipe:
     adapter: str = ""
     seq_len: Optional[int] = None
     nodes: Optional[int] = None
-    instance_type: str = ""
+    instance_types: List[str] = None
     version: str = ""
     category: str = ""
     family: str = ""
     recipe_path: str = ""
     script_path: str = ""
+
+    def __post_init__(self):
+        if self.instance_types is None:
+            self.instance_types = []
 
 
 # =============================================================================
@@ -332,17 +336,23 @@ def _detect_adapter(data: dict, framework: str) -> str:
 
 
 # =============================================================================
-# INSTANCE TYPE — from instance_types YAML field, with filename fallback for Nova
+# INSTANCE TYPES — from instance_types YAML field, with filename fallback for Nova
 # =============================================================================
 
 
-def _extract_instance_type(data: dict, recipe_path: Path) -> str:
-    """Extract from YAML instance_types field. Fallback: parse filename tokens for Nova."""
-    inst = data.get("instance_types")
-    if isinstance(inst, list) and inst and isinstance(inst[0], str):
-        return inst[0].replace("ml.", "")
+def _extract_instance_types(data: dict, recipe_path: Path) -> List[str]:
+    """Extract all supported instance types from YAML instance_types field.
 
-    # Nova/training recipes embed instance info in filename tokens
+    Returns a list of instance type strings with the 'ml.' prefix removed.
+    Fallback: parse filename tokens for recipes that lack the YAML field.
+    """
+    inst = data.get("instance_types")
+    if isinstance(inst, list) and inst:
+        result = [i.replace("ml.", "") for i in inst if isinstance(i, str)]
+        if result:
+            return result
+
+    # Recipes that lack instance_types embed instance info in filename tokens
     stem = recipe_path.stem.lower()
     parts = stem.split("_")
 
@@ -363,20 +373,20 @@ def _extract_instance_type(data: dict, recipe_path: Path) -> str:
     }
     for part in parts:
         if part in _INST_TOKENS:
-            return _INST_TOKENS[part]
+            return [_INST_TOKENS[part]]
 
     # Compound patterns: g5_g6_48x, g5_g6_12x
     joined = "_".join(parts)
     if "48x" in joined:
         for p in ("g6", "g5"):
             if p in parts:
-                return f"{p}.48xlarge"
+                return [f"{p}.48xlarge"]
     if "12x" in joined:
         for p in ("g6", "g5"):
             if p in parts:
-                return f"{p}.12xlarge"
+                return [f"{p}.12xlarge"]
 
-    return ""
+    return []
 
 
 # =============================================================================
@@ -551,7 +561,7 @@ def parse_recipe(recipe_path: Path) -> Optional[Recipe]:
         adapter=adapter,
         seq_len=_extract_seq_len(data, framework),
         nodes=_extract_nodes(data),
-        instance_type=_extract_instance_type(data, recipe_path),
+        instance_types=_extract_instance_types(data, recipe_path),
         version=_extract_version(data, path_parts),
         category=category,
         family=family,
@@ -588,7 +598,7 @@ def _make_table(recipes: List[Recipe]) -> List[str]:
         ("Adapter", lambda r: r.adapter or "-"),
         ("Seq Length", lambda r: f"{r.seq_len:,}" if r.seq_len else "-"),
         ("Nodes", lambda r: str(r.nodes) if r.nodes else "-"),
-        ("Instance Type", lambda r: r.instance_type or "-"),
+        ("Instance Type", lambda r: ", ".join(r.instance_types) if r.instance_types else "-"),
         ("Version", lambda r: r.version or "-"),
         ("Recipe", lambda r: f"[{Path(r.recipe_path).name}](../{r.recipe_path})"),
         ("Launcher Script", lambda r: f"[{Path(r.script_path).name}](../{r.script_path})" if r.script_path else "-"),

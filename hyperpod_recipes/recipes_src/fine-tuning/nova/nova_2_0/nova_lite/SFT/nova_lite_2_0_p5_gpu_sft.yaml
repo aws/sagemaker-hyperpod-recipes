@@ -29,3 +29,6 @@ training_config:
 
   peft:                            # Parameter-efficient fine-tuning (LoRA)
     peft_scheme: "null"            # Disable LoRA for PEFT
+
+  model_importance_score:          # This block allows you to configure model merge from fine tuned checkpoint to the input checkpoint
+    fine_tuned_model: 1.0          # Weightage of the fine tuned checkpoint in the model merge, must be between 0.0 and 1.0. Set it to 1.0 to effectively disable model merging.

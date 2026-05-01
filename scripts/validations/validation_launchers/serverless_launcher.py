@@ -767,6 +767,9 @@ class ServerlessValidationLauncher(BaseLauncher):
                 poll_count += 1
                 elapsed_minutes = (time.time() - start_time) / 60
 
+                # Refresh credentials if they're about to expire
+                self._refresh_credentials_if_needed()
+
                 # Check job status
                 describe_command = [
                     "aws",

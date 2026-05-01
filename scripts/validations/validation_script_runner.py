@@ -14,6 +14,7 @@ import logging
 import math
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 from pathlib import Path
 
 # Add parent directories to path for imports
@@ -307,6 +308,69 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cfg = OmegaConf.load(args.config) if args.config != None else OmegaConf.load(COMMON_CONFIG_PATH)
 
+    # ====================================================================
+    # CONVERGENCE TRAINING MODE
+    # ====================================================================
+    # When --convergence is passed, run training to convergence instead of
+    # the limited smoke-test validation. This uses the same run_validation()
+    # flow but with convergence-specific behavior:
+    # - Training limits are NOT applied (no limit=200, max_epochs=1, etc.)
+    # - Convergence datasets are used instead of smoke-test datasets
+    # - Runtime overrides from convergence_validation config are applied
+    #
+    # Convergence mode works with the standard recipe flow - recipes come
+    # from --fileList, --regex, or config recipe_list. Platform and instance
+    # type come from convergence_validation.runtime_overrides if set, or from
+    # the normal priority chain (CLI args > config > recipe defaults).
+    if getattr(args, "convergence", False):
+        logging.info("Running in CONVERGENCE TRAINING mode")
+
+        if not hasattr(cfg, "convergence_validation"):
+            logging.error("No convergence_validation section found in config")
+            sys.exit(1)
+
+        conv_cfg = cfg.convergence_validation
+
+        OmegaConf.update(cfg, "is_convergence", True, force_add=True)
+
+        # Override S3 output path for convergence
+        # so downstream teams (Eval, Inference) can find the artifacts
+        cfg.smjobs.output_path = "s3://hyperpod-recipes-validation-artifacts/validation_results/"
+        cfg.smjobs.validation_run_name = datetime.utcnow().strftime("%Y-%m-%d")
+
+        if hasattr(conv_cfg, "runtime_overrides") and conv_cfg.runtime_overrides:
+            runtime_overrides = dict(conv_cfg.runtime_overrides)
+
+            # Extract platform and instance_type if specified in runtime_overrides
+            # These are validation script parameters, not Hydra overrides
+            if "platform" in runtime_overrides:
+                cfg.platform = runtime_overrides["platform"]
+                logging.info(f"Platform set from convergence runtime_overrides: {cfg.platform}")
+
+            if "instance_type" in runtime_overrides:
+                cfg.instance_type_list = [runtime_overrides["instance_type"]]
+                logging.info(
+                    f"Instance type set from convergence runtime_overrides: {runtime_overrides['instance_type']}"
+                )
+
+            # Store only Hydra overrides (exclude validation script params) for launcher
+            hydra_overrides = {k: v for k, v in runtime_overrides.items() if k not in ["platform", "instance_type"]}
+            if hydra_overrides:
+                cfg._convergence_overrides = hydra_overrides
+
+            logging.info(f"Convergence runtime overrides:")
+            for k, v in runtime_overrides.items():
+                logging.info(f"  {k}={v}")
+
+        logging.info("Convergence mode: Training limits will NOT be applied (using recipe's native parameters)")
+        logging.info("Convergence mode: Using full convergence datasets instead of smoke-test samples")
+
+        # Continue to standard validation mode with convergence flag set
+        # (falls through to the normal validation flow below)
+
+    # ====================================================================
+    # STANDARD VALIDATION MODE (smoke-test)
+    # ====================================================================
     # Determine file list - CLI args take priority over config
     # Priority: fileList CLI arg > regex CLI arg > config recipe_list
     file_list = None

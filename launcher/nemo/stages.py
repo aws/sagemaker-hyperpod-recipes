@@ -557,6 +557,17 @@ class SMTraining(Training):
         if not sm_jobs_config:
             raise ValueError("sm_jobs_config is required for sm_jobs cluster type")
 
+        # Add config environment variables
+        top_level_env_vars = self.cfg.get("env_vars", {})
+        if top_level_env_vars:
+            existing_env = dict(sm_jobs_config.get("environment") or {})
+            merged_env = {
+                **{k: str(v) for k, v in existing_env.items()},
+                **{k: str(v) for k, v in top_level_env_vars.items()},
+            }
+            with omegaconf.open_dict(sm_jobs_config):
+                sm_jobs_config.environment = merged_env
+
         OmegaConf.save(config=sm_jobs_config, f=sm_jobs_config_path)
 
         # Choose template based on pysdk_launch_executor (estimator or model_trainer)
@@ -989,6 +1000,8 @@ class SMTraining(Training):
             values_template.trainingConfig.instanceType = self.instance_type
 
         values_template.trainingConfig.pre_script = self.stage_cfg.get("pre_script", [])
+        # Pass instance type so container scripts can configure EFA/RDMA accordingly
+        values_template.trainingConfig.envVars.INSTANCE_TYPE = self.instance_type
         values_template.trainingConfig.post_script = self.stage_cfg.get("post_script", [])
         return values_template
 

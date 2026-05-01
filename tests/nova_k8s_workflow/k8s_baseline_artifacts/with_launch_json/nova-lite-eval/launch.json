@@ -20,7 +20,7 @@
     "ServerlessMeteringType": "Token-based",
     "Model_ID": "nova-textgeneration-micro",
     "Versions": [
-      "2.1.2"
+      "2.2.0"
     ],
     "OutputConfig": {
       "SageMakerInferenceRecipeName": "default"
@@ -102,7 +102,7 @@
     },
     "temperature": {
       "type": "float",
-      "required": false,
+      "required": true,
       "min": 0.0,
       "max": 2.0,
       "default": 0
@@ -135,9 +135,7 @@
       "prod": {
         "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
         "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-        "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest",
-        "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
+        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
       },
       "gamma": {
         "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-HP-Eval-V2-latest"
@@ -148,8 +146,7 @@
         "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest",
         "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/init-container-repo:latest",
         "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/init-container-repo:latest",
-        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/init-container-repo:latest",
-        "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/init-container-repo:latest"
+        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/init-container-repo:latest"
       },
       "gamma": {
         "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest"
@@ -159,9 +156,7 @@
       "prod": {
         "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
         "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-        "eu-central-1": "874160969292.dkr.ecr.eu-central-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest",
-        "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
+        "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
       },
       "gamma": {
         "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-evaluation-repo:SM-TJ-Eval-V2-latest"
