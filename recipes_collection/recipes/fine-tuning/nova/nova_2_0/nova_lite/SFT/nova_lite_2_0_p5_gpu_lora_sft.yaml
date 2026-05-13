@@ -3,7 +3,7 @@ run:
   model_type: amazon.nova-2-lite-v1:0:256k
   model_name_or_path: nova-lite-2/prod
   data_s3_path: s3://my-bucket-name/train.jsonl  # SageMaker Hyperpod (SMHP) only and not compatible with SageMaker Training jobs. Note replace my-bucket-name with your real bucket name for SMHP job
-  replicas: 4                      # Number of compute instances for training, allowed values are 4, 8, 16, 32
+  replicas: 1                      # Number of compute instances for training, allowed values are 1, 4, 8, 16, 32
   output_s3_path: s3://my-bucket-name/outputs/               # Output artifact path (Hyperpod job-specific; not compatible with standard SageMaker Training jobs). Note replace my-bucket-name with your real bucket name for SMHP job
   mlflow_tracking_uri: "" # Required for MLFlow
   mlflow_experiment_name: "my-lora-sft-experiment" # Optional for MLFlow. Note: leave this field non-empty
