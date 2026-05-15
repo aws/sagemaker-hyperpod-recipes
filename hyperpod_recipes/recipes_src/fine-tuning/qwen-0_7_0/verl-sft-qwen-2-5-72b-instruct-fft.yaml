@@ -1,0 +1,56 @@
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - _self_
+
+display_name: "Qwen 2.5 72B SFT Full Fine-Tuning"
+version: 2.1.0
+instance_types: ["ml.p5.48xlarge"]
+
+run:
+  name: verl-sft-qwen-2-5-72b-instruct-fft
+
+trainer:
+  # 70B+ FFT requires multi-node (OOMs on single node even with H200 141GB)
+  num_nodes: 4
+
+training_config:
+  data:
+    # Global batch size. Must be >= total GPUs (nodes * 8) to avoid batch_size=0 error.
+    # Per-GPU DataLoader batch = train_batch_size // world_size. With 4 nodes: 64 // 32 = 2.
+    train_batch_size: 64
+    # Unused when use_dynamic_bsz=true (default). Dynamic batching uses max_token_len_per_gpu instead.
+    micro_batch_size_per_gpu: null
+    max_length: 4096
+    max_token_len_per_gpu: 8192
+    truncation: right
+
+  engine:
+    strategy: fsdp2
+    model_dtype: bf16
+    forward_prefetch: true
+
+  model:
+    path: Qwen/Qwen2.5-72B
+    trust_remote_code: false
+    use_liger: true
+    use_fused_kernels: false
+
+  optim:
+    lr: 1.0e-05
+    weight_decay: 0.1
+    betas: [0.9, 0.95]
+    lr_scheduler_type: cosine
+
+  trainer:
+    project_name: verl_sft_qwen_2_5_72b_instruct
+    experiment_name: qwen_2_5_72b_instruct_sft_fsdp_fft_tatqa
+    total_epochs: 1
+    max_ckpt_to_keep: 3
+    resume_mode: resume_path

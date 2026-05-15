@@ -147,8 +147,9 @@ class TestHubContentOverride(unittest.TestCase):
             # Verify auto-update was called with ALL models
             mock_auto_update.assert_called_once()
             called_models = mock_auto_update.call_args[0][0]
-            self.assertIn("llama-3-1-8b-instruct", called_models)
-            self.assertIn("verl-grpo-gpt-oss-20b-lora", called_models)
+            called_model_names = [name for name, _ in called_models]
+            self.assertIn("llama-3-1-8b-instruct", called_model_names)
+            self.assertIn("verl-grpo-gpt-oss-20b-lora", called_model_names)
 
     @patch("boto3.Session")
     @patch("scripts.validations.validation_launchers.serverless_launcher.get_recipes_folder")

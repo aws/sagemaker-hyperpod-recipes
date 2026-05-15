@@ -47,7 +47,7 @@
     "ServerlessMeteringType": "Token-based",
     "Type": "FineTuning",
     "Versions": [
-      "2.1.0"
+      "2.1.1"
     ]
   },
   "output_path": "s3://test_path",
@@ -58,7 +58,9 @@
       "type": "string"
     },
     "global_batch_size": {
+      "category": "hyperparameter",
       "default": 64,
+      "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory.",
       "enum": [
         64,
         128,
@@ -70,14 +72,18 @@
       "type": "integer"
     },
     "learning_rate": {
+      "category": "hyperparameter",
       "default": 0.0002,
+      "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
       "max": 0.001,
       "min": 1e-07,
       "required": true,
       "type": "float"
     },
     "lora_alpha": {
+      "category": "hyperparameter",
       "default": 64,
+      "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
       "enum": [
         16,
         32,
@@ -89,7 +95,9 @@
       "type": "integer"
     },
     "lora_rank": {
+      "category": "hyperparameter",
       "default": 32,
+      "description": "LoRA rank \u2014 the dimensionality of the low-rank decomposition matrices. Lower rank means fewer trainable parameters; higher rank increases model capacity but uses more memory.",
       "enum": [
         8,
         16,
@@ -101,7 +109,9 @@
       "type": "integer"
     },
     "lr_scheduler": {
+      "category": "hyperparameter",
       "default": "cosine",
+      "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve.",
       "enum": [
         "cosine",
         "constant"
@@ -110,21 +120,27 @@
       "type": "string"
     },
     "lr_warmup_steps_ratio": {
+      "category": "hyperparameter",
       "default": 0.0,
+      "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates.",
       "max": 1,
       "min": 0,
       "required": true,
       "type": "float"
     },
     "max_epochs": {
+      "category": "hyperparameter",
       "default": 1,
+      "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
       "max": 100,
       "min": 1,
       "required": true,
       "type": "integer"
     },
     "min_lr": {
+      "category": "hyperparameter",
       "default": 0.0,
+      "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value.",
       "max": 1.0,
       "min": 0.0,
       "required": true,
@@ -166,7 +182,9 @@
       "type": "string"
     },
     "train_val_split_ratio": {
+      "category": "hyperparameter",
       "default": 1.0,
+      "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
       "max": 1.0,
       "min": 0.0,
       "required": false,
@@ -178,14 +196,18 @@
       "type": "string"
     },
     "warmup_steps": {
+      "category": "hyperparameter",
       "default": -1,
+      "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
       "max": 100,
       "min": -1,
       "required": true,
       "type": "integer"
     },
     "weight_decay": {
+      "category": "hyperparameter",
       "default": 0.001,
+      "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
       "max": 1.0,
       "min": 0.0,
       "required": true,
@@ -228,5 +250,5 @@
     "container_logs_path": "/opt/ml/output/tensorboard",
     "output_path": "s3://test_tensorboard_path"
   },
-  "training_recipe.yaml": "display_name: Qwen 3.5 4B SFT LoRA Fine-Tuning\ninstance_types:\n- ml.p5.48xlarge\n- ml.p4de.24xlarge\n- ml.p4d.24xlarge\nrun:\n  model_type: verl\n  name: '{{name}}'\n  results_dir: '{{results_directory}}'\ntrainer:\n  devices: 8\n  num_nodes: 1\ntraining_config:\n  checkpoint:\n    _target_: verl.trainer.config.CheckpointConfig\n    load_contents:\n    - model\n    - optimizer\n    - extra\n    - hf_model\n    save_contents:\n    - model\n    - optimizer\n    - extra\n    - hf_model\n    save_only_adapter_if_lora: true\n  data:\n    custom_cls:\n      name: null\n      path: null\n    ignore_input_ids_mismatch: false\n    max_length: 4096\n    max_token_len_per_gpu: 16384\n    messages_key: messages\n    micro_batch_size_per_gpu: 8\n    pad_mode: no_padding\n    train_batch_size: '{{global_batch_size}}'\n    train_files: '{{data_path}}'\n    train_max_samples: -1\n    train_val_split_ratio: '{{train_val_split_ratio}}'\n    truncation: right\n    use_dynamic_bsz: true\n    val_files: '{{validation_data_path}}'\n    val_max_samples: -1\n  engine:\n    _target_: verl.workers.config.FSDPEngineConfig\n    dtype: bfloat16\n    entropy_checkpointing: false\n    entropy_from_logits_with_chunking: false\n    forward_only: false\n    forward_prefetch: true\n    fsdp_size: 8\n    full_determinism: false\n    model_dtype: bf16\n    offload_policy: false\n    optimizer_offload: false\n    param_offload: false\n    reshard_after_forward: true\n    seed: 42\n    strategy: fsdp2\n    ulysses_sequence_parallel_size: 1\n    use_orig_params: false\n    use_torch_compile: true\n    wrap_policy:\n      min_num_params: 0\n  mlflow:\n    run_id: '{{mlflow_run_id}}'\n    tracking_uri: '{{mlflow_tracking_uri}}'\n  model:\n    _target_: verl.workers.config.HFModelConfig\n    custom_chat_template: null\n    enable_activation_offload: false\n    enable_gradient_checkpointing: true\n    exclude_modules: null\n    external_lib: null\n    fused_kernel_options:\n      impl_backend: torch\n    hf_config_path: null\n    lora_adapter_path: null\n    lora_alpha: '{{lora_alpha}}'\n    lora_rank: '{{lora_rank}}'\n    override_config: {}\n    path: '{{model_name_or_path}}'\n    target_modules: all-linear\n    tiled_mlp:\n      enabled: false\n      num_shards: 4\n    tokenizer_path: null\n    trust_remote_code: true\n    use_fused_kernels: false\n    use_liger: true\n    use_remove_padding: true\n    use_shm: false\n  optim:\n    _target_: verl.workers.config.FSDPOptimizerConfig\n    betas:\n    - 0.9\n    - 0.95\n    clip_grad: 1.0\n    lr: '{{learning_rate}}'\n    lr_scheduler_type: '{{lr_scheduler}}'\n    lr_warmup_steps: '{{warmup_steps}}'\n    lr_warmup_steps_ratio: '{{lr_warmup_steps_ratio}}'\n    min_lr_ratio: '{{min_lr}}'\n    num_cycles: 0.5\n    optimizer: AdamW\n    optimizer_impl: torch.optim\n    override_optimizer_config: null\n    total_training_steps: -1\n    warmup_style: null\n    weight_decay: '{{weight_decay}}'\n  profiler:\n    _target_: verl.utils.profiler.ProfilerConfig\n    all_ranks: false\n    enable: false\n    ranks: []\n    save_path: outputs/profile\n    tool: torch\n    tool_config:\n      npu:\n        _target_: verl.utils.profiler.config.NPUToolConfig\n        analysis: true\n        contents: []\n        discrete: false\n        level: level0\n        name: npu\n      nsys:\n        _target_: verl.utils.profiler.config.NsightToolConfig\n        discrete: null\n        name: nsight\n      torch:\n        _target_: verl.utils.profiler.config.TorchProfilerToolConfig\n        manual_save: true\n        name: torch\n        step_end: null\n        step_start: 0\n      torch_memory:\n        _target_: verl.utils.profiler.config.TorchMemoryToolConfig\n        name: torch_memory\n        stack_depth: 32\n        trace_alloc_max_entries: 100000\n  trainer:\n    default_hdfs_dir: null\n    default_local_dir: '{{output_path}}'\n    device: cuda\n    experiment_name: qwen3_5_4b_sft_fsdp_lora_tatqa\n    logger:\n    - console\n    - mlflow\n    - tensorboard\n    max_ckpt_to_keep: 3\n    merge_lora_on_final_save: true\n    n_gpus_per_node: 8\n    nnodes: 1\n    profile_interval:\n    - -1\n    - -1\n    project_name: verl_sft_qwen3_5_4b\n    resume_from_path: '{{resume_from_path}}'\n    resume_mode: resume_path\n    save_freq: after_each_epoch\n    test_freq: -1\n    total_epochs: '{{max_epochs}}'\n    total_training_steps: null\n  trainer_callbacks:\n  - _target_: metering_callback.MeteringCallback\n    output_path: /opt/ml/metering\nversion: 2.1.0\n"
+  "training_recipe.yaml": "display_name: Qwen 3.5 4B SFT LoRA Fine-Tuning\ninstance_types:\n- ml.p5.48xlarge\n- ml.p4de.24xlarge\n- ml.p4d.24xlarge\nrun:\n  model_type: verl\n  name: '{{name}}'\n  results_dir: '{{results_directory}}'\ntrainer:\n  devices: 8\n  num_nodes: 1\ntraining_config:\n  checkpoint:\n    _target_: verl.trainer.config.CheckpointConfig\n    load_contents:\n    - model\n    - optimizer\n    - extra\n    - hf_model\n    save_contents:\n    - model\n    - optimizer\n    - extra\n    - hf_model\n    save_only_adapter_if_lora: true\n  data:\n    custom_cls:\n      name: null\n      path: null\n    ignore_input_ids_mismatch: false\n    max_length: 4096\n    max_token_len_per_gpu: 16384\n    messages_key: messages\n    micro_batch_size_per_gpu: 8\n    pad_mode: no_padding\n    train_batch_size: '{{global_batch_size}}'\n    train_files: '{{data_path}}'\n    train_max_samples: -1\n    train_val_split_ratio: '{{train_val_split_ratio}}'\n    truncation: right\n    use_dynamic_bsz: true\n    val_files: '{{validation_data_path}}'\n    val_max_samples: -1\n  engine:\n    _target_: verl.workers.config.FSDPEngineConfig\n    dtype: bfloat16\n    entropy_checkpointing: false\n    entropy_from_logits_with_chunking: false\n    forward_only: false\n    forward_prefetch: true\n    fsdp_size: -1\n    full_determinism: false\n    model_dtype: bf16\n    offload_policy: false\n    optimizer_offload: false\n    param_offload: false\n    reshard_after_forward: true\n    seed: 42\n    strategy: fsdp2\n    ulysses_sequence_parallel_size: 1\n    use_orig_params: false\n    use_torch_compile: true\n    wrap_policy:\n      min_num_params: 0\n  mlflow:\n    run_id: '{{mlflow_run_id}}'\n    tracking_uri: '{{mlflow_tracking_uri}}'\n  model:\n    _target_: verl.workers.config.HFModelConfig\n    custom_chat_template: null\n    enable_activation_offload: false\n    enable_gradient_checkpointing: true\n    exclude_modules: null\n    external_lib: null\n    fused_kernel_options:\n      impl_backend: torch\n    hf_config_path: null\n    lora_adapter_path: null\n    lora_alpha: '{{lora_alpha}}'\n    lora_rank: '{{lora_rank}}'\n    override_config: {}\n    path: '{{model_name_or_path}}'\n    target_modules: all-linear\n    tiled_mlp:\n      enabled: false\n      num_shards: 4\n    tokenizer_path: null\n    trust_remote_code: true\n    use_fused_kernels: false\n    use_liger: true\n    use_remove_padding: true\n    use_shm: false\n  optim:\n    _target_: verl.workers.config.FSDPOptimizerConfig\n    betas:\n    - 0.9\n    - 0.95\n    clip_grad: 1.0\n    lr: '{{learning_rate}}'\n    lr_scheduler_type: '{{lr_scheduler}}'\n    lr_warmup_steps: '{{warmup_steps}}'\n    lr_warmup_steps_ratio: '{{lr_warmup_steps_ratio}}'\n    min_lr_ratio: '{{min_lr}}'\n    num_cycles: 0.5\n    optimizer: AdamW\n    optimizer_impl: torch.optim\n    override_optimizer_config: null\n    total_training_steps: -1\n    warmup_style: null\n    weight_decay: '{{weight_decay}}'\n  profiler:\n    _target_: verl.utils.profiler.ProfilerConfig\n    all_ranks: false\n    enable: false\n    ranks: []\n    save_path: outputs/profile\n    tool: torch\n    tool_config:\n      npu:\n        _target_: verl.utils.profiler.config.NPUToolConfig\n        analysis: true\n        contents: []\n        discrete: false\n        level: level0\n        name: npu\n      nsys:\n        _target_: verl.utils.profiler.config.NsightToolConfig\n        discrete: null\n        name: nsight\n      torch:\n        _target_: verl.utils.profiler.config.TorchProfilerToolConfig\n        manual_save: true\n        name: torch\n        step_end: null\n        step_start: 0\n      torch_memory:\n        _target_: verl.utils.profiler.config.TorchMemoryToolConfig\n        name: torch_memory\n        stack_depth: 32\n        trace_alloc_max_entries: 100000\n  trainer:\n    default_hdfs_dir: null\n    default_local_dir: '{{output_path}}'\n    device: cuda\n    experiment_name: qwen3_5_4b_sft_fsdp_lora_tatqa\n    logger:\n    - console\n    - mlflow\n    - tensorboard\n    max_ckpt_to_keep: 3\n    merge_lora_on_final_save: true\n    n_gpus_per_node: 8\n    nnodes: 1\n    profile_interval:\n    - -1\n    - -1\n    project_name: verl_sft_qwen3_5_4b\n    resume_from_path: '{{resume_from_path}}'\n    resume_mode: resume_path\n    save_freq: after_each_epoch\n    test_freq: -1\n    total_epochs: '{{max_epochs}}'\n    total_training_steps: null\n  trainer_callbacks:\n  - _target_: metering_callback.MeteringCallback\n    output_path: /opt/ml/metering\nversion: 2.1.1\n"
 }

@@ -18,7 +18,7 @@
     "SequenceLength": "8K",
     "Model_ID": "nova-textgeneration-pro",
     "Versions": [
-      "1.1.0"
+      "1.1.1"
     ],
     "OutputConfig": {
       "SageMakerInferenceRecipeName": "default"
@@ -70,14 +70,18 @@
       "enum": [
         160
       ],
-      "default": 160
+      "default": 160,
+      "category": "hyperparameter",
+      "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
     },
     "learning_rate": {
       "type": "float",
       "required": true,
       "min": 0,
       "max": 1,
-      "default": 3e-06
+      "default": 3e-06,
+      "category": "hyperparameter",
+      "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
     },
     "replicas": {
       "type": "integer",
@@ -97,7 +101,9 @@
       "required": true,
       "min": 1,
       "max": 131072,
-      "default": 8192
+      "default": 8192,
+      "category": "hyperparameter",
+      "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
     },
     "mlflow_tracking_uri": {
       "type": "string",

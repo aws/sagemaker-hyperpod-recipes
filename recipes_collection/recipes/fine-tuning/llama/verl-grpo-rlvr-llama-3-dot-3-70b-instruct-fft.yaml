@@ -419,4 +419,4 @@ training_config:
       cuda-memory-usage: 'true'
       kill: none
       trace: cuda,nvtx,cublas,ucx
-version: 1.2.0
+version: 1.2.1

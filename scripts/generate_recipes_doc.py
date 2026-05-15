@@ -69,12 +69,6 @@ DOC_SECTIONS = [
         "family",
         "",
     ),
-    (
-        "Other Training Recipes",
-        lambda r: r.framework not in ("llmft", "verl", "checkpointless", "nova") and r.category not in ("evaluation",),
-        None,
-        "",
-    ),
 ]
 
 # =============================================================================
@@ -85,6 +79,7 @@ DOC_SECTIONS = [
 @dataclass
 class Recipe:
     model: str = ""
+    model_short_name: str = ""
     framework: str = ""
     technique: str = ""
     adapter: str = ""
@@ -513,6 +508,206 @@ def _extract_model_name(data: dict, stem: str) -> str:
 
 
 # =============================================================================
+# JUMPSTART MODEL-ID MAP — run.name → JumpStart ID → canonical model name
+# =============================================================================
+
+_JS_MAP_PATH = REPO_ROOT / "launcher" / "recipe_templatization" / "jumpstart_model-id_map.json"
+
+
+def _load_js_map() -> dict:
+    """Load jumpstart_model-id_map.json → {run_name: jumpstart_id}."""
+    try:
+        import json
+
+        with open(_JS_MAP_PATH) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+_JS_MAP: dict = _load_js_map()
+
+# JumpStart ID vendor/framework prefixes to strip (keeping the model-specific suffix)
+# deepseek-llm- is handled specially to preserve "DeepSeek" in the output
+_JS_VENDOR_PREFIXES = re.compile(
+    r"^(meta-textgeneration-|meta-vlm-|huggingface-llm-|huggingface-reasoning-|"
+    r"huggingface-vlm-|openai-reasoning-|nova-textgeneration-)",
+    re.IGNORECASE,
+)
+
+# Tokens that should keep their original case/form in the canonical name
+_CASE_OVERRIDES = {
+    "llama": "Llama",
+    "qwen": "Qwen",
+    "deepseek": "DeepSeek",
+    "gpt": "GPT",
+    "oss": "OSS",
+    "r1": "R1",
+    "nova": "Nova",
+    "micro": "Micro",
+    "lite": "Lite",
+    "pro": "Pro",
+    "premier": "Premier",
+    "instruct": "Instruct",
+    "vision": "Vision",
+    "scout": "Scout",
+    "distill": "Distill",
+    "v2": "V2",
+    "16e": "16E",
+}
+
+# Pattern: size tokens with leading zero → fractional billions  e.g. "06b" → "0.6B"
+_FRACTIONAL_SIZE_RE = re.compile(r"^0(\d)([bBmMkK])$")
+# Pattern: plain size tokens e.g. "8b", "70b", "120b"
+_SIZE_RE = re.compile(r"^\d+[bBmMkK]$")
+
+
+def _humanize_js_id(js_id: str) -> str:
+    """Convert a JumpStart model ID to a canonical human-readable model name.
+
+    Examples:
+      "meta-textgeneration-llama-3-1-8b-instruct"  → "Llama 3.1 8B Instruct"
+      "huggingface-llm-qwen2-5-14b-instruct"        → "Qwen 2.5 14B Instruct"
+      "huggingface-reasoning-qwen3-4b"              → "Qwen 3 4B"
+      "huggingface-reasoning-qwen3-06b"             → "Qwen 3 0.6B"
+      "huggingface-reasoning-qwen3-1-7b"            → "Qwen 3 1.7B"
+      "huggingface-vlm-qwen3-5-4b"                  → "Qwen 3.5 4B"
+      "openai-reasoning-gpt-oss-20b"                → "GPT-OSS 20B"
+      "deepseek-llm-r1-distill-llama-8b"            → "DeepSeek R1 Distill Llama 8B"
+      "nova-textgeneration-lite"                    → "Nova Lite 1.0"
+      "nova-textgeneration-lite-v2"                 → "Nova Lite 2.0"
+      "nova-lite-1-5"                               → "Nova Lite 1.5"
+      "nova-premier"                                → "Nova Premier 1.0"
+    """
+    # Nova JS IDs: derive variant and version, return early
+    # Patterns: nova-textgeneration-{variant}[-v{N}], nova-{variant}[-{M}-{N}], nova-premier
+    nova_m = re.match(
+        r"^nova-(?:textgeneration-)?(\w+?)(?:-v(\d+)|-(\d+)-(\d+))?$",
+        js_id,
+        re.IGNORECASE,
+    )
+    if nova_m:
+        variant = nova_m.group(1).capitalize()  # lite → Lite, micro → Micro, etc.
+        if nova_m.group(2):
+            # -v2 suffix → "2.0"
+            version = f"{nova_m.group(2)}.0"
+        elif nova_m.group(3) and nova_m.group(4):
+            # -1-5 suffix → "1.5"
+            version = f"{nova_m.group(3)}.{nova_m.group(4)}"
+        else:
+            version = "1.0"
+        return f"Nova {variant} {version}"
+
+    # deepseek-llm- → strip only "-llm-", keep "deepseek-"
+    js_id = re.sub(r"^deepseek-llm-", "deepseek-", js_id, flags=re.IGNORECASE)
+
+    # nova- prefix without textgeneration: strip entirely, will add "Nova" via token
+    js_id = re.sub(r"^nova-(?!textgeneration)", "nova-", js_id, flags=re.IGNORECASE)
+
+    # Strip standard vendor/framework prefixes
+    core = _JS_VENDOR_PREFIXES.sub("", js_id)
+
+    # Special-case: gpt-oss-NNb → "GPT-OSS NNb"
+    m = re.match(r"gpt-oss-(.+)$", core, re.IGNORECASE)
+    if m:
+        rest = m.group(1).upper()
+        return f"GPT-OSS {rest}"
+
+    parts = core.split("-")
+    result = []
+    i = 0
+    while i < len(parts):
+        p = parts[i]
+
+        # Handle qwen{N} tokens: "qwen2" → version 2, "qwen3" → version 3
+        qwen_m = re.match(r"^qwen(\d+)$", p, re.IGNORECASE)
+        if qwen_m:
+            major = qwen_m.group(1)
+            # Peek at next token — if it's a single digit it's the minor version
+            if i + 1 < len(parts) and parts[i + 1].isdigit():
+                result.append(f"Qwen {major}.{parts[i+1]}")
+                i += 2
+            else:
+                result.append(f"Qwen {major}")
+                i += 1
+            continue
+
+        # Fractional size: "06b" → "0.6B", "03b" → "0.3B"
+        fm = _FRACTIONAL_SIZE_RE.match(p)
+        if fm:
+            result.append(f"0.{fm.group(1)}{fm.group(2).upper()}")
+            i += 1
+            continue
+
+        # Version number merging: two adjacent pure-digit tokens → "N.M"
+        # e.g. ["3","1"] → "3.1"  (only when not preceded by qwen handling above)
+        if p.isdigit() and i + 1 < len(parts) and parts[i + 1].isdigit():
+            result.append(f"{p}.{parts[i+1]}")
+            i += 2
+            continue
+
+        # Fractional size from digit + size token: "1" + "5b" → "1.5B"
+        # e.g. qwen-1-5b → [..., "1", "5b"] → "1.5B"
+        if p.isdigit() and i + 1 < len(parts) and _SIZE_RE.match(parts[i + 1]):
+            size = parts[i + 1]
+            result.append(f"{p}.{size[:-1]}{size[-1].upper()}")
+            i += 2
+            continue
+
+        # Plain size tokens: "8b" → "8B", "70b" → "70B"
+        if _SIZE_RE.match(p):
+            result.append(p.upper())
+            i += 1
+            continue
+
+        # Apply case overrides, else capitalize
+        lower_p = p.lower()
+        result.append(_CASE_OVERRIDES.get(lower_p, p.capitalize()))
+        i += 1
+
+    return " ".join(result)
+
+
+def _build_js_canonical_map() -> dict:
+    """Build {jumpstart_id: canonical_name} from all unique IDs in the map."""
+    return {js_id: _humanize_js_id(js_id) for js_id in set(_JS_MAP.values())}
+
+
+_JS_CANONICAL: dict = _build_js_canonical_map()
+
+
+# =============================================================================
+# MODEL SHORT NAME — model identifier only, always via JumpStart ID humanization
+# =============================================================================
+
+
+def _extract_model_short_name(display_name: str, run_name: str = "", model_type: str = "") -> str:
+    """Return canonical model name, always derived from JumpStart ID logic.
+
+    Priority:
+      1. Look up run_name in jumpstart_model-id_map.json → get canonical JumpStart ID
+         → humanize that ID (guarantees cross-framework consistency)
+      2. run_name not in map → look up model_type in jumpstart_model-id_map.json
+         (handles Nova recipes where run.name is generic like "my-fullrank-run"
+          but run.model_type like "amazon.nova-pro-v1:0:300k" is a valid map key)
+      3. model_type also not in map → apply _humanize_js_id directly to run_name
+         (still uses the same consistent logic, no display_name string parsing)
+      4. No run_name or model_type → fall back to display_name as-is
+    """
+    if run_name:
+        # Prefer the canonical JumpStart ID via run_name if available
+        if run_name in _JS_MAP:
+            return _humanize_js_id(_JS_MAP[run_name])
+        # Fall back to model_type lookup (e.g. Nova: "amazon.nova-pro-v1:0:300k")
+        if model_type and model_type in _JS_MAP:
+            return _humanize_js_id(_JS_MAP[model_type])
+        # Last resort: humanize run_name directly
+        return _humanize_js_id(run_name)
+    # No run.name at all — return display_name unchanged
+    return display_name
+
+
+# =============================================================================
 # LAUNCHER SCRIPT FINDER
 # =============================================================================
 
@@ -554,8 +749,12 @@ def parse_recipe(recipe_path: Path) -> Optional[Recipe]:
         framework = "nova"  # Use nova-specific technique detection
         technique = _detect_technique(data, "evaluation", path_parts)
 
+    run_name = str(_get(data, "run", "name") or "")
+    model_type = str(_get(data, "run", "model_type") or "")
+    model_name = _extract_model_name(data, stem)
     return Recipe(
-        model=_extract_model_name(data, stem),
+        model=model_name,
+        model_short_name=_extract_model_short_name(model_name, run_name, model_type),
         framework=framework,
         technique=technique,
         adapter=adapter,
@@ -599,7 +798,6 @@ def _make_table(recipes: List[Recipe]) -> List[str]:
         ("Seq Length", lambda r: f"{r.seq_len:,}" if r.seq_len else "-"),
         ("Nodes", lambda r: str(r.nodes) if r.nodes else "-"),
         ("Instance Type", lambda r: ", ".join(r.instance_types) if r.instance_types else "-"),
-        ("Version", lambda r: r.version or "-"),
         ("Recipe", lambda r: f"[{Path(r.recipe_path).name}](../{r.recipe_path})"),
         ("Launcher Script", lambda r: f"[{Path(r.script_path).name}](../{r.script_path})" if r.script_path else "-"),
     ]
@@ -620,10 +818,19 @@ def _generate_section(title, recipes, filter_fn, group_by, intro):
         lines.extend([intro, ""])
     if group_by == "family":
         for fam in sorted(set(r.family for r in matched)):
-            fam_recipes = sorted([r for r in matched if r.family == fam], key=lambda r: (r.model, r.technique))
+            fam_recipes = [r for r in matched if r.family == fam]
             lines.extend([f"### {fam} Models", ""])
-            lines.extend(_make_table(fam_recipes))
-            lines.append("")
+
+            # Sub-group by model_short_name (h4 per model)
+            model_names = sorted(set(r.model_short_name for r in fam_recipes))
+            for model_name in model_names:
+                model_recipes = sorted(
+                    [r for r in fam_recipes if r.model_short_name == model_name],
+                    key=lambda r: (r.technique, r.adapter),
+                )
+                lines.extend([f"#### {model_name}", ""])
+                lines.extend(_make_table(model_recipes))
+                lines.append("")
     else:
         lines.extend(_make_table(sorted(matched, key=lambda r: (r.model, r.technique))))
         lines.append("")

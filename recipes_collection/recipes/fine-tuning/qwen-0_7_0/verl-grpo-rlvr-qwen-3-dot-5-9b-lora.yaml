@@ -189,7 +189,7 @@ training_config:
         entropy_from_logits_with_chunking: false
         forward_only: true
         forward_prefetch: false
-        fsdp_size: 8
+        fsdp_size: -1
         full_determinism: false
         model_dtype: bfloat16
         offload_policy: false
@@ -400,7 +400,7 @@ training_config:
         entropy_from_logits_with_chunking: false
         forward_only: false
         forward_prefetch: false
-        fsdp_size: 8
+        fsdp_size: -1
         full_determinism: false
         model_dtype: bfloat16
         offload_policy: false
@@ -680,4 +680,4 @@ training_config:
     validation_data_dir: null
   transfer_queue:
     enable: false
-version: 2.1.0
+version: 2.1.1

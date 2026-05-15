@@ -11,3 +11,6 @@ training_config:
   mlflow:
     run_id: ''
     tracking_uri: ''
+  trainer_callbacks:
+    - _target_: metering_callback.MeteringCallback
+      output_path: /opt/ml/metering

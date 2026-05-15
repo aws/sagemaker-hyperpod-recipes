@@ -178,21 +178,27 @@
                         32,
                         64
                     ],
-                    "default": 64
+                    "default": 64,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
                     "max": 100,
-                    "default": 2
+                    "default": 2,
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 1e-05
+                    "default": 1e-05,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -205,14 +211,18 @@
                         160,
                         192
                     ],
-                    "default": 128
+                    "default": 128,
+                    "category": "hyperparameter",
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
                 },
                 "learning_rate_ratio": {
                     "type": "float",
                     "required": false,
                     "min": 1.0,
                     "max": 70.0,
-                    "default": 16.0
+                    "default": 16.0,
+                    "category": "hyperparameter",
+                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
                 },
                 "namespace": {
                     "type": "string",
@@ -224,7 +234,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -246,21 +258,27 @@
                     "required": true,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
                 },
                 "warmup_steps": {
                     "type": "integer",
                     "required": true,
                     "min": 0,
                     "max": 100,
-                    "default": 10
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
                 },
                 "min_lr": {
                     "type": "float",
                     "required": true,
                     "min": 1e-07,
                     "max": 1.0,
-                    "default": 1e-06
+                    "default": 1e-06,
+                    "category": "hyperparameter",
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
                 }
             },
             "recipe_metadata_helpers": {
@@ -373,7 +391,9 @@
                 "reasoning_enabled": {
                     "type": "boolean",
                     "required": true,
-                    "default": true
+                    "default": true,
+                    "category": "hyperparameter",
+                    "description": "When enabled, activates chain-of-thought reasoning mode during training."
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -384,7 +404,9 @@
                         128,
                         256
                     ],
-                    "default": 32
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_steps": {
                     "type": "integer",
@@ -399,7 +421,9 @@
                                 "default": 10
                             }
                         }
-                    }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
                 },
                 "save_steps": {
                     "type": "integer",
@@ -414,14 +438,18 @@
                                 "default": 10
                             }
                         }
-                    }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 1e-05
+                    "default": 1e-05,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -434,14 +462,18 @@
                         160,
                         192
                     ],
-                    "default": 64
+                    "default": 64,
+                    "category": "hyperparameter",
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
                 },
                 "learning_rate_ratio": {
                     "type": "float",
                     "required": false,
                     "min": 1.0,
                     "max": 70.0,
-                    "default": 64.0
+                    "default": 64.0,
+                    "category": "hyperparameter",
+                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
                 },
                 "namespace": {
                     "type": "string",
@@ -453,7 +485,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -475,28 +509,36 @@
                     "required": false,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 1.0
+                    "default": 1.0,
+                    "category": "hyperparameter",
+                    "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only)."
                 },
                 "warmup_steps": {
                     "type": "integer",
                     "required": true,
                     "min": 0,
                     "max": 100,
-                    "default": 15
+                    "default": 15,
+                    "category": "hyperparameter",
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
                 },
                 "min_lr": {
                     "type": "float",
                     "required": true,
                     "min": 1e-07,
                     "max": 1.0,
-                    "default": 1e-06
+                    "default": 1e-06,
+                    "category": "hyperparameter",
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
                 },
                 "weight_decay": {
                     "type": "float",
                     "required": true,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
                 }
             },
             "recipe_metadata_helpers": {
@@ -609,12 +651,16 @@
                         128,
                         256
                     ],
-                    "default": 32
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "reasoning_enabled": {
                     "type": "boolean",
                     "required": true,
-                    "default": true
+                    "default": true,
+                    "category": "hyperparameter",
+                    "description": "When enabled, activates chain-of-thought reasoning mode during training."
                 },
                 "max_steps": {
                     "type": "integer",
@@ -629,7 +675,9 @@
                                 "default": 100
                             }
                         }
-                    }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
                 },
                 "save_steps": {
                     "type": "integer",
@@ -644,14 +692,18 @@
                                 "default": 100
                             }
                         }
-                    }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 1e-05
+                    "default": 1e-05,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "namespace": {
                     "type": "string",
@@ -663,7 +715,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -685,28 +739,36 @@
                     "required": false,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 1.0
+                    "default": 1.0,
+                    "category": "hyperparameter",
+                    "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only)."
                 },
                 "warmup_steps": {
                     "type": "integer",
                     "required": true,
                     "min": 0,
                     "max": 100,
-                    "default": 15
+                    "default": 15,
+                    "category": "hyperparameter",
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
                 },
                 "min_lr": {
                     "type": "float",
                     "required": true,
                     "min": 1e-07,
                     "max": 1.0,
-                    "default": 1e-06
+                    "default": 1e-06,
+                    "category": "hyperparameter",
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
                 },
                 "weight_decay": {
                     "type": "float",
                     "required": true,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
                 }
             },
             "recipe_metadata_helpers": {
@@ -850,28 +912,36 @@
                         32,
                         64
                     ],
-                    "default": 32
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
                     "max": 100,
-                    "default": 2
+                    "default": 2,
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 1e-05
+                    "default": 1e-05,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "adam_beta": {
                     "type": "float",
                     "required": false,
                     "min": 0.001,
                     "max": 0.1,
-                    "default": 0.1
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -884,14 +954,18 @@
                         160,
                         192
                     ],
-                    "default": 128
+                    "default": 128,
+                    "category": "hyperparameter",
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
                 },
                 "learning_rate_ratio": {
                     "type": "float",
                     "required": false,
                     "min": 1.0,
                     "max": 70.0,
-                    "default": 16.0
+                    "default": 16.0,
+                    "category": "hyperparameter",
+                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
                 },
                 "namespace": {
                     "type": "string",
@@ -903,7 +977,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -925,21 +1001,27 @@
                     "required": true,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
                 },
                 "warmup_steps": {
                     "type": "integer",
                     "required": true,
                     "min": 0,
                     "max": 100,
-                    "default": 10
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
                 },
                 "min_lr": {
                     "type": "float",
                     "required": true,
                     "min": 1e-07,
                     "max": 1.0,
-                    "default": 1e-06
+                    "default": 1e-06,
+                    "category": "hyperparameter",
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
                 }
             },
             "recipe_metadata_helpers": {
@@ -1068,21 +1150,27 @@
                         32,
                         64
                     ],
-                    "default": 16
+                    "default": 16,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
                     "max": 100,
-                    "default": 2
+                    "default": 2,
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 5e-06
+                    "default": 5e-06,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "namespace": {
                     "type": "string",
@@ -1094,7 +1182,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -1116,21 +1206,27 @@
                     "required": true,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
                 },
                 "warmup_steps": {
                     "type": "integer",
                     "required": true,
                     "min": 0,
                     "max": 100,
-                    "default": 10
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
                 },
                 "min_lr": {
                     "type": "float",
                     "required": true,
                     "min": 1e-07,
                     "max": 1.0,
-                    "default": 1e-06
+                    "default": 1e-06,
+                    "category": "hyperparameter",
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
                 }
             },
             "recipe_metadata_helpers": {
@@ -1261,28 +1357,36 @@
                         64,
                         128
                     ],
-                    "default": 32
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
                     "max": 100,
-                    "default": 3
+                    "default": 3,
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 1e-05
+                    "default": 1e-05,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "adam_beta": {
                     "type": "float",
                     "required": false,
                     "min": 0.001,
                     "max": 0.1,
-                    "default": 0.1
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
                 },
                 "namespace": {
                     "type": "string",
@@ -1294,7 +1398,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -1316,21 +1422,27 @@
                     "required": true,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
                 },
                 "warmup_steps": {
                     "type": "integer",
                     "required": true,
                     "min": 0,
                     "max": 100,
-                    "default": 10
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
                 },
                 "min_lr": {
                     "type": "float",
                     "required": true,
                     "min": 1e-07,
                     "max": 1.0,
-                    "default": 1e-06
+                    "default": 1e-06,
+                    "category": "hyperparameter",
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
                 }
             },
             "recipe_metadata_helpers": {
@@ -1424,14 +1536,18 @@
                                 "nova-textgeneration-pro": 160
                             }
                         }
-                    }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 3e-06
+                    "default": 3e-06,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "replicas": {
                     "type": "integer",
@@ -1475,7 +1591,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -1547,7 +1665,9 @@
                     "required": false,
                     "min": 5000,
                     "max": 5120,
-                    "default": 5120
+                    "default": 5120,
+                    "category": "hyperparameter",
+                    "description": "Maximum number of tokens allowed for the generated response portion during training or evaluation."
                 },
                 "namespace": {
                     "type": "string",
@@ -1559,7 +1679,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 }
             },
             "recipe_metadata_helpers": {
@@ -1652,7 +1774,9 @@
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
                 },
                 "namespace": {
                     "type": "string",
@@ -1756,7 +1880,9 @@
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
                 },
                 "namespace": {
                     "type": "string",
@@ -1860,7 +1986,9 @@
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -1963,7 +2091,9 @@
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -2060,7 +2190,9 @@
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -2168,7 +2300,9 @@
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
                 },
                 "lambda_arn": {
                     "type": "string",
@@ -2291,7 +2425,9 @@
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
                 },
                 "lambda_arn": {
                     "type": "string",
@@ -2441,21 +2577,27 @@
                         128,
                         256
                     ],
-                    "default": 256
+                    "default": 256,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_epochs": {
                     "type": "integer",
                     "required": true,
                     "min": 1,
                     "max": 100,
-                    "default": 1
+                    "default": 1,
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 1e-05
+                    "default": 1e-05,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "namespace": {
                     "type": "string",
@@ -2467,7 +2609,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -2589,21 +2733,27 @@
                         128,
                         256
                     ],
-                    "default": 256
+                    "default": 256,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_steps": {
                     "type": "integer",
                     "required": true,
                     "min": 10,
                     "max": 100000,
-                    "default": 10
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 0,
                     "max": 1,
-                    "default": 1e-05
+                    "default": 1e-05,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "namespace": {
                     "type": "string",
@@ -2615,7 +2765,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -2726,7 +2878,9 @@
                     "required": true,
                     "min": 1e-08,
                     "max": 0.001,
-                    "default": 7e-07
+                    "default": 7e-07,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "max_steps": {
                     "type": "integer",
@@ -2741,7 +2895,9 @@
                                 "default": 10
                             }
                         }
-                    }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
                 },
                 "number_generation": {
                     "type": "integer",
@@ -2758,14 +2914,18 @@
                         32,
                         64
                     ],
-                    "default": 32
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
                 },
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
                     "min": 16,
                     "max": 256,
-                    "default": 256
+                    "default": 256,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_length": {
                     "type": "integer",
@@ -2784,7 +2944,9 @@
                     "required": false,
                     "min": 1.0,
                     "max": 70.0,
-                    "default": 64.0
+                    "default": 64.0,
+                    "category": "hyperparameter",
+                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -2806,7 +2968,9 @@
                     "required": true,
                     "min": 0,
                     "max": 100000,
-                    "default": 10
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
                 }
             },
             "recipe_metadata_helpers": {
@@ -2897,7 +3061,9 @@
                     "required": true,
                     "min": 1e-08,
                     "max": 0.001,
-                    "default": 7e-07
+                    "default": 7e-07,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "max_steps": {
                     "type": "integer",
@@ -2912,14 +3078,18 @@
                                 "default": 10
                             }
                         }
-                    }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
                 },
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
                     "min": 16,
                     "max": 256,
-                    "default": 256
+                    "default": 256,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_length": {
                     "type": "integer",
@@ -2945,7 +3115,9 @@
                     "required": true,
                     "min": 1,
                     "max": 131072,
-                    "default": 8192
+                    "default": 8192,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -2967,7 +3139,9 @@
                     "required": true,
                     "min": 0,
                     "max": 100000,
-                    "default": 10
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
                 }
             },
             "recipe_metadata_helpers": {
@@ -3037,7 +3211,9 @@
                     "required": true,
                     "min": 1e-07,
                     "max": 0.001,
-                    "default": 1e-05
+                    "default": 1e-05,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "max_steps": {
                     "type": "integer",
@@ -3052,7 +3228,9 @@
                                 "default": 10
                             }
                         }
-                    }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -3062,14 +3240,18 @@
                         32,
                         64
                     ],
-                    "default": 32
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
                 },
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
                     "min": 16,
                     "max": 128,
-                    "default": 64
+                    "default": 64,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_length": {
                     "type": "integer",
@@ -3083,14 +3265,18 @@
                     "required": false,
                     "min": 0.0,
                     "max": 100.0,
-                    "default": 64.0
+                    "default": 64.0,
+                    "category": "hyperparameter",
+                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
                 },
                 "save_steps": {
                     "type": "integer",
                     "required": true,
                     "min": 0,
                     "max": 100000,
-                    "default": 10
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
                 }
             },
             "recipe_metadata_helpers": {
@@ -3158,14 +3344,18 @@
                     "required": true,
                     "min": 1e-07,
                     "max": 0.001,
-                    "default": 1e-05
+                    "default": 1e-05,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
                 },
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
                     "min": 16,
                     "max": 256,
-                    "default": 64
+                    "default": 64,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
                 },
                 "max_length": {
                     "type": "integer",
@@ -3187,14 +3377,18 @@
                                 "default": 10
                             }
                         }
-                    }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
                 },
                 "save_steps": {
                     "type": "integer",
                     "required": true,
                     "min": 0,
                     "max": 100000,
-                    "default": 10
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
                 }
             },
             "recipe_metadata_helpers": {

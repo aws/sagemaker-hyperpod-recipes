@@ -16,7 +16,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 2.5 32B GRPO RLVR Fine-Tuning"
-version: "1.3.0"
+version: 1.3.1
 instance_types: ["ml.p4d.24xlarge","ml.p4de.24xlarge","ml.p5.48xlarge"]
 
 run:

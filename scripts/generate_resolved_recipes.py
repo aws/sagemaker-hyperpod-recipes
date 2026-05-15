@@ -25,7 +25,10 @@ Usage:
 """
 
 import argparse
+import os
 import sys
+import time
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 from omegaconf import OmegaConf
@@ -36,7 +39,7 @@ _ROOT_DIR = _SCRIPT_DIR.parent.parent
 sys.path.insert(0, str(_ROOT_DIR))
 
 from hyperpod_recipes import list_recipes
-from hyperpod_recipes.recipe import RECIPES_DIR
+from hyperpod_recipes.recipe import RECIPES_DIR, Recipe
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "recipes_collection" / "recipes"
 
@@ -62,33 +65,44 @@ def list_resolved_files() -> set[Path]:
     return resolved
 
 
-def _is_direct_copy_recipe(recipe) -> bool:
-    """Check if a recipe should be directly copied instead of Hydra-resolved."""
-    return any(recipe.path.startswith(str(p)) for p in DIRECT_COPY_PATHS)
+def _is_direct_copy_path(recipe_path: str) -> bool:
+    return any(recipe_path.startswith(str(p)) for p in DIRECT_COPY_PATHS)
+
+
+def _resolve_one(recipe_path: str) -> tuple[str, str]:
+    """Resolve a single recipe to (name, yaml_content). Runs in a worker process."""
+    recipe = Recipe(recipe_path)
+    if _is_direct_copy_path(recipe_path):
+        content = Path(recipe_path).read_text()
+    else:
+        content = OmegaConf.to_yaml(recipe.config, sort_keys=True)
+    return recipe.name, content
 
 
 def generate_resolved_recipes(write=False):
     """Generate all resolved recipe YAMLs."""
     recipes = list_recipes()
+    recipe_paths = [r.path for r in recipes]
 
     if write:
         print(f"Generating {len(recipes)} resolved recipe YAMLs...")
     else:
         print(f"Checking {len(recipes)} resolved recipe YAMLs...")
 
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    max_workers = min(len(recipe_paths), os.cpu_count() or 1)
+    t0 = time.perf_counter()
+    with ProcessPoolExecutor(max_workers=max_workers) as pool:
+        results = list(pool.map(_resolve_one, recipe_paths))
+    elapsed = time.perf_counter() - t0
+    print(f"Resolved {len(results)} recipes in {elapsed:.1f}s ({max_workers} workers)")
+
     checked_files = set()
 
-    for recipe in recipes:
-        output_path = OUTPUT_DIR / f"{recipe.name}.yaml"
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+    for name, expected_content in results:
+        output_path = OUTPUT_DIR / f"{name}.yaml"
         checked_files.add(output_path)
-
-        if _is_direct_copy_recipe(recipe):
-            # Nova recipes are self-contained YAMLs without Hydra composition.
-            # Copy directly to preserve comments.
-            expected_content = Path(recipe.path).read_text()
-        else:
-            expected_content = OmegaConf.to_yaml(recipe.config, sort_keys=True)
 
         if write:
             print(f"Writing recipe {output_path}")
@@ -98,22 +112,40 @@ def generate_resolved_recipes(write=False):
             if output_path.exists():
                 actual_content = output_path.read_text()
                 if actual_content != expected_content:
-                    raise ResolvedRecipeError("There is a mismatch in the resolved recipes")
+                    import difflib
+
+                    diff = difflib.unified_diff(
+                        actual_content.splitlines(keepends=True),
+                        expected_content.splitlines(keepends=True),
+                        fromfile=f"{output_path} (on disk)",
+                        tofile=f"{output_path} (expected from source)",
+                    )
+                    diff_str = "".join(diff)
+                    raise ResolvedRecipeError(
+                        f"Mismatch in resolved recipe: {output_path}\n"
+                        f"Run `python scripts/generate_resolved_recipes.py` (without --check) to regenerate.\n"
+                        f"Diff:\n{diff_str}"
+                    )
             else:
-                raise ResolvedRecipeError("There is a missing file in the resolved recipes")
+                raise ResolvedRecipeError(
+                    f"Missing resolved recipe file: {output_path}\n"
+                    f"Run `python scripts/generate_resolved_recipes.py` (without --check) to regenerate."
+                )
 
     for to_delete in list_resolved_files().difference(checked_files):
         if write:
-            print(f"Removing deleted recipe {output_path}")
+            print(f"Removing deleted recipe {to_delete}")
             to_delete.unlink()
         else:
-            print(f"Checking found deleted recipe {output_path}")
-            raise ResolvedRecipeError("There is an unexpected file in the resolved recipes")
+            raise ResolvedRecipeError(
+                f"Unexpected resolved recipe file (no longer has a source): {to_delete}\n"
+                "Run `python scripts/generate_resolved_recipes.py` (without --check) to regenerate."
+            )
 
     if write:
-        print(f"Generation successful")
+        print("Generation successful")
     else:
-        print(f"Check passed")
+        print("Check passed")
 
 
 def main():

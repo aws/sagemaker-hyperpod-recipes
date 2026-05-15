@@ -24,7 +24,7 @@ offload_policy: false
 reshard_after_forward: true
 
 # Number of GPUs in each FSDP shard group; -1 means auto
-fsdp_size: 8
+fsdp_size: -1
 
 # Only for FSDP1: FSDP1 configuration, prefetch the next forward-pass all-gather
 # before the current forward computation.

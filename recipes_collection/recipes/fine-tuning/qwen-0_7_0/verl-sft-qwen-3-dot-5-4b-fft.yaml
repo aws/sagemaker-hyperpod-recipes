@@ -49,7 +49,7 @@ training_config:
     entropy_from_logits_with_chunking: false
     forward_only: false
     forward_prefetch: true
-    fsdp_size: 8
+    fsdp_size: -1
     full_determinism: false
     model_dtype: bf16
     offload_policy: false
@@ -165,4 +165,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.1.0
+version: 2.1.1
