@@ -6,6 +6,8 @@ import threading
 import time
 from pathlib import Path
 
+from botocore.exceptions import ClientError
+
 from .base_launcher import BaseLauncher
 from .launcher_utils import (
     _get_recipe_type_info,
@@ -74,8 +76,9 @@ class ServerlessValidationLauncher(BaseLauncher):
 
         has_llmft = hasattr(self.config.container_info, "llmft")
         has_verl = hasattr(self.config.container_info, "verl")
+        has_verl_0_7_0 = hasattr(self.config.container_info, "verl_0_7_0")
 
-        if not has_llmft and not has_verl:
+        if not has_llmft and not has_verl and not has_verl_0_7_0:
             self.logger.info("No smjobs images configured, skipping Hub content override")
             return
 
@@ -85,10 +88,10 @@ class ServerlessValidationLauncher(BaseLauncher):
             if run_name not in self.model_mapping:
                 self.logger.warning(f"Run name '{run_name}' from recipe '{recipe}' not found in model mapping")
                 return
-            models_to_override = [run_name]
+            models_to_override = [(run_name, recipe)]
             self.logger.info(f"Overriding Hub content for model '{run_name}' (from recipe: {recipe})")
         else:
-            models_to_override = list(self.model_mapping.keys())
+            models_to_override = [(name, None) for name in self.model_mapping.keys()]
             self.logger.info(f"Overriding Hub content for all {len(models_to_override)} models")
 
         success = self._auto_update_hub_content(models_to_override)
@@ -110,12 +113,12 @@ class ServerlessValidationLauncher(BaseLauncher):
                 f"Hub content override failed for models: {models_to_override}. " f"Manual fallback: {manual_cmd}"
             )
 
-    def _auto_update_hub_content(self, model_names: list) -> bool:
+    def _auto_update_hub_content(self, model_entries: list) -> bool:
         """
         Override Hub content for the specified models with local config values.
 
         Args:
-            model_names: List of model run_names to update
+            model_entries: List of (model_run_name, recipe_path) tuples to update
 
         Returns:
             True if all updates succeeded, False if any failed
@@ -123,7 +126,7 @@ class ServerlessValidationLauncher(BaseLauncher):
         Raises:
             Exception: If initialization fails (e.g., bad config, auth failure)
         """
-        if not model_names:
+        if not model_entries:
             return True
 
         # Get configuration
@@ -139,14 +142,14 @@ class ServerlessValidationLauncher(BaseLauncher):
             client_kwargs["endpoint_url"] = endpoint_url
         sagemaker = self.boto_session.client("sagemaker", **client_kwargs)
 
-        self.logger.info(f"Updating {len(model_names)} models in Hub: {hub_name}")
+        self.logger.info(f"Updating {len(model_entries)} models in Hub: {hub_name}")
 
         success_count = 0
         failed_models = []
 
-        for model_name in model_names:
+        for model_name, recipe_path in model_entries:
             try:
-                if self._update_single_hub_content(sagemaker, model_name):
+                if self._update_single_hub_content(sagemaker, model_name, recipe_path):
                     success_count += 1
                 else:
                     failed_models.append(model_name)
@@ -157,19 +160,20 @@ class ServerlessValidationLauncher(BaseLauncher):
 
         # Report results
         if failed_models:
-            self.logger.warning(f"Updated {success_count}/{len(model_names)} models. Failed: {failed_models}")
+            self.logger.warning(f"Updated {success_count}/{len(model_entries)} models. Failed: {failed_models}")
             return False
         else:
             self.logger.info(f"✓ Successfully updated all {success_count} models")
             return True
 
-    def _update_single_hub_content(self, sagemaker_client, model_name: str) -> bool:
+    def _update_single_hub_content(self, sagemaker_client, model_name: str, recipe_path: str = None) -> bool:
         """
         Override Hub content for a single model with local config values.
 
         Args:
             sagemaker_client: Boto3 SageMaker client
             model_name: Model run_name to update
+            recipe_path: Optional recipe file path for config-driven container lookup
 
         Returns:
             True if update succeeded, False otherwise
@@ -188,19 +192,30 @@ class ServerlessValidationLauncher(BaseLauncher):
             self.logger.warning(f"  No model_id found for {model_name}, skipping")
             return False
 
-        # Infer recipe type from run_name
-        recipe_type = "verl" if any(x in model_name.lower() for x in ["verl", "grpo", "rlvr", "rlaif"]) else "llmft"
+        # Infer recipe type from config-driven detection or fall back to keyword matching
+        if recipe_path:
+            try:
+                recipe_type_info = _get_recipe_type_info(self.config, recipe_path)
+                container_key = recipe_type_info.get("container_key", "verl")
+            except (ValueError, AttributeError):
+                container_key = (
+                    "verl" if any(x in model_name.lower() for x in ["verl", "grpo", "rlvr", "rlaif"]) else "llmft"
+                )
+        else:
+            container_key = (
+                "verl" if any(x in model_name.lower() for x in ["verl", "grpo", "rlvr", "rlaif"]) else "llmft"
+            )
 
-        # Get expected image based on recipe type
-        expected_image = self._get_expected_image(recipe_type)
+        # Get expected image based on container key
+        expected_image = self._get_expected_image(container_key)
 
         if not expected_image:
             self.logger.warning(
-                f"  Could not determine expected image for {model_name} (recipe_type: {recipe_type}), skipping"
+                f"  Could not determine expected image for {model_name} (container_key: {container_key}), skipping"
             )
             return False
 
-        self.logger.info(f"  Overriding {model_name} ({recipe_type}) with image: {expected_image}")
+        self.logger.info(f"  Overriding {model_name} ({container_key}) with image: {expected_image}")
 
         # Build model ARN and extract components
         model_arn = self._build_model_arn(model_id)
@@ -235,6 +250,13 @@ class ServerlessValidationLauncher(BaseLauncher):
         # Update the Hub content document
         hub_doc["RecipeCollection"] = recipes
 
+        # Determine starting version from describe response
+        current_version = response.get("HubContentVersion", "1.0.0")
+        parts = current_version.split(".")
+        if len(parts) != 3:
+            parts = ["1", "0", "0"]
+        next_patch = int(parts[2]) + 1
+
         # Prepare import parameters
         import_params = {
             "HubName": hub_name_from_arn,
@@ -244,7 +266,7 @@ class ServerlessValidationLauncher(BaseLauncher):
             "DocumentSchemaVersion": "2.4.0",
         }
 
-        # Preserve optional metadata fields (exclude version to auto-generate new version)
+        # Preserve optional metadata fields
         for field in [
             "HubContentDisplayName",
             "HubContentDescription",
@@ -254,26 +276,36 @@ class ServerlessValidationLauncher(BaseLauncher):
             if field in response:
                 import_params[field] = response[field]
 
-        # Import updated content (creates new version)
-        sagemaker_client.import_hub_content(**import_params)
+        # Import with retry: if version already exists, bump patch and retry
+        max_retries = 10
+        for attempt in range(max_retries):
+            import_params["HubContentVersion"] = f"{parts[0]}.{parts[1]}.{next_patch}"
+            try:
+                sagemaker_client.import_hub_content(**import_params)
+                break
+            except ClientError as e:
+                if e.response["Error"]["Code"] == "ResourceInUse":
+                    next_patch += 1
+                    if attempt == max_retries - 1:
+                        raise
+                else:
+                    raise
 
         self.logger.info(f"  ✓ Successfully overrode {model_name} ({override_count} recipes)")
         return True
 
-    def _get_expected_image(self, recipe_type: str) -> str:
+    def _get_expected_image(self, container_key: str) -> str:
         """
-        Get expected image URI for a recipe type.
+        Get expected image URI for a container key.
 
         Args:
-            recipe_type: Recipe type ('llmft' or 'verl')
+            container_key: Container key from recipe_type_config (e.g., 'llmft', 'verl', 'verl_0_7_0')
 
         Returns:
             Expected image URI or None if not found
         """
-        if recipe_type == "llmft" and hasattr(self.config.container_info, "llmft"):
-            return self.config.container_info.llmft.smjobs
-        elif recipe_type == "verl" and hasattr(self.config.container_info, "verl"):
-            return self.config.container_info.verl.smjobs
+        if hasattr(self.config.container_info, container_key):
+            return getattr(self.config.container_info, container_key).smjobs
         return None
 
     def _extract_customization_technique(self, recipe_path: str) -> str:
@@ -526,7 +558,7 @@ class ServerlessValidationLauncher(BaseLauncher):
             self.logger.info(f"  Dataset ARN: {dataset_arn}")
 
             # Execute command
-            result = subprocess.run(command, capture_output=True, text=True, check=False)
+            result = subprocess.run(command, capture_output=True, text=True, check=False, env=self.aws_env)
 
             # Write detailed output to log file
             self._write_debug_output(result, log_file, command)
@@ -710,9 +742,7 @@ class ServerlessValidationLauncher(BaseLauncher):
             # === ENHANCED COMMAND EXECUTION ===
 
             # Execute with enhanced error capture
-            result = subprocess.run(
-                command, capture_output=True, text=True, check=False  # Don't raise exception, we'll handle it
-            )
+            result = subprocess.run(command, capture_output=True, text=True, check=False, env=self.aws_env)
 
             # Write detailed output to log file
             self._write_debug_output(result, log_file, command)
@@ -790,7 +820,7 @@ class ServerlessValidationLauncher(BaseLauncher):
                     ]
                 )
 
-                result = subprocess.run(describe_command, capture_output=True, text=True, check=True)
+                result = subprocess.run(describe_command, capture_output=True, text=True, check=True, env=self.aws_env)
                 job_details = json.loads(result.stdout)
 
                 status = job_details.get("TrainingJobStatus", "Unknown")

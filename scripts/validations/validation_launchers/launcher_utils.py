@@ -902,7 +902,7 @@ def get_launch_command(cfg, run_info, use_fsx=False):
     # Handle special cases that need filename-based logic
     # TODO: Consider moving these to config as well
     # service_account_name is K8s-specific, skip for slurm
-    if "rlaif" in run_info["input_file_path"] and platform != "slurm":
+    if ("rlaif" in run_info["input_file_path"] or "rlvr" in run_info["input_file_path"]) and platform != "slurm":
         command.append("+cluster.service_account_name=bedrock-service-account")
 
     if "rlvr" in run_info["input_file_path"]:
@@ -932,7 +932,11 @@ def get_launch_command(cfg, run_info, use_fsx=False):
             if pattern.search(input_file_lower):
                 if cfg.additional_launch_config[regex_pattern]:
                     for expected_data_type, _ in cfg.additional_launch_config[regex_pattern].items():
-                        if expected_data_type == "ListConfig":
+                        if expected_data_type == "StringConfig":
+                            for key, value in cfg.additional_launch_config[regex_pattern][expected_data_type].items():
+                                # Simple scalar override: append key=value directly as a Hydra override
+                                command.append(f"'{key}={value}'")
+                        elif expected_data_type == "ListConfig":
                             for key, value in cfg.additional_launch_config[regex_pattern][expected_data_type].items():
                                 current_cfg = recipe_cfg
                                 path_found = True

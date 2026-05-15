@@ -62,6 +62,17 @@ class LaunchJsonGenerator:
                     for recipe_path in category_recipes:
                         self.unsupported_recipes.add(Path(recipe_path))
 
+        # Load jumpstart exclusion patterns (same patterns used by the Lambda)
+        import re
+
+        self.exclusion_patterns = []
+        exclusions_path = self.working_dir / "recipes_collection" / "jumpstart_exclusions.yaml"
+        if exclusions_path.exists():
+            with open(exclusions_path) as f:
+                exclusions_data = yaml.safe_load(f)
+                for pattern in exclusions_data.get("exclusion_patterns", []):
+                    self.exclusion_patterns.append(re.compile(pattern))
+
         # Load evaluation regional parameters for model mappings
         self.eval_model_mapping = {}
         if self.eval_regional_params_path.exists():
@@ -113,6 +124,13 @@ class LaunchJsonGenerator:
                 if recipe_relative in self.unsupported_recipes:
                     excluded_count += 1
                     logger.info(f"Excluding unsupported recipe: {recipe_relative}")
+                    continue
+
+                # Check if recipe matches jumpstart exclusion patterns
+                recipe_id = str(recipe_file.relative_to(self.recipes_dir))
+                if any(p.search(recipe_id) for p in self.exclusion_patterns):
+                    excluded_count += 1
+                    logger.info(f"Excluding recipe (exclusion pattern): {recipe_id}")
                     continue
 
                 # For evaluation prefix (open-source), expand into one test per model

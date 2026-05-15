@@ -50,6 +50,23 @@ instance_type_list:
 #   - If ANY keyword in detection_keywords is found, the recipe type matches
 #   - Example: detection_keywords: ["rlvr"] matches "verl-grpo-rlvr-qwen-3-4b-lora.yaml"
 recipe_type_config:
+  # Verl 0.7.0 recipe types (must be before verl 0.5 entries — first match wins)
+  verl_sft_0_7_0:
+    detection_keywords: ["0_7_0/verl-sft"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0"
+    recipe_structure: "verl_sft"
+  verl_rlvr_0_7_0:
+    detection_keywords: ["0_7_0/verl-grpo-rlvr"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0"
+    recipe_structure: "verl_rlvr"
+  verl_rlaif_0_7_0:
+    detection_keywords: ["0_7_0/verl-grpo-rlaif"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0"
+    recipe_structure: "verl_rlaif"
+  # Verl 0.5 recipe types
   verl_sft:
     detection_keywords: ["verl-sft"]
     model_config_key: "verl"
@@ -301,6 +318,20 @@ recipe_dataset_mapping:
     slurm: ["pokemon"]
     k8: ["pokemon"]
     smjobs: ["pokemon"]
+  # Verl 0.7.0 dataset mappings (same datasets as verl 0.5)
+  verl_sft_0_7_0:
+    slurm: ["tat_qa-sft-openai-parquet"]
+    k8: ["tat_qa-sft-openai-parquet"]
+    smjobs: ["tat_qa-sft-openai-parquet"]
+  verl_rlvr_0_7_0:
+    slurm: ["gsm8k"]
+    k8: ["gsm8k"]
+    smjobs: ["gsm8k"]
+  verl_rlaif_0_7_0:
+    slurm: ["panda"]
+    k8: ["panda"]
+    smjobs: ["panda"]
+  # Verl 0.5 dataset mappings
   verl_sft:
     slurm: ["tat_qa-sft-openai-parquet"]
     k8: ["tat_qa-sft-openai-parquet"]
@@ -352,6 +383,10 @@ container_info:
     slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
     k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
     smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
+  verl_0_7_0:
+    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
+    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
+    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
 
 git:
   use_default: false
@@ -628,17 +663,17 @@ additional_launch_config: null
 # Recipe-structure-specific commands are defined here, while platform-common
 # commands remain in code.
 serverless_config:
-  endpoint: "https://api.sagemaker.beta.us-west-2.ml-platform.aws.a2z.com" # "https://api.sagemaker.gamma.us-east-1.ml-platform.aws.a2z.com"
+  endpoint: ""  # empty = prod (no custom endpoint needed). For beta: "https://api.sagemaker.beta.us-west-2.ml-platform.aws.a2z.com"
   region: "us-west-2"
   role_arn: "arn:aws:iam::855988369404:role/MCServerlessExecutionRole"
   s3_output_path: "s3://mc-rubik-serverless-output/model-customization-algo/"
   max_runtime_seconds: 80000
   mlflow_arn: "arn:aws:sagemaker:us-west-2:855988369404:mlflow-tracking-server/mlflow-rubikdev-tracking-server-pdx"
-  model_package_group_arn: "arn:aws:sagemaker:us-west-2:855988369404:model-package-group/MyModelPackageGroup" # "arn:aws:sagemaker:us-west-2:855988369404:model-package-group/mcrubikserverlessmpg"
+  model_package_group_arn: "arn:aws:sagemaker:us-west-2:855988369404:model-package-group/MyModelPackageGroup"
   # Accept EULA for gated models (e.g., Llama, Mistral)
   accept_eula: true
   # Hub configuration for model ARN construction
-  hub_name: "TestPrivateHub"
+  hub_name: "HPMCIntegTestHub"
   hub_account_id: "855988369404"
   model_version: ""
   # Default hyper-parameters for serverless jobs (applied to all techniques)

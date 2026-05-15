@@ -21,3 +21,9 @@ exclusion_patterns:
   - "llama[_-]4[_-]scout"
   # Checkpointless recipes are not published to Jumpstart
   - "checkpointless"
+  # Block Verl SFT recipes for Qwen models other than 3-dot-5 and 3-dot-6
+  - "verl-sft-qwen-3-(?!dot-[56])"
+  - "verl-sft-qwen-2-5"
+  # Block gpt_oss-0_7_0 and qwen-0_7_0/qwen-3-32b recipes (use verl 0.5.0 versions instead)
+  - "gpt_oss-0_7_0/"
+  - "qwen-0_7_0/.*qwen-3-32b"

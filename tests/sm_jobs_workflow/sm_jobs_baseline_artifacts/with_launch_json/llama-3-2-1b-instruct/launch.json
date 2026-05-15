@@ -52,7 +52,7 @@
     "ServerlessMeteringType": "Token-based",
     "Type": "FineTuning",
     "Versions": [
-      "2.2.0"
+      "2.2.1"
     ]
   },
   "output_path": "s3://test_path",
@@ -63,14 +63,18 @@
       "type": "string"
     },
     "dataset_max_len": {
+      "category": "hyperparameter",
       "default": 4096,
+      "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated.",
       "max": 131072,
       "min": 256,
       "required": true,
       "type": "integer"
     },
     "global_batch_size": {
+      "category": "hyperparameter",
       "default": 8,
+      "description": "Total number of training samples processed per optimizer step across all compute instances.",
       "enum": [
         8,
         16,
@@ -85,33 +89,43 @@
       "type": "integer"
     },
     "gradient_clipping": {
+      "category": "hyperparameter",
       "default": true,
+      "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients.",
       "required": true,
       "type": "boolean"
     },
     "gradient_clipping_threshold": {
+      "category": "hyperparameter",
       "default": 1.0,
+      "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down.",
       "max": 5.0,
       "min": 0.0,
       "required": true,
       "type": "float"
     },
     "learning_rate": {
+      "category": "hyperparameter",
       "default": 0.0001,
+      "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO.",
       "max": 0.0001,
       "min": 5e-07,
       "required": true,
       "type": "float"
     },
     "logging_steps": {
+      "category": "hyperparameter",
       "default": 1,
+      "description": "Frequency in optimizer steps at which training metrics are logged.",
       "max": 100,
       "min": 1,
       "required": true,
       "type": "integer"
     },
     "lora_alpha": {
+      "category": "hyperparameter",
       "default": 32,
+      "description": "LoRA scaling factor. The effective learning rate for adapters scales as alpha/rank.",
       "enum": [
         16,
         32,
@@ -123,14 +137,18 @@
       "type": "integer"
     },
     "lora_dropout": {
+      "category": "hyperparameter",
       "default": 0.05,
+      "description": "Dropout probability applied to LoRA adapter layers for regularization.",
       "max": 1.0,
       "min": 0.0,
       "required": true,
       "type": "float"
     },
     "lora_rank": {
+      "category": "hyperparameter",
       "default": 16,
+      "description": "Dimensionality of the low-rank decomposition matrices. Lower rank means fewer trainable parameters.",
       "enum": [
         8,
         16,
@@ -142,7 +160,9 @@
       "type": "integer"
     },
     "lr_scheduler": {
+      "category": "hyperparameter",
       "default": "cosine",
+      "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
       "enum": [
         "cosine",
         "constant"
@@ -151,21 +171,27 @@
       "type": "string"
     },
     "lr_warmup_steps_ratio": {
+      "category": "hyperparameter",
       "default": 0.1,
+      "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value.",
       "max": 1,
       "min": 0,
       "required": true,
       "type": "float"
     },
     "max_epochs": {
+      "category": "hyperparameter",
       "default": 5,
+      "description": "Number of complete passes through the entire training dataset.",
       "max": 100,
       "min": 1,
       "required": true,
       "type": "integer"
     },
     "merge_weights": {
+      "category": "hyperparameter",
       "default": true,
+      "description": "When enabled, merges LoRA adapter weights into the base model after training.",
       "required": true,
       "type": "boolean"
     },
@@ -205,21 +231,27 @@
       "type": "string"
     },
     "seed": {
+      "category": "hyperparameter",
       "default": 42,
+      "description": "Random seed for reproducibility of data shuffling and weight initialization.",
       "max": 2147483647,
       "min": 0,
       "required": true,
       "type": "integer"
     },
     "temperature": {
+      "category": "hyperparameter",
       "default": 0.6,
+      "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity.",
       "max": 2.0,
       "min": 0.0,
       "required": true,
       "type": "float"
     },
     "train_val_split_ratio": {
+      "category": "hyperparameter",
       "default": 0.9,
+      "description": "Fraction of the dataset allocated to training versus validation.",
       "max": 1.0,
       "min": 0.0,
       "required": false,
@@ -241,7 +273,9 @@
       "type": "string"
     },
     "weight_decay": {
+      "category": "hyperparameter",
       "default": 0.0,
+      "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights.",
       "max": 1.0,
       "min": 0.0,
       "required": true,
@@ -284,5 +318,5 @@
     "container_logs_path": "/opt/ml/output/tensorboard",
     "output_path": "s3://test_tensorboard_path"
   },
-  "training_recipe.yaml": "display_name: Llama 3.2 1B Simple Fine Tuning with Lora on GPU, 4K sequence length\nelastic_policy:\n  graceful_shutdown_timeout: 600\n  is_elastic: false\n  max_nodes: 16\n  min_nodes: 1\n  scaling_timeout: 600\n  use_graceful_shutdown: true\ninstance_types:\n- ml.p4de.24xlarge\n- ml.p4d.24xlarge\n- ml.p5.48xlarge\n- ml.g5.48xlarge\n- ml.g5.12xlarge\n- ml.g6.48xlarge\n- ml.g6.12xlarge\n- ml.g6e.12xlarge\nrun:\n  hf_access_token: null\n  model_type: llm_finetuning_aws\n  name: '{{name}}'\n  results_dir: '{{results_directory}}'\nscale_config:\n  1:\n    trainer:\n      num_nodes: 1\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        micro_train_batch_size: 8\n        train_batch_size: 128\n  2:\n    trainer:\n      num_nodes: 2\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        micro_train_batch_size: 8\n        train_batch_size: 128\n  3:\n    trainer:\n      num_nodes: 3\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        train_batch_size: 128\n        uneven_batch:\n          large_local_batch_size: 6\n          num_dp_groups_with_small_batch_size: 16\n          small_local_batch_size: 5\n          use_uneven_batch: true\n  4:\n    trainer:\n      num_nodes: 4\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        micro_train_batch_size: 4\n        train_batch_size: 128\n  6:\n    trainer:\n      num_nodes: 6\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        train_batch_size: 128\n        uneven_batch:\n          large_local_batch_size: 3\n          num_dp_groups_with_small_batch_size: 16\n          small_local_batch_size: 2\n          use_uneven_batch: true\n  8:\n    trainer:\n      num_nodes: 8\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        micro_train_batch_size: 2\n        train_batch_size: 128\n  16:\n    trainer:\n      num_nodes: 16\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        train_batch_size: 128\ntrainer:\n  devices: 8\n  num_nodes: 1\ntraining_config:\n  datasets:\n    data_dir: null\n    preprocessor_cfgs:\n    - type: TrainingSFTSampleConverter\n    - chat_template_name: llama_3_2_seq_instruct.jinja\n      ignore_prompt_labels: true\n      type: Seq2SeqTokensProcessor\n    - column_names:\n      - messages\n      type: DropColumns\n    save_intermediate_processing_steps: false\n    train_data:\n      file_path: '{{data_path}}'\n      limit: null\n      name: '{{training_data_name}}'\n    train_val_split_ratio: '{{train_val_split_ratio}}'\n    train_val_split_seed: 42\n    val_data:\n      file_path: '{{validation_data_path}}'\n      limit: null\n      name: '{{validation_data_name}}'\n  force_rerun: false\n  mlflow:\n    run_id: '{{mlflow_run_id}}'\n    tracking_uri: '{{mlflow_tracking_uri}}'\n  model_config:\n    apply_chat_template: false\n    attn_implementation: sdpa\n    chat_template_key: llama--meta-llama-3.2-1b-instruct\n    device_map: null\n    generation_cfg:\n      do_sample: true\n      max_new_tokens: 2048\n      num_parallel_jobs: 1\n      num_return_sequences: 1\n      temperature: '{{temperature}}'\n      top_p: 0.9\n    lora_checkpoint_file_path: '{{resume_from_path}}'\n    model_name_or_path: '{{model_name_or_path}}'\n    model_save_name: SageMaker/llama-3.2-1B-Instruct-Lora\n    multimodal: false\n    peft_config:\n      bias: none\n      lora_alpha: '{{lora_alpha}}'\n      lora_dropout: '{{lora_dropout}}'\n      peft_type: lora\n      r: '{{lora_rank}}'\n      target_modules: all-linear\n      task_type: CAUSAL_LM\n      use_dora: false\n  training_args:\n    adam_betas:\n    - 0.9\n    - 0.95\n    aux_loss_coef: 0\n    disable_ds_ckpt: false\n    disable_fast_tokenizer: false\n    eval_steps: 0\n    grad_accum_dtype: null\n    gradient_checkpointing: true\n    gradient_checkpointing_use_reentrant: false\n    gradient_clipping: '{{gradient_clipping}}'\n    gradient_clipping_threshold: '{{gradient_clipping_threshold}}'\n    l2: 0.0\n    learning_rate: '{{learning_rate}}'\n    load_checkpoint: true\n    logging_steps: '{{logging_steps}}'\n    lr_scheduler: '{{lr_scheduler}}'\n    lr_warmup_ratio: '{{lr_warmup_steps_ratio}}'\n    max_ckpt_mem: 100000000.0\n    max_ckpt_num: 3\n    max_epochs: '{{max_epochs}}'\n    max_len: '{{dataset_max_len}}'\n    max_norm: 1.0\n    max_samples: 100000000.0\n    merge_weights: '{{merge_weights}}'\n    micro_train_batch_size: 1\n    override_training_dir: true\n    packing_samples: false\n    pretrain_mode: false\n    resume_checkpoint_path: '{{resume_from_path}}'\n    ring_attn_size: 1\n    ring_head_stride: 1\n    save_hf_ckpt: true\n    save_steps: 0\n    seed: '{{seed}}'\n    strategy:\n      fsdp_config:\n        auto_wrap_policy: TRANSFORMER_BASED_WRAP\n        backward_prefetch: BACKWARD_PRE\n        cpu_offload: false\n        cpu_ram_efficient_loading: true\n        forward_prefetch: false\n        sharding_strategy: HYBRID_SHARD\n        state_dict_type: SHARDED_STATE_DICT\n        sync_module_states: true\n        use_orig_params: true\n    train_batch_size: '{{global_batch_size}}'\n    trainer_callbacks:\n    - _target_: metering_callback.MeteringCallback\n      output_path: /opt/ml/metering\n    trainer_type: sft\n    training_dir: '{{output_path}}'\n    use_tensorboard: logs\n    use_wandb: null\n    weight_decay: '{{weight_decay}}'\nversion: 2.2.0\n"
+  "training_recipe.yaml": "display_name: Llama 3.2 1B Simple Fine Tuning with Lora on GPU, 4K sequence length\nelastic_policy:\n  graceful_shutdown_timeout: 600\n  is_elastic: false\n  max_nodes: 16\n  min_nodes: 1\n  scaling_timeout: 600\n  use_graceful_shutdown: true\ninstance_types:\n- ml.p4de.24xlarge\n- ml.p4d.24xlarge\n- ml.p5.48xlarge\n- ml.g5.48xlarge\n- ml.g5.12xlarge\n- ml.g6.48xlarge\n- ml.g6.12xlarge\n- ml.g6e.12xlarge\nrun:\n  hf_access_token: null\n  model_type: llm_finetuning_aws\n  name: '{{name}}'\n  results_dir: '{{results_directory}}'\nscale_config:\n  1:\n    trainer:\n      num_nodes: 1\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        micro_train_batch_size: 8\n        train_batch_size: 128\n  2:\n    trainer:\n      num_nodes: 2\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        micro_train_batch_size: 8\n        train_batch_size: 128\n  3:\n    trainer:\n      num_nodes: 3\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        train_batch_size: 128\n        uneven_batch:\n          large_local_batch_size: 6\n          num_dp_groups_with_small_batch_size: 16\n          small_local_batch_size: 5\n          use_uneven_batch: true\n  4:\n    trainer:\n      num_nodes: 4\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        micro_train_batch_size: 4\n        train_batch_size: 128\n  6:\n    trainer:\n      num_nodes: 6\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        train_batch_size: 128\n        uneven_batch:\n          large_local_batch_size: 3\n          num_dp_groups_with_small_batch_size: 16\n          small_local_batch_size: 2\n          use_uneven_batch: true\n  8:\n    trainer:\n      num_nodes: 8\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        micro_train_batch_size: 2\n        train_batch_size: 128\n  16:\n    trainer:\n      num_nodes: 16\n    training_config:\n      training_args:\n        learning_rate: 0.0004\n        train_batch_size: 128\ntrainer:\n  devices: 8\n  num_nodes: 1\ntraining_config:\n  datasets:\n    data_dir: null\n    preprocessor_cfgs:\n    - type: TrainingSFTSampleConverter\n    - chat_template_name: llama_3_2_seq_instruct.jinja\n      ignore_prompt_labels: true\n      type: Seq2SeqTokensProcessor\n    - column_names:\n      - messages\n      type: DropColumns\n    save_intermediate_processing_steps: false\n    train_data:\n      file_path: '{{data_path}}'\n      limit: null\n      name: '{{training_data_name}}'\n    train_val_split_ratio: '{{train_val_split_ratio}}'\n    train_val_split_seed: 42\n    val_data:\n      file_path: '{{validation_data_path}}'\n      limit: null\n      name: '{{validation_data_name}}'\n  force_rerun: false\n  mlflow:\n    run_id: '{{mlflow_run_id}}'\n    tracking_uri: '{{mlflow_tracking_uri}}'\n  model_config:\n    apply_chat_template: false\n    attn_implementation: sdpa\n    chat_template_key: llama--meta-llama-3.2-1b-instruct\n    device_map: null\n    generation_cfg:\n      do_sample: true\n      max_new_tokens: 2048\n      num_parallel_jobs: 1\n      num_return_sequences: 1\n      temperature: '{{temperature}}'\n      top_p: 0.9\n    lora_checkpoint_file_path: '{{resume_from_path}}'\n    model_name_or_path: '{{model_name_or_path}}'\n    model_save_name: SageMaker/llama-3.2-1B-Instruct-Lora\n    multimodal: false\n    peft_config:\n      bias: none\n      lora_alpha: '{{lora_alpha}}'\n      lora_dropout: '{{lora_dropout}}'\n      peft_type: lora\n      r: '{{lora_rank}}'\n      target_modules: all-linear\n      task_type: CAUSAL_LM\n      use_dora: false\n  training_args:\n    adam_betas:\n    - 0.9\n    - 0.95\n    aux_loss_coef: 0\n    disable_ds_ckpt: false\n    disable_fast_tokenizer: false\n    eval_steps: 0\n    grad_accum_dtype: null\n    gradient_checkpointing: true\n    gradient_checkpointing_use_reentrant: false\n    gradient_clipping: '{{gradient_clipping}}'\n    gradient_clipping_threshold: '{{gradient_clipping_threshold}}'\n    l2: 0.0\n    learning_rate: '{{learning_rate}}'\n    load_checkpoint: true\n    logging_steps: '{{logging_steps}}'\n    lr_scheduler: '{{lr_scheduler}}'\n    lr_warmup_ratio: '{{lr_warmup_steps_ratio}}'\n    max_ckpt_mem: 100000000.0\n    max_ckpt_num: 3\n    max_epochs: '{{max_epochs}}'\n    max_len: '{{dataset_max_len}}'\n    max_norm: 1.0\n    max_samples: 100000000.0\n    merge_weights: '{{merge_weights}}'\n    micro_train_batch_size: 1\n    override_training_dir: true\n    packing_samples: false\n    pretrain_mode: false\n    resume_checkpoint_path: '{{resume_from_path}}'\n    ring_attn_size: 1\n    ring_head_stride: 1\n    save_hf_ckpt: true\n    save_steps: 0\n    seed: '{{seed}}'\n    strategy:\n      fsdp_config:\n        auto_wrap_policy: TRANSFORMER_BASED_WRAP\n        backward_prefetch: BACKWARD_PRE\n        cpu_offload: false\n        cpu_ram_efficient_loading: true\n        forward_prefetch: false\n        sharding_strategy: HYBRID_SHARD\n        state_dict_type: SHARDED_STATE_DICT\n        sync_module_states: true\n        use_orig_params: true\n    train_batch_size: '{{global_batch_size}}'\n    trainer_callbacks:\n    - _target_: metering_callback.MeteringCallback\n      output_path: /opt/ml/metering\n    trainer_type: sft\n    training_dir: '{{output_path}}'\n    use_tensorboard: logs\n    use_wandb: null\n    weight_decay: '{{weight_decay}}'\nversion: 2.2.1\n"
 }

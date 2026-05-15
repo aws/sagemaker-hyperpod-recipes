@@ -20,7 +20,7 @@
     "ServerlessMeteringType": "Token-based",
     "Model_ID": "nova-textgeneration-micro",
     "Versions": [
-      "2.2.0"
+      "2.2.1"
     ],
     "OutputConfig": {
       "SageMakerInferenceRecipeName": "default"
@@ -105,7 +105,9 @@
       "required": true,
       "min": 0.0,
       "max": 2.0,
-      "default": 0
+      "default": 0,
+      "category": "hyperparameter",
+      "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
     },
     "namespace": {
       "type": "string",

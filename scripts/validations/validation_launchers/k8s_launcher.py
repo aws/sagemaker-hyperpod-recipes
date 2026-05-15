@@ -273,6 +273,7 @@ class K8sValidationLauncher(BaseLauncher):
                             "training related exception occurred",
                             "nccl warn cuda failure",
                             "error executing job with overrides",
+                            "application will abort",
                         ]
                     ):
                         error_count += 1
