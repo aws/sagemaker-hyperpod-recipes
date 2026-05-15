@@ -18,6 +18,8 @@ import string
 import sys
 from typing import Tuple
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 from validations_wrapper import validate_config
 
 # Relative path for launcher scripts - converted to absolute only at runtime for Docker mounts
