@@ -21,7 +21,7 @@
     "SequenceLength": "16K",
     "Model_ID": "nova-textgeneration-micro",
     "Versions": [
-      "1.1.1"
+      "1.1.2"
     ],
     "OutputConfig": {
       "SageMakerInferenceRecipeName": "default"

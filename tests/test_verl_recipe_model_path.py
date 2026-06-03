@@ -54,6 +54,12 @@ _TUNING_SUFFIX_RE = re.compile(r"-(lora|fft)$")
 # HuggingFace suffixes that are not part of the model identity.
 _HF_STRIP_RE = re.compile(r"-bf16$", re.IGNORECASE)
 
+# HuggingFace vendor prefixes to strip (e.g., "NVIDIA-" in "NVIDIA-Nemotron-3-...")
+_HF_VENDOR_PREFIX_RE = re.compile(r"^NVIDIA-", re.IGNORECASE)
+
+# HuggingFace architecture suffixes to strip (e.g., "-A3B", "-A12B" active param indicators)
+_HF_ARCH_SUFFIX_RE = re.compile(r"-A\d+B", re.IGNORECASE)
+
 
 def _to_tokens(s):
     """Split a string into lowercase alphanumeric tokens.
@@ -98,7 +104,9 @@ def _model_id_from_path(model_path):
     "openai/gpt-oss-20b-bf16"                -> "gpt oss 20b"
     """
     name = model_path.rsplit("/", 1)[-1]
+    name = _HF_VENDOR_PREFIX_RE.sub("", name)
     name = _HF_STRIP_RE.sub("", name)
+    name = _HF_ARCH_SUFFIX_RE.sub("", name)
     return " ".join(_to_tokens(name))
 
 

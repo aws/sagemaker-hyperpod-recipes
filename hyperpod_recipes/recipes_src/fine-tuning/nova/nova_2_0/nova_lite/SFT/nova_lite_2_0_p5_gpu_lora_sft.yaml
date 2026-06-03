@@ -3,7 +3,9 @@ run:
   model_type: amazon.nova-2-lite-v1:0:256k
   model_name_or_path: nova-lite-2/prod
   data_s3_path: s3://my-bucket-name/train.jsonl  # SageMaker Hyperpod (SMHP) only and not compatible with SageMaker Training jobs. Note replace my-bucket-name with your real bucket name for SMHP job
-  replicas: 4                      # Number of compute instances for training, allowed values are 4, 8, 16, 32
+  validation_data_s3_path: ""      # Optional. S3 path to a validation JSONL file. When provided, validation loss is computed at val_check_interval steps.
+  validation_data_s3_path_list: {}    # Optional. Named validation datasets as a dict of label to S3 JSONL path. Enables per-dataset validation metrics.
+  replicas: 1                      # Number of compute instances for training, allowed values are 1, 4, 8, 16, 32
   output_s3_path: s3://my-bucket-name/outputs/               # Output artifact path (Hyperpod job-specific; not compatible with standard SageMaker Training jobs). Note replace my-bucket-name with your real bucket name for SMHP job
   mlflow_tracking_uri: "" # Required for MLFlow
   mlflow_experiment_name: "my-lora-sft-experiment" # Optional for MLFlow. Note: leave this field non-empty
@@ -16,6 +18,8 @@ training_config:
   max_length: 32768                # Sequence length (options: 8192, 16384, 32768 [default], 65536)
   global_batch_size: 32            # Golbal batch size (options: 32, 64, 128)
   reasoning_enabled: true          # If data has reasoningContent, set to true; otherwise False
+  val_check_interval: null         # Optional. Run validation every N training steps. Only applies when validation_data_s3_path is provided.
+  limit_val_batches: 2             # Optional. Number of validation batches to run per dataset per validation interval. Defaults to 2 when validation is active. Set to 0 to disable.
 
   lr_scheduler:
     warmup_steps: 15               # Learning rate warmup steps. Recommend 15% of max_steps

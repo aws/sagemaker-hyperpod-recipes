@@ -53,7 +53,7 @@ def get_template_parameter_files() -> List[Path]:
     template_files = []
 
     # Search in subdirectories
-    for subdir in ["nova", "llmft", "verl", "evaluation", "checkpointless"]:
+    for subdir in ["nova", "llmft", "verl", "evaluation", "mtrl"]:
         file_path = base_dir / subdir / f"{subdir}_recipe_template_parameters.json"
         if file_path.exists():
             template_files.append(file_path)

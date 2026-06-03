@@ -51,6 +51,12 @@ DOC_SECTIONS = [
         "",
     ),
     (
+        "MTRL (Multi-Turn Reinforcement Learning) Recipes",
+        lambda r: r.framework == "mtrl",
+        "family",
+        "",
+    ),
+    (
         "Evaluation Recipes",
         lambda r: r.category == "evaluation",
         "family",

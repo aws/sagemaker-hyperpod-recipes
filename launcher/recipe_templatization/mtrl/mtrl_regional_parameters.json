@@ -1,0 +1,52 @@
+{
+    "_comment": "Container availability based on MTRL recipes. Single container entry used for all Verl fine-tuning techniques with substring matching support.",
+    "mtrl-qwen-3-dot-6-27b-lora": {
+        "sm_jobs": {
+            "container_image": {
+                "beta": {
+                    "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+                },
+                "gamma": {
+                    "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0",
+                    "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+                },
+                "prod": {
+                    "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+                }
+            }
+        }
+    },
+    "mtrl-gemma-4-31b-lora": {
+        "sm_jobs": {
+            "container_image": {
+                "beta": {
+                    "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+                },
+                "gamma": {
+                    "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0",
+                    "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+                },
+                "prod": {
+                    "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+                }
+            }
+        }
+    },
+    "mtrl": {
+        "sm_jobs": {
+            "container_image": {
+                "beta": {
+                    "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+                },
+                "gamma": {
+                    "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0",
+                    "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+                },
+                "prod": {
+                    "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0",
+                    "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+                }
+            }
+        }
+    }
+}

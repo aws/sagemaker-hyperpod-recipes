@@ -26,8 +26,11 @@ import os
 import sys
 from typing import Optional
 
-from sagemaker.train import DPOTrainer, RLAIFTrainer, RLVRTrainer, SFTTrainer
 from sagemaker.train.common import TrainingType
+from sagemaker.train.dpo_trainer import DPOTrainer
+from sagemaker.train.rlaif_trainer import RLAIFTrainer
+from sagemaker.train.rlvr_trainer import RLVRTrainer
+from sagemaker.train.sft_trainer import SFTTrainer
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -176,7 +179,10 @@ def create_trainer(
     # RLAIF and RLVR require custom_reward_function
     if training_type.lower() in ["rlaif", "rlvr"]:
         if custom_reward_function:
-            trainer_kwargs["custom_reward_function"] = custom_reward_function
+            if training_type in ("rlaif",):
+                trainer_kwargs["reward_prompt"] = custom_reward_function
+            else:
+                trainer_kwargs["custom_reward_function"] = custom_reward_function
         else:
             logger.warning(
                 f"{training_type.upper()} training typically requires custom_reward_function. " "Proceeding without it."

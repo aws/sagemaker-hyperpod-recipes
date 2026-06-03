@@ -11,6 +11,7 @@
     ],
     "templates": {
         "grpo_rlaif": {
+            "display_name": "GRPO RLAIF (LoRA)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -29,7 +30,8 @@
                                 "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
                                 "weight_decay": "{{weight_decay}}",
                                 "lr_warmup_steps": "{{warmup_steps}}",
-                                "min_lr_ratio": "{{min_lr}}"
+                                "min_lr_ratio": "{{min_lr}}",
+                                "min_lr": "{{min_lr}}"
                             },
                             "clip_ratio": "{{clip_ratio}}",
                             "kl_loss_coef": "{{kl_loss_coef}}",
@@ -168,7 +170,8 @@
                         "/opt/ml/code/verl/cot.jinja",
                         "/opt/ml/code/verl/evaluate.jinja",
                         "/opt/ml/code/verl/faithfulness.jinja",
-                        "/opt/ml/code/verl/summarize.jinja"
+                        "/opt/ml/code/verl/summarize.jinja",
+                        "bedrock/RLAIF/PandaLM/prompts/grader.jinja"
                     ],
                     "default": "/opt/ml/code/verl/summarize.jinja"
                 },
@@ -344,6 +347,7 @@
             }
         },
         "grpo_rlvr": {
+            "display_name": "GRPO RLVR (LoRA)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -362,7 +366,8 @@
                                 "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
                                 "weight_decay": "{{weight_decay}}",
                                 "lr_warmup_steps": "{{warmup_steps}}",
-                                "min_lr_ratio": "{{min_lr}}"
+                                "min_lr_ratio": "{{min_lr}}",
+                                "min_lr": "{{min_lr}}"
                             },
                             "clip_ratio": "{{clip_ratio}}",
                             "kl_loss_coef": "{{kl_loss_coef}}",
@@ -678,6 +683,7 @@
             }
         },
         "grpo_rlaif_fft": {
+            "display_name": "GRPO RLAIF (FFT)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -696,7 +702,8 @@
                                 "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
                                 "weight_decay": "{{weight_decay}}",
                                 "lr_warmup_steps": "{{warmup_steps}}",
-                                "min_lr_ratio": "{{min_lr}}"
+                                "min_lr_ratio": "{{min_lr}}",
+                                "min_lr": "{{min_lr}}"
                             },
                             "clip_ratio": "{{clip_ratio}}",
                             "kl_loss_coef": "{{kl_loss_coef}}",
@@ -833,7 +840,8 @@
                         "/opt/ml/code/verl/cot.jinja",
                         "/opt/ml/code/verl/evaluate.jinja",
                         "/opt/ml/code/verl/faithfulness.jinja",
-                        "/opt/ml/code/verl/summarize.jinja"
+                        "/opt/ml/code/verl/summarize.jinja",
+                        "bedrock/RLAIF/PandaLM/prompts/grader.jinja"
                     ],
                     "default": "/opt/ml/code/verl/summarize.jinja"
                 },
@@ -981,6 +989,7 @@
             }
         },
         "sft": {
+            "display_name": "SFT (LoRA)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -1003,7 +1012,9 @@
                         "weight_decay": "{{weight_decay}}",
                         "lr_warmup_steps": "{{warmup_steps}}",
                         "min_lr_ratio": "{{min_lr}}",
-                        "lr_scheduler_type": "{{lr_scheduler}}"
+                        "lr_scheduler_type": "{{lr_scheduler}}",
+                        "lr_decay_style": "{{lr_scheduler}}",
+                        "min_lr": "{{min_lr}}"
                     },
                     "data": {
                         "train_files": "{{data_path}}",
@@ -1202,6 +1213,7 @@
             }
         },
         "sft_fft": {
+            "display_name": "SFT (FFT)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -1222,7 +1234,9 @@
                         "weight_decay": "{{weight_decay}}",
                         "lr_warmup_steps": "{{warmup_steps}}",
                         "min_lr_ratio": "{{min_lr}}",
-                        "lr_scheduler_type": "{{lr_scheduler}}"
+                        "lr_scheduler_type": "{{lr_scheduler}}",
+                        "lr_decay_style": "{{lr_scheduler}}",
+                        "min_lr": "{{min_lr}}"
                     },
                     "data": {
                         "train_files": "{{data_path}}",
@@ -1393,6 +1407,7 @@
             }
         },
         "grpo_rlvr_fft": {
+            "display_name": "GRPO RLVR (FFT)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -1411,7 +1426,8 @@
                                 "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
                                 "weight_decay": "{{weight_decay}}",
                                 "lr_warmup_steps": "{{warmup_steps}}",
-                                "min_lr_ratio": "{{min_lr}}"
+                                "min_lr_ratio": "{{min_lr}}",
+                                "min_lr": "{{min_lr}}"
                             },
                             "clip_ratio": "{{clip_ratio}}",
                             "kl_loss_coef": "{{kl_loss_coef}}",

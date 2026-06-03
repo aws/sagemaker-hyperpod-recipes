@@ -34,6 +34,9 @@ settings:
   excluded_recipe_dirs:
     - fine-tuning/hydra_config
 
+  excluded_recipe_patterns:
+    - mtrl
+
   # Manually maintained scripts (not auto-generated)
   # Format: recipe_path -> script_path (relative to output_dir)
   manually_maintained:

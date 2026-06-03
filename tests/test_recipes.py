@@ -146,6 +146,9 @@ def test_trainer_callbacks_in_openweights_finetuning_recipes(subtests):
         if "checkpointless" in recipe_rel_path.lower():
             continue
 
+        if "mtrl" in recipe_rel_path.lower():
+            continue
+
         with subtests.test(msg=f"trainer_callbacks in {recipe_rel_path}"):
             with open(recipe_path) as f:
                 recipe_data = yaml.safe_load(f)

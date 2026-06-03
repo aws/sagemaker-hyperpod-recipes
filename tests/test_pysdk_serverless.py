@@ -19,6 +19,7 @@ mock_training_type.FULL = "FULL"
 mock_training_type.LORA = "LORA"
 
 mock_train_module = ModuleType("sagemaker.train")
+mock_train_module.__path__ = []  # Make it a package so sub-module imports work
 mock_train_module.SFTTrainer = mock_sft_trainer
 mock_train_module.DPOTrainer = mock_dpo_trainer
 mock_train_module.RLAIFTrainer = mock_rlaif_trainer
@@ -27,10 +28,26 @@ mock_train_module.RLVRTrainer = mock_rlvr_trainer
 mock_train_common_module = ModuleType("sagemaker.train.common")
 mock_train_common_module.TrainingType = mock_training_type
 
+mock_dpo_trainer_module = ModuleType("sagemaker.train.dpo_trainer")
+mock_dpo_trainer_module.DPOTrainer = mock_dpo_trainer
+
+mock_rlaif_trainer_module = ModuleType("sagemaker.train.rlaif_trainer")
+mock_rlaif_trainer_module.RLAIFTrainer = mock_rlaif_trainer
+
+mock_rlvr_trainer_module = ModuleType("sagemaker.train.rlvr_trainer")
+mock_rlvr_trainer_module.RLVRTrainer = mock_rlvr_trainer
+
+mock_sft_trainer_module = ModuleType("sagemaker.train.sft_trainer")
+mock_sft_trainer_module.SFTTrainer = mock_sft_trainer
+
 if "sagemaker.train" not in sys.modules or "sagemaker.core" not in sys.modules:
     sys.modules.setdefault("sagemaker", ModuleType("sagemaker"))
     sys.modules["sagemaker.train"] = mock_train_module
     sys.modules["sagemaker.train.common"] = mock_train_common_module
+    sys.modules["sagemaker.train.dpo_trainer"] = mock_dpo_trainer_module
+    sys.modules["sagemaker.train.rlaif_trainer"] = mock_rlaif_trainer_module
+    sys.modules["sagemaker.train.rlvr_trainer"] = mock_rlvr_trainer_module
+    sys.modules["sagemaker.train.sft_trainer"] = mock_sft_trainer_module
 
 from scripts.validations.pysdk_serverless import (
     TRAINER_MAPPING,
@@ -217,7 +234,7 @@ class TestCreateTrainer(unittest.TestCase):
         )
 
         call_kwargs = mock_rlaif_trainer.call_args[1]
-        self.assertEqual(call_kwargs["custom_reward_function"], "arn:aws:sagemaker:us-west-2:123:evaluator/test")
+        self.assertEqual(call_kwargs["reward_prompt"], "arn:aws:sagemaker:us-west-2:123:evaluator/test")
 
     @patch("scripts.validations.pysdk_serverless.convert_to_jumpstart_model_id")
     def test_rlvr_gets_custom_reward_function(self, mock_convert):

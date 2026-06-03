@@ -340,14 +340,13 @@ class TestIntegrationWithRealData:
         assert isinstance(result, list)
 
     def test_real_data_output_format(self):
-        """Inference outputs eval-compatible schema (run_names list, recipe_paths list)."""
-        # check_inference_coverage returns flat dicts; main() normalizes them.
-        # Here we test the raw output from the checker function.
+        """Each entry is per-recipe with recipe_path, run_name, js_model_id, reason."""
         missing = check_inference_coverage(self.RECIPES_DIR, self.MODEL_ID_MAP, self.INFERENCE_CONFIGS_DIR)
         assert isinstance(missing, list)
         for entry in missing:
             assert "recipe_path" in entry
             assert "run_name" in entry
+            assert "js_model_id" in entry
             assert "reason" in entry
             assert isinstance(entry["recipe_path"], str)
 

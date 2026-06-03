@@ -102,7 +102,7 @@ class BaseRecipeTemplateProcessor(ABC):
                                 # Update default value for the override attribute with the value in the recipe file
                                 self.recipe_override_parameters[template_override]["default"] = (
                                     OmegaConf.to_container(current_value, resolve=True)
-                                    if isinstance(current_value, (ListConfig))
+                                    if isinstance(current_value, (ListConfig, DictConfig))
                                     else current_value
                                 )
                     else:

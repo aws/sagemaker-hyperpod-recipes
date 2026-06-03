@@ -13,6 +13,15 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from scripts.generate_launch_jsons import LaunchJsonGenerator
 
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+
+# Path to the single shared MTRL eval recipe YAML. The recipe is model-agnostic
+# and gets expanded per MTRL-trained model at Hub-import time
+# (see the ``--eval`` branch in ``main`` and ``process_mtrl_eval_recipe_metadata``).
+MTRL_EVAL_RECIPE_PATH = "recipes_collection/recipes/evaluation/mtrl/mtrl_eval.yaml"
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Update private hub by exporting content and generating launch JSONs")
@@ -200,33 +209,46 @@ class S3UploadConfig:
     version: str
 
 
-def upload_artifacts_to_s3(artifacts: RecipeArtifactPaths, s3_config: S3UploadConfig):
+def upload_artifacts_to_s3(artifacts: RecipeArtifactPaths, s3_config: S3UploadConfig, k8s_support=True):
     """Upload recipe artifacts to S3 and return S3 URIs."""
-    # k8s artifacts from k8s launch.json
-    with open(artifacts.k8s_launch_json_path, "r") as f:
-        k8s_launch_data = json.load(f)
-    k8s_yaml_content = extract_yaml_content(k8s_launch_data)
-    k8s_yaml_content = k8s_yaml_content.replace("test_container", "{{container_image}}")
-    k8s_override_params = k8s_launch_data.get("recipe_override_parameters", {})
+    if k8s_support:
+        # k8s artifacts from k8s launch.json
+        with open(artifacts.k8s_launch_json_path, "r") as f:
+            k8s_launch_data = json.load(f)
+        k8s_yaml_content = extract_yaml_content(k8s_launch_data)
+        k8s_yaml_content = k8s_yaml_content.replace("test_container", "{{container_image}}")
+        override_params = k8s_launch_data.get("recipe_override_parameters", {})
+
+        s3_keys = {
+            "k8s_yaml": f"recipes/{artifacts.recipe_name}_payload_template_k8s_{s3_config.version}.yaml",
+            "k8s_json": f"recipes/{artifacts.recipe_name}_override_params_k8s_{s3_config.version}.json",
+            "sm_jobs_yaml": f"recipes/{artifacts.recipe_name}_payload_template_sm_jobs_{s3_config.version}.yaml",
+            "sm_jobs_json": f"recipes/{artifacts.recipe_name}_override_params_sm_jobs_{s3_config.version}.json",
+        }
+    else:
+        # use sm_jobs to get overridable params
+        with open(artifacts.sm_jobs_launch_json_path, "r") as f:
+            sm_jobs_launch_data = json.load(f)
+        override_params = sm_jobs_launch_data.get("recipe_override_parameters", {})
+
+        s3_keys = {
+            "sm_jobs_yaml": f"recipes/{artifacts.recipe_name}_payload_template_sm_jobs_{s3_config.version}.yaml",
+            "sm_jobs_json": f"recipes/{artifacts.recipe_name}_override_params_sm_jobs_{s3_config.version}.json",
+        }
 
     # sm_jobs artifacts from sm_jobs launch.json
     with open(artifacts.sm_jobs_launch_json_path, "r") as f:
         sm_jobs_launch_data = json.load(f)
     sm_jobs_override_params = sm_jobs_launch_data.get("recipe_override_parameters", {})
     sm_jobs_yaml_content = extract_sm_jobs_yaml_content(artifacts.sm_jobs_launch_json_path, artifacts.recipe_name)
-    s3_keys = {
-        "k8s_yaml": f"recipes/{artifacts.recipe_name}_payload_template_k8s_{s3_config.version}.yaml",
-        "k8s_json": f"recipes/{artifacts.recipe_name}_override_params_k8s_{s3_config.version}.json",
-        "sm_jobs_yaml": f"recipes/{artifacts.recipe_name}_payload_template_sm_jobs_{s3_config.version}.yaml",
-        "sm_jobs_json": f"recipes/{artifacts.recipe_name}_override_params_sm_jobs_{s3_config.version}.json",
-    }
 
     s3_client = boto3.client("s3", region_name=s3_config.region)
     s3_uris = {}
 
     # Upload k8s artifacts
-    upload_yaml_to_s3(s3_client, k8s_yaml_content, s3_config.s3_bucket, s3_keys["k8s_yaml"])
-    upload_json_to_s3(s3_client, k8s_override_params, s3_config.s3_bucket, s3_keys["k8s_json"])
+    if k8s_support:
+        upload_yaml_to_s3(s3_client, k8s_yaml_content, s3_config.s3_bucket, s3_keys["k8s_yaml"])
+        upload_json_to_s3(s3_client, override_params, s3_config.s3_bucket, s3_keys["k8s_json"])
 
     # Upload sm_jobs artifacts
     upload_yaml_to_s3(s3_client, sm_jobs_yaml_content, s3_config.s3_bucket, s3_keys["sm_jobs_yaml"])
@@ -275,7 +297,7 @@ def upload_json_to_s3(s3_client, data, bucket, key):
     s3_client.put_object(Bucket=bucket, Key=key, Body=content.encode("utf-8"), Tagging="SageMaker=True")
 
 
-def process_recipe_metadata(launch_json_path, s3_uris, region, endpoint):
+def process_recipe_metadata(launch_json_path, s3_uris, region, endpoint, k8s_support=True):
     """Use launch.json to create recipe collection metadata"""
     with open(launch_json_path, "r") as f:
         launch_data = json.load(f)
@@ -297,18 +319,96 @@ def process_recipe_metadata(launch_json_path, s3_uris, region, endpoint):
         "SequenceLength": metadata.get("SequenceLength"),
         "HostingConfigs": metadata.get("HostingConfigs", []),
         # Add S3 URIs
-        "HpEksPayloadTemplateS3Uri": s3_uris["k8s_yaml"],
-        "HpEksOverrideParamsS3Uri": s3_uris["k8s_json"],
         "SmtjRecipeTemplateS3Uri": s3_uris["sm_jobs_yaml"],
         "SmtjOverrideParamsS3Uri": s3_uris["sm_jobs_json"],
         # Add regional ECR URI
         "SmtjImageUri": get_regional_ecr_uri(launch_data, region, endpoint),
     }
 
+    if k8s_support:
+        recipe_entry["HpEksPayloadTemplateS3Uri"] = s3_uris["k8s_yaml"]
+        recipe_entry["HpEksOverrideParamsS3Uri"] = s3_uris["k8s_json"]
+
     if metadata.get("Peft"):
         recipe_entry["Peft"] = metadata.get("Peft", "").upper()
 
     return recipe_entry
+
+
+def process_mtrl_recipe_metadata(launch_json_path, s3_uris, region, endpoint):
+    """Use launch.json to create recipe collection metadata"""
+    with open(launch_json_path, "r") as f:
+        launch_data = json.load(f)
+
+    metadata = launch_data["metadata"]
+
+    # Build RecipeCollection entry
+    recipe_entry = {
+        "DisplayName": metadata.get("DisplayName"),
+        "Name": metadata.get("Name"),
+        "CustomizationTechnique": metadata.get("CustomizationTechnique", "").upper(),
+        "Type": metadata.get("Type"),
+        "Versions": metadata.get("Versions", ["1.0.0"]),
+        "RecipeFilePath": metadata.get("RecipeFilePath"),
+        "SequenceLength": metadata.get("SequenceLength"),
+        "HostingConfigs": metadata.get("HostingConfigs", []),
+        # Add S3 URIs
+        "SmtjRecipeTemplateS3Uri": s3_uris["sm_jobs_yaml"],
+        "SmtjOverrideParamsS3Uri": s3_uris["sm_jobs_json"],
+        # Add regional ECR URI
+        "SmtjImageUri": get_regional_ecr_uri(launch_data, region, endpoint),
+    }
+
+    if k8s_support:
+        recipe_entry["HpEksPayloadTemplateS3Uri"] = s3_uris["k8s_yaml"]
+        recipe_entry["HpEksOverrideParamsS3Uri"] = s3_uris["k8s_json"]
+
+    if metadata.get("Peft"):
+        recipe_entry["Peft"] = metadata.get("Peft", "").upper()
+
+    return recipe_entry
+
+
+def process_mtrl_eval_recipe_metadata(
+    launch_json_path: str,
+    s3_uris: dict,
+    model_id: str,
+    region: str,
+    endpoint: str,
+) -> dict:
+    """Build a per-model RecipeCollection entry for the shared MTRL eval recipe.
+
+    - SM Jobs only (no HpEks* fields).
+    - CustomizationTechnique is omitted — the eval operator filters on
+      ``Type == "Evaluation"``.
+    - No Hardware / SupportedInstanceTypes.
+
+    The shared recipe is expanded per MTRL-trained model at Hub-import time:
+    each model's Hub content gets its own ``mtrl-eval-{model_id}`` entry with
+    its own S3 URIs pointing at the same underlying YAML template.
+    """
+    with open(launch_json_path, "r") as f:
+        launch_data = json.load(f)
+    metadata = launch_data.get("metadata", {})
+
+    recipe_name = f"mtrl-eval-{model_id}"
+    display_name = metadata.get("DisplayName") or "MTRL Evaluation"
+
+    return {
+        "DisplayName": display_name,
+        "Name": recipe_name,
+        "Type": "Evaluation",
+        "Versions": metadata.get("Versions", ["1.0.0"]),
+        "EvaluationType": "MTRLEvaluation",
+        "SmtjRecipeTemplateS3Uri": s3_uris["sm_jobs_yaml"],
+        "SmtjOverrideParamsS3Uri": s3_uris["sm_jobs_json"],
+        "SmtjImageUri": get_regional_ecr_uri(launch_data, region, endpoint),
+    }
+
+
+def get_mtrl_eval_recipe_path() -> str:
+    """Return the path to the single shared MTRL eval recipe YAML."""
+    return MTRL_EVAL_RECIPE_PATH
 
 
 def process_eval_recipe_metadata(
@@ -553,6 +653,10 @@ def main():
 
         model_id = model_id_mapping.get(model_name)
 
+        k8s_support = True
+        if "mtrl" in recipe_name:
+            k8s_support = False
+
         # Get hub content from JumpStart's hub
         if model_id not in processed_models:
             js_output_file_name = f"{model_id}_export.json"
@@ -587,21 +691,38 @@ def main():
         # Generate launch.jsons for both k8s and sm_jobs using LaunchJsonGenerator
         k8s_launch_json_path = generate_launch_json(recipe_file, recipe_name, args.output_dir, job_type="k8s")
         sm_jobs_launch_json_path = generate_launch_json(recipe_file, recipe_name, args.output_dir, job_type="sm_jobs")
-        if k8s_launch_json_path is None or sm_jobs_launch_json_path is None:
-            print(f"Skipping {recipe_name} - launch.json generation failed or not supported")
-            continue
 
-        results["generated_launch_jsons"][recipe_name] = {
-            "k8s": k8s_launch_json_path,
-            "sm_jobs": sm_jobs_launch_json_path,
-        }
+        if k8s_support:
+            if k8s_launch_json_path is None or sm_jobs_launch_json_path is None:
+                print(f"Skipping {recipe_name} - launch.json generation failed or not supported")
+                continue
+
+            results["generated_launch_jsons"][recipe_name] = {
+                "k8s": k8s_launch_json_path,
+                "sm_jobs": sm_jobs_launch_json_path,
+            }
+        else:
+            results["generated_launch_jsons"][recipe_name] = {
+                "sm_jobs": sm_jobs_launch_json_path,
+            }
 
         artifacts = RecipeArtifactPaths(k8s_launch_json_path, sm_jobs_launch_json_path, recipe_name)
         s3_config = S3UploadConfig(args.s3_bucket, args.region, version_by_model[model_id])
-        s3_uris = upload_artifacts_to_s3(artifacts, s3_config)
+        s3_uris = upload_artifacts_to_s3(artifacts, s3_config, k8s_support)
         results["uploaded_artifacts"][recipe_name] = s3_uris
 
-        recipe_metadata = process_recipe_metadata(sm_jobs_launch_json_path, s3_uris, args.region, args.endpoint)
+        if "mtrl" in recipe_name:
+            recipe_metadata = process_mtrl_recipe_metadata(
+                sm_jobs_launch_json_path, s3_uris, args.region, args.endpoint
+            )
+        else:
+            recipe_metadata = process_recipe_metadata(
+                sm_jobs_launch_json_path,
+                s3_uris,
+                args.region,
+                args.endpoint,
+                k8s_support,
+            )
         results["recipe_metadata"][recipe_name] = recipe_metadata
 
         if model_id not in recipe_metadata_by_model:
@@ -642,7 +763,8 @@ def main():
 
                 artifacts = RecipeArtifactPaths(k8s_launch_json_path, sm_jobs_launch_json_path, recipe_name)
                 s3_config = S3UploadConfig(args.s3_bucket, args.region, version_by_model[model_id])
-                s3_uris = upload_artifacts_to_s3(artifacts, s3_config)
+                eval_image = get_eval_regional_ecr_uri(eval_type, args.region, args.endpoint) or ""
+                s3_uris = upload_artifacts_to_s3(artifacts, s3_config, region=args.region, endpoint=args.endpoint)
                 results["uploaded_artifacts"][recipe_name] = s3_uris
 
                 eval_recipe_metadata = process_eval_recipe_metadata(
@@ -651,6 +773,57 @@ def main():
                 results["recipe_metadata"][recipe_name] = eval_recipe_metadata
 
                 recipe_metadata_by_model[model_id].append(eval_recipe_metadata)
+
+        # MTRL eval expansion — one Hub entry per MTRL-trained model from the
+        # single shared mtrl_eval.yaml recipe. Scoped to the models the user
+        # specified this run (mirrors the open-source eval loop above).
+        mtrl_eval_recipe_path = get_mtrl_eval_recipe_path()
+        for model_id in processed_models:
+            has_mtrl_training = any(
+                entry.get("CustomizationTechnique", "").upper() == "MTRL"
+                for entry in recipe_metadata_by_model.get(model_id, [])
+            )
+            if not has_mtrl_training:
+                continue
+
+            print(f"\n===== Processing MTRL eval recipe for model: {model_id} =====")
+
+            recipe_name = f"mtrl-eval-{model_id}"
+
+            # SM Jobs only for MTRL eval.
+            sm_jobs_launch_json_path = generate_launch_json(
+                mtrl_eval_recipe_path,
+                recipe_name,
+                args.output_dir,
+                model_name=model_id,
+                job_type="sm_jobs",
+            )
+            if sm_jobs_launch_json_path is None:
+                print(f"Skipping {recipe_name} - launch.json generation failed")
+                continue
+
+            results["generated_launch_jsons"][recipe_name] = {
+                "sm_jobs": sm_jobs_launch_json_path,
+            }
+
+            artifacts = RecipeArtifactPaths(
+                k8s_launch_json_path=None,
+                sm_jobs_launch_json_path=sm_jobs_launch_json_path,
+                recipe_name=recipe_name,
+            )
+            s3_config = S3UploadConfig(args.s3_bucket, args.region, version_by_model[model_id])
+            s3_uris = upload_artifacts_to_s3(artifacts, s3_config, k8s_support=False)
+            results["uploaded_artifacts"][recipe_name] = s3_uris
+
+            mtrl_eval_metadata = process_mtrl_eval_recipe_metadata(
+                sm_jobs_launch_json_path,
+                s3_uris,
+                model_id,
+                args.region,
+                args.endpoint,
+            )
+            results["recipe_metadata"][recipe_name] = mtrl_eval_metadata
+            recipe_metadata_by_model[model_id].append(mtrl_eval_metadata)
 
     # Update exported hub content with recipe metadata from launch.jsons
     for model_id, recipe_entries in recipe_metadata_by_model.items():

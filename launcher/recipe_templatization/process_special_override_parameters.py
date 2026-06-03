@@ -29,17 +29,21 @@ class SpecialOverrideParametersProcessor:
     # Special parameters configuration organized by framework
     # "default" applies to all frameworks, framework-specific configs override or add to default
     SPECIAL_PARAMS_CONFIG = {
-        "default": {
-            "global_batch_size": "min_from_default",
-        },
+        "default": {},
         "verl": {
             # Add verl-specific parameters here
+            "global_batch_size": "min_from_default",
         },
         "llmft": {
             # Add llmft-specific parameters here
+            "global_batch_size": "min_from_default",
         },
         "nova": {
             # Add nova-specific parameters here
+            "global_batch_size": "min_from_default",
+        },
+        "mtrl": {
+            # Add mtrl-specific parameters here
         },
     }
 

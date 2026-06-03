@@ -6,6 +6,7 @@ This document provides a comprehensive catalog of all available recipes organize
 
 - [LLMFT (LLM Fine-Tuning Framework) Recipes](#llmft-llm-fine-tuning-framework-recipes)
 - [Checkpointless Training Recipes](#checkpointless-training-recipes)
+- [MTRL (Multi-Turn Reinforcement Learning) Recipes](#mtrl-multi-turn-reinforcement-learning-recipes)
 - [Evaluation Recipes](#evaluation-recipes)
 - [VERL (Versatile Reinforcement Learning) Recipes](#verl-versatile-reinforcement-learning-recipes)
 - [Amazon Nova Recipes](#amazon-nova-recipes)
@@ -231,7 +232,49 @@ This document provides a comprehensive catalog of all available recipes organize
 | HyperPod Checkpointless Training Llama 3 70B LoRA on GPU, 2K sequence length | checkpointless | LoRA | - | 2,048 | 2 | p5.48xlarge, p5e.48xlarge | [checkpointless_llama3_70b_lora.yaml](../recipes_collection/recipes/fine-tuning/llama/checkpointless_llama3_70b_lora.yaml) | [run_checkpointless_llama3_70b_lora.sh](../launcher_scripts/llama/run_checkpointless_llama3_70b_lora.sh) |
 | HyperPod Checkpointless Training Llama 3 70B Pre-Training on GPU, 2K sequence length | checkpointless | - | - | 2,048 | 16 | p5.48xlarge, p5e.48xlarge | [checkpointless_llama3_70b_pretrain.yaml](../recipes_collection/recipes/training/llama/checkpointless_llama3_70b_pretrain.yaml) | [run_checkpointless_llama3_70b_pretrain.sh](../launcher_scripts/llama/run_checkpointless_llama3_70b_pretrain.sh) |
 
+## MTRL (Multi-Turn Reinforcement Learning) Recipes
+
+### GPT-OSS Models
+
+#### GPT-OSS 20B
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Agentic RFT for GPT OSS 20B Lora | mtrl | - | - | - | - | - | [mtrl-gpt-oss-20b-lora.yaml](../recipes_collection/recipes/fine-tuning/gpt_oss/mtrl-gpt-oss-20b-lora.yaml) | - |
+
+### Gemma Models
+
+#### Gemma 4.31B It
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Agentic RFT for Gemma 4 31B Lora IT | mtrl | - | - | - | - | - | [mtrl-gemma-4-31b-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma/mtrl-gemma-4-31b-lora.yaml) | - |
+
+### Nova Models
+
+#### Nova Lite 2.0
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Agentic RFT for Nova Lite 2.0 Lora | mtrl | - | - | - | - | - | [mtrl_nova_lite_2_0_lora.yaml](../recipes_collection/recipes/fine-tuning/nova/nova_2_0/nova_lite/MTRL/mtrl_nova_lite_2_0_lora.yaml) | - |
+
+### Qwen Models
+
+#### Qwen 3.6 27B
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Agentic RFT for Qwen 3.6 27B Lora | mtrl | - | - | - | - | - | [mtrl-qwen-3-dot-6-27b-lora.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/mtrl-qwen-3-dot-6-27b-lora.yaml) | - |
+
 ## Evaluation Recipes
+
+### Mtrl Models
+
+#### Mtrl Eval
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| MTRL Evaluation | evaluation | Evaluation | - | - | - | - | [mtrl_eval.yaml](../recipes_collection/recipes/evaluation/mtrl/mtrl_eval.yaml) | - |
 
 ### Nova Models
 
@@ -400,6 +443,19 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 | Llama 3.3 70B Instruct GRPO RLVR Fine-Tuning with LoRA | verl | GRPO | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlvr-llama-3-dot-3-70b-instruct-lora.yaml](../recipes_collection/recipes/fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-3-70b-instruct-lora.yaml) | [run_verl_grpo_rlvr_llama_3_dot_3_70b_instruct_lora.sh](../launcher_scripts/llama/run_verl_grpo_rlvr_llama_3_dot_3_70b_instruct_lora.sh) |
 | Llama 3.3 70B Instruct GRPO RLAIF Fine-Tuning | verl | GRPO + RLAIF | FFT | 32,768 | 2 | p5.48xlarge | [verl-grpo-rlaif-llama-3-dot-3-70b-instruct-fft.yaml](../recipes_collection/recipes/fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-3-70b-instruct-fft.yaml) | [run_verl_grpo_rlaif_llama_3_dot_3_70b_instruct_fft.sh](../launcher_scripts/llama/run_verl_grpo_rlaif_llama_3_dot_3_70b_instruct_fft.sh) |
 | Llama 3.3 70B Instruct GRPO RLAIF Fine-Tuning with LoRA | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-llama-3-dot-3-70b-instruct-lora.yaml](../recipes_collection/recipes/fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-3-70b-instruct-lora.yaml) | [run_verl_grpo_rlaif_llama_3_dot_3_70b_instruct_lora.sh](../launcher_scripts/llama/run_verl_grpo_rlaif_llama_3_dot_3_70b_instruct_lora.sh) |
+
+### Nemotron Models
+
+#### Nvidia Nemotron 3 Nano 30B A3b Bf16
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Nemotron 3 Nano 30B SFT FFT Fine-Tuning | verl | - | - | - | 2 | p5.48xlarge | [verl-sft-nemotron-3-nano-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-sft-nemotron-3-nano-30b-fft.yaml) | [run_verl_sft_nemotron_3_nano_30b_fft.sh](../launcher_scripts/nemotron-0_7_0/run_verl_sft_nemotron_3_nano_30b_fft.sh) |
+| Nemotron 3 Nano 30B SFT LoRA Fine-Tuning | verl | - | - | - | 1 | p5.48xlarge | [verl-sft-nemotron-3-nano-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-sft-nemotron-3-nano-30b-lora.yaml) | [run_verl_sft_nemotron_3_nano_30b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_sft_nemotron_3_nano_30b_lora.sh) |
+| Nemotron 3 Nano 30B GRPO RLVR Fine-Tuning with Megatron FFT | verl | GRPO | FFT | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlvr-nemotron-3-nano-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlvr-nemotron-3-nano-30b-fft.yaml) | [run_verl_grpo_rlvr_nemotron_3_nano_30b_fft.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlvr_nemotron_3_nano_30b_fft.sh) |
+| Nemotron 3 Nano 30B GRPO RLVR Fine-Tuning with Megatron LoRA | verl | GRPO | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlvr-nemotron-3-nano-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlvr-nemotron-3-nano-30b-lora.yaml) | [run_verl_grpo_rlvr_nemotron_3_nano_30b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlvr_nemotron_3_nano_30b_lora.sh) |
+| Nemotron 3 Nano 30B GRPO RLAIF Fine-Tuning with Megatron FFT | verl | GRPO + RLAIF | FFT | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-nemotron-3-nano-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlaif-nemotron-3-nano-30b-fft.yaml) | [run_verl_grpo_rlaif_nemotron_3_nano_30b_fft.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlaif_nemotron_3_nano_30b_fft.sh) |
+| Nemotron 3 Nano 30B GRPO RLAIF Fine-Tuning with Megatron LoRA | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-nemotron-3-nano-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlaif-nemotron-3-nano-30b-lora.yaml) | [run_verl_grpo_rlaif_nemotron_3_nano_30b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlaif_nemotron_3_nano_30b_lora.sh) |
 
 ### Qwen Models
 
@@ -582,7 +638,7 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 | nova lite 2 0 p5 gpu rft | nova | RFT | FFT | 10,240 | 2 | p5.48xlarge | [nova_lite_2_0_p5_gpu_rft.yaml](../recipes_collection/recipes/fine-tuning/nova/nova_2_0/nova_lite/RFT/nova_lite_2_0_p5_gpu_rft.yaml) | [run_nova_lite_2_0_p5_gpu_rft.sh](../launcher_scripts/nova/run_nova_lite_2_0_p5_gpu_rft.sh) |
 | nova lite v2 smtj p5 p5en gpu lora rft | nova | RFT | FFT | 8,192 | 4 | p5.48xlarge | [nova_lite_v2_smtj_p5_p5en_gpu_lora_rft.yaml](../recipes_collection/recipes/fine-tuning/nova/nova_2_0/nova_lite/RFT/nova_lite_v2_smtj_p5_p5en_gpu_lora_rft.yaml) | [run_nova_lite_v2_smtj_p5_p5en_gpu_lora_rft.sh](../launcher_scripts/nova/run_nova_lite_v2_smtj_p5_p5en_gpu_lora_rft.sh) |
 | nova lite v2 smtj p5 p5en gpu rft | nova | RFT | FFT | 8,192 | 4 | p5.48xlarge | [nova_lite_v2_smtj_p5_p5en_gpu_rft.yaml](../recipes_collection/recipes/fine-tuning/nova/nova_2_0/nova_lite/RFT/nova_lite_v2_smtj_p5_p5en_gpu_rft.yaml) | [run_nova_lite_v2_smtj_p5_p5en_gpu_rft.sh](../launcher_scripts/nova/run_nova_lite_v2_smtj_p5_p5en_gpu_rft.sh) |
-| nova lite 2 0 p5 gpu lora sft | nova | SFT | FFT | 32,768 | 4 | p5.48xlarge | [nova_lite_2_0_p5_gpu_lora_sft.yaml](../recipes_collection/recipes/fine-tuning/nova/nova_2_0/nova_lite/SFT/nova_lite_2_0_p5_gpu_lora_sft.yaml) | [run_nova_lite_2_0_p5_gpu_lora_sft.sh](../launcher_scripts/nova/run_nova_lite_2_0_p5_gpu_lora_sft.sh) |
+| nova lite 2 0 p5 gpu lora sft | nova | SFT | FFT | 32,768 | 1 | p5.48xlarge | [nova_lite_2_0_p5_gpu_lora_sft.yaml](../recipes_collection/recipes/fine-tuning/nova/nova_2_0/nova_lite/SFT/nova_lite_2_0_p5_gpu_lora_sft.yaml) | [run_nova_lite_2_0_p5_gpu_lora_sft.sh](../launcher_scripts/nova/run_nova_lite_2_0_p5_gpu_lora_sft.sh) |
 | nova lite 2 0 p5 gpu sft | nova | SFT | FFT | 32,768 | 4 | p5.48xlarge | [nova_lite_2_0_p5_gpu_sft.yaml](../recipes_collection/recipes/fine-tuning/nova/nova_2_0/nova_lite/SFT/nova_lite_2_0_p5_gpu_sft.yaml) | [run_nova_lite_2_0_p5_gpu_sft.sh](../launcher_scripts/nova/run_nova_lite_2_0_p5_gpu_sft.sh) |
 
 #### Nova Micro 1.0

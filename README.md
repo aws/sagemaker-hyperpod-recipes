@@ -38,6 +38,7 @@ This repository contains **v2.0.0** of Amazon SageMaker HyperPod recipes, which 
 | **Reinforcement Learning with Verifiable Rewards (RLVR)** | RL training with verifiable reward signals | • Full Fine-Tuning (FFT)<br>• LoRA | All models |
 | **Reinforcement Fine-Tuning (RFT)** | Reinforcement learning fine-tuning | • Full Fine-Tuning (FFT)<br>• LoRA | Nova models only |
 | **Proximal Policy Optimization (PPO)** | Policy gradient RL algorithm | Standard | Nova models only |
+| **Multi-Turn Reinforcement Learning (MTRL)** | RL training with multi-turn conversational interactions | LoRA | All models |
 | **Pretraining** | Continued pre-training on domain-specific data | Full Fine-Tuning (FFT) | All models |
 
 ### Supported Accelerators
@@ -115,6 +116,12 @@ cluster.use_hyperpod_pytorch_job=true \
 cluster.queue_name=<queue_name> \
 ...
 ```
+
+#### Multi-Turn Reinforcement Learning (MTRL)
+
+Multi-turn reinforcement learning enables RL training with multi-turn conversational interactions, allowing models to learn from extended dialogue sequences rather than single-turn exchanges. One key feature of MTRL is tool calling.
+
+> **Note:** MTRL recipes are not launched directly from this repository. Please refer to the [MTRL documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/model-customize-mtrl.html) for full setup and usage instructions.
 
 ### Evaluation
 - Open-source deterministic evaluation

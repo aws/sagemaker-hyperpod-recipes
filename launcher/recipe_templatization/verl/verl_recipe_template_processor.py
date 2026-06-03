@@ -103,7 +103,14 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         # SFT 0.7.0 recipes have "profiler" directly under training_config,
         # while RL 0.7.0 recipes (GRPO/PPO) have "global_profiler" instead.
         is_verl_0_7_0 = "profiler" in recipe_cfg.training_config or "global_profiler" in recipe_cfg.training_config
-        self._verl_regional_key = "verl-0.7.0" if is_verl_0_7_0 else "verl"
+        if is_verl_0_7_0:
+            # Nemotron recipes use a separate container (vllm012) from Qwen (smtj)
+            if "nemotron" in recipe_file_path.lower():
+                self._verl_regional_key = "verl-0.7.0-vllm012"
+            else:
+                self._verl_regional_key = "verl-0.7.0"
+        else:
+            self._verl_regional_key = "verl"
         logger.debug(f"Detected verl recipe version: {self._verl_regional_key}")
 
         # Basic metadata
@@ -290,14 +297,16 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     def _extract_sequence_length(self, recipe_cfg) -> Optional[int]:
         """Extract sequence length from recipe configuration.
 
-        RL recipes use data.max_prompt_length; SFT recipes use data.max_length.
+        RL recipes use max_prompt_length + max_response_length as the full
+        sequence the GPU must handle. SFT recipes use data.max_length.
         Falls back to max_length if max_prompt_length is not present.
         """
         training_config = recipe_cfg.get("training_config")
         data = training_config.get("data")
         max_prompt_length = data.get("max_prompt_length")
-        if max_prompt_length is not None:
-            return max_prompt_length
+        max_response_length = data.get("max_response_length")
+        if max_prompt_length is not None and max_response_length is not None:
+            return max_prompt_length + max_response_length
         return data.get("max_length")
 
     def _training_technique(self, algorithm_type: str, display_name: str) -> str:

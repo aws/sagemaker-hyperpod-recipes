@@ -191,6 +191,10 @@ class TestNovaMetadataBaseline(unittest.TestCase):
         for recipe_file in nova_recipe_files:
             recipe_name = recipe_file.stem  # filename without .yaml
 
+            # Skip MTRL recipes - they are processed differently
+            if "mtrl" in recipe_name.lower():
+                continue
+
             # Check 1: Recipe has metadata entry
             if recipe_name not in metadata_mapping:
                 missing_metadata.append(str(recipe_file.relative_to(project_root)))

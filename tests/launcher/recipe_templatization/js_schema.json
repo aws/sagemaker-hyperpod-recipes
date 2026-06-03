@@ -15,7 +15,7 @@
           },
           "EvaluationType": {
             "type": "string",
-            "enum": ["DeterministicTextBenchmark", "DeterministicMultiModalBenchmark", "DeterministicEvaluation", "LLMAJEvaluation"]
+            "enum": ["DeterministicTextBenchmark", "DeterministicMultiModalBenchmark", "DeterministicEvaluation", "LLMAJEvaluation", "MTRLEvaluation"]
 
           },
           "IsSubscriptionModel": {"type": "boolean"},

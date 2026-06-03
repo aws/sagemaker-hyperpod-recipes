@@ -206,6 +206,11 @@ datasets:
       val_data_name: "tatqa_val"
       val_data_dir: "/opt/ml/input/data/training/hp-recipe-validator/datasets/tatqa/zc_dev.jsonl"
   tat_qa-sft-openai-parquet:
+    slurm:
+      train_data_name: "tatqa_train"
+      train_data_dir: "/fsx/datasets/tat_qa-sft-openai-parquet/zc_dev.parquet"
+      val_data_name: "tatqa_val"
+      val_data_dir: "/fsx/datasets/tat_qa-sft-openai-parquet/zc_test.parquet"
     k8:
       train_data_name: "tatqa_train"
       train_data_dir: "/data/hp-recipe-validator/datasets/tat_qa-sft-openai-parquet/zc_dev.parquet"
@@ -387,6 +392,10 @@ container_info:
     slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
     k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
     smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
+  verl_0_7_0_vllm012:
+    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
+    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
+    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
 
 git:
   use_default: false
@@ -525,12 +534,16 @@ smjobs:
 # Dataset ARN mappings by customization technique (beta endpoint only)
 # Each training type (SFT, DPO, RLVR, RLAIF) uses a different dataset format and structure
 serverless_dataset_mapping:
-  SFT: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-sft/0.0.1"
+  SFT: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-sft-256/0.0.1"
+  # Full SFT dataset: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-sft/0.0.1"
   # Alternative SFT dataset for Vision models (multimodal):
   # SFT: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-vision-sft/0.0.1"
-  DPO: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-dpo"
-  RLVR: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-rlvr"
-  RLAIF: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-rlaif"
+  DPO: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-dpo-256/0.0.1"
+  # Full DPO dataset: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-dpo"
+  RLVR: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-rlvr-256/0.0.1"
+  # Full RLVR dataset: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-rlvr"
+  RLAIF: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-rlaif-256/0.0.1"
+  # Full RLAIF dataset: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/RecipeTestDataSets/DataSet/science-team-dataset-rlaif"
 
 # Evaluator ARN mappings by customization technique (beta endpoint only)
 # RLVR and RLAIF require evaluators to assess model outputs during training
@@ -696,6 +709,39 @@ serverless_hyper_parameters:
   verl_rlaif:
     # RLAIF uses LLM-as-judge, so it requires a judge_model_id parameter
     judge_model_id: "bedrock/openai.gpt-oss-120b-1:0"
+
+# ============================================================================
+# HPCLI VALIDATION CONFIG
+# ============================================================================
+# Configuration for HyperPod CLI (hyp) recipe job integration tests.
+# Only hub/endpoint/auth defaults live here. Recipe-specific values
+# (model_arn, data paths, instance_type, technique, container image)
+# are passed as config_overrides from the integ test repo.
+#
+# To run HP CLI validation locally:
+#   1. Install the CLI: pip install -e /path/to/private-sagemaker-hyperpod-cli-staging
+#   2. Set platform: "HPCLI" (at the top of this file)
+#   3. Uncomment and fill in the fields below
+#   4. Run: python scripts/validations/validation_script_runner.py
+#
+# Example model_arn values:
+#   - "arn:aws:sagemaker:us-west-2:855988369404:hub-content/HPMCIntegTestHub/Model/meta-textgeneration-llama-3-2-3b-instruct"
+#   - "arn:aws:sagemaker:us-west-2:855988369404:hub-content/HPMCIntegTestHub/Model/meta-textgeneration-llama-3-2-1b-instruct"
+hpcli_config:
+  endpoint: ""  # empty = prod (no custom endpoint needed)
+  region: "us-west-2"
+  namespace: "default"
+  # Uncomment below for local runs:
+  # model_arn: "arn:aws:sagemaker:us-west-2:855988369404:hub-content/HPMCIntegTestHub/Model/meta-textgeneration-llama-3-2-3b-instruct"
+  # expected_container_image: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+  # instance_type: "ml.p5.48xlarge"
+  # default_technique: "SFT"
+  # data_path: "/data/hp-recipe-validator/datasets/PandaLM/train_with_question_small.jsonl"
+  # output_path: "/opt/ml/model"
+  # results_directory: "/opt/ml/model"
+  # training_data_name: "train"
+  # validation_data_name: "val"
+  # validation_data_path: "/data/hp-recipe-validator/datasets/PandaLM/train_with_question_small.jsonl"
 
 recipe_structure_config:
   verl_sft:

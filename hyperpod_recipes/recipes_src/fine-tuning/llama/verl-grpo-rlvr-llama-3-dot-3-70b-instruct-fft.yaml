@@ -15,7 +15,7 @@ defaults:
 - /hydra_config/verl/model_config/llama-3-3-70b-instruct
 - _self_
 display_name: Llama 3.3 70B Instruct GRPO RLVR Fine-Tuning
-version: 1.2.1
+version: 1.2.2
 instance_types:
 - ml.p5.48xlarge
 run:

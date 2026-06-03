@@ -47,6 +47,9 @@ from ..recipe_templatization.launch_json_validation import (
 from ..recipe_templatization.llmft.llmft_recipe_template_processor import (
     LLMFTRecipeTemplateProcessor,
 )
+from ..recipe_templatization.mtrl.mtrl_recipe_template_processor import (
+    MtrlRecipeTemplateProcessor,
+)
 from ..recipe_templatization.verl.verl_recipe_template_processor import (
     VerlRecipeTemplateProcessor,
 )
@@ -734,6 +737,8 @@ class SMTraining(Training):
                     recipe_template_processor = CheckpointlessRecipeTemplateProcessor(
                         self.cfg, platform=self.cfg.cluster_type
                     )
+                case "mtrl":
+                    recipe_template_processor = MtrlRecipeTemplateProcessor(self.cfg, platform=self.cfg.cluster_type)
                 case _:
                     raise ValueError(f"Unsupported model type: {model_type}")
 
