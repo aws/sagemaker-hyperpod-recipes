@@ -214,3 +214,54 @@ def test_ray_verl_recipe_k8s_workflow_invalid(test_params):
 
     with pytest.raises(ValidationError):
         main(sample_recipe_k8s_config)
+
+
+def test_ray_verl_recipe_custom_labels_rendered():
+    """Test that custom_labels are passed through to the RayJob values.yaml."""
+    recipe = "fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-2-1b-instruct-lora"
+
+    artifacts_dir = create_temp_directory()
+    overrides = [
+        "instance_type=p5.48xlarge",
+        f"recipes={recipe}",
+        f"base_results_dir={artifacts_dir}",
+        "container=test_container",
+        "cluster=k8s",
+        "cluster_type=k8s",
+        "+env_vars.NEMO_LAUNCHER_DEBUG=1",
+        "git.repo_url_or_path=https://github.com/aws/sagemaker-hyperpod-training-adapter-for-nemo.git",
+        "git.branch=test_branch",
+        "git.commit=test_commit",
+        "git.token=test_token",
+        "++recipes.training_config.algorithm.adv_estimator=grpo",
+        "+cluster.custom_labels.source=recipe-optimizer",
+        "+cluster.custom_labels.run_identifier=test-run-123",
+        "++dry_run=True",
+    ]
+
+    sample_recipe_k8s_config = make_hydra_cfg_instance("../recipes_collection", "config", overrides)
+    main(sample_recipe_k8s_config)
+
+    # Find the generated k8s_template directory (job name has random suffix)
+    import glob
+
+    values_files = glob.glob(f"{artifacts_dir}/*/k8s_template/values.yaml")
+    assert values_files, f"No values.yaml found under {artifacts_dir}"
+
+    with open(values_files[0]) as f:
+        import yaml
+
+        values = yaml.safe_load(f)
+
+    custom_labels = values["trainingConfig"]["customLabels"]
+    assert custom_labels["source"] == "recipe-optimizer"
+    assert custom_labels["run_identifier"] == "test-run-123"
+
+    # Verify the template has the customLabels rendering block
+    training_yamls = glob.glob(f"{artifacts_dir}/*/k8s_template/templates/training.yaml")
+    assert training_yamls, f"No training.yaml found under {artifacts_dir}"
+
+    with open(training_yamls[0]) as f:
+        template_content = f.read()
+
+    assert ".Values.trainingConfig.customLabels" in template_content

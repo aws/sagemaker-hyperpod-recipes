@@ -1,0 +1,122 @@
+{
+    "_comment": [
+        "MTRL Eval Recipe Template Parameters Configuration",
+        "",
+        "This file defines template structure and parameters for MTRL agentic eval recipes.",
+        "Only deterministic evaluation is supported (no LLMAJ, no benchmark).",
+        "",
+        "`name`, `sampling_temperature`, `top_p`, `max_tokens`, `eval_group_size`,",
+        "`pass_k_values`, and `success_threshold` are customer-overridable."
+    ],
+    "templates": {
+        "mtrl_eval": {
+            "recipe_template": {
+                "run": {
+                    "base_model_name": "{{base_model_name}}",
+                    "name": "{{name}}"
+                },
+                "batch": {
+                    "eval_group_size": "{{eval_group_size}}"
+                },
+                "eval_metrics_config": {
+                    "pass_k_values": "{{pass_k_values}}",
+                    "success_threshold": "{{success_threshold}}"
+                },
+                "eval_sampling_params": {
+                    "temperature": "{{temperature}}",
+                    "top_p": "{{sampling_top_p}}",
+                    "max_tokens": "{{sampling_max_tokens}}"
+                },
+                "model": {
+                    "model_name": "{{model_name}}"
+                },
+                "rollout": {
+                    "max_concurrency": "{{rollout_max_concurrency}}",
+                    "timeout": "{{rollout_timeout}}",
+                    "max_retries": "{{rollout_max_retries}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "base_model_name": {
+                    "type": "string",
+                    "default": "",
+                    "required": true
+                },
+                "model_name": {
+                    "type": "string",
+                    "default": "",
+                    "required": true
+                },
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "eval_group_size": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 128,
+                    "default": 1
+                },
+                "pass_k_values": {
+                    "type": "array",
+                    "required": true,
+                    "default": [1, 2, 4, 8, 16, 32]
+                },
+                "success_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "default": 1.0
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 2,
+                    "default": 0
+                },
+                "sampling_top_p": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 1
+                },
+                "sampling_max_tokens": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 512,
+                    "max": 8192,
+                    "default": 4096
+                },
+                "rollout_max_concurrency": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 32,
+                    "max": 96,
+                    "default": 96
+                },
+                "rollout_timeout": {
+                    "type": "float",
+                    "required": true,
+                    "min": 300,
+                    "max": 86400,
+                    "default": 600
+                },
+                "rollout_max_retries": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 10,
+                    "default": 3
+                }
+            },
+            "recipe_metadata_helpers": {
+                "evaluation_types": {
+                    "MTRLEvaluation": "MTRL Evaluation"
+                }
+            }
+        }
+    }
+}

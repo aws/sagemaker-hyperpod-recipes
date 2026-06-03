@@ -121,7 +121,15 @@ class SlurmClient:
             f"cd {self.controller_work_dir}",
             f"{cmd_str} > {log_file} 2>&1",
         ]
-        self.run(command, timeout_in_min)
+        try:
+            self.run(command, timeout_in_min)
+        except subprocess.CalledProcessError as e:
+            try:
+                stdout_content = self.download_remote_file(log_file)
+                self.logger.error(f"launch_job failed. Remote log output:\n{stdout_content}")
+            except Exception as log_err:
+                self.logger.error(f"launch_job failed and could not retrieve remote log: {log_err}")
+            raise
 
         # Transfer the log file back via S3 and return as CompletedProcess
         stdout_content = self.download_remote_file(log_file)

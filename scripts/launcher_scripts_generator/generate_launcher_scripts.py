@@ -80,6 +80,10 @@ class LauncherConfig:
         return self.settings.get("excluded_recipe_dirs", [])
 
     @property
+    def excluded_recipe_patterns(self) -> List[str]:
+        return self.settings.get("excluded_recipe_patterns", [])
+
+    @property
     def recipes_dir(self) -> str:
         return self.settings.get("recipes_dir", "recipes_collection/recipes")
 
@@ -260,14 +264,20 @@ class LauncherScriptGenerationOrchestrator:
         self.generated: set = set()
 
     def discover_recipes(self) -> List[Path]:
-        """Find all recipe YAML files, excluding configured directories."""
-        excluded = self.config.excluded_recipe_dirs
+        """Find all recipe YAML files, excluding configured directories and patterns."""
+        excluded_dirs = self.config.excluded_recipe_dirs
+        excluded_patterns = self.config.excluded_recipe_patterns
         recipes = []
         for recipe_path in self.recipes_dir.rglob("*.yaml"):
             rel_path = str(recipe_path.relative_to(self.recipes_dir))
             # Skip if recipe is in an excluded directory
-            if not any(rel_path.startswith(excl) for excl in excluded):
-                recipes.append(recipe_path)
+            if any(rel_path.startswith(excl) for excl in excluded_dirs):
+                continue
+            # Skip if recipe name matches an excluded pattern (case-insensitive)
+            recipe_name_lower = recipe_path.stem.lower()
+            if any(pattern.lower() in recipe_name_lower for pattern in excluded_patterns):
+                continue
+            recipes.append(recipe_path)
         return sorted(recipes)
 
     def infer_model_family(self, recipe_path: Path) -> str:

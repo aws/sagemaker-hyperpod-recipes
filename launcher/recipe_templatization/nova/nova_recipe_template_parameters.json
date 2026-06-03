@@ -57,6 +57,7 @@
     ],
     "templates": {
         "nova_lora_sft": {
+            "display_name": "SFT (LoRA) 1.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -305,6 +306,7 @@
             }
         },
         "nova_lora_sft_2_0": {
+            "display_name": "SFT (LoRA) 2.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -565,6 +567,7 @@
             }
         },
         "nova_sft_2_0": {
+            "display_name": "SFT (FFT) 2.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -792,6 +795,7 @@
             }
         },
         "nova_lora_dpo": {
+            "display_name": "DPO (LoRA)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -1048,6 +1052,7 @@
             }
         },
         "nova_sft": {
+            "display_name": "SFT (FFT) 1.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -1250,6 +1255,7 @@
             }
         },
         "nova_dpo": {
+            "display_name": "DPO (FFT)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -1466,6 +1472,7 @@
             }
         },
         "nova_ppo": {
+            "display_name": "PPO",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -1634,6 +1641,7 @@
             }
         },
         "nova_distill": {
+            "display_name": "Distillation",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}"
@@ -1700,6 +1708,7 @@
             }
         },
         "nova_general_text_benchmark_eval": {
+            "display_name": "Text Benchmark Eval 1.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -1806,6 +1815,7 @@
             }
         },
         "nova_general_text_benchmark_2_0_eval": {
+            "display_name": "Text Benchmark Eval 2.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -1912,6 +1922,7 @@
             }
         },
         "nova_general_multi_modal_benchmark_eval": {
+            "display_name": "Multi-Modal Benchmark Eval 1.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -2017,6 +2028,7 @@
             }
         },
         "nova_general_multi_modal_benchmark_2_0_eval": {
+            "display_name": "Multi-Modal Benchmark Eval 2.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -2122,6 +2134,7 @@
             }
         },
         "nova_llm_judge_eval": {
+            "display_name": "LLM-as-Judge Eval",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -2222,6 +2235,7 @@
             }
         },
         "nova_bring_your_own_dataset_eval": {
+            "display_name": "Custom Dataset Eval 1.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -2346,6 +2360,7 @@
             }
         },
         "nova_bring_your_own_dataset_2_0_eval": {
+            "display_name": "Custom Dataset Eval 2.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -2480,6 +2495,7 @@
             }
         },
         "nova_pretrain": {
+            "display_name": "Pretraining 1.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -2646,6 +2662,7 @@
             }
         },
         "nova_pretrain_2_0": {
+            "display_name": "Pretraining 2.0",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -2802,6 +2819,7 @@
             }
         },
         "nova_lora_rft": {
+            "display_name": "RFT (LoRA)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -2991,6 +3009,7 @@
             }
         },
         "nova_rft": {
+            "display_name": "RFT (FFT)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -3159,6 +3178,7 @@
             }
         },
         "nova_smtj_lora_rft": {
+            "display_name": "SMTJ RFT (LoRA)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -3298,6 +3318,7 @@
             }
         },
         "nova_smtj_rft": {
+            "display_name": "SMTJ RFT (FFT)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",

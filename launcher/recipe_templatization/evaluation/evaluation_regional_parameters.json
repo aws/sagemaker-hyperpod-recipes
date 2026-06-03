@@ -132,6 +132,7 @@
     "meta-textgeneration-llama-3-3-70b-instruct": ["ml.p4d.24xlarge","ml.p4de.24xlarge"],
     "meta-vlm-llama-4-scout-17b-16e-instruct": ["ml.p5.48xlarge"],
     "openai-reasoning-gpt-oss-120b": ["ml.p5.48xlarge"],
-    "openai-reasoning-gpt-oss-20b": ["ml.g5.12xlarge","ml.g5.24xlarge","ml.g5.48xlarge","ml.g6.24xlarge","ml.g6.48xlarge","ml.p4d.24xlarge","ml.p4de.24xlarge"]
+    "openai-reasoning-gpt-oss-20b": ["ml.g5.12xlarge","ml.g5.24xlarge","ml.g5.48xlarge","ml.g6.24xlarge","ml.g6.48xlarge","ml.p4d.24xlarge","ml.p4de.24xlarge"],
+    "huggingface-reasoning-nvidia-nemotron-3-nano-30b-a3b-bf16": ["ml.p4d.24xlarge"]
   }
 }

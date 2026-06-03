@@ -680,4 +680,4 @@ training_config:
     validation_data_dir: null
   transfer_queue:
     enable: false
-version: 2.1.1
+version: 2.1.2

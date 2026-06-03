@@ -56,6 +56,7 @@
     ],
     "templates": {
         "llmft_sft_lora": {
+            "display_name": "SFT (LoRA)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -364,6 +365,7 @@
             }
         },
         "llmft_dpo": {
+            "display_name": "DPO (LoRA)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -678,6 +680,7 @@
             }
         },
         "llmft_fine_tuning": {
+            "display_name": "Fine-Tuning",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -929,6 +932,7 @@
             }
         },
         "llmft_sft_fft": {
+            "display_name": "SFT (FFT)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -1196,6 +1200,7 @@
             }
         },
         "llmft_dpo_fft": {
+            "display_name": "DPO (FFT)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",

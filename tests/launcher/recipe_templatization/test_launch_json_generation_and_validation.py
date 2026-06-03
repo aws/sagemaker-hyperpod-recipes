@@ -58,7 +58,7 @@ except ImportError:
     logger.warning("Could not import DONT_OVERRIDE_IN_SMTJ from launchers.py, using fallback")
 
 # Configuration
-RECIPE_PREFIXES = ["llmft", "nova", "verl", "evaluation"]
+RECIPE_PREFIXES = ["llmft", "nova", "verl", "evaluation", "mtrl"]
 
 # DEBUG: Filter recipes by path substring (e.g., "evaluation", "lite", "sft_lora")
 # Set to None to test all recipes
@@ -67,6 +67,7 @@ DEBUG_RECIPE_PATH = None  # Example: "evaluation/nova" or "nova_lite_v2_sft_lora
 # Valid stages/environments in regional_parameters
 VALID_REGIONAL_STAGES = {"prod", "gamma", "beta"}  # For llmft and verl
 VALID_REGIONAL_STAGES_NOVA = {"prod", "gamma"}  # Nova excludes beta
+VALID_REGIONAL_STAGES_MTRL = {"prod", "gamma", "beta", "alpha"}
 
 # Valid parameter keys in regional_parameters
 VALID_REGIONAL_PARAMS = {
@@ -148,6 +149,12 @@ class LaunchJsonGeneratorWithValidation(LaunchJsonGenerator):
                 for stage_name in param_value.keys():
                     if stage_name not in VALID_REGIONAL_STAGES:
                         errors.append(f"Invalid stage in {param_name}: {stage_name}. Valid: {VALID_REGIONAL_STAGES}")
+            elif recipe_prefix == "mtrl":
+                for stage_name in param_value.keys():
+                    if stage_name not in VALID_REGIONAL_STAGES_MTRL:
+                        errors.append(
+                            f"Invalid stage in {param_name}: {stage_name}. Valid: {VALID_REGIONAL_STAGES_MTRL}"
+                        )
             elif recipe_prefix == "nova":
                 for stage_name in param_value.keys():
                     if stage_name not in VALID_REGIONAL_STAGES_NOVA:
@@ -287,7 +294,9 @@ class TestLaunchJsonGenerationAndValidation:
         assert launch_json_path.exists(), f"launch.json not found at {launch_json_path}"
 
         # Validate the generated launch.json using both schema and content validators
-        validation_errors = generator.validate_launch_json(launch_json_path, prefix)
+        # Use effective prefix for validation: MTRL recipes in nova folder should validate as mtrl
+        effective_prefix = "mtrl" if "mtrl" in str(recipe_path).lower() else prefix
+        validation_errors = generator.validate_launch_json(launch_json_path, effective_prefix)
 
         # Load launch.json for content validation
         with open(launch_json_path) as f:
@@ -415,6 +424,9 @@ class TestLaunchJsonGenerationAndValidation:
                     from launcher.recipe_templatization.llmft.llmft_recipe_template_processor import (
                         LLMFTRecipeTemplateProcessor,
                     )
+                    from launcher.recipe_templatization.mtrl.mtrl_recipe_template_processor import (
+                        MtrlRecipeTemplateProcessor,
+                    )
                     from launcher.recipe_templatization.nova.nova_recipe_template_processor import (
                         NovaRecipeTemplateProcessor,
                     )
@@ -425,7 +437,10 @@ class TestLaunchJsonGenerationAndValidation:
                     recipe_processor = None
                     recipe_template = None
 
-                    if "nova" in recipe_file_str.lower():
+                    # Check MTRL before nova - MTRL recipes may be in nova folder but should use MTRL processor
+                    if "mtrl" in recipe_file_str.lower():
+                        recipe_processor = MtrlRecipeTemplateProcessor(original_recipe, platform=job_type)
+                    elif "nova" in recipe_file_str.lower():
                         recipe_processor = NovaRecipeTemplateProcessor(original_recipe, platform=job_type)
                     elif "llmft" in recipe_file_str.lower():
                         recipe_processor = LLMFTRecipeTemplateProcessor(original_recipe, platform=job_type)

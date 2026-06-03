@@ -289,8 +289,17 @@ def validate_platform_auth(cfg) -> bool:
             # EVAL uses the eval launcher to launch SageMaker Training Jobs for evaluation
             return True
 
+        case "HPCLI":
+            # HPCLI uses the HyperPod CLI (hyp) builder pattern for recipe jobs on K8s
+            try:
+                subprocess.run(["hyp", "--help"], check=True, capture_output=True, text=True)
+                return True
+            except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                logging.info(f"HPCLI environment ran into an issue - 'hyp' CLI not available: {e}")
+                return False
+
         case _:
-            logging.info("Valid environment (SLURM, K8, SMJOBS, SERVERLESS, PYSDK_FINETUNE, EVAL) not found")
+            logging.info("Valid environment (SLURM, K8, SMJOBS, SERVERLESS, PYSDK_FINETUNE, EVAL, HPCLI) not found")
             return False
 
 
@@ -1599,6 +1608,9 @@ def select_validation_launcher(cfg_platform):
     from scripts.validations.validation_launchers.eval_launcher import (
         EvalValidationLauncher,
     )
+    from scripts.validations.validation_launchers.hpcli_launcher import (
+        HpCliValidationLauncher,
+    )
     from scripts.validations.validation_launchers.k8s_launcher import (
         K8sValidationLauncher,
     )
@@ -1625,5 +1637,7 @@ def select_validation_launcher(cfg_platform):
             return SageMakerJobsValidationLauncher
         case "EVAL":
             return EvalValidationLauncher
+        case "HPCLI":
+            return HpCliValidationLauncher
         case _:
             raise ValueError(f"Unknown platform: {cfg_platform}")

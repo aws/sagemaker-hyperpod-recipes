@@ -51,6 +51,7 @@ from launcher.accelerator_devices import (
 )
 from launcher.evaluation.launchers import SMEvaluationK8SLauncher
 from launcher.evaluation.sm_jobs_launcher import SMEvaluationJobsLauncher
+from launcher.mtrl.launchers import MtrlSMTJLauncher
 from launcher.nemo.recipe_stages import (
     NeMoTraining,
     SMTrainingGPURecipe,
@@ -392,6 +393,19 @@ def main(cfg):
             raise ValueError("Recipe only can not provide persistent volume claims")
         launcher = get_nova_launcher(cfg)
         if cfg.dry_run:
+            print("[DRY_RUN] Skipping launcher run.")
+        else:
+            launcher.run()
+        return
+
+    # MTRL routing: MtrlSMTJLauncher internally dispatches to the eval or
+    # training template processor based on the recipe file path.
+    if model_type and model_type == "mtrl":
+        if "pytest" not in sys.modules and "name" in cfg.recipes.run:
+            cfg.recipes.run.name = valid_run_name(cfg.recipes.run.get("name", None))
+
+        launcher = MtrlSMTJLauncher(cfg)
+        if cfg.get("dry_run", False):
             print("[DRY_RUN] Skipping launcher run.")
         else:
             launcher.run()

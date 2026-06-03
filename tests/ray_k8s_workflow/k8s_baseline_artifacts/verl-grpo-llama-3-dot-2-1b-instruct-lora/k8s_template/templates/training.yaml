@@ -3,6 +3,12 @@ kind: RayJob
 metadata:
   name: {{ .Values.trainingConfig.jobName }}
   namespace: {{ .Values.trainingConfig.namespace }}
+  {{- if .Values.trainingConfig.customLabels }}
+  labels:
+    {{- range $key, $value := .Values.trainingConfig.customLabels }}
+    {{ $key | quote }}: {{ $value | quote }}
+    {{- end}}
+  {{- end }}
 spec:
   shutdownAfterJobFinishes: {{ .Values.gc.shutdownAfterJobFinishes | default true }}
   ttlSecondsAfterFinished: {{ .Values.gc.ttlSecondsAfterFinished | default 600 }}

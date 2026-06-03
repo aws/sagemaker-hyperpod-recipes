@@ -21,7 +21,6 @@ from check_eval_coverage import (
     EXCLUDED_SUBDIRS,
     check_eval_coverage,
     check_eval_coverage_for_recipes,
-    deduplicate_by_model,
     extract_run_name,
     filter_recipe_files,
     find_recipes,
@@ -422,93 +421,6 @@ class TestCheckEvalCoverage:
         assert result[0]["run_name"] == "new-deepseek"
 
 
-class TestDeduplicateByModel:
-    def test_deduplicates_same_run_name_no_js_id(self):
-        """Entries with the same run_name and no js_model_id are grouped together."""
-        missing = [
-            {"recipe_path": "llama/sft.yaml", "run_name": "llama-8b", "js_model_id": None, "reason": "not mapped"},
-            {"recipe_path": "llama/dpo.yaml", "run_name": "llama-8b", "js_model_id": None, "reason": "not mapped"},
-            {"recipe_path": "llama/fft.yaml", "run_name": "llama-8b", "js_model_id": None, "reason": "not mapped"},
-        ]
-
-        result = deduplicate_by_model(missing)
-        assert len(result) == 1
-        assert result[0]["run_names"] == ["llama-8b"]
-        assert len(result[0]["recipe_paths"]) == 3
-
-    def test_groups_by_js_model_id(self):
-        """Different run_names mapping to the same js_model_id are grouped together."""
-        missing = [
-            {
-                "recipe_path": "llama/sft.yaml",
-                "run_name": "llama-8b",
-                "js_model_id": "meta-llama-8b",
-                "reason": "missing eval",
-            },
-            {
-                "recipe_path": "llama/verl_lora.yaml",
-                "run_name": "verl-grpo-llama-8b-lora",
-                "js_model_id": "meta-llama-8b",
-                "reason": "missing eval",
-            },
-            {
-                "recipe_path": "llama/verl_fft.yaml",
-                "run_name": "verl-grpo-llama-8b-fft",
-                "js_model_id": "meta-llama-8b",
-                "reason": "missing eval",
-            },
-        ]
-
-        result = deduplicate_by_model(missing)
-        assert len(result) == 1
-        assert set(result[0]["run_names"]) == {"llama-8b", "verl-grpo-llama-8b-lora", "verl-grpo-llama-8b-fft"}
-        assert result[0]["js_model_id"] == "meta-llama-8b"
-        assert len(result[0]["recipe_paths"]) == 3
-
-    def test_keeps_different_models_separate(self):
-        missing = [
-            {"recipe_path": "llama/sft.yaml", "run_name": "llama-8b", "js_model_id": None, "reason": "not mapped"},
-            {"recipe_path": "qwen/sft.yaml", "run_name": "qwen-7b", "js_model_id": None, "reason": "not mapped"},
-        ]
-
-        result = deduplicate_by_model(missing)
-        assert len(result) == 2
-
-    def test_keeps_different_js_model_ids_separate(self):
-        """Different js_model_ids are not grouped even if reasons match."""
-        missing = [
-            {"recipe_path": "a.yaml", "run_name": "llama-8b", "js_model_id": "meta-llama-8b", "reason": "missing eval"},
-            {"recipe_path": "b.yaml", "run_name": "qwen-7b", "js_model_id": "hf-qwen-7b", "reason": "missing eval"},
-        ]
-
-        result = deduplicate_by_model(missing)
-        assert len(result) == 2
-
-    def test_keeps_different_reasons_separate(self):
-        missing = [
-            {"recipe_path": "a.yaml", "run_name": "llama-8b", "js_model_id": None, "reason": "reason A"},
-            {"recipe_path": "b.yaml", "run_name": "llama-8b", "js_model_id": "meta-llama", "reason": "reason B"},
-        ]
-
-        result = deduplicate_by_model(missing)
-        assert len(result) == 2
-
-    def test_no_duplicate_run_names(self):
-        """Same run_name appearing multiple times should only be listed once in run_names."""
-        missing = [
-            {"recipe_path": "a.yaml", "run_name": "llama-8b", "js_model_id": "meta-llama-8b", "reason": "missing"},
-            {"recipe_path": "b.yaml", "run_name": "llama-8b", "js_model_id": "meta-llama-8b", "reason": "missing"},
-        ]
-
-        result = deduplicate_by_model(missing)
-        assert len(result) == 1
-        assert result[0]["run_names"] == ["llama-8b"]
-        assert len(result[0]["recipe_paths"]) == 2
-
-    def test_empty_input(self):
-        assert deduplicate_by_model([]) == []
-
-
 class TestIntegrationWithRealData:
     """Integration tests using real repo data (skipped if files don't exist)."""
 
@@ -524,14 +436,12 @@ class TestIntegrationWithRealData:
     def test_real_data_runs_without_error(self):
         result = check_eval_coverage(self.RECIPES_DIR, self.MODEL_ID_MAP, self.EVAL_PARAMS)
         assert isinstance(result, list)
-
-    def test_real_data_dedup_runs(self):
-        missing = check_eval_coverage(self.RECIPES_DIR, self.MODEL_ID_MAP, self.EVAL_PARAMS)
-        deduped = deduplicate_by_model(missing)
-        assert isinstance(deduped, list)
-        for entry in deduped:
-            assert "recipe_paths" in entry
-            assert len(entry["recipe_paths"]) >= 1
+        # Each entry is per-recipe with the canonical schema
+        for entry in result:
+            assert "recipe_path" in entry
+            assert "run_name" in entry
+            assert "js_model_id" in entry
+            assert "reason" in entry
 
     def test_real_find_recipes_excludes_nova(self):
         recipes = find_recipes(self.RECIPES_DIR)

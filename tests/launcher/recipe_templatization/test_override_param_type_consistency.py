@@ -65,6 +65,8 @@ TYPE_FAMILIES = {
 FRAMEWORK_CATEGORIES = {
     "llmft": ("fine_tuning", None),
     "verl": ("fine_tuning", None),
+    "mtrl": ("fine_tuning", None),
+    "mtrl_eval": ("evaluation", None),
     "nova": None,  # Special: split into train and eval
     "evaluation": ("evaluation", None),
     "checkpointless": ("checkpointless", None),

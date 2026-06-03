@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Qwen 3.5 4B GRPO RLAIF Fine-Tuning with LoRA
-version: 2.1.1
+version: 2.1.2
 instance_types:
   - ml.p5.48xlarge
 run:

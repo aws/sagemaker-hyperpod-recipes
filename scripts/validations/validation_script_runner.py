@@ -65,27 +65,36 @@ def run_validation(cfg, fileList=None, save_model_files=True, instance_type=None
         # Return jobRecorder even on failure so JSON can be written
         return jobRecorder
     fileList = fileList if fileList != None else cfg.recipe_list
-    input_file_list = get_input_recipes(fileList, jobRecorder)
-    if input_file_list == None:
-        logging.error(f"Folder/File '{fileList}' not valid")
-        jobRecorder.print_results()
-        return None
-
-    # Group recipes by model
-    # For EVAL platform, skip model grouping since eval recipes don't match training recipe_type_config
-    if cfg.platform == "EVAL":
-        model_groups = {"eval": input_file_list}
-        logging.info(f"EVAL platform - bypassing model grouping, {len(input_file_list)} recipe(s) in eval group")
+    # HPCLI doesn't use recipe files on disk — the recipe_list is a logical identifier
+    # for the launcher. Skip file validation and model grouping.
+    if cfg.platform == "HPCLI":
+        input_file_list = list(fileList)
+        for recipe in input_file_list:
+            jobRecorder.add_job(input_filename=recipe)
+        model_groups = {"hpcli": input_file_list}
+        logging.info(f"HPCLI platform - {len(input_file_list)} recipe(s) to validate")
     else:
-        model_groups = group_recipes_by_model(input_file_list)
-        logging.info(f"Found {len(model_groups)} model groups")
+        input_file_list = get_input_recipes(fileList, jobRecorder)
+        if input_file_list == None:
+            logging.error(f"Folder/File '{fileList}' not valid")
+            jobRecorder.print_results()
+            return None
+
+        # Group recipes by model
+        # For EVAL platform, skip model grouping since eval recipes don't match training recipe_type_config
+        if cfg.platform == "EVAL":
+            model_groups = {"eval": input_file_list}
+            logging.info(f"EVAL platform - bypassing model grouping, {len(input_file_list)} recipe(s) in eval group")
+        else:
+            model_groups = group_recipes_by_model(input_file_list)
+            logging.info(f"Found {len(model_groups)} model groups")
 
     # Initiate launcher object and start execution
     launcher = select_validation_launcher(cfg.platform)(jobRecorder, cfg)
     start_execution(model_groups, launcher)
 
     # Cleans resources no longer needed like model files etc
-    if not save_model_files:
+    if not save_model_files and hasattr(cfg, "models") and hasattr(cfg.models, "model_parent_folder"):
         cleanup(cfg.models.model_parent_folder)
 
     return jobRecorder
@@ -95,6 +104,7 @@ def run_validation(cfg, fileList=None, save_model_files=True, instance_type=None
 SERVERLESS_MOCK_INSTANCE_TYPE = "serverless_mock_instance_type"
 PYSDK_FINETUNE_MOCK_INSTANCE_TYPE = "pysdk_finetune_mock_instance_type"
 EVAL_MOCK_INSTANCE_TYPE = "eval_mock_instance_type"
+HPCLI_MOCK_INSTANCE_TYPE = "hpcli_mock_instance_type"
 
 
 def split_recipes_into_batches(recipe_list, batch_size):
@@ -265,6 +275,15 @@ def run_validation_for_all_instance_types(cfg, fileList=None, save_model_files=T
         cfg_copy = copy.deepcopy(cfg)
         job_recorder = run_validation(cfg_copy, fileList, save_model_files, EVAL_MOCK_INSTANCE_TYPE)
         return {EVAL_MOCK_INSTANCE_TYPE: job_recorder}
+
+    if cfg.platform == "HPCLI":
+        logging.info(
+            f"HPCLI platform detected - instance type is managed by the CLI. "
+            f"Running validation once with mock instance type: {HPCLI_MOCK_INSTANCE_TYPE}"
+        )
+        cfg_copy = copy.deepcopy(cfg)
+        job_recorder = run_validation(cfg_copy, fileList, save_model_files, HPCLI_MOCK_INSTANCE_TYPE)
+        return {HPCLI_MOCK_INSTANCE_TYPE: job_recorder}
 
     # Get instance type list from config
     instance_type_list = list(cfg.instance_type_list) if hasattr(cfg, "instance_type_list") else []

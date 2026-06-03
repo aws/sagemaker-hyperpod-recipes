@@ -14,7 +14,20 @@
                 }
             }
         },
-        "sm_jobs": {}
+        "sm_jobs": {},
+        "hosting": {
+            "container_image": {
+                "prod": {
+                    "us-east-1": "708977205387.dkr.ecr.us-east-1.amazonaws.com/nova-inference-repo:SM-Inference-latest",
+                    "us-west-2": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-inference-repo:SM-Inference-latest",
+                    "eu-west-2": "470633809225.dkr.ecr.eu-west-2.amazonaws.com/nova-inference-repo:SM-Inference-latest",
+                    "ap-northeast-1": "878185805882.dkr.ecr.ap-northeast-1.amazonaws.com/nova-inference-repo:SM-Inference-latest"
+                },
+                "gamma": {
+                    "us-east-1": "900867814919.dkr.ecr.us-east-1.amazonaws.com/nova-inference-repo:SM-Inference-latest"
+                }
+            }
+        }
     },
     "nova_lite_2_0_p5_gpu_lora_sft": {
         "k8s": {

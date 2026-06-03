@@ -1,0 +1,328 @@
+{
+  "metadata": {
+    "Name": "mtrl-gpt-oss-20b-lora",
+    "RecipeFilePath": "recipes/fine-tuning/gpt_oss/mtrl-gpt-oss-20b-lora.yaml",
+    "DisplayName": "Agentic RFT for GPT OSS 20B Lora",
+    "Model_ID": "openai-reasoning-gpt-oss-20b",
+    "Description": "Agentic RFT training recipe for gpt-oss-20b",
+    "Type": "FineTuning",
+    "CustomizationTechnique": "MTRL",
+    "Peft": "LoRA",
+    "SequenceLength": "64K",
+    "Versions": [
+      "1.0.24"
+    ]
+  },
+  "recipe_override_parameters": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "default": "mtrl-gpt-oss-20b-lora"
+    },
+    "data_path": {
+      "type": "string",
+      "required": true,
+      "default": ""
+    },
+    "model_name_or_path": {
+      "type": "string",
+      "required": true,
+      "default": "openai/gpt-oss-20b"
+    },
+    "output_path": {
+      "type": "string",
+      "required": true,
+      "default": ""
+    },
+    "adam_beta1": {
+      "type": "float",
+      "required": true,
+      "min": 0.0,
+      "max": 0.999999,
+      "default": 0.9
+    },
+    "adam_beta2": {
+      "type": "float",
+      "required": true,
+      "min": 0.0,
+      "max": 0.999999,
+      "default": 0.95
+    },
+    "adam_eps": {
+      "type": "float",
+      "required": true,
+      "min": 1e-16,
+      "max": 0.01,
+      "default": 1e-08
+    },
+    "adam_weight_decay": {
+      "type": "float",
+      "required": true,
+      "min": 0.0,
+      "max": 1.0,
+      "default": 0.0
+    },
+    "adam_grad_clip_norm": {
+      "type": "float",
+      "required": true,
+      "min": 0.0,
+      "max": 100.0,
+      "default": 1.0
+    },
+    "advantage_method": {
+      "type": "string",
+      "required": true,
+      "enum": [
+        "monte_carlo",
+        "group_based",
+        "group_based_per_turn",
+        "rloo",
+        "reinforce_pp",
+        "reinforce_pp_baseline",
+        "opo",
+        "grpo_passk",
+        "gpg"
+      ],
+      "default": "group_based"
+    },
+    "learning_rate": {
+      "type": "float",
+      "required": true,
+      "min": 0,
+      "max": 0.01,
+      "default": 1e-05
+    },
+    "lora_rank": {
+      "type": "integer",
+      "required": true,
+      "min": 16,
+      "max": 64,
+      "default": 32
+    },
+    "lora_alpha": {
+      "type": "integer",
+      "required": true,
+      "min": 16,
+      "max": 128,
+      "default": 64
+    },
+    "loss_fn": {
+      "type": "string",
+      "required": true,
+      "enum": [
+        "importance_sampling",
+        "ppo",
+        "cispo"
+      ],
+      "default": "ppo"
+    },
+    "rollout_max_concurrency": {
+      "type": "integer",
+      "required": true,
+      "min": 32,
+      "max": 96,
+      "default": 96
+    },
+    "rollout_timeout": {
+      "type": "float",
+      "required": true,
+      "min": 300,
+      "max": 86400,
+      "default": 600.0
+    },
+    "rollout_max_retries": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "max": 10,
+      "default": 3
+    },
+    "max_epochs": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "max": 30,
+      "default": 1
+    },
+    "sampling_max_tokens": {
+      "type": "integer",
+      "required": true,
+      "min": 512,
+      "max": 8192,
+      "default": 4096
+    },
+    "max_steps": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "max": 1000,
+      "default": 100
+    },
+    "max_steps_off_policy": {
+      "type": "integer",
+      "required": true,
+      "min": 0,
+      "max": 10,
+      "default": 3
+    },
+    "global_batch_size": {
+      "type": "integer",
+      "required": true,
+      "enum": [
+        32,
+        64,
+        128
+      ],
+      "default": 128
+    },
+    "group_size": {
+      "type": "integer",
+      "required": true,
+      "min": 2,
+      "max": 32,
+      "default": 8
+    },
+    "temperature": {
+      "type": "float",
+      "required": true,
+      "min": 0,
+      "max": 2,
+      "default": 1.0
+    },
+    "val_every": {
+      "type": "integer",
+      "required": true,
+      "min": 0,
+      "max": 100,
+      "default": 10
+    },
+    "sampling_top_p": {
+      "type": "float",
+      "required": true,
+      "min": 0,
+      "max": 1,
+      "default": 1.0
+    },
+    "pass_k_values": {
+      "type": "array",
+      "required": true,
+      "default": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        32
+      ]
+    },
+    "success_threshold": {
+      "type": "float",
+      "required": true,
+      "default": 1.0
+    },
+    "clip_low_threshold": {
+      "type": "float",
+      "required": true,
+      "min": 0,
+      "max": 1,
+      "default": 0.8
+    },
+    "clip_high_threshold": {
+      "type": "float",
+      "required": true,
+      "min": 1,
+      "max": 10,
+      "default": 1.2
+    }
+  },
+  "regional_parameters": {
+    "smtj_regional_ecr_uri": {
+      "beta": {
+        "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+      },
+      "gamma": {
+        "us-west-2": "839249767557.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0",
+        "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+      },
+      "prod": {
+        "us-west-2": "920498770698.dkr.ecr.us-west-2.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0",
+        "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/mtrl-recipes:rft-trainer-v1.0.0"
+      }
+    }
+  },
+  "training_recipe.yaml": "display_name: Agentic RFT for GPT OSS 20B Lora\nrecipe_version: 1.0.24\nrun:\n  name: '{{name}}'\n  model_type: mtrl\nbatch:\n  training_batch_size: '{{global_batch_size}}'\n  group_size: '{{group_size}}'\n  val_batch_size: null\n  val_group_size: 1\n  val_random_sample: false\nrl:\n  advantage_method: '{{advantage_method}}'\n  advantage_normalization: true\n  gamma: 1.0\n  loss_fn: '{{loss_fn}}'\n  clip_low_threshold: '{{clip_low_threshold}}'\n  clip_high_threshold: '{{clip_high_threshold}}'\nsampling_params:\n  temperature: '{{temperature}}'\n  top_p: '{{sampling_top_p}}'\n  max_tokens: '{{sampling_max_tokens}}'\neval_sampling_params:\n  temperature: 0.0\n  top_p: 1.0\n  max_tokens: 4096\nval_metrics_config:\n  pass_k_values: '{{pass_k_values}}'\n  success_threshold: '{{success_threshold}}'\nschedule:\n  epochs: '{{max_epochs}}'\n  max_steps: '{{max_steps}}'\n  save_every: 1\n  val_every: '{{val_every}}'\n  val_at_start: true\nmodel:\n  model_name: '{{model_name_or_path}}'\n  max_sequence_length: 65536\n  lora_rank: '{{lora_rank}}'\n  lora_alpha: '{{lora_alpha}}'\n  learning_rate: '{{learning_rate}}'\n  adam_beta1: '{{adam_beta1}}'\n  adam_beta2: '{{adam_beta2}}'\n  adam_eps: '{{adam_eps}}'\n  weight_decay: '{{adam_weight_decay}}'\n  grad_clip_norm: '{{adam_grad_clip_norm}}'\nrollout:\n  max_concurrency: '{{rollout_max_concurrency}}'\n  timeout: '{{rollout_timeout}}'\n  max_retries: '{{rollout_max_retries}}'\n  rollout_tps: 5\nasync_config:\n  max_steps_off_policy: '{{max_steps_off_policy}}'\n",
+  "training_recipe.json": {
+    "recipes": {
+      "display_name": "Agentic RFT for GPT OSS 20B Lora",
+      "recipe_version": "1.0.24",
+      "run": {
+        "name": "mtrl-gpt-oss-20b-lora",
+        "model_type": "mtrl"
+      },
+      "batch": {
+        "training_batch_size": 128,
+        "group_size": 8,
+        "val_batch_size": null,
+        "val_group_size": 1,
+        "val_random_sample": false
+      },
+      "rl": {
+        "advantage_method": "group_based",
+        "advantage_normalization": true,
+        "gamma": 1.0,
+        "loss_fn": "ppo",
+        "clip_low_threshold": 0.8,
+        "clip_high_threshold": 1.2
+      },
+      "sampling_params": {
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "max_tokens": 4096
+      },
+      "eval_sampling_params": {
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "max_tokens": 4096
+      },
+      "val_metrics_config": {
+        "pass_k_values": [
+          1,
+          2,
+          4,
+          8,
+          16,
+          32
+        ],
+        "success_threshold": 1.0
+      },
+      "schedule": {
+        "epochs": 1,
+        "max_steps": 100,
+        "save_every": 1,
+        "val_every": 10,
+        "val_at_start": true
+      },
+      "model": {
+        "model_name": "openai/gpt-oss-20b",
+        "max_sequence_length": 65536,
+        "lora_rank": 32,
+        "lora_alpha": 64,
+        "learning_rate": 1e-05,
+        "adam_beta1": 0.9,
+        "adam_beta2": 0.95,
+        "adam_eps": 1e-08,
+        "weight_decay": 0.0,
+        "grad_clip_norm": 1.0
+      },
+      "rollout": {
+        "max_concurrency": 96,
+        "timeout": 600.0,
+        "max_retries": 3,
+        "rollout_tps": 5
+      },
+      "async_config": {
+        "max_steps_off_policy": 3
+      }
+    }
+  }
+}

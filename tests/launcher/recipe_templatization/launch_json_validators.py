@@ -76,12 +76,14 @@ def identify_recipe_type(recipe_name: str, metadata: Optional[Dict] = None) -> s
         return "llmft"
     elif "verl" in recipe_name_lower or "vlm" in recipe_name_lower:
         return "verl"
+    elif "mtrl" in recipe_name_lower:
+        return "mtrl"
     elif "nova" in recipe_name_lower:
         return "nova_training"
 
     # Unknown recipe type - this should fail the test
     raise ValueError(
-        f"Unknown recipe type for: {recipe_name}. Recipe does not match any known pattern (llmft, nova, verl, evaluation, or supported open source models)."
+        f"Unknown recipe type for: {recipe_name}. Recipe does not match any known pattern (llmft, nova, verl, mtrl, evaluation, or supported open source models)."
     )
 
 
@@ -191,7 +193,7 @@ def validate_k8s_templates(launch_json: Dict, recipe_type: str) -> List[str]:
     errors = []
 
     # Define valid recipe types
-    valid_recipe_types = ["llmft", "nova_training", "nova_eval", "verl", "open_source_eval"]
+    valid_recipe_types = ["llmft", "nova_training", "nova_eval", "verl", "open_source_eval", "mtrl"]
 
     # Fail if recipe_type is not in the preset list
     if recipe_type not in valid_recipe_types:
@@ -204,7 +206,7 @@ def validate_k8s_templates(launch_json: Dict, recipe_type: str) -> List[str]:
     # Common templates for all K8s recipes
     required_templates = []
 
-    if recipe_type in ["llmft", "nova_training", "verl", "nova_eval"]:
+    if recipe_type in ["llmft", "nova_training", "verl", "nova_eval", "mtrl"]:
         required_templates = ["training.yaml", "training-config.yaml"]
     elif recipe_type == "open_source_eval":
         # Open source evaluation uses evaluation-specific templates
@@ -331,7 +333,7 @@ def validate_metadata_schema(metadata: Dict) -> List[str]:
                 f"CustomizationTechnique must be string, got {type(metadata['CustomizationTechnique']).__name__}"
             )
         else:
-            valid_techniques = ["SFT", "DPO", "RLAIF", "RLVR", "PPO", "CPT", "DISTILL"]
+            valid_techniques = ["SFT", "DPO", "RLAIF", "RLVR", "PPO", "CPT", "DISTILL", "MTRL"]
             technique_upper = metadata["CustomizationTechnique"].upper()
             if technique_upper not in valid_techniques:
                 errors.append(
@@ -356,6 +358,7 @@ def validate_metadata_schema(metadata: Dict) -> List[str]:
                 "DeterministicMultiModalBenchmark",
                 "DeterministicEvaluation",
                 "LLMAJEvaluation",
+                "MTRLEvaluation",
             ]
             if metadata["EvaluationType"] not in valid_eval_types:
                 errors.append(
@@ -572,6 +575,8 @@ def validate_regional_parameters(regional_params: Dict, platform: str, recipe_na
 
         # Each regional parameter should have stage keys (prod, gamma, etc.)
         valid_stages = {"prod", "gamma", "beta"}
+        if recipe_name and "mtrl" in recipe_name.lower():
+            valid_stages = {"prod", "gamma", "beta", "alpha"}
         for stage_name in param_value.keys():
             if stage_name not in valid_stages:
                 errors.append(f"Invalid stage in regional_parameters.{param_name}: {stage_name}. Valid: {valid_stages}")

@@ -1,0 +1,72 @@
+[
+  {
+    "InstanceType": "ml.g6e.48xlarge",
+    "Profile": "Default",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.20.0-gpu-py312-cu130-ubuntu22.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "4",
+      "SM_VLLM_MAX_CPU_LORAS": "32",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "8",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "gemma4",
+      "SM_VLLM_MAX_NUM_BATCHED_TOKENS": "4096",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "64",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1024000,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  },
+  {
+    "InstanceType": "ml.p5.48xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.20.0-gpu-py312-cu130-ubuntu22.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "8",
+      "SM_VLLM_MAX_CPU_LORAS": "64",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "8",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "gemma4",
+      "SM_VLLM_MAX_NUM_BATCHED_TOKENS": "4096",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "128",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1539316,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  },
+  {
+    "InstanceType": "ml.p5en.48xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.20.0-gpu-py312-cu130-ubuntu22.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "8",
+      "SM_VLLM_MAX_CPU_LORAS": "64",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "8",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "gemma4",
+      "SM_VLLM_MAX_NUM_BATCHED_TOKENS": "4096",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "128",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1539316,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  }
+]

@@ -126,7 +126,8 @@
         "base_model_name": {
             "type_family": "string",
             "frameworks": [
-                "evaluation"
+                "evaluation",
+                "mtrl_eval"
             ]
         },
         "custom_metrics": {
@@ -140,6 +141,12 @@
             "frameworks": [
                 "evaluation",
                 "nova"
+            ]
+        },
+        "eval_group_size": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl_eval"
             ]
         },
         "eval_tensorboard_results_dir": {
@@ -240,6 +247,12 @@
                 "evaluation"
             ]
         },
+        "model_name": {
+            "type_family": "string",
+            "frameworks": [
+                "mtrl_eval"
+            ]
+        },
         "model_name_or_path": {
             "type_family": "string",
             "frameworks": [
@@ -251,6 +264,7 @@
             "type_family": "string",
             "frameworks": [
                 "evaluation",
+                "mtrl_eval",
                 "nova"
             ]
         },
@@ -272,6 +286,12 @@
                 "nova"
             ]
         },
+        "pass_k_values": {
+            "type_family": "array",
+            "frameworks": [
+                "mtrl_eval"
+            ]
+        },
         "postprocessing": {
             "type_family": "boolean",
             "frameworks": [
@@ -283,6 +303,36 @@
             "frameworks": [
                 "evaluation",
                 "nova"
+            ]
+        },
+        "rollout_max_concurrency": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl_eval"
+            ]
+        },
+        "rollout_max_retries": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl_eval"
+            ]
+        },
+        "rollout_timeout": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl_eval"
+            ]
+        },
+        "sampling_max_tokens": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl_eval"
+            ]
+        },
+        "sampling_top_p": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl_eval"
             ]
         },
         "strategy": {
@@ -299,6 +349,12 @@
                 "nova"
             ]
         },
+        "success_threshold": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl_eval"
+            ]
+        },
         "task": {
             "type_family": "string",
             "frameworks": [
@@ -310,6 +366,7 @@
             "type_family": "numeric",
             "frameworks": [
                 "evaluation",
+                "mtrl_eval",
                 "nova"
             ]
         },
@@ -334,6 +391,54 @@
             "frameworks": [
                 "llmft",
                 "nova"
+            ]
+        },
+        "adam_beta1": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "adam_beta2": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "adam_eps": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "adam_grad_clip_norm": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "adam_weight_decay": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "advantage_method": {
+            "type_family": "string",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "clip_high_threshold": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "clip_low_threshold": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
             ]
         },
         "clip_ratio": {
@@ -364,6 +469,7 @@
             "type_family": "string",
             "frameworks": [
                 "llmft",
+                "mtrl",
                 "verl"
             ]
         },
@@ -389,6 +495,7 @@
             "type_family": "numeric",
             "frameworks": [
                 "llmft",
+                "mtrl",
                 "nova",
                 "verl"
             ]
@@ -403,6 +510,12 @@
             "type_family": "numeric",
             "frameworks": [
                 "llmft"
+            ]
+        },
+        "group_size": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
             ]
         },
         "judge_model_id": {
@@ -433,6 +546,7 @@
             "type_family": "numeric",
             "frameworks": [
                 "llmft",
+                "mtrl",
                 "nova",
                 "verl"
             ]
@@ -453,6 +567,7 @@
             "type_family": "numeric",
             "frameworks": [
                 "llmft",
+                "mtrl",
                 "nova",
                 "verl"
             ]
@@ -463,11 +578,24 @@
                 "llmft"
             ]
         },
+        "lora_plus_lr_ratio": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
         "lora_rank": {
             "type_family": "numeric",
             "frameworks": [
                 "llmft",
+                "mtrl",
                 "verl"
+            ]
+        },
+        "loss_fn": {
+            "type_family": "string",
+            "frameworks": [
+                "mtrl"
             ]
         },
         "lr_scheduler": {
@@ -494,6 +622,7 @@
             "type_family": "numeric",
             "frameworks": [
                 "llmft",
+                "mtrl",
                 "nova",
                 "verl"
             ]
@@ -520,7 +649,14 @@
         "max_steps": {
             "type_family": "numeric",
             "frameworks": [
+                "mtrl",
                 "nova"
+            ]
+        },
+        "max_steps_off_policy": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
             ]
         },
         "merge_weights": {
@@ -567,6 +703,7 @@
             "type_family": "string",
             "frameworks": [
                 "llmft",
+                "mtrl",
                 "verl"
             ]
         },
@@ -574,6 +711,7 @@
             "type_family": "string",
             "frameworks": [
                 "llmft",
+                "mtrl",
                 "nova",
                 "verl"
             ]
@@ -596,6 +734,7 @@
             "type_family": "string",
             "frameworks": [
                 "llmft",
+                "mtrl",
                 "verl"
             ]
         },
@@ -603,6 +742,12 @@
             "type_family": "string",
             "frameworks": [
                 "nova"
+            ]
+        },
+        "pass_k_values": {
+            "type_family": "array",
+            "frameworks": [
+                "mtrl"
             ]
         },
         "preset_reward_function": {
@@ -644,6 +789,18 @@
                 "verl"
             ]
         },
+        "rollout_max_concurrency": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "rollout_max_retries": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
         "rollout_n": {
             "type_family": "numeric",
             "frameworks": [
@@ -654,6 +811,30 @@
             "type_family": "numeric",
             "frameworks": [
                 "verl"
+            ]
+        },
+        "rollout_timeout": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "sampling_max_tokens": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "sampling_top_p": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
+        "save_every": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
             ]
         },
         "save_steps": {
@@ -668,10 +849,17 @@
                 "llmft"
             ]
         },
+        "success_threshold": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
+            ]
+        },
         "temperature": {
             "type_family": "numeric",
             "frameworks": [
                 "llmft",
+                "mtrl",
                 "verl"
             ]
         },
@@ -692,6 +880,12 @@
             "type_family": "boolean",
             "frameworks": [
                 "verl"
+            ]
+        },
+        "val_every": {
+            "type_family": "numeric",
+            "frameworks": [
+                "mtrl"
             ]
         },
         "validation_data_name": {

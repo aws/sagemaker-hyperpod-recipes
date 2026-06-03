@@ -152,7 +152,7 @@ REGIONAL_PARAMS_FILES = {
 }
 
 # Valid platforms - only these are allowed
-VALID_PLATFORMS = {"k8s", "sm_jobs"}
+VALID_PLATFORMS = {"k8s", "sm_jobs", "hosting"}
 
 # Valid regional parameter keys - only these are allowed in platform configs
 VALID_REGIONAL_PARAM_KEYS = {

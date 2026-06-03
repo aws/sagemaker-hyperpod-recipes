@@ -165,7 +165,9 @@ def validate_override_parameters_templatization(
     # Infer recipe type from file path if not provided
     if recipe_type is None:
         recipe_file_path_lower = recipe_file_path.lower()
-        if "nova" in recipe_file_path_lower:
+        if "mtrl" in recipe_file_path_lower:
+            recipe_type = "mtrl"
+        elif "nova" in recipe_file_path_lower:
             recipe_type = "nova"
         elif "llmft" in recipe_file_path_lower:
             recipe_type = "llmft"
@@ -175,6 +177,10 @@ def validate_override_parameters_templatization(
             recipe_type = "evaluation"
         else:
             recipe_type = "unknown"
+
+    # Early return for MTRL recipes - different template from other recipes
+    if recipe_type == "mtrl":
+        return errors
 
     # Platform-specific skip parameters
     # K8s-specific parameters

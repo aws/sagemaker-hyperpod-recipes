@@ -137,12 +137,17 @@ class TestResolveArtifacts:
         return mock_client
 
     def test_no_js_model_id_skipped(self):
-        missing = [{"run_names": ["x"], "js_model_id": None, "reason": "x", "recipe_paths": ["x.yaml"]}]
+        missing = [{"recipe_path": "x.yaml", "run_name": "x", "js_model_id": None, "reason": "x"}]
+        events = resolve_artifacts(missing, "bucket", "prefix/", s3_client=self._make_noop_client())
+        assert len(events) == 0
+
+    def test_no_recipe_path_skipped(self):
+        missing = [{"recipe_path": "", "run_name": "x", "js_model_id": "js-x", "reason": "x"}]
         events = resolve_artifacts(missing, "bucket", "prefix/", s3_client=self._make_noop_client())
         assert len(events) == 0
 
     def test_output_keys(self):
-        missing = [{"run_names": ["x"], "js_model_id": "js-x", "reason": "x", "recipe_paths": ["sft_lora.yaml"]}]
+        missing = [{"recipe_path": "sft_lora.yaml", "run_name": "x", "js_model_id": "js-x", "reason": "x"}]
         events = resolve_artifacts(missing, "bucket", "prefix/", s3_client=self._make_noop_client())
         assert len(events) == 1
         assert set(events[0].keys()) == {
@@ -156,9 +161,7 @@ class TestResolveArtifacts:
 
     def test_base_model_empty_when_not_in_s3(self):
         """base_model_s3_uri is empty when base model doesn't exist in S3."""
-        missing = [
-            {"run_names": ["x"], "js_model_id": "meta-llama-8b", "reason": "x", "recipe_paths": ["sft_lora.yaml"]}
-        ]
+        missing = [{"recipe_path": "sft_lora.yaml", "run_name": "x", "js_model_id": "meta-llama-8b", "reason": "x"}]
         events = resolve_artifacts(missing, "bucket", "prefix/", s3_client=self._make_noop_client())
         # noop client has no objects, so base model verification fails → empty
         assert events[0]["base_model_s3_uri"] == ""
@@ -173,7 +176,7 @@ class TestResolveArtifacts:
         """resolve_artifacts derives hf/ from the same job as hf_merged/."""
         mock_find.return_value = "s3://bucket/pfx/run/m/LORA/SFT/inst/job/output/model/checkpoints/hf_merged/"
         mock_modified.return_value = datetime(2026, 1, 1, tzinfo=timezone.utc)  # hf/ exists
-        missing = [{"run_names": ["x"], "js_model_id": "js-x", "reason": "x", "recipe_paths": ["sft_lora.yaml"]}]
+        missing = [{"recipe_path": "sft_lora.yaml", "run_name": "x", "js_model_id": "js-x", "reason": "x"}]
         events = resolve_artifacts(missing, "bucket", "prefix/", s3_client=MagicMock())
         # find_latest_artifact called once (for hf_merged only)
         assert mock_find.call_count == 1
@@ -186,12 +189,40 @@ class TestResolveArtifacts:
     def test_peft_type_detected(self, mock_find):
         mock_find.return_value = ""
         missing = [
-            {"run_names": ["x"], "js_model_id": "js-x", "reason": "x", "recipe_paths": ["sft_fft.yaml"]},
-            {"run_names": ["y"], "js_model_id": "js-y", "reason": "x", "recipe_paths": ["sft_lora.yaml"]},
+            {"recipe_path": "sft_fft.yaml", "run_name": "x", "js_model_id": "js-x", "reason": "x"},
+            {"recipe_path": "sft_lora.yaml", "run_name": "y", "js_model_id": "js-y", "reason": "x"},
         ]
         events = resolve_artifacts(missing, "bucket", "prefix/", s3_client=MagicMock())
         assert events[0]["peft_type"] == "FFT"
         assert events[1]["peft_type"] == "LORA"
+
+    @patch("resolve_model_artifacts.find_latest_artifact")
+    def test_caches_within_same_model_peft_training(self, mock_find):
+        """Recipes with same (js_model_id, peft, training) share one S3 listing."""
+        mock_find.return_value = ""
+        missing = [
+            {"recipe_path": "verl-sft-llama-lora.yaml", "run_name": "verl", "js_model_id": "js-x", "reason": "x"},
+            {"recipe_path": "llmft-sft-llama-lora.yaml", "run_name": "llmft", "js_model_id": "js-x", "reason": "x"},
+        ]
+        events = resolve_artifacts(missing, "bucket", "prefix/", s3_client=MagicMock())
+        # Both LORA/SFT under js-x — find_latest_artifact runs once
+        assert mock_find.call_count == 1
+        assert len(events) == 2
+        assert events[0]["recipe_path"] == "verl-sft-llama-lora.yaml"
+        assert events[1]["recipe_path"] == "llmft-sft-llama-lora.yaml"
+
+    @patch("resolve_model_artifacts.find_latest_artifact")
+    def test_lora_and_fft_for_same_model_resolve_separately(self, mock_find):
+        """LoRA and FFT recipes for the same JS model resolve independently."""
+        mock_find.return_value = ""
+        missing = [
+            {"recipe_path": "sft_lora.yaml", "run_name": "x", "js_model_id": "js-x", "reason": "x"},
+            {"recipe_path": "sft_fft.yaml", "run_name": "x", "js_model_id": "js-x", "reason": "x"},
+        ]
+        events = resolve_artifacts(missing, "bucket", "prefix/", s3_client=MagicMock())
+        # Different PEFT → 2 distinct cache keys → 2 S3 calls
+        assert mock_find.call_count == 2
+        assert {e["peft_type"] for e in events} == {"LORA", "FFT"}
 
 
 class TestHasUnresolvedInferenceMode:

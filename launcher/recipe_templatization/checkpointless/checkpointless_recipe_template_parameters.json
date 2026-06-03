@@ -5,6 +5,7 @@
     ],
     "templates": {
         "checkpointless_fine_tuning": {
+            "display_name": "Fine-Tuning",
             "recipe_template": {
                 "instance_types": "{{instance_types}}",
                 "run": {
@@ -88,13 +89,27 @@
                 "sequence_length": {
                     "type": "integer",
                     "required": true,
-                    "enum": [1024, 2048, 4096, 8192, 16384, 32768],
+                    "enum": [
+                        1024,
+                        2048,
+                        4096,
+                        8192,
+                        16384,
+                        32768
+                    ],
                     "default": 2048
                 },
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [2, 4, 8, 16, 32, 64],
+                    "enum": [
+                        2,
+                        4,
+                        8,
+                        16,
+                        32,
+                        64
+                    ],
                     "default": 2
                 },
                 "dataset_path": {
@@ -105,14 +120,17 @@
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 1e-6,
-                    "max": 1e-3,
+                    "min": 1e-06,
+                    "max": 0.001,
                     "default": 0.0001
                 },
                 "instance_types": {
                     "type": "string",
                     "required": true,
-                    "enum": ["ml.p5.48xlarge", "ml.p5e.48xlarge"],
+                    "enum": [
+                        "ml.p5.48xlarge",
+                        "ml.p5e.48xlarge"
+                    ],
                     "default": ""
                 },
                 "instance_count": {
@@ -135,6 +153,7 @@
             }
         },
         "checkpointless_pretrain": {
+            "display_name": "Pretraining",
             "recipe_template": {
                 "instance_types": "{{instance_types}}",
                 "run": {
@@ -219,13 +238,27 @@
                 "sequence_length": {
                     "type": "integer",
                     "required": true,
-                    "enum": [1024, 2048, 4096, 8192, 16384, 32768],
+                    "enum": [
+                        1024,
+                        2048,
+                        4096,
+                        8192,
+                        16384,
+                        32768
+                    ],
                     "default": 2048
                 },
                 "global_batch_size": {
                     "type": "integer",
                     "required": true,
-                    "enum": [2, 4, 8, 16, 32, 64],
+                    "enum": [
+                        2,
+                        4,
+                        8,
+                        16,
+                        32,
+                        64
+                    ],
                     "default": 2
                 },
                 "dataset_path": {
@@ -236,14 +269,17 @@
                 "learning_rate": {
                     "type": "float",
                     "required": true,
-                    "min": 1e-6,
-                    "max": 1e-3,
+                    "min": 1e-06,
+                    "max": 0.001,
                     "default": 0.0001
                 },
                 "instance_types": {
                     "type": "string",
                     "required": true,
-                    "enum": ["ml.p5.48xlarge", "ml.p5e.48xlarge"],
+                    "enum": [
+                        "ml.p5.48xlarge",
+                        "ml.p5e.48xlarge"
+                    ],
                     "default": ""
                 },
                 "instance_count": {

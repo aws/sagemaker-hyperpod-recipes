@@ -24,7 +24,7 @@ import yaml
 logger = logging.getLogger(__name__)
 
 # Default recipe prefixes to search for
-DEFAULT_RECIPE_PREFIXES = ["llmft", "nova", "verl", "evaluation", "checkpointless"]
+DEFAULT_RECIPE_PREFIXES = ["llmft", "nova", "verl", "evaluation", "checkpointless", "mtrl_eval", "mtrl"]
 
 # Default job types
 DEFAULT_JOB_TYPES = ["k8s", "sm_jobs"]
@@ -102,18 +102,42 @@ class LaunchJsonGenerator:
 
         recipes = []
         excluded_count = 0
+        seen_recipes = set()  # Track already-discovered recipes to avoid duplicates
 
-        for prefix in prefixes:
+        # Process prefixes in priority order: mtrl_eval before mtrl before nova
+        # - mtrl_eval wins over mtrl so eval recipes get the "mtrl_eval" prefix
+        # - mtrl wins over nova so mtrl recipes in nova folder get correct prefix assignment
+        priority_prefixes = sorted(prefixes, key=lambda p: 0 if p == "mtrl_eval" else (1 if p == "mtrl" else 2))
+
+        for prefix in priority_prefixes:
             # Handle special case for evaluation - search only in open-source directory
             if prefix == "evaluation":
                 search_dir = self.recipes_dir / "evaluation" / "open-source"
                 recipe_files = search_dir.glob("*.yaml") if search_dir.exists() else []
+            elif prefix == "mtrl_eval":
+                # MTRL eval YAMLs use hyphen-separated names ("mtrl-eval-*.yaml") but
+                # the prefix identifier uses an underscore. Match both variants plus
+                # any YAMLs under evaluation/mtrl/ so eval recipes are claimed by the
+                # eval prefix before the broader "mtrl" prefix sees them.
+                search_dir = self.recipes_dir
+                if search_dir.exists():
+                    recipe_files = set()
+                    recipe_files.update(search_dir.rglob("*mtrl_eval*.yaml"))
+                    eval_mtrl_dir = search_dir / "evaluation" / "mtrl"
+                    if eval_mtrl_dir.exists():
+                        recipe_files.update(eval_mtrl_dir.rglob("*.yaml"))
+                else:
+                    recipe_files = []
             else:
                 # For other prefixes, recursively search for files matching the prefix
                 search_dir = self.recipes_dir
                 recipe_files = search_dir.rglob(f"*{prefix}*.yaml") if search_dir.exists() else []
 
             for recipe_file in recipe_files:
+                # Skip if already discovered (prevents duplicate entries with wrong prefix)
+                if recipe_file in seen_recipes:
+                    continue
+
                 # Apply filter if set
                 if recipe_filter is not None:
                     if recipe_filter not in str(recipe_file):
@@ -139,6 +163,8 @@ class LaunchJsonGenerator:
                         recipes.append((recipe_file, prefix, model_name))
                 else:
                     recipes.append((recipe_file, prefix, None))
+
+                seen_recipes.add(recipe_file)
 
         unique_recipe_files = len(set(r[0] for r in recipes))
         logger.info(f"Discovered {unique_recipe_files} recipe file(s), {len(recipes)} total tests")
@@ -304,6 +330,69 @@ class LaunchJsonGenerator:
         # Verl recipes follow similar pattern to LLMFT
         return self.get_llmft_params(recipe_rel_path, job_type, run_name, output_dir, instance_type)
 
+    def get_mtrl_params(
+        self,
+        recipe_rel_path: Path,
+        job_type: str,
+        output_dir: str,
+    ) -> List[str]:
+        """
+        Generate MTRL (Agentic RFT) specific parameters.
+
+        Note: MTRL currently only supports sm_jobs platform per regional_parameters.json.
+        """
+        if job_type == "sm_jobs":
+            return [
+                f"recipes={recipe_rel_path}",
+                f"base_results_dir={output_dir}",
+                "cluster=sm_jobs",
+                "cluster_type=sm_jobs",
+                "container=test_container",
+                "launch_json=true",
+            ]
+        else:
+            # k8s not currently supported for MTRL - return params that will be skipped
+            return [
+                f"recipes={recipe_rel_path}",
+                f"base_results_dir={output_dir}",
+                "cluster=k8s",
+                "cluster_type=k8s",
+                "container=test_container",
+                "launch_json=true",
+            ]
+
+    def get_mtrl_eval_params(
+        self,
+        recipe_rel_path: Path,
+        job_type: str,
+        output_dir: str,
+    ) -> List[str]:
+        """
+        Generate MTRL eval-specific parameters.
+
+        Note: MTRL eval only supports sm_jobs platform; the launcher raises
+        ValueError for k8s.
+        """
+        if job_type == "sm_jobs":
+            return [
+                f"recipes={recipe_rel_path}",
+                f"base_results_dir={output_dir}",
+                "cluster=sm_jobs",
+                "cluster_type=sm_jobs",
+                "container=test_container",
+                "launch_json=true",
+            ]
+        else:
+            # k8s not supported for MTRL eval - return params that will be rejected by the launcher
+            return [
+                f"recipes={recipe_rel_path}",
+                f"base_results_dir={output_dir}",
+                "cluster=k8s",
+                "cluster_type=k8s",
+                "container=test_container",
+                "launch_json=true",
+            ]
+
     def get_open_source_eval_params(
         self,
         recipe_path: Path,
@@ -374,9 +463,11 @@ class LaunchJsonGenerator:
         recipe_rel_path = recipe_path.relative_to(self.recipes_dir).with_suffix("")
         recipe_name = recipe_path.stem.lower()
 
-        # Route to recipe-specific parameter generation
-        if model_name is not None:
-            return self.get_open_source_eval_params(recipe_path, recipe_rel_path, job_type, output_dir, model_name)
+        if "eval" in recipe_name:
+            if "mtrl" in recipe_name:
+                return self.get_mtrl_eval_params(recipe_rel_path, job_type, output_dir)
+            elif "nova" not in recipe_name:
+                return self.get_open_source_eval_params(recipe_path, recipe_rel_path, job_type, output_dir, model_name)
 
         # Read recipe file to extract instance_type
         with open(recipe_path, "r") as f:
@@ -385,7 +476,12 @@ class LaunchJsonGenerator:
         instance_types = recipe_data.get("instance_types", ["ml.p5.48xlarge"])
         instance_type = instance_types[0] if instance_types else "ml.p5.48xlarge"
 
-        if "nova" in recipe_name:
+        # Check for MTRL recipes (by filename or model_type in config)
+        is_mtrl = "mtrl" in recipe_name or recipe_data.get("run", {}).get("model_type") == "mtrl"
+
+        if is_mtrl:
+            return self.get_mtrl_params(recipe_rel_path, job_type, output_dir)
+        elif "nova" in recipe_name:
             return self.get_nova_params(recipe_path, recipe_rel_path, job_type, run_name, output_dir, instance_type)
         elif "checkpointless" in recipe_name:
             return self.get_checkpointless_params(recipe_rel_path, job_type, run_name, output_dir, instance_type)
