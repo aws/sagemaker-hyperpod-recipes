@@ -557,6 +557,12 @@
                 "nova"
             ]
         },
+        "limit_val_batches": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova"
+            ]
+        },
         "logging_steps": {
             "type_family": "numeric",
             "frameworks": [
@@ -880,6 +886,12 @@
             "type_family": "boolean",
             "frameworks": [
                 "verl"
+            ]
+        },
+        "val_check_interval": {
+            "type_family": "numeric",
+            "frameworks": [
+                "nova"
             ]
         },
         "val_every": {

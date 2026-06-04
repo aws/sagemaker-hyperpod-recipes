@@ -18,7 +18,7 @@ training_config:
   max_length: 32768                # Sequence length (options: 8192, 16384, 32768 [default], 65536)
   global_batch_size: 32            # Golbal batch size (options: 32, 64, 128)
   reasoning_enabled: true          # If data has reasoningContent, set to true; otherwise False
-  val_check_interval: null         # Optional. Run validation every N training steps. Only applies when validation_data_s3_path is provided.
+  val_check_interval: 2500         # Optional. Run validation every N training steps. Only applies when validation_data_s3_path is provided.
   limit_val_batches: 2             # Optional. Number of validation batches to run per dataset per validation interval. Defaults to 2 when validation is active. Set to 0 to disable.
 
   lr_scheduler:

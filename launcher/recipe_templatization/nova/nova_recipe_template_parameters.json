@@ -312,6 +312,7 @@
                     "name": "{{name}}",
                     "replicas": "{{replicas}}",
                     "data_s3_path": "{{data_s3_path}}",
+                    "validation_data_s3_path": "{{validation_s3_path}}",
                     "output_s3_path": "{{output_s3_path}}",
                     "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
                     "mlflow_experiment_name": "{{mlflow_experiment_name}}",
@@ -322,6 +323,8 @@
                     "max_steps": "{{max_steps}}",
                     "save_steps": "{{save_steps}}",
                     "reasoning_enabled": "{{reasoning_enabled}}",
+                    "val_check_interval": "{{val_check_interval}}",
+                    "limit_val_batches": "{{limit_val_batches}}",
                     "lr_scheduler": {
                         "warmup_steps": "{{warmup_steps}}",
                         "min_lr": "{{min_lr}}"
@@ -541,6 +544,25 @@
                     "default": 0.0,
                     "category": "hyperparameter",
                     "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                },
+                "validation_s3_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "val_check_interval": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 1,
+                    "max": 100000,
+                    "default": 2500
+                },
+                "limit_val_batches": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 2
                 }
             },
             "recipe_metadata_helpers": {
@@ -573,6 +595,7 @@
                     "name": "{{name}}",
                     "replicas": "{{replicas}}",
                     "data_s3_path": "{{data_s3_path}}",
+                    "validation_data_s3_path": "{{validation_s3_path}}",
                     "output_s3_path": "{{output_s3_path}}",
                     "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
                     "mlflow_experiment_name": "{{mlflow_experiment_name}}",
@@ -583,6 +606,8 @@
                     "max_steps": "{{max_steps}}",
                     "save_steps": "{{save_steps}}",
                     "reasoning_enabled": "{{reasoning_enabled}}",
+                    "val_check_interval": "{{val_check_interval}}",
+                    "limit_val_batches": "{{limit_val_batches}}",
                     "lr_scheduler": {
                         "warmup_steps": "{{warmup_steps}}",
                         "min_lr": "{{min_lr}}"
@@ -772,6 +797,25 @@
                     "default": 0.0,
                     "category": "hyperparameter",
                     "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                },
+                "validation_s3_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "val_check_interval": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 1,
+                    "max": 100000,
+                    "default": 2500
+                },
+                "limit_val_batches": {
+                    "type": "integer",
+                    "required": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": 2
                 }
             },
             "recipe_metadata_helpers": {

@@ -1,0 +1,153 @@
+defaults:
+  - /hydra_config/verl-0_7_0/default
+  - _self_
+
+display_name: Gemma 4 31B IT GRPO RLVR Fine-Tuning with LoRA (Text)
+version: 2.0.1
+instance_types:
+  - ml.p5.48xlarge
+run:
+    model_type: verl
+    name: verl-grpo-rlvr-gemma-4-31b-it-lora
+    results_dir: ${base_results_dir}/${.name}
+trainer:
+  num_nodes: 1
+
+ray_cluster:
+  head_node:
+    cpu: '16'
+    cpuLimit: null
+    gpu: '0'
+    memory: 32Gi
+    memoryLimit: null
+  worker_nodes:
+    cpu: '48'
+    cpuLimit: null
+    gpu: '8'
+    memory: 144Gi
+    memoryLimit: null
+    replicas: 1
+
+training_config:
+  algorithm:
+    adv_estimator: grpo
+    norm_adv_by_std_in_grpo: true
+
+  actor_rollout_ref:
+    hybrid_engine: true
+    nccl_timeout: 600
+
+    actor:
+      use_kl_loss: true
+      kl_loss_coef: 0.001
+      kl_loss_type: low_var_kl
+      use_dynamic_bsz: true
+      ppo_mini_batch_size: 32
+      ppo_micro_batch_size_per_gpu: 2
+      ppo_max_token_len_per_gpu: 16384
+      strategy: fsdp2
+      clip_ratio_low: 0.2
+      clip_ratio_high: 0.28
+      clip_ratio_c: 3.0
+      loss_agg_mode: token-mean
+      entropy_coeff: 0
+      freeze_vision_tower: true
+      fsdp_config:
+        model_dtype: bfloat16
+        strategy: fsdp2
+        wrap_policy:
+          transformer_layer_cls_to_wrap:
+            - Gemma4TextDecoderLayer
+      optim:
+        lr: 1.0e-05
+        warmup_style: constant
+
+    ref:
+      log_prob_micro_batch_size_per_gpu: 1
+      log_prob_use_dynamic_bsz: true
+      log_prob_max_token_len_per_gpu: 16384
+      fsdp_config:
+        param_offload: true
+        strategy: fsdp2
+        model_dtype: bfloat16
+
+    rollout:
+      name: vllm
+      mode: async
+      prompt_length: 512
+      response_length: 2048
+      tensor_model_parallel_size: 8
+      gpu_memory_utilization: 0.5
+      max_model_len: 2560
+      max_num_batched_tokens: 16384
+      enable_chunked_prefill: true
+      enable_prefix_caching: true
+      free_cache_engine: false
+      load_format: safetensors
+      log_prob_micro_batch_size_per_gpu: 1
+      disable_log_stats: false
+      merge_lora_for_inference: true
+
+    model:
+      path: google/gemma-4-31B-it
+      trust_remote_code: false
+      enable_gradient_checkpointing: true
+      use_remove_padding: true
+      override_config:
+        attn_implementation: flash_attention_2
+      lora_rank: 16
+      lora_alpha: 32
+      target_modules: .*q_proj.*|.*k_proj.*|.*v_proj.*|.*o_proj.*|.*gate_proj.*|.*up_proj.*|.*down_proj.*
+      exclude_modules: .*vision_tower.*|.*embed_vision.*|.*embed_audio.*|.*audio_tower.*|.*router.*|.*experts.*
+      use_fused_kernels: true
+      tiled_mlp:
+        enabled: true
+        num_shards: 4
+
+  trainer:
+    project_name: gemma4-rl
+    experiment_name: gemma-4-31b-it-grpo-rlvr-lora
+    logger:
+      - console
+      - mlflow
+    resume_mode: auto
+    test_freq: 5
+    total_epochs: 1
+    save_freq: 20
+    default_local_dir: /opt/ml/model
+    merge_lora_on_final_save: true
+
+  data:
+    max_prompt_length: 512
+    max_response_length: 2048
+    train_batch_size: 32
+    truncation: left
+    filter_overlong_prompts: true
+    trust_remote_code: true
+    apply_chat_template_kwargs:
+      enable_thinking: false
+    train_val_split_ratio: 0.9
+
+  reward_model:
+    enable: false
+    use_reward_loop: false
+    rollout:
+      name: vllm
+
+  reward_manager:
+    _target_: verl.trainer.config.config.RewardManagerConfig
+    source: register
+    name: prime
+    module:
+      _target_: verl.trainer.config.config.ModuleConfig
+      path: null
+      name: custom_reward_manager
+
+  custom_reward_function:
+    lambda_arn: ''
+    path: ''
+    name: ''
+
+  mlflow:
+    run_id: ''
+    tracking_uri: ''
