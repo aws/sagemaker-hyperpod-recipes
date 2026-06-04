@@ -188,7 +188,7 @@
       "ml.p5en.48xlarge",
       "ml.p4d.24xlarge"
     ],
-    "version": "2.3.0"
+    "version": "2.4.0"
   },
   "nova_lite_2_0_p5_gpu_rft": {
     "display_name": "Nova Lite RLVR Training",
@@ -205,7 +205,7 @@
       "ml.p5en.48xlarge",
       "ml.p4d.24xlarge"
     ],
-    "version": "2.2.2"
+    "version": "2.3.0"
   },
   "nova_lite_2_0_p5x8_gpu_pretrain": {
     "display_name": "Nova Lite Pretrain on P5 GPU",

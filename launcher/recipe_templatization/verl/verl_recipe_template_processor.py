@@ -104,9 +104,10 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         # while RL 0.7.0 recipes (GRPO/PPO) have "global_profiler" instead.
         is_verl_0_7_0 = "profiler" in recipe_cfg.training_config or "global_profiler" in recipe_cfg.training_config
         if is_verl_0_7_0:
-            # Nemotron recipes use a separate container (vllm012) from Qwen (smtj)
             if "nemotron" in recipe_file_path.lower():
                 self._verl_regional_key = "verl-0.7.0-vllm012"
+            elif "gemma4" in recipe_file_path.lower():
+                self._verl_regional_key = "verl-0.7.0-tf58"
             else:
                 self._verl_regional_key = "verl-0.7.0"
         else:

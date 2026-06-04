@@ -406,6 +406,32 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 | GPT OSS 20B GRPO RLAIF Fine-Tuning | verl | GRPO + RLAIF | FFT | 32,768 | 2 | p5.48xlarge | [verl-grpo-rlaif-gpt-oss-20b-fft.yaml](../recipes_collection/recipes/fine-tuning/gpt_oss/verl-grpo-rlaif-gpt-oss-20b-fft.yaml) | [run_verl_grpo_rlaif_gpt_oss_20b_fft.sh](../launcher_scripts/gpt_oss/run_verl_grpo_rlaif_gpt_oss_20b_fft.sh) |
 | GPT OSS 20B GRPO RLAIF Fine-Tuning with LoRA | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlaif-gpt-oss-20b-lora.yaml](../recipes_collection/recipes/fine-tuning/gpt_oss/verl-grpo-rlaif-gpt-oss-20b-lora.yaml) | [run_verl_grpo_rlaif_gpt_oss_20b_lora.sh](../launcher_scripts/gpt_oss/run_verl_grpo_rlaif_gpt_oss_20b_lora.sh) |
 
+### Gemma4 Models
+
+#### Gemma 4 E4b It
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Gemma 4 E4B IT SFT LoRA Fine-Tuning (Text) | verl | - | - | - | 1 | p5.48xlarge | [verl-sft-gemma-4-e4b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-sft-gemma-4-e4b-it-lora.yaml) | [run_verl_sft_gemma_4_e4b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_sft_gemma_4_e4b_it_lora.sh) |
+| Gemma 4 E4B IT GRPO RLVR Fine-Tuning with LoRA (Text) | verl | GRPO | LoRA | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlvr-gemma-4-e4b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-grpo-rlvr-gemma-4-e4b-it-lora.yaml) | [run_verl_grpo_rlvr_gemma_4_e4b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_grpo_rlvr_gemma_4_e4b_it_lora.sh) |
+| Gemma 4 E4B IT GRPO RLAIF Fine-Tuning with LoRA (Text) | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlaif-gemma-4-e4b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-grpo-rlaif-gemma-4-e4b-it-lora.yaml) | [run_verl_grpo_rlaif_gemma_4_e4b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_grpo_rlaif_gemma_4_e4b_it_lora.sh) |
+
+#### Gemma 4.26B A4b It
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Gemma 4 26B IT SFT LoRA Fine-Tuning (Text) | verl | - | - | - | 1 | p5.48xlarge | [verl-sft-gemma-4-26b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-sft-gemma-4-26b-it-lora.yaml) | [run_verl_sft_gemma_4_26b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_sft_gemma_4_26b_it_lora.sh) |
+| Gemma 4 26B IT GRPO RLVR Fine-Tuning with LoRA (Text) | verl | GRPO | LoRA | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlvr-gemma-4-26b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-grpo-rlvr-gemma-4-26b-it-lora.yaml) | [run_verl_grpo_rlvr_gemma_4_26b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_grpo_rlvr_gemma_4_26b_it_lora.sh) |
+| Gemma 4 26B IT GRPO RLAIF Fine-Tuning with LoRA (Text) | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlaif-gemma-4-26b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-grpo-rlaif-gemma-4-26b-it-lora.yaml) | [run_verl_grpo_rlaif_gemma_4_26b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_grpo_rlaif_gemma_4_26b_it_lora.sh) |
+
+#### Gemma 4.31B It
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Gemma 4 31B IT SFT LoRA Fine-Tuning (Text) | verl | - | - | - | 1 | p5.48xlarge | [verl-sft-gemma-4-31b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-sft-gemma-4-31b-it-lora.yaml) | [run_verl_sft_gemma_4_31b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_sft_gemma_4_31b_it_lora.sh) |
+| Gemma 4 31B IT GRPO RLVR Fine-Tuning with LoRA (Text) | verl | GRPO | LoRA | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlvr-gemma-4-31b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-grpo-rlvr-gemma-4-31b-it-lora.yaml) | [run_verl_grpo_rlvr_gemma_4_31b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_grpo_rlvr_gemma_4_31b_it_lora.sh) |
+| Gemma 4 31B IT GRPO RLAIF Fine-Tuning with LoRA (Text) | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlaif-gemma-4-31b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-grpo-rlaif-gemma-4-31b-it-lora.yaml) | [run_verl_grpo_rlaif_gemma_4_31b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_grpo_rlaif_gemma_4_31b_it_lora.sh) |
+
 ### Llama Models
 
 #### Llama 3.1 8B Instruct

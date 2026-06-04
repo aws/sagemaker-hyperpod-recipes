@@ -276,6 +276,8 @@ This document contains the list of hyperparameters available when using the reci
 | `warmup_steps` | integer | Yes | 0–100 | Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value. |
 | `min_lr` | float | Yes | 1e-07–1.0 | Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value. |
 | `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
+| `val_check_interval` | integer | No | 1–100000 | — |
+| `limit_val_batches` | integer | No | 0–100000 | — |
 
 ### SFT (FFT) 2.0
 
@@ -292,6 +294,8 @@ This document contains the list of hyperparameters available when using the reci
 | `warmup_steps` | integer | Yes | 0–100 | Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value. |
 | `min_lr` | float | Yes | 1e-07–1.0 | Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value. |
 | `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
+| `val_check_interval` | integer | No | 1–100000 | — |
+| `limit_val_batches` | integer | No | 0–100000 | — |
 
 ### DPO (LoRA)
 
