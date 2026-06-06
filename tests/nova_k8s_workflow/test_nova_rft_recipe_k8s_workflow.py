@@ -72,11 +72,15 @@ def mock_aws_account_id():
 
 
 @pytest.fixture(autouse=True)
-def mock_aws_region():
+def mock_aws_region(monkeypatch):
+    monkeypatch.delenv("AWS_REGION", raising=False)
+
     session_mock = MagicMock()
     session_mock.region_name = "us-east-1"
 
-    with patch("launcher.nova.launchers.boto3.session.Session", return_value=session_mock):
+    with patch("launcher.nova.launchers.boto3.session.Session", return_value=session_mock), patch(
+        "launcher.nova.utils.boto3.session.Session", return_value=session_mock
+    ):
         yield
 
 

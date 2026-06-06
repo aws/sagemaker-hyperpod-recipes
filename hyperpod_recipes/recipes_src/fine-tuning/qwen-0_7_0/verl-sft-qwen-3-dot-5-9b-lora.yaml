@@ -8,7 +8,7 @@ defaults:
   - /hydra_config/verl-0_7_0/profiler/profiler
   - /hydra_config/verl-0_7_0/sft/checkpoint/default
   - /hydra_config/verl-0_7_0/sft/peft/lora
-  - /hydra_config/verl-0_7_0/sft/model_config/qwen-3-dot-5-9b
+  - /hydra_config/verl-0_7_0/model_config/qwen-3-dot-5-9b
   - _self_
 
 display_name: "Qwen 3.5 9B SFT LoRA Fine-Tuning"

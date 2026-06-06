@@ -55,6 +55,11 @@ spec:
             - name: {{ $config.initContainer.name }}
               image: {{ $config.initContainer.image }}
               imagePullPolicy: {{ .Values.image.pullPolicy }}
+              env:
+                {{- range $key, $value := $config.envVars }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end}}
               volumeMounts:
               - name: fsx-path-init
                 mountPath: /sagemaker/fsx/init
@@ -62,6 +67,9 @@ spec:
                 name: training-config
               - mountPath: /var/log/aws/clusters
                 name: logs
+              - name: k8s-ca-cert
+                mountPath: /etc/kubernetes/pki/ca.crt
+                readOnly: true
           {{- end }}
           containers:
           - name: pytorch
@@ -200,6 +208,11 @@ spec:
             - name: {{ $config.initContainer.name }}
               image: {{ $config.initContainer.image }}
               imagePullPolicy: {{ .Values.image.pullPolicy }}
+              env:
+                {{- range $key, $value := $config.envVars }}
+                - name: {{ $key }}
+                  value: {{ $value | quote }}
+                {{- end}}
               volumeMounts:
               - name: fsx-path-init
                 mountPath: /sagemaker/fsx/init
@@ -207,6 +220,9 @@ spec:
                 name: training-config
               - mountPath: /var/log/aws/clusters
                 name: logs
+              - name: k8s-ca-cert
+                mountPath: /etc/kubernetes/pki/ca.crt
+                readOnly: true
           {{- end }}
           containers:
           - name: pytorch

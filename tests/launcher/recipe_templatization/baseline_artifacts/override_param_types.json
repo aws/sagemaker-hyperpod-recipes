@@ -390,7 +390,8 @@
             "type_family": "numeric",
             "frameworks": [
                 "llmft",
-                "nova"
+                "nova",
+                "verl"
             ]
         },
         "adam_beta1": {

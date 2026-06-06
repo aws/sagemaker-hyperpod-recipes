@@ -1,0 +1,19 @@
+# @package recipes.training_config.trainer
+# DPO-specific overrides — loaded after sft/trainer/default in recipe defaults.
+
+project_name: verl_dpo
+
+experiment_name: verl-dpo
+
+max_ckpt_to_keep: 3
+
+training_mode: auto
+
+# DPO-specific fields
+beta: 0.1
+
+loss_type: sigmoid
+
+label_smoothing: 0.0
+
+reference_free: false

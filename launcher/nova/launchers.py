@@ -49,6 +49,7 @@ from .constants.rft_container_constants import (
 )
 from .utils import (
     get_actor_generation_container_uri,
+    get_current_region,
     get_init_container_uri,
     get_rft_generation_container_uri,
     get_rft_nats_reloader_container_uri,
@@ -259,6 +260,8 @@ class NovaK8SLauncher:
 
         if self.instance_type:
             env_vars["INSTANCE_TYPE"] = self.instance_type
+
+        env_vars["AWS_REGION"] = get_current_region()
 
         return env_vars
 

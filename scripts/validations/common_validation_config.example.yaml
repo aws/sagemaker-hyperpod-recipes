@@ -77,6 +77,11 @@ recipe_type_config:
     model_config_key: "verl"
     container_key: "verl_0_7_0"
     recipe_structure: "verl_rlvr"
+  verl_dpo_0_7_0:
+    detection_keywords: ["0_7_0/verl-dpo"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0"
+    recipe_structure: "verl_dpo"
   verl_rlaif_0_7_0:
     detection_keywords: ["0_7_0/verl-grpo-rlaif"]
     model_config_key: "verl"
@@ -357,6 +362,10 @@ recipe_dataset_mapping:
     slurm: ["tat_qa-sft-openai-parquet"]
     k8: ["tat_qa-sft-openai-parquet"]
     smjobs: ["tat_qa-sft-openai-parquet"]
+  verl_dpo_0_7_0:
+    slurm: ["ultra_feedback"]
+    k8: ["ultra_feedback"]
+    smjobs: ["ultra_feedback"]
   verl_rlvr_0_7_0:
     slurm: ["gsm8k"]
     k8: ["gsm8k"]
@@ -392,6 +401,8 @@ recipe_dataset_mapping:
     smjobs: ["tat_qa-sft-openai-parquet_convergence"]
   verl_rlvr_convergence:
     smjobs: ["gsm8k_convergence"]
+  verl_dpo_0_7_0_convergence:
+    smjobs: ["ultra_feedback_convergence"]
   verl_rlaif_convergence:
     smjobs: ["panda_convergence"]
   sft_convergence:
@@ -834,6 +845,64 @@ recipe_structure_config:
     # Variables like {local_model_name_or_path}, {train_data_dir}, {val_data_dir}, {model_parent_folder}
     # are populated from smjobs_fsx sections when use_fsx is true
     # NOTE: RLVR uses custom_reward_function.lambda_arn for programmatic reward computation
+    smjobs_fsx_overrides:
+      recipe_overrides.run.results_dir: "/opt/ml/model"
+      recipe_overrides.training_config.data.train_files: "{train_data_dir}"
+      recipe_overrides.training_config.data.val_files: "{val_data_dir}"
+      recipe_overrides.training_config.model.path: "{local_model_name_or_path}"
+
+  verl_dpo:
+    # VERL DPO (Direct Preference Optimization) Configuration
+    # Uses the same config structure as verl_sft (training_config.model.path)
+
+    # Path to model name within recipe YAML (dot notation)
+    model_path_in_recipe: "training_config.model.path"
+
+    launch_commands:
+      common:  # Commands added for all platforms
+        - "recipes.training_config.data.train_files='{train_data_dir}'"
+        - "recipes.training_config.data.val_files='{val_data_dir}'"
+        - "recipes.training_config.data.train_max_samples=1000"
+        - "recipes.training_config.data.val_max_samples=0"
+        - "recipes.training_config.trainer.total_epochs=5"
+        - "recipes.training_config.model.path='{local_model_name_or_path}'"
+        - "recipes.training_config.trainer.default_local_dir='/opt/ml/model'"
+        - "container='{container_path}'"
+        - "git.entry_script=verl_trainer_script.py"
+
+      slurm:  # Slurm-specific commands
+        - "++cluster.container_mounts.0=/fsx:/fsx"
+
+      k8:  # K8-specific commands (uses torchrun via HyperPodPyTorchJob)
+        - "+cluster.persistent_volume_claims.0.claimName=fsx-claim"
+        - "cluster.cleanPodPolicy=None"
+
+      smjobs:  # SM Jobs-specific commands (S3 mode)
+        - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
+        - "++cluster.sm_jobs_config.inputs.file_system=null"
+        - "cluster.sm_jobs_config.output_path={s3_output_path}"
+        - "cluster.sm_jobs_config.tensorboard_config=''"
+        - "cluster.sm_jobs_config.wait=False"
+        - "cluster.sm_jobs_config.additional_estimator_kwargs.max_run=86400"
+        - "+cluster.sm_jobs_config.additional_estimator_kwargs.disable_output_compression=True"
+
+      smjobs_fsx:  # SM Jobs FSx-specific commands (FSx mode)
+        - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
+        - "++cluster.sm_jobs_config.inputs.s3=null"
+        - "cluster.sm_jobs_config.output_path={s3_output_path}"
+        - "cluster.sm_jobs_config.tensorboard_config=''"
+        - "cluster.sm_jobs_config.wait=False"
+        - "cluster.sm_jobs_config.additional_estimator_kwargs.max_run=86400"
+        - "+cluster.sm_jobs_config.additional_estimator_kwargs.disable_output_compression=True"
+
+    smjobs_overrides:
+      inputs.s3.{model_name}: "{model_s3_path}"
+      recipe_overrides.training_config.data.train_files: "{train_data_dir}"
+      recipe_overrides.training_config.data.val_files: "{val_data_dir}"
+      recipe_overrides.training_config.model.path: "/opt/ml/input/data/{model_name}"
+
     smjobs_fsx_overrides:
       recipe_overrides.run.results_dir: "/opt/ml/model"
       recipe_overrides.training_config.data.train_files: "{train_data_dir}"

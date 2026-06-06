@@ -147,6 +147,11 @@ spec:
         - name: {{ $config.initContainer.name }}
           image: {{ $config.initContainer.image }}
           imagePullPolicy: {{ $root.image.pullPolicy }}
+          env:
+            {{- range $key, $value := $config.envVars }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end}}
           volumeMounts:
           - name: fsx-path-init
             mountPath: /sagemaker/fsx/init
@@ -154,6 +159,9 @@ spec:
             name: training-config
           - mountPath: /var/log/aws/clusters
             name: logs
+          - name: k8s-ca-cert
+            mountPath: /etc/kubernetes/pki/ca.crt
+            readOnly: true
       {{- end }}
       containers:
         - name: promptcli
@@ -204,6 +212,10 @@ spec:
           hostPath:
             path: /sagemaker/fsx/output_artifacts
             type: DirectoryOrCreate
+        - name: k8s-ca-cert
+          hostPath:
+            path: /etc/kubernetes/pki/ca.crt
+            type: File
 
 ---
 apiVersion: batch/v1

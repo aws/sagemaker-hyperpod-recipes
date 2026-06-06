@@ -1,0 +1,55 @@
+# @package recipes.training_config.data
+_target_: verl.utils.dataset.dpo_dataset.DPODataConfig
+
+train_files: null
+
+val_files: null
+
+train_max_samples: -1
+
+val_max_samples: -1
+
+prompt_key: prompt
+
+chosen_key: chosen
+
+rejected_key: rejected
+
+chat_template_key: null
+
+train_batch_size: 256
+
+micro_batch_size_per_gpu: null
+
+max_token_len_per_gpu: 8192
+
+use_dynamic_bsz: true
+
+dataloader_num_workers: 8
+
+max_length: 1024
+
+pad_mode: no_padding
+
+truncation: right
+
+shuffle: true
+
+seed: 42
+
+remove_invalid_samples: false
+
+train_val_split_ratio: 0.9
+
+use_shm: false
+
+apply_chat_template_kwargs: {}
+
+# Custom dataset class configuration
+custom_cls:
+
+    # Path to custom dataset class file
+    path: null
+
+    # Name of the custom dataset class
+    name: null

@@ -57,6 +57,11 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
                 template_key = "sft_fft"
             else:
                 template_key = "sft"
+        elif self.algorithm_type == "dpo":
+            if "fft" in recipe_file_name.lower():
+                template_key = "dpo_fft"
+            else:
+                template_key = "dpo"
         elif self.algorithm_type == "grpo":
             display_name = recipe_cfg.get("display_name", "")
             customization_technique = self._training_technique(self.algorithm_type, display_name)
@@ -218,12 +223,16 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         """Extract algorithm type from recipe configuration.
 
         For RL recipes (e.g. GRPO), the type is found at
-        training_config.algorithm.adv_estimator. For SFT recipes there is no
-        algorithm section, so we return "sft" in that case.
+        training_config.algorithm.adv_estimator. For DPO recipes, the trainer
+        section contains a 'beta' field. For SFT recipes there is no algorithm
+        section and no beta field, so we return "sft" in that case.
         """
         training_config = recipe_cfg.get("training_config")
         algorithm = training_config.get("algorithm")
         if algorithm is None:
+            trainer = training_config.get("trainer", {})
+            if "beta" in trainer:
+                return "dpo"
             return "sft"
         adv_estimator = algorithm.get("adv_estimator")
         if adv_estimator is None:

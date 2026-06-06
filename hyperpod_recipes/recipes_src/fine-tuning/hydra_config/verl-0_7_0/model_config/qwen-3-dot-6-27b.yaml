@@ -1,8 +1,8 @@
 # @package recipes
-# Qwen 3.5 27B model configuration for verl-0.7.0 SFT
+# Qwen 3.6 27B model configuration for verl-0.7.0
 training_config:
   model:
-    path: Qwen/Qwen3.5-27B
+    path: Qwen/Qwen3.6-27B
     trust_remote_code: true
     use_liger: true
     use_fused_kernels: false
