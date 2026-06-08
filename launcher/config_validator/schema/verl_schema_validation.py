@@ -42,6 +42,36 @@ class VerlAlgorithmValidator(BaseModel):
         return self
 
 
+class VerlDpoTrainerValidator(BaseModel):
+    """Validates DPO trainer fields."""
+
+    model_config = ConfigDict(extra="allow")
+
+    beta: float | None = Field(default=None, gt=0)
+    loss_type: str | None = None
+
+    @model_validator(mode="after")
+    def validate_loss_type(self):
+        if self.loss_type is not None and self.loss_type not in {
+            "sigmoid",
+            "hinge",
+            "ipo",
+            "kto_pair",
+        }:
+            raise ValueError(f"loss_type must be one of 'sigmoid', 'hinge', 'ipo', 'kto_pair', got '{self.loss_type}'")
+        return self
+
+
+class VerlDpoDataValidator(BaseModel):
+    """Validates DPO data fields."""
+
+    model_config = ConfigDict(extra="allow")
+
+    prompt_key: str | None = None
+    chosen_key: str | None = None
+    rejected_key: str | None = None
+
+
 class VerlRecipeValidator(BaseModel):
     """Top-level validator for VERL recipes."""
 

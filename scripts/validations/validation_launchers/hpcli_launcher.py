@@ -579,7 +579,11 @@ class HpCliValidationLauncher(BaseLauncher):
     # ---- Job lifecycle (builder pattern) ---------------------------------
 
     def _build_job(self, recipe: str) -> HpCliRecipeJobBuilder:
-        """Construct a fully-configured job builder from config + recipe."""
+        """Construct a fully-configured job builder from config + recipe.
+
+        Passes assumed-role credentials so the kubeconfig exec plugin
+        (aws eks get-token --role-arn) can re-assume the role for K8s auth.
+        """
         technique = self._extract_technique(recipe)
         instance_type = getattr(self.hpcli_config, "instance_type", "ml.g5.48xlarge")
         job_name = f"integ-cli-{os.environ.get('USER', 'test')[:8]}-{int(time.time()) % 100000}"
@@ -631,7 +635,7 @@ class HpCliValidationLauncher(BaseLauncher):
             builder.cleanup()
 
     def _monitor_job(
-        self, recipe: str, builder: HpCliRecipeJobBuilder, timeout: int = 3600, poll_interval: int = 30
+        self, recipe: str, builder: HpCliRecipeJobBuilder, timeout: int = 7200, poll_interval: int = 30
     ) -> bool:
         """Poll ``builder.describe()`` until job reaches a terminal status."""
         start = time.time()

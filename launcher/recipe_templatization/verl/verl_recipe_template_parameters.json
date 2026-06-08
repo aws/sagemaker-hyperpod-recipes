@@ -1712,6 +1712,440 @@
                     "prime_math": "Math answers (prime_math)"
                 }
             }
+        },
+        "dpo": {
+            "display_name": "DPO (LoRA)",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}",
+                        "beta": "{{adam_beta}}"
+                    },
+                    "model": {
+                        "path": "{{model_name_or_path}}",
+                        "lora_rank": "{{lora_rank}}",
+                        "lora_alpha": "{{lora_alpha}}"
+                    },
+                    "optim": {
+                        "lr": "{{learning_rate}}",
+                        "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "lr_warmup_steps": "{{warmup_steps}}",
+                        "min_lr_ratio": "{{min_lr}}",
+                        "lr_scheduler_type": "{{lr_scheduler}}"
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-07,
+                    "max": 0.001,
+                    "default": 1e-04,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step."
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 3,
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "default": "default",
+                    "required": true,
+                    "type": "string"
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9,
+                    "category": "hyperparameter",
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation."
+                },
+                "adam_beta": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.001,
+                    "max": 1.0,
+                    "default": 0.01,
+                    "category": "hyperparameter",
+                    "description": "KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation."
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                },
+                "lora_rank": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "Rank of the low-rank decomposition in LoRA adapters. Higher rank increases expressiveness but uses more memory and compute."
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 64,
+                    "category": "hyperparameter",
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": -1,
+                    "max": 100,
+                    "default": -1,
+                    "category": "hyperparameter",
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                },
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ],
+                    "category": "hyperparameter",
+                    "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "sft_algorithms": {
+                    "dpo": "DPO"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4d.24xlarge",
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "dpo_fft": {
+            "display_name": "DPO (FFT)",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}",
+                        "beta": "{{adam_beta}}"
+                    },
+                    "model": {
+                        "path": "{{model_name_or_path}}"
+                    },
+                    "optim": {
+                        "lr": "{{learning_rate}}",
+                        "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "lr_warmup_steps": "{{warmup_steps}}",
+                        "min_lr_ratio": "{{min_lr}}",
+                        "lr_scheduler_type": "{{lr_scheduler}}"
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-07,
+                    "max": 0.001,
+                    "default": 5e-05,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step."
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 3,
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "default": "default",
+                    "required": true,
+                    "type": "string"
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9,
+                    "category": "hyperparameter",
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation."
+                },
+                "adam_beta": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.001,
+                    "max": 1.0,
+                    "default": 0.01,
+                    "category": "hyperparameter",
+                    "description": "KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation."
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                },
+                "warmup_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": -1,
+                    "max": 100,
+                    "default": -1,
+                    "category": "hyperparameter",
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                },
+                "min_lr": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                },
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ],
+                    "category": "hyperparameter",
+                    "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {},
+                "sft_algorithms": {
+                    "dpo": "DPO"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4d.24xlarge",
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
         }
     }
 }

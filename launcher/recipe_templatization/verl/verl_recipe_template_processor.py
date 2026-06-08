@@ -39,6 +39,26 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         with open("./launcher/recipe_templatization/verl/verl_regional_parameters.json", "r") as f:
             self._original_regional_parameters = json.load(f)
 
+    def process_recipe(self, recipe_file_path: str = None, output_path: str = None, dont_override_list=None) -> dict:
+        """Process recipe file with template matching, with lora_rank backfill for Mcore recipes."""
+        result = super().process_recipe(recipe_file_path, output_path, dont_override_list)
+
+        # Backfill lora_rank default from model.lora.rank for Mcore recipes
+        # (Super uses model.lora.rank, not model.lora_rank, to avoid vLLM enabling LoRA for MoE)
+        if "lora_rank" in self.recipe_override_parameters:
+            lora_rank_default = self.recipe_override_parameters["lora_rank"].get("default", 0)
+            if lora_rank_default == 0:
+                recipe_cfg = self._load_recipe_config(recipe_file_path)
+                training_config = recipe_cfg.get("training_config", {})
+                actor_rollout_ref = training_config.get("actor_rollout_ref")
+                model = actor_rollout_ref.get("model") if actor_rollout_ref else training_config.get("model")
+                if model:
+                    lora_cfg = model.get("lora")
+                    if lora_cfg and lora_cfg.get("rank") and int(lora_cfg.get("rank")) > 0:
+                        self.recipe_override_parameters["lora_rank"]["default"] = int(lora_cfg["rank"])
+
+        return result
+
     def get_recipe_template(self, yaml_data: dict, template: dict, recipe_file_path: str = None) -> Optional[dict]:
         """Get matching template for VERL recipes based on algorithm type and reward mechanism."""
         if recipe_file_path is None:
@@ -57,6 +77,11 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
                 template_key = "sft_fft"
             else:
                 template_key = "sft"
+        elif self.algorithm_type == "dpo":
+            if "fft" in recipe_file_name.lower():
+                template_key = "dpo_fft"
+            else:
+                template_key = "dpo"
         elif self.algorithm_type == "grpo":
             display_name = recipe_cfg.get("display_name", "")
             customization_technique = self._training_technique(self.algorithm_type, display_name)
@@ -218,12 +243,16 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         """Extract algorithm type from recipe configuration.
 
         For RL recipes (e.g. GRPO), the type is found at
-        training_config.algorithm.adv_estimator. For SFT recipes there is no
-        algorithm section, so we return "sft" in that case.
+        training_config.algorithm.adv_estimator. For DPO recipes, the trainer
+        section contains a 'beta' field. For SFT recipes there is no algorithm
+        section and no beta field, so we return "sft" in that case.
         """
         training_config = recipe_cfg.get("training_config")
         algorithm = training_config.get("algorithm")
         if algorithm is None:
+            trainer = training_config.get("trainer", {})
+            if "beta" in trainer:
+                return "dpo"
             return "sft"
         adv_estimator = algorithm.get("adv_estimator")
         if adv_estimator is None:
@@ -272,9 +301,16 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
 
         lora_rank = model.get("lora_rank")
 
-        # If lora_rank > 0, it's LoRA; if 0 or absent, it's FFT
+        # If lora_rank > 0, it's LoRA; if 0 or absent, check model.lora.rank
+        # (Mcore/Nemotron recipes use model.lora.rank instead of model.lora_rank)
         if lora_rank and int(lora_rank) > 0:
             return "LoRA"
+
+        # Check nested lora.rank for Mcore recipes
+        lora_config = model.get("lora")
+        if lora_config and lora_config.get("rank") and int(lora_config.get("rank")) > 0:
+            return "LoRA"
+
         return None
 
     def _extract_num_nodes(self, recipe_cfg) -> Optional[int]:
