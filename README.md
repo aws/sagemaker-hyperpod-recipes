@@ -34,6 +34,7 @@ This repository contains **v2.0.0** of Amazon SageMaker HyperPod recipes, which 
 | Technique | Description | Variants | Model Support |
 |-----------|-------------|----------|---------------|
 | **Supervised Fine-Tuning (SFT)** | Fine-tune models on supervised datasets | • Full Fine-Tuning (FFT): Complete model parameter updates<br>• LoRA: Low-rank adaptation for parameter efficiency<br>• QLoRA: Quantized LoRA for reduced memory | All models |
+| **Direct Preference Optimization (DPO)** | Align models with human preferences without reward modeling | • Full Fine-Tuning (FFT)<br>• LoRA | All models |
 | **Reinforcement Learning from AI Feedback (RLAIF)** | Train models using AI-generated feedback | • Full Fine-Tuning (FFT)<br>• LoRA | All models |
 | **Reinforcement Learning with Verifiable Rewards (RLVR)** | RL training with verifiable reward signals | • Full Fine-Tuning (FFT)<br>• LoRA | All models |
 | **Reinforcement Fine-Tuning (RFT)** | Reinforcement learning fine-tuning | • Full Fine-Tuning (FFT)<br>• LoRA | Nova models only |
@@ -55,7 +56,7 @@ Advanced fine-tuning framework with optimized implementations for:
 - GPT-OSS models (20B, 120B)
 - Llama models (3.1, 3.2, 3.3, 4)
 - Qwen models (2.5, 3)
-- Techniques: SFT (Full Fine-Tuning and LoRA)
+- Techniques: SFT (Full Fine-Tuning and LoRA), DPO (Full Fine-Tuning and LoRA)
 
 #### VERL (Versatile Reinforcement Learning)
 Reinforcement learning framework using the GRPO algorithm for:
