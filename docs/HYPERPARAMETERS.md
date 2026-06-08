@@ -242,6 +242,38 @@ This document contains the list of hyperparameters available when using the reci
 | `temperature` | float | Yes | 0.0–2.0 | Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic. |
 | `use_kl_loss` | boolean | Yes | — | Boolean flag to add a KL divergence penalty to the training loss. Prevents the RL-trained policy from drifting too far from the reference model. |
 
+### DPO (LoRA)
+
+| Parameter | Type | Required | Range / Values | Description |
+|-----|-----|-----|-----|-----|
+| `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. |
+| `max_epochs` | integer | Yes | 1–100 | Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting. |
+| `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory. |
+| `train_val_split_ratio` | float | No | 0.0–1.0 | Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation. |
+| `adam_beta` | float | Yes | 1e-03–1.0 | KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation. |
+| `lr_warmup_steps_ratio` | float | Yes | 0–1 | Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates. |
+| `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
+| `lora_rank` | integer | Yes | 8, 16, 32, 64, 128 | Rank of the low-rank decomposition in LoRA adapters. Higher rank increases expressiveness but uses more memory and compute. |
+| `lora_alpha` | integer | Yes | 16, 32, 64, 128, 256 | LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank. |
+| `warmup_steps` | integer | Yes | -1–100 | Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value. |
+| `min_lr` | float | Yes | 0.0–1.0 | Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value. |
+| `lr_scheduler` | string | Yes | cosine, constant | Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve. |
+
+### DPO (FFT)
+
+| Parameter | Type | Required | Range / Values | Description |
+|-----|-----|-----|-----|-----|
+| `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. |
+| `max_epochs` | integer | Yes | 1–100 | Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting. |
+| `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory. |
+| `train_val_split_ratio` | float | No | 0.0–1.0 | Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation. |
+| `adam_beta` | float | Yes | 1e-03–1.0 | KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation. |
+| `lr_warmup_steps_ratio` | float | Yes | 0–1 | Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates. |
+| `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
+| `warmup_steps` | integer | Yes | -1–100 | Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value. |
+| `min_lr` | float | Yes | 0.0–1.0 | Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value. |
+| `lr_scheduler` | string | Yes | cosine, constant | Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve. |
+
 ## Amazon Nova
 
 ### SFT (LoRA) 1.0

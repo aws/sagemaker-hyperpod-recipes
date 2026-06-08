@@ -7,7 +7,7 @@ defaults:
   - /hydra_config/verl-0_7_0/sft/trainer/default
   - /hydra_config/verl-0_7_0/profiler/profiler
   - /hydra_config/verl-0_7_0/sft/checkpoint/default
-  - /hydra_config/verl-0_7_0/sft/model_config/nemo3-nano-30b
+  - /hydra_config/verl-0_7_0/model_config/nemo3-nano-30b
   - _self_
 
 display_name: "Nemotron 3 Nano 30B SFT FFT Fine-Tuning"
