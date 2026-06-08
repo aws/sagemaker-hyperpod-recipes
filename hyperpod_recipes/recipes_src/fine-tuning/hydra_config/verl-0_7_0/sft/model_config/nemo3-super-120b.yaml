@@ -1,9 +1,0 @@
-# @package recipes
-# Nemo3 Super 120B model configuration for verl-0.7.0 SFT
-training_config:
-  model:
-    path: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
-    trust_remote_code: true
-    external_lib: verl.models.mcore.nemotron_h_patch
-    use_liger: false
-    use_fused_kernels: false
