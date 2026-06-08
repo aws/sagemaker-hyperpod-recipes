@@ -581,9 +581,8 @@ class HpCliValidationLauncher(BaseLauncher):
     def _build_job(self, recipe: str) -> HpCliRecipeJobBuilder:
         """Construct a fully-configured job builder from config + recipe.
 
-        Uses ambient credentials (no explicit AWS keys in env) so that the
-        kubeconfig exec plugin can re-assume the role on every kubectl call,
-        preventing "system:anonymous" auth failures during hyp create/describe/delete.
+        Passes assumed-role credentials so the kubeconfig exec plugin
+        (aws eks get-token --role-arn) can re-assume the role for K8s auth.
         """
         technique = self._extract_technique(recipe)
         instance_type = getattr(self.hpcli_config, "instance_type", "ml.g5.48xlarge")

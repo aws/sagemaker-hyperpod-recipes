@@ -22,20 +22,22 @@ trainer:
 
 training_config:
   data:
-    train_batch_size: 64
+    train_batch_size: 128
     micro_batch_size_per_gpu: 1
-    max_length: 8192
-    max_token_len_per_gpu: 16384
+    max_length: 32768
+    max_token_len_per_gpu: 33280
     truncation: left
     use_dynamic_bsz: true
+    apply_chat_template_kwargs:
+      enable_thinking: false
 
   model:
     path: google/gemma-4-31B-it
     trust_remote_code: true
     enable_gradient_checkpointing: true
     use_remove_padding: true
-    use_liger: true
-    use_fused_kernels: false
+    use_liger: false
+    use_fused_kernels: true
     override_config:
       attn_implementation: flash_attention_2
     lora_rank: 64
@@ -43,24 +45,25 @@ training_config:
     target_modules: .*q_proj.*|.*k_proj.*|.*v_proj.*|.*o_proj.*|.*gate_proj.*|.*up_proj.*|.*down_proj.*
     exclude_modules: .*vision_tower.*|.*embed_vision.*|.*embed_audio.*|.*audio_tower.*|.*router.*|.*experts.*
     tiled_mlp:
-      enabled: true
+      enabled: false
       num_shards: 4
 
   engine:
     strategy: fsdp2
-    model_dtype: fp32
+    model_dtype: bfloat16
     dtype: bfloat16
 
   optim:
-    lr: 1.0e-05
+    lr: 5.0e-05
     weight_decay: 0.01
     betas: [0.9, 0.999]
     lr_scheduler_type: constant
+    lr_warmup_steps: 10
 
   trainer:
     project_name: gemma4-sft
     experiment_name: gemma-4-31b-it-sft-lora
-    total_epochs: 1
+    total_epochs: 3
     test_freq: 5
     resume_mode: auto
 

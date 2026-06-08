@@ -50,6 +50,21 @@ instance_type_list:
 #   - If ANY keyword in detection_keywords is found, the recipe type matches
 #   - Example: detection_keywords: ["rlvr"] matches "verl-grpo-rlvr-qwen-3-4b-lora.yaml"
 recipe_type_config:
+  # Verl 0.7.0 Nemotron recipe types (must be before generic 0.7.0 entries — first match wins)
+  verl_sft_0_7_0_nemotron:
+    detection_keywords: ["nemotron-0_7_0/verl-sft"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0_vllm012"
+    recipe_structure: "verl_sft"
+  verl_rlvr_0_7_0_nemotron:
+    detection_keywords: ["nemotron-0_7_0/verl-grpo-rlvr"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0_vllm012"
+    recipe_structure: "verl_rlvr"
+  verl_rlaif_0_7_0_nemotron:
+    detection_keywords: ["nemotron-0_7_0/verl-grpo-rlaif"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0_vllm012"
   # Gemma 4 recipes use tf58 container (must be before generic 0_7_0 entries — first match wins)
   verl_sft_0_7_0_gemma4:
     detection_keywords: ["gemma4-0_7_0/verl-sft"]
@@ -344,6 +359,20 @@ recipe_dataset_mapping:
     slurm: ["pokemon"]
     k8: ["pokemon"]
     smjobs: ["pokemon"]
+  # Verl 0.7.0 Nemotron dataset mappings (same datasets, different container)
+  verl_sft_0_7_0_nemotron:
+    slurm: ["tat_qa-sft-openai-parquet"]
+    k8: ["tat_qa-sft-openai-parquet"]
+    smjobs: ["tat_qa-sft-openai-parquet"]
+  verl_rlvr_0_7_0_nemotron:
+    slurm: ["gsm8k"]
+    k8: ["gsm8k"]
+    smjobs: ["gsm8k"]
+  verl_rlaif_0_7_0_nemotron:
+    slurm: ["panda"]
+    k8: ["panda"]
+    smjobs: ["panda"]
+  # Verl 0.7.0 dataset mappings (Qwen and others)
   # Gemma 4 dataset mappings (same datasets, different container)
   verl_sft_0_7_0_gemma4:
     slurm: ["tat_qa-sft-openai-parquet"]
@@ -730,7 +759,7 @@ serverless_config:
   # Accept EULA for gated models (e.g., Llama, Mistral)
   accept_eula: true
   # Hub configuration for model ARN construction
-  hub_name: "Qwen35ProdValidationHub"
+  hub_name: "HPMCIntegTestHub"
   hub_account_id: "855988369404"
   model_version: ""
   # Default hyper-parameters for serverless jobs (applied to all techniques)
