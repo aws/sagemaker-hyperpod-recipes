@@ -579,7 +579,11 @@ class HpCliValidationLauncher(BaseLauncher):
     # ---- Job lifecycle (builder pattern) ---------------------------------
 
     def _build_job(self, recipe: str) -> HpCliRecipeJobBuilder:
-        """Construct a fully-configured job builder from config + recipe."""
+        """Construct a fully-configured job builder from config + recipe.
+
+        Passes assumed-role credentials so the kubeconfig exec plugin
+        (aws eks get-token --role-arn) can re-assume the role for K8s auth.
+        """
         technique = self._extract_technique(recipe)
         instance_type = getattr(self.hpcli_config, "instance_type", "ml.g5.48xlarge")
         job_name = f"integ-cli-{os.environ.get('USER', 'test')[:8]}-{int(time.time()) % 100000}"

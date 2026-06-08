@@ -31,6 +31,7 @@ trainingConfig:
   envVars:
     X_AMZ_SOURCE_ACCOUNT: '123456789012'
     INSTANCE_TYPE: ml.p5.48xlarge
+    AWS_REGION: us-east-1
   initContainer:
     name: init-container
     image: 708977205387.dkr.ecr.us-east-1.amazonaws.com/init-container-repo:latest

@@ -313,9 +313,21 @@ def _detect_adapter(data: dict, framework: str) -> str:
 
     if framework == "verl":
         rank = _get(data, "training_config", "actor_rollout_ref", "model", "lora_rank")
-        if rank is not None:
-            return "LoRA" if int(rank) > 0 else "FFT"
-        return ""
+        if rank is not None and int(rank) > 0:
+            return "LoRA"
+        # Also check nested lora.rank (used by Nemotron Mcore recipes)
+        nested_rank = _get(data, "training_config", "actor_rollout_ref", "model", "lora", "rank")
+        if nested_rank is not None and int(nested_rank) > 0:
+            return "LoRA"
+        # SFT verl recipes use model.lora.rank
+        sft_rank = _get(data, "training_config", "model", "lora", "rank")
+        if sft_rank is not None and int(sft_rank) > 0:
+            return "LoRA"
+        sft_lora_rank = _get(data, "training_config", "model", "lora_rank")
+        if sft_lora_rank is not None and int(sft_lora_rank) > 0:
+            return "LoRA"
+        # Check if recipe filename contains "lora" as final fallback
+        return "FFT"
 
     if framework == "nova":
         scheme = _get(data, "training_config", "model", "peft", "peft_scheme")

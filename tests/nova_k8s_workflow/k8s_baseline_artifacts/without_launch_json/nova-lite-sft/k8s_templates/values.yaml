@@ -33,3 +33,4 @@ trainingConfig:
     env: []
   envVars:
     INSTANCE_TYPE: ml.p5.48xlarge
+    AWS_REGION: us-east-1

@@ -58,7 +58,7 @@ training_config:
         full_determinism: false
         model_dtype: bfloat16
         offload_policy: false
-        optimizer_offload: false
+        optimizer_offload: true
         param_offload: false
         reshard_after_forward: true
         seed: 42
@@ -102,10 +102,10 @@ training_config:
         loss_mode: vanilla
         ppo_kl_coef: 0.1
       ppo_epochs: 1
-      ppo_max_token_len_per_gpu: 16384
+      ppo_max_token_len_per_gpu: 20992
       ppo_micro_batch_size: null
       ppo_micro_batch_size_per_gpu: 2
-      ppo_mini_batch_size: 32
+      ppo_mini_batch_size: 64
       profiler:
         _target_: verl.utils.profiler.ProfilerConfig
         all_ranks: false
@@ -158,15 +158,16 @@ training_config:
       fused_kernel_options:
         impl_backend: torch
       hf_config_path: null
+      is_saving_checkpoint_in_lora: true
       lora_adapter_path: null
-      lora_alpha: 32
-      lora_rank: 16
+      lora_alpha: 64
+      lora_rank: 32
       override_config:
         attn_implementation: flash_attention_2
       path: google/gemma-4-31B-it
       target_modules: .*q_proj.*|.*k_proj.*|.*v_proj.*|.*o_proj.*|.*gate_proj.*|.*up_proj.*|.*down_proj.*
       tiled_mlp:
-        enabled: true
+        enabled: false
         num_shards: 4
       tokenizer_path: null
       trust_remote_code: false
@@ -200,7 +201,7 @@ training_config:
         use_torch_compile: true
         wrap_policy:
           min_num_params: 0
-      log_prob_max_token_len_per_gpu: 16384
+      log_prob_max_token_len_per_gpu: 20992
       log_prob_micro_batch_size: null
       log_prob_micro_batch_size_per_gpu: 1
       log_prob_use_dynamic_bsz: true
@@ -263,18 +264,18 @@ training_config:
         sglang: {}
         vllm: {}
       expert_parallel_size: 1
-      free_cache_engine: false
-      gpu_memory_utilization: 0.5
+      free_cache_engine: true
+      gpu_memory_utilization: 0.6
       ignore_eos: false
       layered_summon: false
       load_format: safetensors
-      log_prob_max_token_len_per_gpu: ${oc.select:recipes.training_config.actor_rollout_ref.actor.ppo_max_token_len_per_gpu,16384}
+      log_prob_max_token_len_per_gpu: 20992
       log_prob_micro_batch_size: null
       log_prob_micro_batch_size_per_gpu: 1
-      log_prob_use_dynamic_bsz: ${oc.select:recipes.training_config.actor_rollout_ref.actor.use_dynamic_bsz,true}
+      log_prob_use_dynamic_bsz: true
       logprobs_mode: processed_logprobs
-      max_model_len: 4096
-      max_num_batched_tokens: 16384
+      max_model_len: 20992
+      max_num_batched_tokens: 20992
       max_num_seqs: 1024
       merge_lora_for_inference: true
       mode: async
@@ -311,14 +312,14 @@ training_config:
         file: /tmp/ray/session_latest/metrics/prometheus/prometheus.yml
         port: 9090
         served_model_name: ${oc.select:recipes.training_config.actor_rollout_ref.model.path,null}
-      prompt_length: 2048
+      prompt_length: 16384
       quantization: null
       quantization_config_file: null
-      response_length: 2048
+      response_length: 4096
       skip_dump_dir: /tmp/rollout_dump
       skip_rollout: false
       skip_tokenizer_init: true
-      temperature: 1.5
+      temperature: 1.0
       tensor_model_parallel_size: 8
       top_k: -1
       top_p: 1
@@ -347,7 +348,7 @@ training_config:
       type: fixed
     kl_penalty: kl
     lam: 1.0
-    norm_adv_by_std_in_grpo: true
+    norm_adv_by_std_in_grpo: false
     pf_ppo:
       reweight_method: pow
       weight_pow: 2.0
@@ -490,8 +491,8 @@ training_config:
     filter_overlong_prompts_workers: 1
     image_key: images
     image_patch_size: 14
-    max_prompt_length: 2048
-    max_response_length: 2048
+    max_prompt_length: 16384
+    max_response_length: 4096
     prompt_key: prompt
     return_full_prompt: false
     return_multi_modal_inputs: true
@@ -506,7 +507,7 @@ training_config:
     tokenizer: null
     tool_config_path: ${oc.select:recipes.training_config.actor_rollout_ref.rollout.multi_turn.tool_config_path,
       null}
-    train_batch_size: 128
+    train_batch_size: 256
     train_files: null
     train_max_samples: -1
     train_val_split_ratio: 0.9
@@ -578,7 +579,7 @@ training_config:
         reshard_after_forward: true
         wrap_policy:
           min_num_params: 0
-      input_tokenizer: sfairXC/FsfairX-LLaMA3-RM-v0.1
+      input_tokenizer: google/gemma-4-31B-it
       override_config: {}
       path: sfairXC/FsfairX-LLaMA3-RM-v0.1
       trust_remote_code: false
@@ -598,10 +599,10 @@ training_config:
       tool_config: ${oc.select:recipes.training_config.actor_rollout_ref.actor.profiler.tool_config,null}
     reward_kwargs:
       kwargs:
-        aws_region_name: null
+        aws_region_name: us-west-2
         llmj_prompt_template_path: /opt/ml/code/verl/summarize.jinja
         max_workers: 100
-        model_id: bedrock/openai.gpt-oss-120b-1:0
+        model_id: bedrock/deepseek.v3.2
         num_retries: 5
         range:
         - 0.0
@@ -609,6 +610,7 @@ training_config:
         sampling_params:
           max_completion_tokens: 2048
           temperature: 0.0
+        service_tier: flex
       reward_fn_name: llmj
     reward_loop_class_name: null
     reward_loop_module_path: null
@@ -677,7 +679,7 @@ training_config:
     rollout_data_dir: null
     save_freq: 20
     test_freq: 5
-    total_epochs: 1
+    total_epochs: 3
     total_training_steps: null
     use_custom_rollouts: false
     use_legacy_worker_impl: auto

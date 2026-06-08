@@ -479,29 +479,51 @@ def create_new_recipecollection(exported_json_path):
     with open(exported_json_path, "r") as f:
         hub_content = json.load(f)
 
-    hub_content["HubContentDocument"]["RecipeCollection"] = []
+    # Preserve existing recipes - do NOT wipe to empty list
+    existing = hub_content.get("HubContentDocument", {}).get("RecipeCollection", [])
+    if "HubContentDocument" not in hub_content:
+        hub_content["HubContentDocument"] = {}
+    if "RecipeCollection" not in hub_content["HubContentDocument"]:
+        hub_content["HubContentDocument"]["RecipeCollection"] = []
 
     with open(exported_json_path, "w") as f:
         json.dump(hub_content, f, indent=2)
 
-    print(f"✓ Successfully initialized RecipeCollection in {exported_json_path}")
+    print(
+        f"✓ Successfully initialized RecipeCollection in {exported_json_path} (preserved {len(existing)} existing recipes)"
+    )
     return True
 
 
 def update_exported_json(exported_json_path, new_recipe_entries, model_id, version):
-    """Add new recipe entries to exported hub content JSON"""
+    """Add new recipe entries to exported hub content JSON, deduplicating by RecipeName."""
     with open(exported_json_path, "r") as f:
         hub_content = json.load(f)
 
-    hub_content["HubContentDocument"]["RecipeCollection"].extend(new_recipe_entries)
+    existing_recipes = hub_content["HubContentDocument"]["RecipeCollection"]
+    existing_names = {r.get("RecipeName") for r in existing_recipes if r.get("RecipeName")}
 
+    added = 0
+    for entry in new_recipe_entries:
+        name = entry.get("RecipeName")
+        if name and name in existing_names:
+            # Replace existing recipe with updated version
+            existing_recipes = [r for r in existing_recipes if r.get("RecipeName") != name]
+            existing_recipes.append(entry)
+        else:
+            existing_recipes.append(entry)
+            added += 1
+
+    hub_content["HubContentDocument"]["RecipeCollection"] = existing_recipes
     hub_content["HubContentVersion"] = version
 
     # Save updated JSON
     with open(exported_json_path, "w") as f:
         json.dump(hub_content, f, indent=2)
 
-    print(f"Updated {exported_json_path} with {len(new_recipe_entries)} new recipes")
+    print(
+        f"Updated {exported_json_path} with {added} new recipes ({len(new_recipe_entries) - added} updated, {len(existing_recipes)} total)"
+    )
 
 
 def export_hub_content(hub_name, model_id, region, output, output_dir, endpoint):

@@ -55,3 +55,4 @@ trainingConfig:
   jobName: nova-lite-ppo
   envVars:
     INSTANCE_TYPE: ml.p5.48xlarge
+    AWS_REGION: us-east-1

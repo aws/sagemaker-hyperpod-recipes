@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import time
+from datetime import datetime, timedelta, timezone
 
 from scripts.validations.validation_launchers.launcher_utils import (
     execute_pysdk_finetune,
@@ -40,6 +41,19 @@ class SageMakerJobsValidationLauncher(BaseLauncher):
             self.sagemaker_session = sagemaker.Session(boto_session=self.boto_session)
             self.sagemaker_client = self.boto_session.client("sagemaker")
             self.logs_client = self.boto_session.client("logs")
+
+    def _refresh_session_if_needed(self):
+        """Refresh credentials and rebuild sagemaker session/client if expiring soon."""
+        if not self._assume_role_arn or not self._credentials_expiry:
+            return
+
+        now = datetime.now(timezone.utc)
+        if (self._credentials_expiry - now) < timedelta(minutes=self.REFRESH_THRESHOLD_MINUTES):
+            self._refresh_credentials_if_needed()
+            if self.config.platform != "PYSDK_FINETUNE":
+                self.sagemaker_session = sagemaker.Session(boto_session=self.boto_session)
+                self.sagemaker_client = self.boto_session.client("sagemaker")
+                self.logs_client = self.boto_session.client("logs")
 
     def launch_job(self, recipe) -> bool:
         """Launch a single job and return True if successful, False otherwise"""
@@ -135,6 +149,7 @@ class SageMakerJobsValidationLauncher(BaseLauncher):
         try:
             while True:
                 time.sleep(300)  # Wait before next check
+                self._refresh_session_if_needed()
                 status = self.sagemaker_session.describe_training_job(training_job_name)
                 current_status = status["TrainingJobStatus"]
                 secondary_status = status["SecondaryStatus"]

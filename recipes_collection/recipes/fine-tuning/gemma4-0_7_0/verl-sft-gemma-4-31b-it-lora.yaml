@@ -23,16 +23,18 @@ training_config:
     - hf_model
     save_only_adapter_if_lora: true
   data:
+    apply_chat_template_kwargs:
+      enable_thinking: false
     custom_cls:
       name: null
       path: null
     ignore_input_ids_mismatch: false
-    max_length: 8192
-    max_token_len_per_gpu: 16384
+    max_length: 32768
+    max_token_len_per_gpu: 33280
     messages_key: messages
     micro_batch_size_per_gpu: 1
     pad_mode: no_padding
-    train_batch_size: 64
+    train_batch_size: 128
     train_files: null
     train_val_split_ratio: 1.0
     truncation: left
@@ -47,7 +49,7 @@ training_config:
     forward_prefetch: false
     fsdp_size: -1
     full_determinism: false
-    model_dtype: fp32
+    model_dtype: bfloat16
     offload_policy: false
     optimizer_offload: false
     param_offload: false
@@ -80,12 +82,12 @@ training_config:
     path: google/gemma-4-31B-it
     target_modules: .*q_proj.*|.*k_proj.*|.*v_proj.*|.*o_proj.*|.*gate_proj.*|.*up_proj.*|.*down_proj.*
     tiled_mlp:
-      enabled: true
+      enabled: false
       num_shards: 4
     tokenizer_path: null
     trust_remote_code: true
-    use_fused_kernels: false
-    use_liger: true
+    use_fused_kernels: true
+    use_liger: false
     use_remove_padding: true
     use_shm: false
   optim:
@@ -94,9 +96,9 @@ training_config:
     - 0.9
     - 0.999
     clip_grad: 1.0
-    lr: 1.0e-05
+    lr: 5.0e-05
     lr_scheduler_type: constant
-    lr_warmup_steps: -1
+    lr_warmup_steps: 10
     lr_warmup_steps_ratio: 0.0
     min_lr_ratio: 0.0
     num_cycles: 0.5
@@ -157,7 +159,7 @@ training_config:
     resume_mode: auto
     save_freq: after_each_epoch
     test_freq: 5
-    total_epochs: 1
+    total_epochs: 3
     total_training_steps: null
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback

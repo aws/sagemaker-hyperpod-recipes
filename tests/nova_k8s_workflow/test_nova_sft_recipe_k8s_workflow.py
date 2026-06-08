@@ -31,11 +31,15 @@ def mock_aws_account_id():
 
 
 @pytest.fixture(autouse=True)
-def mock_aws_region():
+def mock_aws_region(monkeypatch):
+    monkeypatch.delenv("AWS_REGION", raising=False)
+
     session_mock = MagicMock()
     session_mock.region_name = "us-east-1"
 
-    with patch("launcher.nova.launchers.boto3.session.Session", return_value=session_mock):
+    with patch("launcher.nova.launchers.boto3.session.Session", return_value=session_mock), patch(
+        "launcher.nova.utils.boto3.session.Session", return_value=session_mock
+    ):
         yield
 
 
@@ -168,7 +172,7 @@ def test_recipe_env_vars():
 
         base_class = NovaK8SLauncher(sample_recipe_k8s_config)
         result = base_class._get_env_vars()
-        assert result == {"INSTANCE_TYPE": "ml.p5.48xlarge"}
+        assert result == {"INSTANCE_TYPE": "ml.p5.48xlarge", "AWS_REGION": "us-east-1"}
 
 
 @patch(
