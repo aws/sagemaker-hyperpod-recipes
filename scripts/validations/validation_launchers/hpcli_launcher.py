@@ -635,7 +635,7 @@ class HpCliValidationLauncher(BaseLauncher):
             builder.cleanup()
 
     def _monitor_job(
-        self, recipe: str, builder: HpCliRecipeJobBuilder, timeout: int = 7200, poll_interval: int = 30
+        self, recipe: str, builder: HpCliRecipeJobBuilder, timeout: int = 3600, poll_interval: int = 30
     ) -> bool:
         """Poll ``builder.describe()`` until job reaches a terminal status."""
         start = time.time()
