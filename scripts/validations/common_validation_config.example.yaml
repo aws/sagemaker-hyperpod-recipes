@@ -81,6 +81,11 @@ recipe_type_config:
     model_config_key: "verl"
     container_key: "verl_0_7_0_tf58"
     recipe_structure: "verl_rlaif"
+  verl_dpo_0_7_0_gemma4:
+    detection_keywords: ["gemma4-0_7_0/verl-dpo"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0_tf58"
+    recipe_structure: "verl_dpo"
   # Verl 0.7.0 recipe types (must be before verl 0.5 entries — first match wins)
   verl_sft_0_7_0:
     detection_keywords: ["0_7_0/verl-sft"]
@@ -378,6 +383,10 @@ recipe_dataset_mapping:
     slurm: ["tat_qa-sft-openai-parquet"]
     k8: ["tat_qa-sft-openai-parquet"]
     smjobs: ["tat_qa-sft-openai-parquet"]
+  verl_dpo_0_7_0_gemma4:
+    slurm: ["ultra_feedback"]
+    k8: ["ultra_feedback"]
+    smjobs: ["ultra_feedback"]
   verl_rlvr_0_7_0_gemma4:
     slurm: ["gsm8k"]
     k8: ["gsm8k"]

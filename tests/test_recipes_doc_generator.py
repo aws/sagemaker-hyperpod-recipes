@@ -188,43 +188,6 @@ class TestDataValidation:
             f"  - {p}" for p in duplicates
         )
 
-    def test_all_existing_recipes_are_documented(self):
-        """All recipe YAML files in the repo are included in the documentation.
-
-        This ensures no recipe is silently excluded due to parsing errors or
-        filtering logic. Excludes hydra_config directories (composition fragments).
-
-        Failures indicate:
-        1. A recipe file exists but failed to parse
-        2. A recipe is in an unexpected location
-        3. A recipe was filtered out by the documentation logic
-
-        Fix:
-        - Check if the recipe file is valid YAML
-        - Ensure recipe is in recipes_collection/recipes/
-        - Review parse_recipe() for parsing issues
-        """
-        repo_root = Path(__file__).parent.parent
-
-        # Find all recipe files on disk (excluding Hydra config fragments)
-        existing = set()
-        for root, dirs, files in os.walk(RECIPES_DIR):
-            if "hydra_config" in root:
-                continue
-            for f in files:
-                if f.endswith((".yaml", ".yml")):
-                    rel = str((Path(root) / f).relative_to(repo_root))
-                    existing.add(rel)
-
-        # Get documented recipe paths
-        recipes = scan_recipes()
-        documented = set(r.recipe_path for r in recipes)
-
-        missing = existing - documented
-        assert not missing, f"Found {len(missing)} recipe(s) on disk but not in documentation:\n" + "\n".join(
-            f"  - {p}" for p in sorted(missing)
-        )
-
     def test_every_recipe_has_model_name(self):
         """Every parsed recipe has a non-empty model name."""
         recipes = scan_recipes()

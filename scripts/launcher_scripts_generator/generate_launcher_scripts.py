@@ -33,14 +33,14 @@ import argparse
 import difflib
 import logging
 import sys
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
-from hydra import compose, initialize_config_dir
-from hydra.core.global_hydra import GlobalHydra
 from omegaconf import OmegaConf
+
+from hyperpod_recipes import list_recipes as _list_recipes
+from hyperpod_recipes.recipe import Recipe as HpRecipe
 
 logger = logging.getLogger(__name__)
 
@@ -115,73 +115,33 @@ class LauncherConfig:
 # =============================================================================
 
 
-@contextmanager
-def hydra_compose_context(config_dir: Path):
-    """Context manager for Hydra compose that handles GlobalHydra cleanup."""
-    GlobalHydra.instance().clear()
-    try:
-        initialize_config_dir(config_dir=str(config_dir), version_base=None)
-        yield
-    finally:
-        GlobalHydra.instance().clear()
-
-
 class LauncherScriptGenerator:
     """Generates launcher scripts for recipes."""
 
-    # Class-level cache for Hydra config directory
-    _hydra_config_dir: Optional[Path] = None
-
-    def __init__(self, recipe_name: str, recipe_path: str, **kwargs):
-        self.recipe_name = recipe_name
-        self.recipe_path = recipe_path
+    def __init__(self, hp_recipe: HpRecipe):
+        self.recipe_name = Path(hp_recipe.path).stem
+        # recipe_path is the recipes_collection-relative path (no extension), used in the
+        # generated shell script body (e.g. recipes=fine-tuning/llama/recipe_name)
+        self.recipe_path = hp_recipe.name
         self.config = LauncherConfig()
         self._recipe_data: Optional[Dict] = None
-        self._recipes_root = Path(__file__).parent.parent.parent / "recipes_collection/recipes"
+        self._hp_recipe = hp_recipe
 
     @property
     def recipe_data(self) -> Dict:
-        """Lazy-load recipe YAML with Hydra defaults resolved via OmegaConf."""
         if self._recipe_data is None:
-            recipe_file = self._recipes_root / f"{self.recipe_path}.yaml"
-            if recipe_file.exists():
-                self._recipe_data = self._load_with_hydra(recipe_file)
-            else:
+            try:
+                self._recipe_data = (
+                    OmegaConf.to_container(self._hp_recipe.config, resolve=False, throw_on_missing=False) or {}
+                )
+            except Exception:
                 self._recipe_data = {}
         return self._recipe_data
 
-    def _load_with_hydra(self, recipe_file: Path) -> Dict:
-        """Load recipe YAML, resolving Hydra defaults if present."""
-        raw = yaml.safe_load(recipe_file.read_text()) or {}
-        if "defaults" not in raw:
-            return raw
-
-        # Derive paths from recipe_file: .../recipes/{category}/{model}/{recipe}.yaml
-        # searchpath = category dir (for hydra_config), config_dir = recipes_collection
-        searchpath = recipe_file.parent.parent
-        config_dir = self._recipes_root.parent
-
-        with hydra_compose_context(config_dir):
-            cfg = compose(
-                config_name="config",
-                overrides=[f"hydra.searchpath=[file://{searchpath}]", f"recipes={self.recipe_path}"],
-            )
-            return OmegaConf.to_container(cfg.get("recipes", cfg), resolve=True)
-
     def get_model_type(self) -> str:
-        """Get run.model_type from recipe, or infer from Hydra defaults."""
         run = self.recipe_data.get("run", {})
         if isinstance(run, dict) and run.get("model_type"):
             return run.get("model_type")
-
-        # Infer from Hydra defaults
-        defaults = self.recipe_data.get("defaults", [])
-        for default in defaults:
-            if isinstance(default, str) and "/hydra_config/verl/" in default:
-                return "verl"
-            if isinstance(default, str) and "/hydra_config/llmft/" in default:
-                return "llm_finetuning_aws"
-
         return ""
 
     def get_template_key(self) -> str:
@@ -259,34 +219,22 @@ class LauncherScriptGenerationOrchestrator:
     def __init__(self):
         self.config = LauncherConfig()
         self.root = Path(__file__).parent.parent.parent
-        self.recipes_dir = self.root / self.config.recipes_dir
         self.output_dir = self.root / self.config.output_dir
         self.generated: set = set()
 
-    def discover_recipes(self) -> List[Path]:
-        """Find all recipe YAML files, excluding configured directories and patterns."""
+    def discover_recipes(self) -> List[HpRecipe]:
+        """Find all recipes via list_recipes(), excluding configured directories."""
         excluded_dirs = self.config.excluded_recipe_dirs
         excluded_patterns = self.config.excluded_recipe_patterns
-        recipes = []
-        for recipe_path in self.recipes_dir.rglob("*.yaml"):
-            rel_path = str(recipe_path.relative_to(self.recipes_dir))
-            # Skip if recipe is in an excluded directory
-            if any(rel_path.startswith(excl) for excl in excluded_dirs):
-                continue
-            # Skip if recipe name matches an excluded pattern (case-insensitive)
-            recipe_name_lower = recipe_path.stem.lower()
-            if any(pattern.lower() in recipe_name_lower for pattern in excluded_patterns):
-                continue
-            recipes.append(recipe_path)
-        return sorted(recipes)
+        recipes = _list_recipes()
+        recipes = [r for r in recipes if not any(r.name.startswith(excl) for excl in excluded_dirs)]
+        recipes = [r for r in recipes if not any(excl in Path(r.path).stem.lower() for excl in excluded_patterns)]
+        return sorted(recipes, key=lambda r: r.name)
 
-    def infer_model_family(self, recipe_path: Path) -> str:
+    def infer_model_family(self, hp_recipe: HpRecipe) -> str:
         """Extract model family from recipe path (2nd directory level)."""
-        try:
-            parts = recipe_path.relative_to(self.recipes_dir).parts
-            return parts[1].lower() if len(parts) >= 2 else "misc"
-        except ValueError:
-            return "misc"
+        parts = hp_recipe.name.split("/")
+        return parts[1].lower() if len(parts) >= 2 else "misc"
 
     def run(self):
         """Generate all launcher scripts."""
@@ -295,32 +243,30 @@ class LauncherScriptGenerationOrchestrator:
 
         stats = {"generated": 0, "skipped": 0, "errors": 0}
 
-        for recipe_path in recipes:
-            rel_path = str(recipe_path.relative_to(self.recipes_dir).with_suffix(""))
-
+        for hp_recipe in recipes:
             # Handle manually maintained scripts
-            if rel_path in self.config.manually_maintained:
-                script_path = self.output_dir / self.config.manually_maintained[rel_path]
+            if hp_recipe.name in self.config.manually_maintained:
+                script_path = self.output_dir / self.config.manually_maintained[hp_recipe.name]
                 self.generated.add(script_path)
                 stats["skipped"] += 1
-                print(f"⚠ {recipe_path.stem} → {script_path.relative_to(self.root)} (manually maintained)")
+                print(f"⚠ {Path(hp_recipe.path).stem} → {script_path.relative_to(self.root)} (manually maintained)")
                 continue
 
             # Generate script
             try:
-                out_dir = self.output_dir / self.infer_model_family(recipe_path)
+                out_dir = self.output_dir / self.infer_model_family(hp_recipe)
                 out_dir.mkdir(parents=True, exist_ok=True)
 
-                gen = LauncherScriptGenerator(recipe_path.stem, rel_path)
+                gen = LauncherScriptGenerator(hp_recipe)
                 script_path, _ = gen.generate(out_dir)
                 self.generated.add(script_path)
                 stats["generated"] += 1
                 print(
-                    f"✓ {recipe_path.stem} → {script_path.relative_to(self.root)} [model_type={gen.get_model_type() or '(none)'} → {gen.get_template_key()}]"
+                    f"✓ {Path(hp_recipe.path).stem} → {script_path.relative_to(self.root)} [model_type={gen.get_model_type() or '(none)'} → {gen.get_template_key()}]"
                 )
             except Exception as e:
                 stats["errors"] += 1
-                print(f"✗ {recipe_path.stem}: {e}")
+                print(f"✗ {Path(hp_recipe.path).stem}: {e}")
 
         self._cleanup()
         self._print_summary(stats)
@@ -356,15 +302,13 @@ class LauncherScriptGenerationOrchestrator:
         """
         mismatches: List[Tuple[Path, Optional[str], str]] = []
 
-        for recipe_path in self.discover_recipes():
-            rel_path = str(recipe_path.relative_to(self.recipes_dir).with_suffix(""))
-
+        for hp_recipe in self.discover_recipes():
             # Skip manually maintained scripts
-            if rel_path in self.config.manually_maintained:
+            if hp_recipe.name in self.config.manually_maintained:
                 continue
 
-            out_dir = self.output_dir / self.infer_model_family(recipe_path)
-            gen = LauncherScriptGenerator(recipe_path.stem, rel_path)
+            out_dir = self.output_dir / self.infer_model_family(hp_recipe)
+            gen = LauncherScriptGenerator(hp_recipe)
             expected_path, expected_content = gen.generate(out_dir, dry_run=True)
 
             if not expected_path.exists():
