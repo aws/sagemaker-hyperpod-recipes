@@ -346,6 +346,8 @@ class SlurmClient:
 
     def _clean_local_dir(self):
         """Clean up local artifacts"""
+        if not os.path.exists(self.local_work_dir):
+            return
         for item in os.listdir(self.local_work_dir):
             path = os.path.join(self.local_work_dir, item)
             if os.path.isfile(path):

@@ -588,16 +588,8 @@ class HpCliValidationLauncher(BaseLauncher):
         instance_type = getattr(self.hpcli_config, "instance_type", "ml.g5.48xlarge")
         job_name = f"integ-cli-{os.environ.get('USER', 'test')[:8]}-{int(time.time()) % 100000}"
 
-        # Strip explicit AWS credentials so the kubeconfig exec plugin uses
-        # ambient Fargate task credentials to re-assume the role via --role-arn.
-        k8s_safe_env = {
-            k: v
-            for k, v in self.aws_env.items()
-            if k not in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN")
-        }
-
         return (
-            HpCliRecipeJobBuilder(endpoint_url=self.endpoint_url, aws_env=k8s_safe_env)
+            HpCliRecipeJobBuilder(endpoint_url=self.endpoint_url, aws_env=self.aws_env)
             .with_model(self.model_arn)
             .with_technique(technique)
             .with_instance_type(instance_type)

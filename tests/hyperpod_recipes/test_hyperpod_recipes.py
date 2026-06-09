@@ -12,7 +12,7 @@ class TestHyperpodRecipes(unittest.TestCase):
 
         # Assertions
         self.assertGreaterEqual(len(recipes), 100)
-        self.assertLessEqual(len(recipes), 300)
+        self.assertLessEqual(len(recipes), 350)
         self.assertTrue(all(isinstance(r, Recipe) for r in recipes))
         self.assertTrue(
             "training/nova/nova_1_0/nova_micro/CPT/nova_micro_1_0_p5x8_gpu_pretrain"

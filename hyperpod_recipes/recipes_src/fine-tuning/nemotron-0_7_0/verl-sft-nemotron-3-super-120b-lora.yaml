@@ -1,0 +1,81 @@
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/megatron
+  - /hydra_config/verl-0_7_0/optim/megatron
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/sft/model_config/nemo3-super-120b
+  - _self_
+
+display_name: "Nemo3 Super 120B SFT LoRA Fine-Tuning"
+version: 2.0.0
+instance_types: ["ml.p5.48xlarge"]
+
+run:
+  name: verl-sft-nemo3-super-120b-lora
+
+trainer:
+  num_nodes: 4
+
+training_config:
+  data:
+    train_batch_size: 128
+    micro_batch_size_per_gpu: 1
+    max_length: 8192
+    max_token_len_per_gpu: 16384
+    truncation: left
+    train_max_samples: -1
+    val_max_samples: -1
+
+  model:
+    enable_gradient_checkpointing: true
+    use_remove_padding: true
+    lora:
+      rank: 128
+      alpha: 256
+      target_modules:
+      - linear_qkv
+      - linear_proj
+      - linear_fc1
+      - linear_fc2
+      - in_proj
+      - out_proj
+
+  engine:
+    tensor_model_parallel_size: 8
+    expert_model_parallel_size: 8
+    expert_tensor_parallel_size: 1
+    pipeline_model_parallel_size: 4
+    vanilla_mbridge: false
+    override_transformer_config:
+      recompute_granularity: full
+      recompute_method: uniform
+      recompute_num_layers: 1
+      apply_rope_fusion: true
+      moe_router_dtype: fp32
+      moe_latent_size: 1024
+      moe_shared_expert_overlap: false
+      mtp_num_layers: 0
+
+  optim:
+    lr: 1.0e-4
+    min_lr: 1.0e-6
+    lr_warmup_steps: 10
+    weight_decay: 0.1
+    betas: [0.9, 0.95]
+    lr_decay_style: cosine
+    override_optimizer_config:
+      use_precision_aware_optimizer: true
+
+  trainer:
+    project_name: verl_sft_nemo3_super
+    experiment_name: nemo3_super_120b_sft_megatron_lora
+    total_epochs: 1
+    resume_mode: auto
+
+  trainer_callbacks:
+    - _target_: metering_callback.MeteringCallback
+      output_path: /opt/ml/metering
