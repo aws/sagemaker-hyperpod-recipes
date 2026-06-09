@@ -232,7 +232,49 @@ This document provides a comprehensive catalog of all available recipes organize
 | HyperPod Checkpointless Training Llama 3 70B LoRA on GPU, 2K sequence length | checkpointless | LoRA | - | 2,048 | 2 | p5.48xlarge, p5e.48xlarge | [checkpointless_llama3_70b_lora.yaml](../recipes_collection/recipes/fine-tuning/llama/checkpointless_llama3_70b_lora.yaml) | [run_checkpointless_llama3_70b_lora.sh](../launcher_scripts/llama/run_checkpointless_llama3_70b_lora.sh) |
 | HyperPod Checkpointless Training Llama 3 70B Pre-Training on GPU, 2K sequence length | checkpointless | - | - | 2,048 | 16 | p5.48xlarge, p5e.48xlarge | [checkpointless_llama3_70b_pretrain.yaml](../recipes_collection/recipes/training/llama/checkpointless_llama3_70b_pretrain.yaml) | [run_checkpointless_llama3_70b_pretrain.sh](../launcher_scripts/llama/run_checkpointless_llama3_70b_pretrain.sh) |
 
+## MTRL (Multi-Turn Reinforcement Learning) Recipes
+
+### GPT-OSS Models
+
+#### GPT-OSS 20B
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Agentic RFT for GPT OSS 20B Lora | mtrl | - | - | - | - | - | [mtrl-gpt-oss-20b-lora.yaml](../recipes_collection/recipes/fine-tuning/gpt_oss/mtrl-gpt-oss-20b-lora.yaml) | - |
+
+### Gemma Models
+
+#### Gemma 4.31B It
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Agentic RFT for Gemma 4 31B Lora IT | mtrl | - | - | - | - | - | [mtrl-gemma-4-31b-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma/mtrl-gemma-4-31b-lora.yaml) | - |
+
+### Nova Models
+
+#### Nova Lite 2.0
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Agentic RFT for Nova Lite 2.0 Lora | mtrl | - | - | - | - | - | [mtrl_nova_lite_2_0_lora.yaml](../recipes_collection/recipes/fine-tuning/nova/nova_2_0/nova_lite/MTRL/mtrl_nova_lite_2_0_lora.yaml) | - |
+
+### Qwen Models
+
+#### Qwen 3.6 27B
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Agentic RFT for Qwen 3.6 27B Lora | mtrl | - | - | - | - | - | [mtrl-qwen-3-dot-6-27b-lora.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/mtrl-qwen-3-dot-6-27b-lora.yaml) | - |
+
 ## Evaluation Recipes
+
+### Mtrl Models
+
+#### Mtrl Eval
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| MTRL Evaluation | evaluation | Evaluation | - | - | - | - | [mtrl_eval.yaml](../recipes_collection/recipes/evaluation/mtrl/mtrl_eval.yaml) | - |
 
 ### Nova Models
 
@@ -394,18 +436,21 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 
 | Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
 |-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Gemma 4 E4B IT DPO Full Fine-Tuning | verl | - | FFT | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-gemma-4-e4b-it-fft.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-e4b-it-fft.yaml) | [run_verl_dpo_gemma_4_e4b_it_fft.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_e4b_it_fft.sh) |
 | Gemma 4 E4B IT DPO LoRA Fine-Tuning | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-gemma-4-e4b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-e4b-it-lora.yaml) | [run_verl_dpo_gemma_4_e4b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_e4b_it_lora.sh) |
 
 #### Google Gemma 4.26B A4b It
 
 | Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
 |-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Gemma 4 26B IT DPO Full Fine-Tuning | verl | - | FFT | - | 1 | p5.48xlarge | [verl-dpo-gemma-4-26b-a4b-it-fft.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-26b-a4b-it-fft.yaml) | [run_verl_dpo_gemma_4_26b_a4b_it_fft.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_26b_a4b_it_fft.sh) |
 | Gemma 4 26B IT DPO LoRA Fine-Tuning | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-gemma-4-26b-a4b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-26b-a4b-it-lora.yaml) | [run_verl_dpo_gemma_4_26b_a4b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_26b_a4b_it_lora.sh) |
 
 #### Google Gemma 4.31B It
 
 | Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
 |-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Gemma 4 31B IT DPO Full Fine-Tuning | verl | - | FFT | - | 1 | p5.48xlarge | [verl-dpo-gemma-4-31b-it-fft.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-31b-it-fft.yaml) | [run_verl_dpo_gemma_4_31b_it_fft.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_31b_it_fft.sh) |
 | Gemma 4 31B IT DPO LoRA Fine-Tuning | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-gemma-4-31b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-31b-it-lora.yaml) | [run_verl_dpo_gemma_4_31b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_31b_it_lora.sh) |
 
 ### Llama Models
