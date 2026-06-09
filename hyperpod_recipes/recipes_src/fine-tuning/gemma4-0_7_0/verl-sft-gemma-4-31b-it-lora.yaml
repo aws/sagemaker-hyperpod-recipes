@@ -36,7 +36,6 @@ training_config:
     trust_remote_code: true
     enable_gradient_checkpointing: true
     use_remove_padding: true
-    use_liger: false
     use_fused_kernels: true
     override_config:
       attn_implementation: flash_attention_2
@@ -44,9 +43,6 @@ training_config:
     lora_alpha: 128
     target_modules: .*q_proj.*|.*k_proj.*|.*v_proj.*|.*o_proj.*|.*gate_proj.*|.*up_proj.*|.*down_proj.*
     exclude_modules: .*vision_tower.*|.*embed_vision.*|.*embed_audio.*|.*audio_tower.*|.*router.*|.*experts.*
-    tiled_mlp:
-      enabled: false
-      num_shards: 4
 
   engine:
     strategy: fsdp2

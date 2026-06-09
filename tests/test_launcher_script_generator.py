@@ -32,12 +32,19 @@ from unittest.mock import patch
 
 import pytest
 
+from hyperpod_recipes.recipe import RECIPES_DIR as _RECIPES_SRC_DIR
+from hyperpod_recipes.recipe import Recipe as HpRecipe
 from scripts.launcher_scripts_generator.generate_launcher_scripts import (
     LauncherConfig,
     LauncherScriptGenerationOrchestrator,
     LauncherScriptGenerator,
     main,
 )
+
+
+def _make_hp_recipe(recipe_name: str) -> HpRecipe:
+    """Create an HpRecipe pointed at recipes_src; config load is lazy so path need not exist."""
+    return HpRecipe(os.path.join(_RECIPES_SRC_DIR, recipe_name + ".yaml"))
 
 
 @pytest.fixture(autouse=True)
@@ -85,42 +92,23 @@ class TestLauncherScriptGenerator:
     """Tests for LauncherScriptGenerator template selection and script generation."""
 
     @pytest.mark.parametrize(
-        "recipe_name,recipe_path,expected_template",
+        "recipe_path,expected_template",
         [
-            (
-                "llmft_llama3_1_8b_instruct_seq4k_gpu_sft_lora",
-                "fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_sft_lora",
-                "llm_finetuning_aws",
-            ),
-            (
-                "verl-grpo-rlaif-llama-3-dot-1-8b-instruct-lora",
-                "fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-1-8b-instruct-lora",
-                "verl",
-            ),
-            (
-                "nova_lite_1_0_p5_p4d_gpu_sft",
-                "fine-tuning/nova/nova_1_0/nova_lite/SFT/nova_lite_1_0_p5_p4d_gpu_sft",
-                "nova",
-            ),
-            (
-                "checkpointless_llama3_70b_pretrain",
-                "training/llama/checkpointless_llama3_70b_pretrain",
-                "hyperpod_checkpointless_nemo",
-            ),
-            ("falcon", "training/custom_model/falcon", "hf"),
+            ("fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_sft_lora", "llm_finetuning_aws"),
+            ("fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-1-8b-instruct-lora", "verl"),
+            ("fine-tuning/nova/nova_1_0/nova_lite/SFT/nova_lite_1_0_p5_p4d_gpu_sft", "nova"),
+            ("training/llama/checkpointless_llama3_70b_pretrain", "hyperpod_checkpointless_nemo"),
+            ("training/custom_model/falcon", "hf"),
         ],
     )
-    def test_template_selection(self, recipe_name, recipe_path, expected_template):
+    def test_template_selection(self, recipe_path, expected_template):
         """Generator selects correct template based on recipe's model_type."""
-        generator = LauncherScriptGenerator(recipe_name=recipe_name, recipe_path=recipe_path)
+        generator = LauncherScriptGenerator(_make_hp_recipe(recipe_path))
         assert generator.get_template_key() == expected_template
 
     def test_fallback_to_default_for_unknown_model_type(self):
         """Unknown/missing model_type falls back to default template."""
-        generator = LauncherScriptGenerator(
-            recipe_name="unknown_recipe",
-            recipe_path="nonexistent/path/unknown_recipe",
-        )
+        generator = LauncherScriptGenerator(_make_hp_recipe("nonexistent/path/unknown_recipe"))
         config = LauncherConfig()
         assert generator.get_template_key() == config.default_template
         assert generator.get_model_type() == ""
@@ -129,10 +117,7 @@ class TestLauncherScriptGenerator:
     def test_generate_creates_executable_script_with_correct_content(self):
         """Generate creates executable script with recipe path and no unreplaced placeholders."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            generator = LauncherScriptGenerator(
-                recipe_name="test_recipe",
-                recipe_path="fine-tuning/test/test_recipe",
-            )
+            generator = LauncherScriptGenerator(_make_hp_recipe("fine-tuning/test/test_recipe"))
             script_path, content = generator.generate(Path(tmpdir))
 
             # File exists and is executable
@@ -148,20 +133,14 @@ class TestLauncherScriptGenerator:
     def test_generate_with_custom_script_name(self):
         """Custom script name is used when provided."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            generator = LauncherScriptGenerator(
-                recipe_name="test_recipe",
-                recipe_path="test/path/test_recipe",
-            )
+            generator = LauncherScriptGenerator(_make_hp_recipe("test/path/test_recipe"))
             script_path, _ = generator.generate(Path(tmpdir), script_name="custom.sh")
             assert script_path.name == "custom.sh"
 
     def test_generate_dry_run_does_not_write(self):
         """Dry run returns content but doesn't write file."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            generator = LauncherScriptGenerator(
-                recipe_name="test_recipe",
-                recipe_path="test/path/test_recipe",
-            )
+            generator = LauncherScriptGenerator(_make_hp_recipe("test/path/test_recipe"))
             script_path, content = generator.generate(Path(tmpdir), dry_run=True)
 
             assert not script_path.exists()
@@ -170,21 +149,14 @@ class TestLauncherScriptGenerator:
     def test_script_name_converts_hyphens_to_underscores(self):
         """Hyphens in recipe name become underscores in script name."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            generator = LauncherScriptGenerator(
-                recipe_name="my-hyphenated-recipe",
-                recipe_path="test/path/my-hyphenated-recipe",
-            )
+            generator = LauncherScriptGenerator(_make_hp_recipe("test/path/my-hyphenated-recipe"))
             script_path, _ = generator.generate(Path(tmpdir))
             assert script_path.name == "run_my_hyphenated_recipe.sh"
 
-    def test_generator_accepts_extra_kwargs(self):
-        """Extra kwargs are accepted for backwards compatibility."""
-        generator = LauncherScriptGenerator(
-            recipe_name="test",
-            recipe_path="test/path",
-            extra_param="ignored",
-        )
-        assert generator.recipe_name == "test"
+    def test_generator_uses_recipe_name_from_hp_recipe(self):
+        """Generator derives recipe_name from HpRecipe path stem."""
+        generator = LauncherScriptGenerator(_make_hp_recipe("test/path/my_recipe"))
+        assert generator.recipe_name == "my_recipe"
 
 
 class TestLauncherScriptGenerationOrchestrator:
@@ -193,35 +165,33 @@ class TestLauncherScriptGenerationOrchestrator:
     def test_orchestrator_initialization(self):
         """Orchestrator initializes with correct paths."""
         orchestrator = LauncherScriptGenerationOrchestrator()
-        assert orchestrator.recipes_dir.exists()
         assert orchestrator.output_dir.exists()
         assert len(orchestrator.generated) == 0
 
     def test_discover_recipes(self):
-        """Recipe discovery finds sorted YAML files."""
+        """Recipe discovery finds sorted HpRecipe objects."""
         orchestrator = LauncherScriptGenerationOrchestrator()
         recipes = orchestrator.discover_recipes()
 
         assert len(recipes) > 0
-        assert all(r.suffix == ".yaml" for r in recipes)
-        assert recipes == sorted(recipes)
+        assert all(isinstance(r, HpRecipe) for r in recipes)
+        assert recipes == sorted(recipes, key=lambda r: r.name)
 
     @pytest.mark.parametrize(
-        "path_parts,expected_family",
+        "recipe_name,expected_family",
         [
-            ("fine-tuning/llama/recipe.yaml", "llama"),
-            ("fine-tuning/nova/nova_1_0/recipe.yaml", "nova"),
-            ("training/custom_model/falcon.yaml", "custom_model"),
-            ("fine-tuning/deepseek/recipe.yaml", "deepseek"),
-            ("evaluation/open-source/recipe.yaml", "open-source"),
-            ("recipe.yaml", "misc"),  # Short path defaults to misc
+            ("fine-tuning/llama/recipe", "llama"),
+            ("fine-tuning/nova/nova_1_0/recipe", "nova"),
+            ("training/custom_model/falcon", "custom_model"),
+            ("fine-tuning/deepseek/recipe", "deepseek"),
+            ("evaluation/open-source/recipe", "open-source"),
+            ("recipe", "misc"),  # Short path defaults to misc
         ],
     )
-    def test_infer_model_family(self, path_parts, expected_family):
-        """Model family is correctly inferred from recipe path."""
+    def test_infer_model_family(self, recipe_name, expected_family):
+        """Model family is correctly inferred from recipe name."""
         orchestrator = LauncherScriptGenerationOrchestrator()
-        recipe_path = orchestrator.recipes_dir / path_parts
-        assert orchestrator.infer_model_family(recipe_path) == expected_family
+        assert orchestrator.infer_model_family(_make_hp_recipe(recipe_name)) == expected_family
 
     def test_check_returns_empty_when_scripts_match(self):
         """Check returns empty list when all scripts match."""

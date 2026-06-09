@@ -6,8 +6,6 @@ All metadata is derived from two sources:
      training_config fields, version, trainer.num_nodes, etc.
   2. Directory path (structural) — category, family, Nova technique subdirectory
 
-No Hydra loading needed — all recipes under recipes_collection/recipes are
-fully hydrated YAML files. Just yaml.safe_load().
 
 Usage:
     python scripts/generate_recipes_doc.py           # Generate docs/RECIPES.md
@@ -24,13 +22,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional
 
-import yaml
+from omegaconf import OmegaConf
+
+from hyperpod_recipes import list_recipes as _list_recipes
+from hyperpod_recipes.recipe import RECIPES_DIR as _RECIPES_SRC_DIR
+from hyperpod_recipes.recipe import Recipe as HpRecipe
 
 # =============================================================================
 # PATHS
 # =============================================================================
 REPO_ROOT = Path(__file__).resolve().parent.parent
-RECIPES_DIR = REPO_ROOT / "recipes_collection" / "recipes"
+RECIPES_DIR = Path(_RECIPES_SRC_DIR)
+_RECIPES_COLLECTION_DIR = REPO_ROOT / "recipes_collection" / "recipes"
 LAUNCHER_DIR = REPO_ROOT / "launcher_scripts"
 OUTPUT_FILE = REPO_ROOT / "docs" / "RECIPES.md"
 
@@ -117,11 +120,10 @@ def _get(data: dict, *keys) -> Any:
     return data
 
 
-def _load_yaml(path: Path) -> dict:
-    """Load fully-hydrated recipe YAML. No Hydra needed."""
+def _hp_recipe_to_dict(hp_recipe: HpRecipe) -> dict:
+    """Convert a hyperpod_recipes Recipe config to a plain dict."""
     try:
-        with open(path) as f:
-            return yaml.safe_load(f) or {}
+        return OmegaConf.to_container(hp_recipe.config, resolve=False, throw_on_missing=False) or {}
     except Exception:
         return {}
 
@@ -748,12 +750,13 @@ def _find_launcher_script(stem: str) -> str:
 # =============================================================================
 
 
-def parse_recipe(recipe_path: Path) -> Optional[Recipe]:
-    """Parse a fully-hydrated recipe YAML and return a Recipe with all metadata."""
-    data = _load_yaml(recipe_path)
+def parse_recipe(hp_recipe: HpRecipe) -> Optional[Recipe]:
+    """Parse a hyperpod_recipes Recipe and return a doc Recipe with all metadata."""
+    data = _hp_recipe_to_dict(hp_recipe)
     if not data:
         return None
 
+    recipe_path = Path(hp_recipe.path)
     stem = recipe_path.stem
     category, family_dir, path_parts = _path_metadata(recipe_path)
     family = _display_family(family_dir)
@@ -770,6 +773,9 @@ def parse_recipe(recipe_path: Path) -> Optional[Recipe]:
     run_name = str(_get(data, "run", "name") or "")
     model_type = str(_get(data, "run", "model_type") or "")
     model_name = _extract_model_name(data, stem)
+    # recipe_path in the output points to the canonical recipes_collection path for user-facing links
+    collection_path = _RECIPES_COLLECTION_DIR / Path(hp_recipe.name).with_suffix(".yaml")
+    script = _find_launcher_script(stem)
     return Recipe(
         model=model_name,
         model_short_name=_extract_model_short_name(model_name, run_name, model_type),
@@ -782,23 +788,18 @@ def parse_recipe(recipe_path: Path) -> Optional[Recipe]:
         version=_extract_version(data, path_parts),
         category=category,
         family=family,
-        recipe_path=str(recipe_path.relative_to(REPO_ROOT)),
-        script_path=(os.path.relpath(_find_launcher_script(stem), REPO_ROOT) if _find_launcher_script(stem) else ""),
+        recipe_path=str(collection_path.relative_to(REPO_ROOT)),
+        script_path=(os.path.relpath(script, REPO_ROOT) if script else ""),
     )
 
 
 def scan_recipes() -> List[Recipe]:
-    """Scan all recipe YAML files. Sorted for deterministic output.
-    Skips hydra_config directories (composition fragments).
-    """
+    """Scan all recipe YAML files via list_recipes(). Sorted for deterministic output."""
     recipes = []
-    for root, dirs, files in os.walk(RECIPES_DIR):
-        dirs[:] = [d for d in sorted(dirs) if d != "hydra_config"]
-        for f in sorted(files):
-            if f.endswith((".yaml", ".yml")):
-                r = parse_recipe(Path(root) / f)
-                if r:
-                    recipes.append(r)
+    for hp_recipe in sorted(_list_recipes(), key=lambda r: r.path):
+        r = parse_recipe(hp_recipe)
+        if r:
+            recipes.append(r)
     return recipes
 
 
@@ -879,7 +880,7 @@ def generate_markdown(recipes: List[Recipe]) -> str:
 
 
 def run_generation():
-    print(f"Scanning recipes in: {RECIPES_DIR}")
+    print(f"Scanning recipes")
     recipes = scan_recipes()
     print(f"Found {len(recipes)} recipes")
     content = generate_markdown(recipes)

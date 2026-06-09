@@ -104,4 +104,8 @@ requires = ["hatch-pip-compile"]
 path = ".hatch/hatch_plugin.py"
 disable_lockfile_update_on_build_fleet = true
 
+[tool.isort]
+profile = "black"
+known_first_party = ["hyperpod_recipes", "launcher", "utils"]
+
 [tool.uv.workspace]
