@@ -1,0 +1,743 @@
+display_name: Nemotron 3 Super 120B GRPO RLVR Fine-Tuning with Megatron LoRA
+instance_types:
+- ml.p5.48xlarge
+ray_cluster:
+  worker_nodes:
+    replicas: 3
+run:
+  model_type: verl
+  name: verl-grpo-nemotron-3-super-120b-lora
+  results_dir: ${base_results_dir}/${.name}
+trainer:
+  num_nodes: 4
+training_config:
+  actor_rollout_ref:
+    actor:
+      _target_: verl.workers.config.McoreActorConfig
+      calculate_entropy: false
+      checkpoint:
+        _target_: verl.trainer.config.CheckpointConfig
+        async_save: false
+        load_contents: ${.save_contents}
+        save_contents:
+        - model
+        - optimizer
+        - extra
+        - hf_model
+      clip_ratio: 0.2
+      clip_ratio_c: 3.0
+      clip_ratio_high: 0.28
+      clip_ratio_low: 0.2
+      data_loader_seed: 42
+      entropy_advantage: false
+      entropy_advantage_alpha: 0.4
+      entropy_advantage_kappa: 2
+      entropy_coeff: 0
+      freeze_vision_tower: false
+      kl_loss_coef: 0.0
+      kl_loss_type: low_var_kl
+      load_weight: true
+      loss_agg_mode: token-mean
+      loss_scale_factor: null
+      megatron:
+        _target_: verl.workers.config.McoreEngineConfig
+        context_parallel_size: 1
+        dist_checkpointing_path: null
+        dist_checkpointing_prefix: ''
+        dtype: bfloat16
+        expert_model_parallel_size: 16
+        expert_tensor_parallel_size: 1
+        forward_only: false
+        grad_offload: true
+        optimizer_offload: true
+        override_ddp_config: {}
+        override_mcore_model_config: {}
+        override_transformer_config:
+          apply_rope_fusion: true
+          attention_backend: flash
+          moe_latent_size: 1024
+          moe_router_dtype: fp32
+          moe_shared_expert_overlap: false
+          recompute_granularity: full
+          recompute_method: uniform
+          recompute_modules:
+          - core_attn
+          recompute_num_layers: 1
+        param_offload: true
+        pipeline_model_parallel_size: 1
+        seed: 42
+        sequence_parallel: true
+        tensor_model_parallel_size: 8
+        use_dist_checkpointing: false
+        use_distributed_optimizer: true
+        use_mbridge: true
+        use_remove_padding: true
+        vanilla_mbridge: false
+        virtual_pipeline_model_parallel_size: null
+      optim:
+        _target_: verl.workers.config.McoreOptimizerConfig
+        betas:
+        - 0.9
+        - 0.999
+        clip_grad: 1.0
+        lr: 1.0e-06
+        lr_decay_steps: null
+        lr_decay_style: constant
+        lr_warmup_init: 0.0
+        lr_warmup_steps: -1
+        lr_warmup_steps_ratio: 0.0
+        lr_wsd_decay_steps: null
+        lr_wsd_decay_style: exponential
+        min_lr: 0.0
+        optimizer: adam
+        override_optimizer_config:
+          optimizer_cpu_offload: true
+          optimizer_offload_fraction: 1
+          overlap_cpu_optimizer_d2h_h2d: true
+          use_precision_aware_optimizer: true
+        total_training_steps: -1
+        use_checkpoint_opt_param_scheduler: false
+        weight_decay: 0.0
+        weight_decay_incr_style: constant
+      policy_loss:
+        _target_: verl.workers.config.PolicyLossConfig
+        clip_cov_lb: 1.0
+        clip_cov_ratio: 0.0002
+        clip_cov_ub: 5.0
+        kl_cov_ratio: 0.0002
+        loss_mode: vanilla
+        ppo_kl_coef: 0.1
+      ppo_epochs: 1
+      ppo_max_token_len_per_gpu: 8192
+      ppo_micro_batch_size: null
+      ppo_micro_batch_size_per_gpu: 1
+      ppo_mini_batch_size: 64
+      profiler:
+        _target_: verl.utils.profiler.ProfilerConfig
+        all_ranks: false
+        enable: false
+        ranks: []
+        save_path: ${oc.select:recipes.training_config.global_profiler.save_path,null}
+        tool: ${oc.select:recipes.training_config.global_profiler.tool,null}
+        tool_config:
+          npu:
+            _target_: verl.utils.profiler.config.NPUToolConfig
+            analysis: true
+            contents: []
+            discrete: false
+            level: level0
+          nsys:
+            _target_: verl.utils.profiler.config.NsightToolConfig
+            discrete: ${oc.select:recipes.training_config.global_profiler.global_tool_config.nsys.discrete}
+          torch:
+            _target_: verl.utils.profiler.config.TorchProfilerToolConfig
+            step_end: null
+            step_start: 0
+          torch_memory:
+            _target_: verl.utils.profiler.config.TorchMemoryToolConfig
+            stack_depth: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.stack_depth,32}
+            trace_alloc_max_entries: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.trace_alloc_max_entries,100000}
+      rollout_n: 16
+      router_replay:
+        _target_: verl.workers.config.RouterReplayConfig
+        mode: disabled
+        record_file: null
+        replay_file: null
+      shuffle: false
+      strategy: megatron
+      tau_neg: 1.05
+      tau_pos: 1.0
+      use_dynamic_bsz: true
+      use_fused_kernels: ${oc.select:recipes.training_config.actor_rollout_ref.model.use_fused_kernels,false}
+      use_kl_loss: false
+      use_torch_compile: true
+    hybrid_engine: true
+    model:
+      _target_: verl.workers.config.HFModelConfig
+      custom_chat_template: null
+      enable_activation_offload: false
+      enable_gradient_checkpointing: true
+      exclude_modules: null
+      external_lib: verl.models.mcore.nemotron_h_patch,verl.models.vllm.nemotron_h_latent_moe_patch
+      fused_kernel_options:
+        impl_backend: torch
+      hf_config_path: null
+      is_saving_checkpoint_in_lora: false
+      lora:
+        a2a_experimental: false
+        adapter_path: null
+        alpha: 256
+        dropout: 0.0
+        dropout_position: pre
+        dtype: null
+        exclude_modules: []
+        freeze_language_model: true
+        freeze_vision_model: true
+        freeze_vision_projection: true
+        lora_A_init_method: xavier
+        lora_B_init_method: zero
+        rank: 128
+        target_modules:
+        - linear_qkv
+        - linear_proj
+        - in_proj
+        - out_proj
+        type: lora
+      lora_adapter_path: null
+      lora_alpha: 16
+      lora_rank: 0
+      override_config:
+        model_config: {}
+        moe_config:
+          freeze_moe_router: false
+      path: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+      target_modules: all-linear
+      tiled_mlp:
+        enabled: false
+        num_shards: 4
+      tokenizer_path: null
+      trust_remote_code: true
+      use_fused_kernels: false
+      use_liger: false
+      use_remove_padding: false
+      use_shm: false
+    nccl_timeout: 600
+    ref:
+      _target_: verl.workers.config.McoreActorConfig
+      load_weight: true
+      log_prob_max_token_len_per_gpu: 8192
+      log_prob_micro_batch_size: null
+      log_prob_micro_batch_size_per_gpu: 2
+      log_prob_use_dynamic_bsz: true
+      megatron:
+        _target_: verl.workers.config.McoreEngineConfig
+        context_parallel_size: ${oc.select:recipes.training_config.actor_rollout_ref.actor.megatron.context_parallel_size,1}
+        dist_checkpointing_path: null
+        dist_checkpointing_prefix: ''
+        dtype: bfloat16
+        expert_model_parallel_size: 16
+        expert_tensor_parallel_size: 1
+        forward_only: true
+        grad_offload: false
+        optimizer_offload: false
+        override_ddp_config: {}
+        override_mcore_model_config: {}
+        override_transformer_config:
+          attention_backend: flash
+          moe_latent_size: 1024
+          moe_shared_expert_overlap: false
+          recompute_granularity: null
+          recompute_method: null
+          recompute_modules:
+          - core_attn
+          recompute_num_layers: null
+        param_offload: true
+        pipeline_model_parallel_size: ${oc.select:recipes.training_config.actor_rollout_ref.actor.megatron.pipeline_model_parallel_size,1}
+        seed: ${oc.select:recipes.training_config.actor_rollout_ref.actor.megatron.seed,42}
+        sequence_parallel: true
+        tensor_model_parallel_size: 8
+        use_dist_checkpointing: false
+        use_distributed_optimizer: true
+        use_mbridge: true
+        use_remove_padding: true
+        vanilla_mbridge: false
+        virtual_pipeline_model_parallel_size: ${oc.select:recipes.training_config.actor_rollout_ref.actor.megatron.virtual_pipeline_model_parallel_size,null}
+      profiler:
+        _target_: verl.utils.profiler.ProfilerConfig
+        all_ranks: false
+        enable: false
+        ranks: []
+        save_path: ${oc.select:recipes.training_config.global_profiler.save_path,null}
+        tool: ${oc.select:recipes.training_config.global_profiler.tool,null}
+        tool_config:
+          npu:
+            _target_: verl.utils.profiler.config.NPUToolConfig
+            analysis: true
+            contents: []
+            discrete: false
+            level: level0
+          nsys:
+            _target_: verl.utils.profiler.config.NsightToolConfig
+            discrete: ${oc.select:recipes.training_config.global_profiler.global_tool_config.nsys.discrete}
+          torch:
+            _target_: verl.utils.profiler.config.TorchProfilerToolConfig
+            step_end: null
+            step_start: 0
+          torch_memory:
+            _target_: verl.utils.profiler.config.TorchMemoryToolConfig
+            stack_depth: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.stack_depth,32}
+            trace_alloc_max_entries: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.trace_alloc_max_entries,100000}
+      rollout_n: 16
+      router_replay:
+        _target_: verl.workers.config.RouterReplayConfig
+        mode: disabled
+        record_file: null
+        replay_file: null
+      strategy: megatron
+      use_torch_compile: true
+    rollout:
+      _target_: verl.workers.config.RolloutConfig
+      agent:
+        _target_: verl.workers.config.AgentLoopConfig
+        agent_loop_config_path: null
+        custom_async_server:
+          _target_: verl.workers.config.CustomAsyncServerConfig
+          name: null
+          path: null
+        default_agent_loop: single_turn_agent
+        num_workers: 8
+      calculate_log_probs: true
+      cudagraph_capture_sizes: null
+      data_parallel_size: 1
+      disable_log_stats: true
+      do_sample: true
+      dtype: bfloat16
+      enable_chunked_prefill: true
+      enable_prefix_caching: true
+      enable_rollout_routing_replay: false
+      enforce_eager: false
+      engine_kwargs:
+        sglang: {}
+        vllm: {}
+      expert_parallel_size: 1
+      free_cache_engine: true
+      gpu_memory_utilization: 0.45
+      ignore_eos: false
+      layer_name_map:
+        gate_proj_layer_name: gate_up
+        qkv_layer_name: qkv
+      load_format: dummy
+      log_prob_max_token_len_per_gpu: 8192
+      log_prob_micro_batch_size: null
+      log_prob_micro_batch_size_per_gpu: 2
+      log_prob_use_dynamic_bsz: true
+      logprobs_mode: processed_logprobs
+      max_model_len: 8192
+      max_num_batched_tokens: 1536
+      max_num_seqs: 1024
+      mode: async
+      multi_stage_wake_up: false
+      multi_turn:
+        _target_: verl.workers.config.MultiTurnConfig
+        enable: false
+        format: hermes
+        interaction_config_path: null
+        max_assistant_turns: null
+        max_parallel_calls: 1
+        max_tool_response_length: 256
+        max_user_turns: null
+        num_repeat_rollouts: null
+        tokenization_sanity_check_mode: strict
+        tool_config_path: null
+        tool_response_truncate_side: middle
+        use_inference_chat_template: false
+      'n': 16
+      name: vllm
+      over_sample_rate: 0
+      pipeline_model_parallel_size: 1
+      profiler:
+        _target_: verl.utils.profiler.ProfilerConfig
+        all_ranks: ${oc.select:recipes.training_config.actor_rollout_ref.actor.profiler.all_ranks,false}
+        enable: ${oc.select:recipes.training_config.actor_rollout_ref.actor.profiler.enable,false}
+        ranks: ${oc.select:recipes.training_config.actor_rollout_ref.actor.profiler.ranks,[]}
+        save_path: ${oc.select:recipes.training_config.global_profiler.save_path,null}
+        tool: ${oc.select:recipes.training_config.global_profiler.tool,null}
+        tool_config: ${oc.select:recipes.training_config.actor_rollout_ref.actor.profiler.tool_config,null}
+      prometheus:
+        _target_: verl.workers.config.PrometheusConfig
+        enable: false
+        file: /tmp/ray/session_latest/metrics/prometheus/prometheus.yml
+        port: 9090
+        served_model_name: ${oc.select:recipes.training_config.actor_rollout_ref.model.path,null}
+      prompt_length: 1024
+      quantization: null
+      quantization_config_file: null
+      response_length: 5120
+      skip_dump_dir: /tmp/rollout_dump
+      skip_rollout: false
+      skip_tokenizer_init: true
+      temperature: 1.0
+      tensor_model_parallel_size: 8
+      top_k: -1
+      top_p: 1
+      trace:
+        _target_: verl.workers.config.TraceConfig
+        backend: null
+        max_samples_per_step_per_worker: null
+        token2text: false
+      update_weights_bucket_megabytes: 512
+      val_kwargs:
+        _target_: verl.workers.config.SamplingConfig
+        do_sample: true
+        'n': 1
+        temperature: 1.0
+        top_k: -1
+        top_p: 0.7
+  algorithm:
+    _target_: verl.trainer.config.AlgoConfig
+    adv_estimator: grpo
+    gamma: 1.0
+    kl_ctrl:
+      _target_: verl.trainer.config.KLControlConfig
+      horizon: 10000
+      kl_coef: 0.0
+      target_kl: 0.1
+      type: fixed
+    kl_penalty: kl
+    lam: 1.0
+    norm_adv_by_std_in_grpo: true
+    pf_ppo:
+      reweight_method: pow
+      weight_pow: 2.0
+    rollout_correction:
+      bypass_mode: false
+      loss_type: ppo_clip
+      rollout_is: null
+      rollout_is_batch_normalize: false
+      rollout_is_threshold: 2.0
+      rollout_rs: null
+      rollout_rs_threshold: null
+      rollout_rs_threshold_lower: null
+      rollout_token_veto_threshold: null
+    use_kl_in_reward: false
+    use_pf_ppo: false
+  critic:
+    _target_: verl.workers.config.McoreCriticConfig
+    checkpoint:
+      _target_: verl.trainer.config.CheckpointConfig
+      async_save: false
+      load_contents: ${.save_contents}
+      save_contents:
+      - model
+      - optimizer
+      - extra
+    cliprange_value: 0.5
+    data_loader_seed: ${oc.select:recipes.training_config.actor_rollout_ref.actor.data_loader_seed,null}
+    enable: null
+    forward_max_token_len_per_gpu: ${.ppo_max_token_len_per_gpu}
+    load_weight: true
+    loss_agg_mode: ${oc.select:recipes.training_config.actor_rollout_ref.actor.loss_agg_mode,token-mean}
+    megatron:
+      _target_: verl.workers.config.McoreEngineConfig
+      context_parallel_size: 1
+      dist_checkpointing_path: null
+      dist_checkpointing_prefix: ''
+      dtype: bfloat16
+      expert_model_parallel_size: 1
+      expert_tensor_parallel_size: null
+      forward_only: false
+      grad_offload: false
+      optimizer_offload: false
+      override_ddp_config: {}
+      override_mcore_model_config: {}
+      override_transformer_config:
+        attention_backend: flash
+        recompute_granularity: null
+        recompute_method: null
+        recompute_modules:
+        - core_attn
+        recompute_num_layers: null
+      param_offload: false
+      pipeline_model_parallel_size: 1
+      seed: 42
+      sequence_parallel: true
+      tensor_model_parallel_size: 1
+      use_dist_checkpointing: false
+      use_distributed_optimizer: true
+      use_mbridge: true
+      use_remove_padding: true
+      vanilla_mbridge: true
+      virtual_pipeline_model_parallel_size: null
+    model:
+      _target_: verl.trainer.config.BaseModelConfig
+      external_lib: verl.models.mcore.nemotron_h_patch,verl.models.vllm.nemotron_h_latent_moe_patch
+      lora:
+        a2a_experimental: false
+        adapter_path: null
+        alpha: 32
+        dropout: 0.0
+        dropout_position: pre
+        dtype: null
+        exclude_modules: []
+        freeze_language_model: true
+        freeze_vision_model: true
+        freeze_vision_projection: true
+        lora_A_init_method: xavier
+        lora_B_init_method: zero
+        rank: 0
+        target_modules:
+        - linear_qkv
+        - linear_proj
+        - linear_fc1
+        - linear_fc2
+        type: lora
+      override_config:
+        model_config: {}
+        moe_config:
+          freeze_moe_router: false
+      path: deepseek-ai/deepseek-llm-7b-chat
+      tokenizer_path: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+      trust_remote_code: ${oc.select:recipes.training_config.actor_rollout_ref.model.trust_remote_code,false}
+    nccl_timeout: 600
+    optim:
+      _target_: verl.workers.config.McoreOptimizerConfig
+      betas:
+      - 0.9
+      - 0.999
+      clip_grad: 1.0
+      lr: 1.0e-05
+      lr_decay_steps: null
+      lr_decay_style: constant
+      lr_warmup_init: 0.0
+      lr_warmup_steps: -1
+      lr_warmup_steps_ratio: 0.0
+      lr_wsd_decay_steps: null
+      lr_wsd_decay_style: exponential
+      min_lr: 0.0
+      optimizer: adam
+      override_optimizer_config: {}
+      total_training_steps: -1
+      use_checkpoint_opt_param_scheduler: false
+      weight_decay: 0.01
+      weight_decay_incr_style: constant
+    ppo_epochs: ${oc.select:recipes.training_config.actor_rollout_ref.actor.ppo_epochs,1}
+    ppo_max_token_len_per_gpu: 32768
+    ppo_micro_batch_size: null
+    ppo_micro_batch_size_per_gpu: ${oc.select:.ppo_micro_batch_size,null}
+    ppo_mini_batch_size: 64
+    profiler:
+      _target_: verl.utils.profiler.ProfilerConfig
+      all_ranks: false
+      enable: false
+      ranks: []
+      save_path: ${oc.select:recipes.training_config.global_profiler.save_path,null}
+      tool: ${oc.select:recipes.training_config.global_profiler.tool,null}
+      tool_config:
+        npu:
+          _target_: verl.utils.profiler.config.NPUToolConfig
+          analysis: true
+          contents: []
+          discrete: false
+          level: level0
+        nsys:
+          _target_: verl.utils.profiler.config.NsightToolConfig
+          discrete: ${oc.select:recipes.training_config.global_profiler.global_tool_config.nsys.discrete}
+        torch:
+          _target_: verl.utils.profiler.config.TorchProfilerToolConfig
+          step_end: null
+          step_start: 0
+        torch_memory:
+          _target_: verl.utils.profiler.config.TorchMemoryToolConfig
+          stack_depth: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.stack_depth,32}
+          trace_alloc_max_entries: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.trace_alloc_max_entries,100000}
+    rollout_n: ${oc.select:recipes.training_config.actor_rollout_ref.rollout.n,8}
+    shuffle: ${oc.select:recipes.training_config.actor_rollout_ref.actor.shuffle,false}
+    strategy: megatron
+    use_dynamic_bsz: ${oc.select:recipes.training_config.actor_rollout_ref.actor.use_dynamic_bsz,false}
+  custom_reward_function:
+    lambda_arn: ''
+    name: ''
+    path: ''
+  data:
+    apply_chat_template_kwargs: {}
+    custom_cls:
+      name: null
+      path: null
+    datagen:
+      name: null
+      path: null
+    dataloader_num_workers: 8
+    filter_overlong_prompts: true
+    filter_overlong_prompts_workers: 1
+    image_key: images
+    image_patch_size: 14
+    max_prompt_length: 1024
+    max_response_length: 5120
+    prompt_key: prompt
+    return_full_prompt: false
+    return_multi_modal_inputs: true
+    return_raw_chat: true
+    return_raw_input_ids: false
+    reward_fn_key: data_source
+    sampler:
+      class_name: null
+      class_path: null
+    seed: null
+    shuffle: true
+    tokenizer: null
+    tool_config_path: ${oc.select:recipes.training_config.actor_rollout_ref.rollout.multi_turn.tool_config_path,
+      null}
+    train_batch_size: 128
+    train_files: null
+    train_max_samples: -1
+    train_val_split_ratio: 0.9
+    truncation: left
+    trust_remote_code: false
+    use_shm: false
+    val_batch_size: null
+    val_files: null
+    val_max_samples: -1
+    validation_shuffle: false
+    video_key: videos
+  global_profiler:
+    _target_: verl.utils.profiler.ProfilerConfig
+    global_tool_config:
+      nsys:
+        controller_nsight_options:
+          cuda-graph-trace: graph
+          cuda-memory-usage: 'true'
+          trace: cuda,nvtx,cublas,ucx
+        discrete: false
+        worker_nsight_options:
+          capture-range: cudaProfilerApi
+          capture-range-end: null
+          cuda-graph-trace: graph
+          cuda-memory-usage: 'true'
+          kill: none
+          trace: cuda,nvtx,cublas,ucx
+      torch_memory:
+        context: all
+        kw_args: {}
+        stack_depth: 32
+        stacks: all
+        trace_alloc_max_entries: 100000
+    profile_continuous_steps: false
+    save_path: outputs/profile
+    steps: null
+    tool: null
+  mlflow:
+    run_id: ''
+    tracking_uri: ''
+  ray_kwargs:
+    ray_init:
+      num_cpus: null
+    timeline_json_file: null
+  reward_manager:
+    _target_: verl.trainer.config.config.RewardManagerConfig
+    module:
+      _target_: verl.trainer.config.config.ModuleConfig
+      name: custom_reward_manager
+      path: null
+    name: prime
+    source: register
+  reward_model:
+    enable: false
+    enable_resource_pool: false
+    forward_max_token_len_per_gpu: ${recipes.training_config.critic.forward_max_token_len_per_gpu}
+    launch_reward_fn_async: false
+    load_weight: true
+    max_length: null
+    megatron:
+      _target_: verl.workers.config.MegatronEngineConfig
+      context_parallel_size: 1
+      dist_checkpointing_path: null
+      dist_checkpointing_prefix: ''
+      dtype: bfloat16
+      expert_model_parallel_size: 1
+      expert_tensor_parallel_size: null
+      override_transformer_config:
+        attention_backend: flash
+        moe_latent_size: 1024
+        moe_shared_expert_overlap: false
+        recompute_granularity: null
+        recompute_method: null
+        recompute_modules:
+        - core_attn
+        recompute_num_layers: null
+      param_offload: false
+      pipeline_model_parallel_size: 1
+      seed: ${oc.select:recipes.training_config.actor_rollout_ref.actor.megatron.seed,42}
+      sequence_parallel: true
+      tensor_model_parallel_size: 1
+      use_dist_checkpointing: false
+      use_distributed_optimizer: false
+      use_mbridge: ${oc.select:recipes.training_config.actor_rollout_ref.actor.megatron.use_mbridge,False}
+      use_remove_padding: ${oc.select:recipes.training_config.actor_rollout_ref.actor.megatron.use_remove_padding,True}
+      vanilla_mbridge: ${oc.select:recipes.training_config.actor_rollout_ref.actor.megatron.vanilla_mbridge,True}
+      virtual_pipeline_model_parallel_size: null
+    micro_batch_size: null
+    micro_batch_size_per_gpu: null
+    model:
+      external_lib: verl.models.mcore.nemotron_h_patch,verl.models.vllm.nemotron_h_latent_moe_patch
+      input_tokenizer: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+      override_config: {}
+      path: sfairXC/FsfairX-LLaMA3-RM-v0.1
+      trust_remote_code: false
+    n_gpus_per_node: 8
+    nccl_timeout: 600
+    nnodes: 0
+    num_workers: 1
+    profiler:
+      _target_: verl.utils.profiler.ProfilerConfig
+      all_ranks: false
+      enable: false
+      ranks: []
+      save_path: ${oc.select:recipes.training_config.global_profiler.save_path,null}
+      tool: ${oc.select:recipes.training_config.global_profiler.tool,null}
+      tool_config: ${oc.select:recipes.training_config.actor_rollout_ref.actor.profiler.tool_config,null}
+    reward_loop_class_name: null
+    reward_loop_module_path: null
+    reward_loop_source: register
+    reward_manager: prime
+    rollout:
+      _target_: verl.workers.config.RolloutConfig
+      cudagraph_capture_sizes: null
+      data_parallel_size: 1
+      disable_log_stats: true
+      dtype: bfloat16
+      enable_chunked_prefill: true
+      enable_prefix_caching: true
+      enforce_eager: true
+      engine_kwargs: {}
+      expert_parallel_size: 1
+      free_cache_engine: true
+      gpu_memory_utilization: 0.5
+      limit_images: null
+      load_format: auto
+      max_model_len: null
+      max_num_batched_tokens: 8192
+      max_num_seqs: 1024
+      name: vllm
+      prompt_length: 2048
+      response_length: 2048
+      skip_tokenizer_init: false
+      tensor_model_parallel_size: 2
+    sandbox_fusion:
+      max_concurrent: 64
+      memory_limit_mb: 1024
+      url: null
+    strategy: megatron
+    use_dynamic_bsz: ${recipes.training_config.critic.use_dynamic_bsz}
+    use_reward_loop: false
+  trainer:
+    balance_batch: true
+    critic_warmup: 0
+    default_hdfs_dir: null
+    default_local_dir: /opt/ml/model
+    del_local_ckpt_after_load: false
+    device: cuda
+    esi_redundant_time: 0
+    experiment_name: rlvr-lora
+    log_val_generations: 0
+    logger:
+    - console
+    - mlflow
+    max_actor_ckpt_to_keep: null
+    max_critic_ckpt_to_keep: null
+    merge_lora_on_final_save: true
+    n_gpus_per_node: 8
+    nnodes: 4
+    project_name: Nemotron-Super
+    ray_wait_register_center_timeout: 300
+    resume_from_path: null
+    resume_mode: auto
+    rollout_data_dir: null
+    save_freq: 10
+    test_freq: 10
+    total_epochs: 1
+    total_training_steps: null
+    use_legacy_worker_impl: auto
+    val_before_train: true
+  transfer_queue:
+    enable: false
+version: 1.1.0

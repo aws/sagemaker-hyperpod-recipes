@@ -436,21 +436,18 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 
 | Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
 |-----|-----|-----|-----|-----|-----|-----|-----|-----|
-| Gemma 4 E4B IT DPO Full Fine-Tuning | verl | - | FFT | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-gemma-4-e4b-it-fft.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-e4b-it-fft.yaml) | [run_verl_dpo_gemma_4_e4b_it_fft.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_e4b_it_fft.sh) |
 | Gemma 4 E4B IT DPO LoRA Fine-Tuning | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-gemma-4-e4b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-e4b-it-lora.yaml) | [run_verl_dpo_gemma_4_e4b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_e4b_it_lora.sh) |
 
 #### Google Gemma 4.26B A4b It
 
 | Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
 |-----|-----|-----|-----|-----|-----|-----|-----|-----|
-| Gemma 4 26B IT DPO Full Fine-Tuning | verl | - | FFT | - | 1 | p5.48xlarge | [verl-dpo-gemma-4-26b-a4b-it-fft.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-26b-a4b-it-fft.yaml) | [run_verl_dpo_gemma_4_26b_a4b_it_fft.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_26b_a4b_it_fft.sh) |
 | Gemma 4 26B IT DPO LoRA Fine-Tuning | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-gemma-4-26b-a4b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-26b-a4b-it-lora.yaml) | [run_verl_dpo_gemma_4_26b_a4b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_26b_a4b_it_lora.sh) |
 
 #### Google Gemma 4.31B It
 
 | Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
 |-----|-----|-----|-----|-----|-----|-----|-----|-----|
-| Gemma 4 31B IT DPO Full Fine-Tuning | verl | - | FFT | - | 1 | p5.48xlarge | [verl-dpo-gemma-4-31b-it-fft.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-31b-it-fft.yaml) | [run_verl_dpo_gemma_4_31b_it_fft.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_31b_it_fft.sh) |
 | Gemma 4 31B IT DPO LoRA Fine-Tuning | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-gemma-4-31b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-31b-it-lora.yaml) | [run_verl_dpo_gemma_4_31b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_dpo_gemma_4_31b_it_lora.sh) |
 
 ### Llama Models
@@ -503,6 +500,14 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 | Nemotron 3 Nano 30B GRPO RLVR Fine-Tuning with Megatron LoRA | verl | GRPO | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlvr-nemotron-3-nano-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlvr-nemotron-3-nano-30b-lora.yaml) | [run_verl_grpo_rlvr_nemotron_3_nano_30b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlvr_nemotron_3_nano_30b_lora.sh) |
 | Nemotron 3 Nano 30B GRPO RLAIF Fine-Tuning with Megatron FFT | verl | GRPO + RLAIF | FFT | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-nemotron-3-nano-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlaif-nemotron-3-nano-30b-fft.yaml) | [run_verl_grpo_rlaif_nemotron_3_nano_30b_fft.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlaif_nemotron_3_nano_30b_fft.sh) |
 | Nemotron 3 Nano 30B GRPO RLAIF Fine-Tuning with Megatron LoRA | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-nemotron-3-nano-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlaif-nemotron-3-nano-30b-lora.yaml) | [run_verl_grpo_rlaif_nemotron_3_nano_30b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlaif_nemotron_3_nano_30b_lora.sh) |
+
+#### Nvidia Nemotron 3 Super 120B A12b Bf16
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Nemo3 Super 120B SFT LoRA Fine-Tuning | verl | - | LoRA | - | 4 | p5.48xlarge | [verl-sft-nemotron-3-super-120b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-sft-nemotron-3-super-120b-lora.yaml) | [run_verl_sft_nemotron_3_super_120b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_sft_nemotron_3_super_120b_lora.sh) |
+| Nemotron 3 Super 120B GRPO RLVR Fine-Tuning with Megatron LoRA | verl | GRPO | LoRA | 32,768 | 4 | p5.48xlarge | [verl-grpo-rlvr-nemotron-3-super-120b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlvr-nemotron-3-super-120b-lora.yaml) | [run_verl_grpo_rlvr_nemotron_3_super_120b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlvr_nemotron_3_super_120b_lora.sh) |
+| Nemotron 3 Super 120B GRPO RLAIF Fine-Tuning with Megatron LoRA | verl | GRPO + RLAIF | LoRA | 32,768 | 4 | p5.48xlarge | [verl-grpo-rlaif-nemotron-3-super-120b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlaif-nemotron-3-super-120b-lora.yaml) | [run_verl_grpo_rlaif_nemotron_3_super_120b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlaif_nemotron_3_super_120b_lora.sh) |
 
 ### Qwen Models
 

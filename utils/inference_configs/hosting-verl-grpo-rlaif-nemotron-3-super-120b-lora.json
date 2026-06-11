@@ -1,0 +1,22 @@
+[
+  {
+    "InstanceType": "ml.p5.48xlarge",
+    "Profile": "Default",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.21.0-gpu-py312-cu130-ubuntu22.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "8",
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "1",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_MAX_MODEL_LEN": "4096",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.95",
+      "SM_VLLM_ENFORCE_EAGER": "true"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1539316,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  }
+]
