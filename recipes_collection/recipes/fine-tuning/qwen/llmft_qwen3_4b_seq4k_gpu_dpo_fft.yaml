@@ -2,7 +2,6 @@ display_name: Qwen3 4B Direct Preference Optimization Full Fine-Tuning on GPU
 instance_types:
 - ml.p5.48xlarge
 - ml.g6.48xlarge
-- ml.g6e.12xlarge
 run:
   hf_access_token: null
   model_type: llm_finetuning_aws

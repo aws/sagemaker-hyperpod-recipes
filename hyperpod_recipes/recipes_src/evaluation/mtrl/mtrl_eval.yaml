@@ -1,0 +1,36 @@
+display_name: MTRL Evaluation
+recipe_version: "1.0.15"
+
+run:
+  base_model_name: ''             # override for each model
+  name: mtrl-eval                 # override per job
+  model_type: mtrl
+
+batch:
+  eval_batch_size: null
+  eval_group_size: 1              # overridable by customer at launch time
+  eval_random_sample: false
+
+eval_metrics_config:
+  pass_k_values:                  # overridable by customer at launch time
+    - 1
+    - 2
+    - 4
+    - 8
+    - 16
+    - 32
+  success_threshold: 1.0          # overridable by customer
+
+eval_sampling_params:
+  temperature: 0                  # override
+  top_p: 1                        # override
+  max_tokens: 4096                # override
+
+model:
+  model_name: ""                  # override for each model
+
+rollout:
+  max_concurrency: 96
+  timeout: 600.0
+  max_retries: 3
+  rollout_tps: 5

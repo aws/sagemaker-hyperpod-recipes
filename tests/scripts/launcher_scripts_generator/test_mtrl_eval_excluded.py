@@ -57,7 +57,7 @@ def test_shared_mtrl_eval_yaml_is_excluded_by_discover_recipes():
 
     orchestrator = LauncherScriptGenerationOrchestrator()
     discovered = orchestrator.discover_recipes()
-    discovered_resolved = {p.resolve() for p in discovered}
+    discovered_resolved = {Path(r.path).resolve() for r in discovered}
 
     assert SHARED_EVAL_YAML.resolve() not in discovered_resolved, (
         "Shared MTRL eval YAML was surfaced by discover_recipes(); the "
@@ -75,13 +75,13 @@ def test_no_sh_file_produced_for_shared_mtrl_eval_recipe():
     orchestrator = LauncherScriptGenerationOrchestrator()
     discovered = orchestrator.discover_recipes()
 
-    offenders = [p for p in discovered if "mtrl_eval" in p.stem.lower()]
+    offenders = [r for r in discovered if "mtrl_eval" in Path(r.path).stem.lower()]
     assert not offenders, (
         f"Found recipes with 'mtrl_eval' in their stem that would produce "
-        f".sh wrappers: {[str(p) for p in offenders]}"
+        f".sh wrappers: {[str(r.path) for r in offenders]}"
     )
 
     # Also double-check via the same resolve() comparison used above —
     # belt-and-suspenders against symlink / relative-path surprises.
-    discovered_resolved = {p.resolve() for p in discovered}
+    discovered_resolved = {Path(r.path).resolve() for r in discovered}
     assert SHARED_EVAL_YAML.resolve() not in discovered_resolved

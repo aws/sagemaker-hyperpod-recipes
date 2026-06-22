@@ -1,0 +1,220 @@
+defaults:
+  - /hydra_config/verl-0_7_0/default_megatron
+  - _self_
+
+display_name: Nemotron 3 Super 120B GRPO RLAIF Fine-Tuning with Megatron LoRA
+version: 1.1.1
+instance_types:
+  - ml.p5.48xlarge
+
+run:
+  model_type: verl
+  name: verl-grpo-nemotron-3-super-120b-lora
+  results_dir: ${base_results_dir}/${.name}
+
+trainer:
+  num_nodes: 4
+
+ray_cluster:
+  worker_nodes:
+    replicas: 3
+
+training_config:
+  # Algorithm: GRPO
+  algorithm:
+    adv_estimator: grpo
+    norm_adv_by_std_in_grpo: true
+    kl_ctrl:
+      kl_coef: 0.0
+
+  actor_rollout_ref:
+    hybrid_engine: true
+    nccl_timeout: 600
+
+    # Actor overrides
+    actor:
+      rollout_n: 16
+      use_kl_loss: false
+      kl_loss_coef: 0.0
+      use_dynamic_bsz: true
+      use_torch_compile: true
+      ppo_mini_batch_size: 64
+      ppo_micro_batch_size_per_gpu: 1
+      ppo_max_token_len_per_gpu: 16384
+      clip_ratio_c: 3.0
+      clip_ratio_high: 0.28
+      megatron:
+        tensor_model_parallel_size: 8
+        expert_model_parallel_size: 16
+        expert_tensor_parallel_size: 1
+        sequence_parallel: true
+        use_remove_padding: true
+        use_mbridge: true
+        vanilla_mbridge: false
+        grad_offload: true
+        optimizer_offload: true
+        param_offload: true
+        override_transformer_config:
+          apply_rope_fusion: true
+          attention_backend: flash
+          moe_router_dtype: fp32
+          moe_latent_size: 1024
+          moe_shared_expert_overlap: false
+          recompute_granularity: full
+          recompute_method: uniform
+          recompute_modules:
+            - core_attn
+          recompute_num_layers: 1
+      optim:
+        lr: 1.0e-06
+        weight_decay: 0.0
+        override_optimizer_config:
+          optimizer_cpu_offload: true
+          optimizer_offload_fraction: 1
+          overlap_cpu_optimizer_d2h_h2d: true
+          use_precision_aware_optimizer: true
+
+    # Reference model overrides
+    ref:
+      rollout_n: 16
+      log_prob_micro_batch_size_per_gpu: 2
+      log_prob_max_token_len_per_gpu: 16384
+      log_prob_use_dynamic_bsz: true
+      use_torch_compile: true
+      megatron:
+        tensor_model_parallel_size: 8
+        expert_model_parallel_size: 16
+        expert_tensor_parallel_size: 1
+        sequence_parallel: true
+        use_remove_padding: true
+        use_mbridge: true
+        vanilla_mbridge: false
+        param_offload: true
+        override_transformer_config:
+          moe_latent_size: 1024
+          moe_shared_expert_overlap: false
+
+    # Rollout overrides (vLLM engine)
+    rollout:
+      name: vllm
+      prompt_length: 1024
+      response_length: 5120
+      tensor_model_parallel_size: 8
+      gpu_memory_utilization: 0.45
+      max_model_len: 8192
+      calculate_log_probs: true
+      log_prob_micro_batch_size_per_gpu: 2
+      log_prob_max_token_len_per_gpu: 16384
+      log_prob_use_dynamic_bsz: true
+      enable_chunked_prefill: true
+      load_format: dummy
+      max_num_batched_tokens: 6144
+      'n': 16
+      val_kwargs:
+        'n': 1
+        temperature: 1.0
+        do_sample: true
+        top_p: 0.7
+      layer_name_map:
+        qkv_layer_name: qkv
+        gate_proj_layer_name: gate_up
+
+    # Model config (Nemotron 3 Super 120B + LoRA)
+    model:
+      path: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+      trust_remote_code: true
+      external_lib: verl.models.mcore.nemotron_h_patch,verl.models.vllm.nemotron_h_latent_moe_patch
+      enable_gradient_checkpointing: true
+      is_saving_checkpoint_in_lora: false
+      lora:
+        rank: 128
+        alpha: 256
+        target_modules:
+          - linear_qkv
+          - linear_proj
+          - in_proj
+          - out_proj
+
+  # Critic overrides
+  critic:
+    ppo_mini_batch_size: 64
+    model:
+      tokenizer_path: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+      external_lib: verl.models.mcore.nemotron_h_patch,verl.models.vllm.nemotron_h_latent_moe_patch
+
+  # Trainer overrides
+  trainer:
+    project_name: Nemotron-Super
+    experiment_name: rlaif-lora
+    logger:
+      - console
+      - mlflow
+    resume_mode: auto
+    resume_from_path: null
+    test_freq: 10
+    save_freq: 10
+    total_epochs: 1
+    default_local_dir: /opt/ml/model
+    val_before_train: true
+    merge_lora_on_final_save: true
+    log_val_generations: 0
+    nnodes: 4
+
+  # Data overrides
+  data:
+    max_prompt_length: 1024
+    max_response_length: 5120
+    train_batch_size: 128
+    return_raw_chat: true
+    truncation: left
+    val_batch_size: null
+    train_val_split_ratio: 0.9
+
+  # Reward model overrides
+  reward_model:
+    enable: false
+    reward_manager: batch
+    launch_reward_fn_async: true
+    rollout:
+      name: vllm
+    model:
+      input_tokenizer: nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16
+      external_lib: verl.models.mcore.nemotron_h_patch,verl.models.vllm.nemotron_h_latent_moe_patch
+    megatron:
+      override_transformer_config:
+        moe_latent_size: 1024
+        moe_shared_expert_overlap: false
+    reward_kwargs:
+      reward_fn_name: llmj
+      kwargs:
+        llmj_prompt_template_path: bedrock/RLAIF/PandaLM/prompts/grader.jinja
+        model_id: bedrock/deepseek.v3-v1:0
+        service_tier: flex
+        max_workers: 100
+        num_retries: 5
+        range:
+          - 0.0
+          - 1.0
+        aws_region_name: us-west-2
+        sampling_params:
+          temperature: 0.0
+          max_completion_tokens: 2048
+
+  # Reward manager (RLAIF - batch)
+  reward_manager:
+    _target_: verl.trainer.config.config.RewardManagerConfig
+    source: register
+    name: batch
+    module:
+      _target_: verl.trainer.config.config.ModuleConfig
+      path: null
+      name: custom_reward_manager
+
+  custom_reward_function:
+    lambda_arn: ''
+    path: ''
+    name: ''
+
+  mlflow:
+    run_id: ''
+    tracking_uri: ''

@@ -496,19 +496,19 @@ def create_new_recipecollection(exported_json_path):
 
 
 def update_exported_json(exported_json_path, new_recipe_entries, model_id, version):
-    """Add new recipe entries to exported hub content JSON, deduplicating by RecipeName."""
+    """Add new recipe entries to exported hub content JSON, deduplicating by Name."""
     with open(exported_json_path, "r") as f:
         hub_content = json.load(f)
 
     existing_recipes = hub_content["HubContentDocument"]["RecipeCollection"]
-    existing_names = {r.get("RecipeName") for r in existing_recipes if r.get("RecipeName")}
+    existing_names = {r.get("Name") for r in existing_recipes if r.get("Name")}
 
     added = 0
     for entry in new_recipe_entries:
-        name = entry.get("RecipeName")
+        name = entry.get("Name")
         if name and name in existing_names:
             # Replace existing recipe with updated version
-            existing_recipes = [r for r in existing_recipes if r.get("RecipeName") != name]
+            existing_recipes = [r for r in existing_recipes if r.get("Name") != name]
             existing_recipes.append(entry)
         else:
             existing_recipes.append(entry)
@@ -786,7 +786,7 @@ def main():
                 artifacts = RecipeArtifactPaths(k8s_launch_json_path, sm_jobs_launch_json_path, recipe_name)
                 s3_config = S3UploadConfig(args.s3_bucket, args.region, version_by_model[model_id])
                 eval_image = get_eval_regional_ecr_uri(eval_type, args.region, args.endpoint) or ""
-                s3_uris = upload_artifacts_to_s3(artifacts, s3_config, region=args.region, endpoint=args.endpoint)
+                s3_uris = upload_artifacts_to_s3(artifacts, s3_config)
                 results["uploaded_artifacts"][recipe_name] = s3_uris
 
                 eval_recipe_metadata = process_eval_recipe_metadata(

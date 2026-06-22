@@ -1,6 +1,7 @@
 display_name: DeepSeek R1 Distill Qwen 32B Supervised Fine-Tuning Full Fine-Tuning
   on GPU
 instance_types:
+- ml.p4de.24xlarge
 - ml.p5.48xlarge
 run:
   hf_access_token: null
@@ -101,7 +102,7 @@ training_config:
         state_dict_type: FULL_STATE_DICT
         sync_module_states: true
         use_orig_params: true
-    train_batch_size: 16
+    train_batch_size: 32
     trainer_callbacks:
     - _target_: metering_callback.MeteringCallback
       output_path: /opt/ml/metering

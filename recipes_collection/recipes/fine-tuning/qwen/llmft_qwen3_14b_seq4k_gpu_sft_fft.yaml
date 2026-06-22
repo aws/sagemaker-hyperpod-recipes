@@ -1,8 +1,6 @@
 display_name: Qwen3 14B Supervised Fine-Tuning Full Fine-Tuning on GPU
 instance_types:
-- ml.p4d.24xlarge
 - ml.p4de.24xlarge
-- ml.p5.48xlarge
 run:
   hf_access_token: null
   model_type: llm_finetuning_aws
@@ -10,7 +8,7 @@ run:
   results_dir: ${base_results_dir}/${.name}
 trainer:
   devices: 8
-  num_nodes: 2
+  num_nodes: 1
 training_config:
   datasets:
     data_dir: null

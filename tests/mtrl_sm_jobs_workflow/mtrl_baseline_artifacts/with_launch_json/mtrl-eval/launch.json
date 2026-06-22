@@ -107,21 +107,15 @@
       }
     }
   },
-  "training_recipe.yaml": "display_name: MTRL Evaluation\nrecipe_version: 1.0.15\nrun:\n  base_model_name: '{{base_model_name}}'\n  name: '{{name}}'\n  model_type: mtrl\nbatch:\n  eval_batch_size: null\n  eval_group_size: '{{eval_group_size}}'\n  eval_random_sample: false\neval_metrics_config:\n  pass_k_values: '{{pass_k_values}}'\n  success_threshold: '{{success_threshold}}'\neval_sampling_params:\n  temperature: '{{temperature}}'\n  top_p: '{{sampling_top_p}}'\n  max_tokens: '{{sampling_max_tokens}}'\nmodel:\n  model_name: '{{model_name}}'\nrollout:\n  max_concurrency: '{{rollout_max_concurrency}}'\n  timeout: '{{rollout_timeout}}'\n  max_retries: '{{rollout_max_retries}}'\n  rollout_tps: 5\n",
+  "training_recipe.yaml": "batch:\n  eval_batch_size: null\n  eval_group_size: '{{eval_group_size}}'\n  eval_random_sample: false\ndisplay_name: MTRL Evaluation\neval_metrics_config:\n  pass_k_values: '{{pass_k_values}}'\n  success_threshold: '{{success_threshold}}'\neval_sampling_params:\n  max_tokens: '{{sampling_max_tokens}}'\n  temperature: '{{temperature}}'\n  top_p: '{{sampling_top_p}}'\nmodel:\n  model_name: '{{model_name}}'\nrecipe_version: 1.0.15\nrollout:\n  max_concurrency: '{{rollout_max_concurrency}}'\n  max_retries: '{{rollout_max_retries}}'\n  rollout_tps: 5\n  timeout: '{{rollout_timeout}}'\nrun:\n  base_model_name: '{{base_model_name}}'\n  model_type: mtrl\n  name: '{{name}}'\n",
   "training_recipe.json": {
     "recipes": {
-      "display_name": "MTRL Evaluation",
-      "recipe_version": "1.0.15",
-      "run": {
-        "base_model_name": "",
-        "name": "mtrl-eval",
-        "model_type": "mtrl"
-      },
       "batch": {
         "eval_batch_size": null,
         "eval_group_size": 1,
         "eval_random_sample": false
       },
+      "display_name": "MTRL Evaluation",
       "eval_metrics_config": {
         "pass_k_values": [
           1,
@@ -134,18 +128,24 @@
         "success_threshold": 1.0
       },
       "eval_sampling_params": {
+        "max_tokens": 4096,
         "temperature": 0,
-        "top_p": 1,
-        "max_tokens": 4096
+        "top_p": 1
       },
       "model": {
         "model_name": ""
       },
+      "recipe_version": "1.0.15",
       "rollout": {
         "max_concurrency": 96,
-        "timeout": 600.0,
         "max_retries": 3,
-        "rollout_tps": 5
+        "rollout_tps": 5,
+        "timeout": 600.0
+      },
+      "run": {
+        "base_model_name": "",
+        "model_type": "mtrl",
+        "name": "mtrl-eval"
       }
     }
   }

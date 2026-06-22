@@ -1,0 +1,610 @@
+name: Orchestrator for 1click validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      trigger_mode:
+        description: 'Trigger mode: PR or Manual, defaults to PR'
+        required: true
+        type: choice
+        options:
+          - pr
+          - manual
+        default: 'pr'
+      recipe_metadata:
+        description: 'Comma-separated recipe list (required for manual mode)'
+        required: false
+        type: string
+      instance_type:
+        description: 'Comma-separated instance type list (optional, only used in manual mode)'
+        required: false
+        type: string
+      platform:
+        description: 'Platform to validate on'
+        required: false
+        type: choice
+        options:
+          - ALL
+          - SMJOBS
+          - K8
+          - SLURM
+          - SERVERLESS
+        default: 'ALL'
+      convergence:
+        description: 'Run convergence training instead of smoke-test validation (forces SMJOBS platform)'
+        required: false
+        type: boolean
+        default: false
+      custom_flag:
+        description: 'Custom user flag to identify the run'
+        required: false
+        type: string
+
+permissions:
+  id-token: write
+  contents: read # This is required for actions/checkout
+
+jobs:
+  orchestrater:
+    runs-on: [self-hosted, orchestrator]
+    outputs:
+      batches_json: ${{ steps.matrix.outputs.batches_json }}
+      num_batches: ${{ steps.matrix.outputs.num_batches }}
+      expiry_time: ${{ steps.timer.outputs.expiry_time }}
+      asg_name: ${{ steps.create_asg.outputs.asg_name }}
+      runner_label: ${{ steps.create_asg.outputs.runner_label }}
+    steps:
+      - name: Set timer start
+        id: timer
+        run: |
+          START_TIME=$(date +%s)
+          EXPIRY_TIME=$((START_TIME + 5*24*60*60))  # 5 days in seconds
+          echo "start_time=$START_TIME" >> $GITHUB_OUTPUT
+          echo "expiry_time=$EXPIRY_TIME" >> $GITHUB_OUTPUT
+          echo "Timer started at $(date -d @$START_TIME). Expires at $(date -d @$EXPIRY_TIME)"
+
+      - name: Clean disk space
+        run: |
+          echo "=== Disk usage before cleanup ==="
+          df -h /
+          # Clear pip cache
+          pip cache purge 2>/dev/null || true
+          rm -rf ~/.cache/pip 2>/dev/null || true
+          # Remove previous sagemaker-python-sdk clones
+          rm -rf sagemaker-python-sdk 2>/dev/null || true
+          # Clear old pip/build temp files
+          find /tmp -maxdepth 1 \( -name 'pip-*' -o -name 'tmp*' \) -exec rm -rf {} + 2>/dev/null || true
+          echo "=== Disk usage after cleanup ==="
+          df -h /
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          # ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.sha }}
+          submodules: recursives
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.RECIPE_VALIDATION }}
+          aws-region: us-west-2
+
+      - name: Who am I (sanity)
+        run: aws sts get-caller-identity
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+          pip install boto3
+
+      - name: Validate manual trigger inputs
+        if: ${{ inputs.trigger_mode == 'manual' }}
+        run: |
+          if [ -z "${{ inputs.recipe_metadata }}" ]; then
+            echo "❌ recipe_metadata is required when trigger_mode is 'manual'"
+            exit 1
+          fi
+          echo "✅ Manual mode: recipe_metadata provided"
+
+      - name: Detect modified recipes
+        id: matrix
+        run: |
+          RECIPES_ARG=""
+          INSTANCES_ARG=""
+          PLATFORM_ARG=""
+          CONVERGENCE_ARG=""
+
+          if [ "${{ inputs.trigger_mode }}" = "manual" ]; then
+            RECIPES_ARG="--recipes ${{ inputs.recipe_metadata }}"
+            if [ -n "${{ inputs.instance_type }}" ]; then
+              INSTANCES_ARG="--instances ${{ inputs.instance_type }}"
+            fi
+          fi
+
+          # Set platform argument (if not in convergence mode)
+          PLATFORM_INPUT="${{ inputs.platform }}"
+          if [ -n "$PLATFORM_INPUT" ] && [ "$PLATFORM_INPUT" != "ALL" ]; then
+            PLATFORM_ARG="--platform $PLATFORM_INPUT"
+          fi
+
+          # Set convergence flag - validation_helpers.py will handle platform/instance override
+          if [ "${{ inputs.convergence }}" = "true" ]; then
+            CONVERGENCE_ARG="--convergence"
+          fi
+
+          python .github/scripts/validation_helpers.py create-matrix \
+            --base-branch main \
+            --recipes-dir recipes_collection/recipes/ \
+            $RECIPES_ARG \
+            $INSTANCES_ARG \
+            $PLATFORM_ARG \
+            $CONVERGENCE_ARG \
+            --batch-size 15 \
+            --max-workers 5
+
+      - name: Cleanup orphaned ASGs from previous failed runs
+        if: ${{ steps.matrix.outputs.num_batches != '0' }}
+        run: |
+          set -euo pipefail
+          echo "🧹 Checking for orphaned 1click-asg-* ASGs older than 5 days..."
+          CUTOFF_TIME=$(date -d '5 days ago' +%s 2>/dev/null || date -v-5d +%s 2>/dev/null || echo "0")
+
+          # List all ASGs matching the 1click-asg- prefix (excluding the legacy 1click-asg-test)
+          ORPHANED_ASGS=$(aws autoscaling describe-auto-scaling-groups \
+            --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, '1click-asg-') && AutoScalingGroupName != '1click-asg-test'].{Name:AutoScalingGroupName,Created:CreatedTime}" \
+            --output json)
+
+          echo "$ORPHANED_ASGS" | jq -r '.[] | "\(.Name) created at \(.Created)"'
+
+          # Delete ASGs older than cutoff
+          for ASG in $(echo "$ORPHANED_ASGS" | jq -r '.[].Name'); do
+            CREATED=$(echo "$ORPHANED_ASGS" | jq -r ".[] | select(.Name==\"$ASG\") | .Created")
+            CREATED_TS=$(date -d "$CREATED" +%s 2>/dev/null || echo "0")
+            if [ "$CREATED_TS" -lt "$CUTOFF_TIME" ] && [ "$CUTOFF_TIME" -gt 0 ]; then
+              echo "🗑️ Deleting orphaned ASG: $ASG (created $CREATED)"
+              aws autoscaling delete-auto-scaling-group \
+                --auto-scaling-group-name "$ASG" \
+                --force-delete || echo "⚠️ Failed to delete $ASG, continuing..."
+            else
+              echo "⏭️ Skipping $ASG (created $CREATED, still within 5-day retention window)"
+            fi
+          done
+
+      - name: Create per-run ASG
+        id: create_asg
+        if: ${{ steps.matrix.outputs.num_batches != '0' }}
+        env:
+          RUN_ID: ${{ github.run_id }}
+          NUM_BATCHES: ${{ steps.matrix.outputs.num_batches }}
+          LAUNCH_TEMPLATE_NAME: 1click-asg
+          SUBNET_ID: subnet-77668a0f
+        run: |
+          set -euo pipefail
+
+          ASG_NAME="1click-asg-${RUN_ID}"
+          RUNNER_LABEL="run-${RUN_ID}"
+          echo "asg_name=${ASG_NAME}" >> $GITHUB_OUTPUT
+          echo "runner_label=${RUNNER_LABEL}" >> $GITHUB_OUTPUT
+
+          echo "🚀 Creating ASG: ${ASG_NAME} with ${NUM_BATCHES} instances"
+          echo "   Launch template: ${LAUNCH_TEMPLATE_NAME}"
+          echo "   Runner label: ${RUNNER_LABEL}"
+
+          aws autoscaling create-auto-scaling-group \
+            --auto-scaling-group-name "${ASG_NAME}" \
+            --launch-template "LaunchTemplateName=${LAUNCH_TEMPLATE_NAME},Version=\$Latest" \
+            --min-size 0 \
+            --max-size 10 \
+            --desired-capacity "${NUM_BATCHES}" \
+            --vpc-zone-identifier "${SUBNET_ID}" \
+            --tags \
+              "Key=github_run_id,Value=${RUN_ID},PropagateAtLaunch=true" \
+              "Key=purpose,Value=1click-validation,PropagateAtLaunch=true" \
+              "Key=Name,Value=1click-runner-${RUN_ID},PropagateAtLaunch=true"
+
+          echo "✅ ASG ${ASG_NAME} created successfully"
+
+      - name: Upload overflow runs
+        if: ${{ steps.matrix.outputs.has_overflow == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: overflow-runs
+          path: overflow_runs.json
+
+      - name: Wait for workers to be InService
+        if: ${{ steps.matrix.outputs.num_batches != '0' }}
+        env:
+          ASG_NAME: ${{ steps.create_asg.outputs.asg_name }}
+          NUM_BATCHES: ${{ steps.matrix.outputs.num_batches }}
+        run: |
+          set -euo pipefail
+          echo "⏳ Waiting for ${NUM_BATCHES} instances in ${ASG_NAME} to be InService..."
+          sleep 120
+          for i in $(seq 1 60); do
+            in_service=$(aws autoscaling describe-auto-scaling-groups \
+              --auto-scaling-group-names "$ASG_NAME" \
+              --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'] | length(@)" \
+              --output text)
+            echo "InService: ${in_service}/${NUM_BATCHES}"
+            if [ "${in_service}" -ge "$NUM_BATCHES" ]; then
+              echo "✅ All instances are InService"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "❌ Timed out waiting for ASG instances to be InService" >&2
+          exit 1
+
+  validate_batch:
+    needs: orchestrater
+    if: ${{ needs.orchestrater.outputs.num_batches != '0' }}
+    timeout-minutes: 4320
+    strategy:
+      fail-fast: false
+      matrix:
+        batch: ${{ fromJson(needs.orchestrater.outputs.batches_json) }}
+    runs-on: [self-hosted, linux, x64, validator, "${{ needs.orchestrater.outputs.runner_label }}"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Configure AWS credentials US-West-2
+        if: ${{ matrix.batch.platform == 'SMJOBS' || matrix.batch.platform == 'SERVERLESS' }}
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.RECIPE_VALIDATION }}
+          aws-region: us-west-2
+          role-duration-seconds: 43200  # 12 hours
+
+      - name: Configure AWS credentials AP-South-1
+        if: ${{ matrix.batch.platform != 'SMJOBS' && matrix.batch.platform != 'SERVERLESS' }}
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.RECIPE_VALIDATION }}
+          aws-region: ap-south-1
+          role-duration-seconds: 43200
+
+      - name: Install deps
+        run: |
+          python -m pip install --no-cache-dir --upgrade pip
+          pip install --no-cache-dir -r launcher/nemo/nemo_framework_launcher/requirements.txt
+          pip install --no-cache-dir -r requirements.txt
+          pip install --no-cache-dir "git+https://github.com/aws/sagemaker-python-sdk.git@master-v2"
+
+      - name: Runner identity
+        run: |
+          echo "Runner name: $RUNNER_NAME"
+          echo "Runner OS: $RUNNER_OS"
+          hostname
+          uname -a
+
+      - name: Process batch
+        run: |
+          echo "## Batch ${{ matrix.batch.batch_id }} - ${{ matrix.batch.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Recipe | Instance Type |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|---------------|" >> $GITHUB_STEP_SUMMARY
+          echo '${{ toJson(matrix.batch.runs) }}' | jq -r '.[] | "| \(.recipe) | \(.instance_type) |"' >> $GITHUB_STEP_SUMMARY
+
+      - name: EKS update
+        if: ${{ matrix.batch.platform == 'K8' }}
+        run: |
+          aws eks update-kubeconfig --name sagemaker-hyperpod-eks-cluster --region ap-south-1
+
+      - name: Update private hub for serverless
+        if: ${{ matrix.batch.platform == 'SERVERLESS' }}
+        run: |
+          RECIPES=$(echo '${{ toJson(matrix.batch.runs) }}' | jq -r '[.[].recipe] | unique | join(",")')
+
+          python scripts/model_hub/update_private_hub.py \
+            --hub-name "Qwen35ProdValidationHub" \
+            --s3-bucket "my-private-hub-recipes-pdx" \
+            --region "us-west-2" \
+            --endpoint "prod" \
+            --recipe-files "$RECIPES"
+
+      - name: Run validation
+        id: validation
+        run: |
+          set -o pipefail
+
+          PLATFORM="${{ matrix.batch.platform }}"
+          RUNS='${{ toJson(matrix.batch.runs) }}'
+          EXPIRY_TIME=${{ needs.orchestrater.outputs.expiry_time }}
+          BATCH_FAILED=0
+
+          # Create log file for parsing
+          VALIDATION_LOG="validation_output_${{ matrix.batch.batch_id }}.log"
+          : > "$VALIDATION_LOG"
+
+          while true; do
+            COUNT=$(echo "$RUNS" | jq 'length')
+            if [ "$COUNT" -eq 0 ]; then
+              if [ $BATCH_FAILED -ne 0 ]; then
+                echo "⚠️ All runs processed, but some recipes failed"
+              else
+                echo "✅ All runs completed successfully"
+              fi
+              break
+            fi
+
+            CURRENT_TIME=$(date +%s)
+            REMAINING_SECONDS=$((EXPIRY_TIME - CURRENT_TIME))
+            REMAINING_HOURS=$((REMAINING_SECONDS / 3600))
+
+            if [ $REMAINING_HOURS -lt 6 ]; then
+              echo "strategy=STOP" >> $GITHUB_OUTPUT
+              echo "⛔ Less than 6 hours remaining. Stopping new validations."
+
+              echo "$RUNS" > remaining_runs_${{ matrix.batch.batch_id }}.json
+              break
+
+            # ==================== PARALLEL MODE ====================
+            elif [ $REMAINING_HOURS -ge 72 ]; then
+              echo "Remaining hours $REMAINING_HOURS" >> $GITHUB_STEP_SUMMARY
+              echo "🚀 More than 3 days remaining. Using parallel mode."
+
+              # ==================== K8 and SLURM ====================
+              if [ "$PLATFORM" = "K8" ] || [ "$PLATFORM" = "SLURM" ]; then
+                # Get all recipes for parallel execution
+                RECIPES=$(echo "$RUNS" | jq -r '[.[].recipe] | unique | join(" ")')
+
+                cp scripts/validations/common_validation_config.example.yaml scripts/validations/common_validation_config.yaml
+                python .github/scripts/validation_helpers.py update-config \
+                  --platform "$PLATFORM" \
+                  --recipe-files $RECIPES \
+                  --config-path scripts/validations/common_validation_config.yaml \
+                  --instance-type "ml.p5.48xlarge"
+
+
+                # Run validation and capture output
+                python scripts/validations/validation_script_runner.py 2>&1 | tee -a "$VALIDATION_LOG"
+
+                RUNS='[]'
+
+              # ==================== SERVERLESS ====================
+              elif [ "$PLATFORM" = "SERVERLESS" ]; then
+                # Serverless does not use instance types
+                RECIPES=$(echo "$RUNS" | jq -r '[.[].recipe] | unique | join(" ")')
+
+                cp scripts/validations/common_validation_config.example.yaml scripts/validations/common_validation_config.yaml
+                python .github/scripts/validation_helpers.py update-config \
+                  --platform "$PLATFORM" \
+                  --recipe-files $RECIPES \
+                  --config-path scripts/validations/common_validation_config.yaml \
+                  --instance-type "serverless"
+
+                # Run with batch_size=2 to limit serverless to 2 parallel runs at a time
+                set +e
+                python scripts/validations/validation_script_runner.py \
+                  --recipe_batch_size 2 2>&1 | tee -a "$VALIDATION_LOG"
+                RC=${PIPESTATUS[0]}
+                set -e
+                if [ $RC -ne 0 ]; then
+                  echo "⚠️ Serverless validation failed with exit code $RC"
+                  BATCH_FAILED=1
+                fi
+
+                RUNS='[]'
+
+              # ==================== SMJOBS ====================
+              else
+                # ---- CONVERGENCE MODE ----
+                # When convergence flag is set, bypass normal recipe iteration
+                # and run convergence training directly via --convergence flag.
+                # Recipe comes from recipe_metadata input, platform/instance from convergence_validation config.
+                CONVERGENCE="${{ inputs.convergence }}"
+                if [ "$CONVERGENCE" = "true" ]; then
+                  echo "🔧 Running CONVERGENCE training mode on SMJOBS"
+
+                  cp scripts/validations/common_validation_config.example.yaml scripts/validations/common_validation_config.yaml
+
+                  # Build convergence command with recipe from recipe_metadata
+                  CONVERGENCE_CMD="python scripts/validations/validation_script_runner.py --convergence"
+                  RECIPE_METADATA="${{ inputs.recipe_metadata }}"
+                  if [ -n "$RECIPE_METADATA" ]; then
+                    CONVERGENCE_CMD="$CONVERGENCE_CMD --fileList $RECIPE_METADATA"
+                  fi
+
+                  set +e
+                  $CONVERGENCE_CMD 2>&1 | tee -a "$VALIDATION_LOG"
+                  RC=${PIPESTATUS[0]}
+                  set -e
+                  if [ $RC -ne 0 ]; then
+                    echo "⚠️ Convergence training failed with exit code $RC"
+                    BATCH_FAILED=1
+                  fi
+
+                  RUNS='[]'
+
+                # ---- NORMAL SMJOBS MODE ----
+                else
+                  # Sort matrix into group by recipe name
+                  RUN_GROUPS="$(jq -c 'sort_by(.recipe) | group_by(.recipe)' <<<"$RUNS")"
+
+                  FIRST_GROUP="$(jq -c '.[0]' <<<"$RUN_GROUPS")"
+                  echo "FIRST_GROUP=$FIRST_GROUP"
+
+                  RECIPES="$(jq -r '.[0].recipe' <<<"$FIRST_GROUP")"
+                  INSTANCES="$(jq -r '[.[].instance_type] | join(",")' <<<"$FIRST_GROUP")"
+
+                  cp scripts/validations/common_validation_config.example.yaml scripts/validations/common_validation_config.yaml
+                  python .github/scripts/validation_helpers.py update-config \
+                    --platform "$PLATFORM" \
+                    --recipe-files $RECIPES \
+                    --config-path scripts/validations/common_validation_config.yaml \
+                    --instance-type "$INSTANCES"
+
+                  # Capture output — pipefail ensures RC reflects Python's exit code, not tee's
+                  set +e
+                  python scripts/validations/validation_script_runner.py 2>&1 | tee -a "$VALIDATION_LOG"
+                  RC=${PIPESTATUS[0]}
+                  set -e
+                  if [ $RC -ne 0 ]; then
+                    echo "⚠️ Recipe $RECIPES failed with exit code $RC, continuing with remaining recipes..."
+                    BATCH_FAILED=1
+                  fi
+
+                  # Remove processed group
+                  RUNS="$(jq -c 'del(.[0]) | add // []' <<<"$RUN_GROUPS")"
+                fi
+
+              fi
+
+
+            # ==================== INCREMENTAL MODE ====================
+            else
+              # Get first run only
+              FIRST_RUN=$(echo "$RUNS" | jq '.[0]')
+              RECIPE=$(echo "$FIRST_RUN" | jq -r '.recipe')
+              INSTANCE=$(echo "$FIRST_RUN" | jq -r '.instance_type')
+
+              echo "Running: $RECIPE on $INSTANCE"
+
+              python scripts/validations/validation_script_runner.py \
+                --fileList "$RECIPE" \
+                --instance_types "$INSTANCE" 2>&1 | tee -a "$VALIDATION_LOG"
+
+              # Remove processed run
+              RUNS=$(echo "$RUNS" | jq 'del(.[0])')
+            fi
+          done
+
+      - name: Parse validation results
+        if: always()
+        run: |
+          PLATFORM="${{ matrix.batch.platform }}"
+          VALIDATION_LOG="validation_output_${{ matrix.batch.batch_id }}.log"
+          RUNS='${{ toJson(matrix.batch.runs) }}'
+
+          if [ ! -f "$VALIDATION_LOG" ]; then
+            echo "⚠️ No validation log found at: $VALIDATION_LOG" | tee -a $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## 📊 Validation Results Summary - Batch ${{ matrix.batch.batch_id }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Recipe | Instance | Platform | Status |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|----------|----------|--------|" >> $GITHUB_STEP_SUMMARY
+            echo "$RUNS" | jq -r '.[] | "| \(.recipe | split("/") | .[-1]) | \(.instance_type) | '"$PLATFORM"' | ⚠️ No Log |"' >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          # Use Python script to parse validation results from logs
+          set +e  # Don't exit on error, we want to capture the summary first
+          CUSTOM_FLAG="${{ inputs.custom_flag }}"
+          if [ -z "$CUSTOM_FLAG" ]; then
+            CUSTOM_FLAG="NA"
+          fi
+
+          python .github/scripts/parse_validation_results.py \
+            --log-file "$VALIDATION_LOG" \
+            --runs-json "$RUNS" \
+            --platform "$PLATFORM" \
+            --custom-flag "$CUSTOM_FLAG" \
+            --output-file validation_summary_${{ matrix.batch.batch_id }}.md
+          PARSE_EXIT_CODE=$?
+          set -e
+
+          # Append the summary to GITHUB_STEP_SUMMARY (do this even if parse failed)
+          if [ -f validation_summary_${{ matrix.batch.batch_id }}.md ]; then
+            cat validation_summary_${{ matrix.batch.batch_id }}.md >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Now exit with the parse script's exit code
+          exit $PARSE_EXIT_CODE
+
+      - name: Upload remaining runs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: remaining-runs-${{ matrix.batch.batch_id }}
+          path: remaining_runs_${{ matrix.batch.batch_id }}.json
+          if-no-files-found: ignore
+
+  cleanup:
+    needs: [orchestrater, validate_batch]
+    if: always()
+    runs-on: [self-hosted, orchestrator]
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.RECIPE_VALIDATION }}
+          aws-region: us-west-2
+
+      - name: Download all remaining runs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: remaining-runs-*
+          merge-multiple: true
+
+      - name: Download overflow runs
+        uses: actions/download-artifact@v4
+        with:
+          name: overflow-runs
+          path: .
+        continue-on-error: true
+
+      - name: Aggregate remaining runs
+        run: |
+          # Collect worker remaining runs (from timed-out batches)
+          if ls remaining_runs_*.json 1>/dev/null 2>&1; then
+            cat remaining_runs_*.json | jq -s 'add' > worker_remaining.json
+          else
+            echo '[]' > worker_remaining.json
+          fi
+
+          # Collect overflow runs (batches that exceeded max_workers)
+          if [ -f overflow_runs.json ]; then
+            echo "Found overflow_runs.json with $(jq 'length' overflow_runs.json) runs"
+          else
+            echo "No overflow runs found"
+            echo '[]' > overflow_runs.json
+          fi
+
+          # Merge both into all_remaining_runs.json
+          jq -s 'add' worker_remaining.json overflow_runs.json > all_remaining_runs.json
+          echo "Total remaining runs: $(jq 'length' all_remaining_runs.json)"
+
+      - name: Delete per-run ASG
+        env:
+          ASG_NAME: ${{ needs.orchestrater.outputs.asg_name }}
+        run: |
+          if [ -z "$ASG_NAME" ]; then
+            echo "⚠️ No ASG name provided (orchestrator may have been skipped). Nothing to delete."
+            exit 0
+          fi
+
+          echo "🗑️ Deleting ASG: ${ASG_NAME} and all its instances..."
+          aws autoscaling delete-auto-scaling-group \
+            --auto-scaling-group-name "${ASG_NAME}" \
+            --force-delete
+
+          echo "✅ ASG ${ASG_NAME} deletion initiated"
+
+          # Wait briefly for instances to start terminating
+          sleep 10
+          REMAINING=$(aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names "${ASG_NAME}" \
+            --query "AutoScalingGroups[0].Instances | length(@)" \
+            --output text 2>/dev/null || echo "0")
+          echo "Instances still terminating: ${REMAINING}"

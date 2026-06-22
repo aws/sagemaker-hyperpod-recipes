@@ -14,8 +14,6 @@ exclusion_patterns:
   - "multi_modal_benchmark_eval$"
   - "llm_judge_eval$"
   - "rubric_llm_judge_eval$"
-  # Full fine-tuning (FFT) recipes are not published to JumpStart
-  - "[_-]fft$"
   - "full_fine_tuning$"
   - "gpu_fine_tuning$"
   - "llama[_-]4[_-]scout"
@@ -27,3 +25,4 @@ exclusion_patterns:
   # Block gpt_oss-0_7_0 and qwen-0_7_0/qwen-3-32b recipes (use verl 0.5.0 versions instead)
   - "gpt_oss-0_7_0/"
   - "qwen-0_7_0/.*qwen-3-32b"
+  - "verl-sft-gpt-oss-20b-lora"

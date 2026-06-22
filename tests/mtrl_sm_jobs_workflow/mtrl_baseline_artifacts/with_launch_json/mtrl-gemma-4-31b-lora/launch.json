@@ -249,39 +249,62 @@
       }
     }
   },
-  "training_recipe.yaml": "display_name: Agentic RFT for Gemma 4 31B Lora IT\nrecipe_version: 1.0.16\nrun:\n  name: '{{name}}'\n  model_type: mtrl\nbatch:\n  training_batch_size: '{{global_batch_size}}'\n  group_size: '{{group_size}}'\n  val_batch_size: null\n  val_group_size: 1\n  val_random_sample: false\nrl:\n  advantage_method: '{{advantage_method}}'\n  advantage_normalization: true\n  gamma: 1.0\n  loss_fn: '{{loss_fn}}'\n  clip_low_threshold: '{{clip_low_threshold}}'\n  clip_high_threshold: '{{clip_high_threshold}}'\nsampling_params:\n  temperature: '{{temperature}}'\n  top_p: '{{sampling_top_p}}'\n  max_tokens: '{{sampling_max_tokens}}'\nval_sampling_params:\n  temperature: 0.0\n  top_p: 1.0\n  max_tokens: '{{sampling_max_tokens}}'\nval_metrics_config:\n  pass_k_values: '{{pass_k_values}}'\n  success_threshold: '{{success_threshold}}'\nschedule:\n  epochs: '{{max_epochs}}'\n  max_steps: '{{max_steps}}'\n  save_every: 1\n  val_every: '{{val_every}}'\n  val_at_start: true\nmodel:\n  model_name: '{{model_name_or_path}}'\n  max_sequence_length: 65536\n  lora_rank: '{{lora_rank}}'\n  lora_alpha: '{{lora_alpha}}'\n  learning_rate: '{{learning_rate}}'\n  adam_beta1: '{{adam_beta1}}'\n  adam_beta2: '{{adam_beta2}}'\n  adam_eps: '{{adam_eps}}'\n  weight_decay: '{{adam_weight_decay}}'\n  grad_clip_norm: '{{adam_grad_clip_norm}}'\nrollout:\n  max_concurrency: '{{rollout_max_concurrency}}'\n  timeout: '{{rollout_timeout}}'\n  max_retries: '{{rollout_max_retries}}'\n  rollout_tps: 5\nasync_config:\n  max_steps_off_policy: '{{max_steps_off_policy}}'\n",
+  "training_recipe.yaml": "async_config:\n  max_steps_off_policy: '{{max_steps_off_policy}}'\nbatch:\n  group_size: '{{group_size}}'\n  training_batch_size: '{{global_batch_size}}'\n  val_batch_size: null\n  val_group_size: 1\n  val_random_sample: false\ndisplay_name: Agentic RFT for Gemma 4 31B Lora IT\nmodel:\n  adam_beta1: '{{adam_beta1}}'\n  adam_beta2: '{{adam_beta2}}'\n  adam_eps: '{{adam_eps}}'\n  grad_clip_norm: '{{adam_grad_clip_norm}}'\n  learning_rate: '{{learning_rate}}'\n  lora_alpha: '{{lora_alpha}}'\n  lora_rank: '{{lora_rank}}'\n  max_sequence_length: 65536\n  model_name: '{{model_name_or_path}}'\n  weight_decay: '{{adam_weight_decay}}'\nrecipe_version: 1.0.16\nrl:\n  advantage_method: '{{advantage_method}}'\n  advantage_normalization: true\n  clip_high_threshold: '{{clip_high_threshold}}'\n  clip_low_threshold: '{{clip_low_threshold}}'\n  gamma: 1.0\n  loss_fn: '{{loss_fn}}'\nrollout:\n  max_concurrency: '{{rollout_max_concurrency}}'\n  max_retries: '{{rollout_max_retries}}'\n  rollout_tps: 5\n  timeout: '{{rollout_timeout}}'\nrun:\n  model_type: mtrl\n  name: '{{name}}'\nsampling_params:\n  max_tokens: '{{sampling_max_tokens}}'\n  temperature: '{{temperature}}'\n  top_p: '{{sampling_top_p}}'\nschedule:\n  epochs: '{{max_epochs}}'\n  max_steps: '{{max_steps}}'\n  save_every: 1\n  val_at_start: true\n  val_every: '{{val_every}}'\nval_metrics_config:\n  pass_k_values: '{{pass_k_values}}'\n  success_threshold: '{{success_threshold}}'\nval_sampling_params:\n  max_tokens: '{{sampling_max_tokens}}'\n  temperature: 0.0\n  top_p: 1.0\n",
   "training_recipe.json": {
     "recipes": {
-      "display_name": "Agentic RFT for Gemma 4 31B Lora IT",
-      "recipe_version": "1.0.16",
-      "run": {
-        "name": "mtrl-gemma-4-31b-lora",
-        "model_type": "mtrl"
+      "async_config": {
+        "max_steps_off_policy": 3
       },
       "batch": {
-        "training_batch_size": 128,
         "group_size": 8,
+        "training_batch_size": 128,
         "val_batch_size": null,
         "val_group_size": 1,
         "val_random_sample": false
       },
+      "display_name": "Agentic RFT for Gemma 4 31B Lora IT",
+      "model": {
+        "adam_beta1": 0.9,
+        "adam_beta2": 0.95,
+        "adam_eps": 1e-08,
+        "grad_clip_norm": 1.0,
+        "learning_rate": 1e-05,
+        "lora_alpha": 64,
+        "lora_rank": 32,
+        "max_sequence_length": 65536,
+        "model_name": "google/gemma-4-31B-it",
+        "weight_decay": 0.0
+      },
+      "recipe_version": "1.0.16",
       "rl": {
         "advantage_method": "group_based",
         "advantage_normalization": true,
-        "gamma": 1.0,
-        "loss_fn": "ppo",
+        "clip_high_threshold": 1.2,
         "clip_low_threshold": 0.8,
-        "clip_high_threshold": 1.2
+        "gamma": 1.0,
+        "loss_fn": "ppo"
+      },
+      "rollout": {
+        "max_concurrency": 96,
+        "max_retries": 3,
+        "rollout_tps": 5,
+        "timeout": 600.0
+      },
+      "run": {
+        "model_type": "mtrl",
+        "name": "mtrl-gemma-4-31b-lora"
       },
       "sampling_params": {
+        "max_tokens": 4096,
         "temperature": 1.0,
-        "top_p": 1.0,
-        "max_tokens": 4096
+        "top_p": 1.0
       },
-      "val_sampling_params": {
-        "temperature": 0.0,
-        "top_p": 1.0,
-        "max_tokens": 4096
+      "schedule": {
+        "epochs": 1,
+        "max_steps": 100,
+        "save_every": 1,
+        "val_at_start": true,
+        "val_every": 10
       },
       "val_metrics_config": {
         "pass_k_values": [
@@ -294,33 +317,10 @@
         ],
         "success_threshold": 1.0
       },
-      "schedule": {
-        "epochs": 1,
-        "max_steps": 100,
-        "save_every": 1,
-        "val_every": 10,
-        "val_at_start": true
-      },
-      "model": {
-        "model_name": "google/gemma-4-31B-it",
-        "max_sequence_length": 65536,
-        "lora_rank": 32,
-        "lora_alpha": 64,
-        "learning_rate": 1e-05,
-        "adam_beta1": 0.9,
-        "adam_beta2": 0.95,
-        "adam_eps": 1e-08,
-        "weight_decay": 0.0,
-        "grad_clip_norm": 1.0
-      },
-      "rollout": {
-        "max_concurrency": 96,
-        "timeout": 600.0,
-        "max_retries": 3,
-        "rollout_tps": 5
-      },
-      "async_config": {
-        "max_steps_off_policy": 3
+      "val_sampling_params": {
+        "max_tokens": 4096,
+        "temperature": 0.0,
+        "top_p": 1.0
       }
     }
   }

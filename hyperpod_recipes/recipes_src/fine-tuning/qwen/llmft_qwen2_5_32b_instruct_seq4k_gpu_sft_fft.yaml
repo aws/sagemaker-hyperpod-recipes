@@ -9,17 +9,17 @@ defaults:
 
 display_name: "Qwen 2.5 32B Instruct Supervised Fine-Tuning Full Fine-Tuning on GPU"
 version: 1.2.1
-instance_types: ['ml.p5.48xlarge']
+instance_types: ['ml.p4de.24xlarge', 'ml.p5.48xlarge']
 
 run:
   name: qwen-2d5-32b
 
 trainer:
-  num_nodes: 2
+  num_nodes: 1
 
 training_config:
   model_config:
     model_name_or_path: "Qwen/Qwen2.5-32B-Instruct"
     model_save_name: SageMaker-FFT/Qwen2.5-32B-Instruct
   training_args:
-    train_batch_size: 16
+    train_batch_size: 32

@@ -8,7 +8,7 @@ defaults:
   - _self_
 
 display_name: "GPT OSS 20B Supervised Fine-Tuning with LoRA on GPU, 4K sequence length"
-version: 2.2.1
+version: 2.3.0
 instance_types: ['ml.p5.48xlarge', 'ml.p5e.48xlarge', 'ml.p5en.48xlarge']
 
 run:
@@ -17,6 +17,13 @@ run:
 training_config:
   model_config:
     model_save_name: SageMaker/gpt-oss-20B-Instruct-Lora
+    peft_config:
+      peft_type: lora
+      target_modules: all-linear
+      target_parameters:
+        - mlp.experts.gate_up_proj
+        - mlp.experts.down_proj
+      lora_dropout: 0.00
 
 elastic_policy:
   is_elastic: false

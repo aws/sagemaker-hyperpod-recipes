@@ -9,7 +9,7 @@ defaults:
 
 display_name: "Llama 3.2 1B Instruct Supervised Fine-Tuning Full Fine-Tuning on GPU"
 version: 1.2.1
-instance_types: ['ml.p4d.24xlarge', 'ml.p4de.24xlarge', 'ml.p5.48xlarge', 'ml.g6.48xlarge', 'ml.g6.12xlarge', 'ml.g6e.12xlarge']
+instance_types: ['ml.p4d.24xlarge', 'ml.p4de.24xlarge', 'ml.p5.48xlarge', 'ml.g6.48xlarge']
 
 run:
   name: llama-3-2-1b-instruct
