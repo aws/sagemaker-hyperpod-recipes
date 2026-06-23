@@ -180,7 +180,7 @@ class K8sValidationLauncher(BaseLauncher):
         job_successful = False
         tokens_per_sec = None
 
-        pod_timeout = 45 if is_verl else 10
+        pod_timeout = 45 if is_verl else 20
         self._wait_for_pod_status(pod_name, "Running", is_verl, timeout_in_minutes=pod_timeout)
 
         # Start log collection in background
@@ -202,10 +202,17 @@ class K8sValidationLauncher(BaseLauncher):
                     job_successful = False
                     break
 
-                # Check if log thread stopped (max errors reached)
+                # Check if log thread stopped (max errors reached or pod exited)
                 if not log_thread.is_alive():
-                    self.logger.info(f"Fast-failing. Log collection stopped for {pod_name}")
-                    job_successful = False
+                    final_status = self._get_job_status(job_name, is_verl)
+                    if any(s in final_status for s in ["SUCCEEDED", "Completed"]):
+                        self.logger.info(f"Log stream ended and job {job_name} completed successfully")
+                        job_successful = True
+                    else:
+                        self.logger.info(
+                            f"Fast-failing. Log collection stopped for {pod_name} (status: {final_status})"
+                        )
+                        job_successful = False
                     break
 
                 time.sleep(poll_sec)

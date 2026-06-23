@@ -1,5 +1,6 @@
 display_name: Qwen3 32B Supervised Fine-Tuning Full Fine-Tuning on GPU
 instance_types:
+- ml.p4de.24xlarge
 - ml.p5.48xlarge
 run:
   hf_access_token: null
@@ -8,7 +9,7 @@ run:
   results_dir: ${base_results_dir}/${.name}
 trainer:
   devices: 8
-  num_nodes: 2
+  num_nodes: 1
 training_config:
   datasets:
     data_dir: null
@@ -100,7 +101,7 @@ training_config:
         state_dict_type: FULL_STATE_DICT
         sync_module_states: true
         use_orig_params: true
-    train_batch_size: 16
+    train_batch_size: 32
     trainer_callbacks:
     - _target_: metering_callback.MeteringCallback
       output_path: /opt/ml/metering

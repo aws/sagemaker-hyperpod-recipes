@@ -13,7 +13,7 @@ defaults:
   - _self_
 
 display_name: "Gemma 4 E4B IT DPO LoRA Fine-Tuning"
-version: 2.0.0
+version: 2.0.1
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
 
 run:

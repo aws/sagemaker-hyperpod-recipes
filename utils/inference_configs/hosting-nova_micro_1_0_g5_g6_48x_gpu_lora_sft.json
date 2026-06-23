@@ -1,43 +1,26 @@
 [
     {
-        "InstanceType": "ml.g5.12xlarge",
+        "InstanceType": "ml.g6.48xlarge",
         "EcrAddress": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-inference-repo:SM-Inference-latest",
         "Environment": {
-            "CONTEXT_LENGTH": "4096",
-            "MAX_CONCURRENCY": "16"
+            "CONTEXT_LENGTH": "32000",
+            "MAX_CONCURRENCY": "4"
         }
     },
     {
-        "InstanceType": "ml.g5.24xlarge",
-        "Profile": "Default",
+        "InstanceType": "ml.g5.12xlarge",
         "EcrAddress": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-inference-repo:SM-Inference-latest",
         "Environment": {
-            "CONTEXT_LENGTH": "8192",
-            "MAX_CONCURRENCY": "16"
+            "CONTEXT_LENGTH": "4000",
+            "MAX_CONCURRENCY": "12"
         }
     },
     {
         "InstanceType": "ml.g6.12xlarge",
         "EcrAddress": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-inference-repo:SM-Inference-latest",
         "Environment": {
-            "CONTEXT_LENGTH": "10000",
-            "MAX_CONCURRENCY": "16"
-        }
-    },
-    {
-        "InstanceType": "ml.g6.24xlarge",
-        "EcrAddress": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-inference-repo:SM-Inference-latest",
-        "Environment": {
-            "CONTEXT_LENGTH": "10000",
-            "MAX_CONCURRENCY": "16"
-        }
-    },
-    {
-        "InstanceType": "ml.g6.48xlarge",
-        "EcrAddress": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-inference-repo:SM-Inference-latest",
-        "Environment": {
-            "CONTEXT_LENGTH": "12000",
-            "MAX_CONCURRENCY": "16"
+            "CONTEXT_LENGTH": "4000",
+            "MAX_CONCURRENCY": "12"
         }
     }
 ]

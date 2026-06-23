@@ -1,19 +1,10 @@
 [
     {
-        "InstanceType": "ml.g5.24xlarge",
-        "Profile": "Default",
+        "InstanceType": "ml.g6.12xlarge",
         "EcrAddress": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-inference-repo:SM-Inference-latest",
         "Environment": {
-            "CONTEXT_LENGTH": "8192",
-            "MAX_CONCURRENCY": "16"
-        }
-    },
-    {
-        "InstanceType": "ml.g6.24xlarge",
-        "EcrAddress": "176779409107.dkr.ecr.us-west-2.amazonaws.com/nova-inference-repo:SM-Inference-latest",
-        "Environment": {
-            "CONTEXT_LENGTH": "10000",
-            "MAX_CONCURRENCY": "16"
+            "CONTEXT_LENGTH": "8000",
+            "MAX_CONCURRENCY": "2"
         }
     }
 ]

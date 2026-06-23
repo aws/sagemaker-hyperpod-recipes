@@ -38,7 +38,8 @@ import pytest
 # ---------------------------------------------------------------------------
 
 TEMPLATE_DIR = Path("launcher/recipe_templatization")
-BASELINE_PATH = Path("tests/launcher/recipe_templatization/baseline_artifacts/override_param_types.json")
+BASELINE_DIR = Path("tests/launcher/recipe_templatization/baseline_artifacts")
+BASELINE_PATH = BASELINE_DIR / "override_param_types.json"
 GOLDEN_WRITE = os.environ.get("GOLDEN_TEST_WRITE", "").lower() in ("true", "1", "yes")
 
 # Nova eval template names — everything else in nova is train
@@ -316,4 +317,53 @@ def test_no_stale_baseline_entries(category):
     assert not stale, (
         f"Parameters in baseline but NOT in any {category} template: {sorted(stale)}. "
         f"Remove them from {BASELINE_PATH} or run with GOLDEN_TEST_WRITE=1."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Test 5: Baseline copies of template parameter files match the live ones
+# ---------------------------------------------------------------------------
+
+
+def _discover_baseline_template_files() -> Dict[str, Path]:
+    """Find all *_recipe_template_parameters.json under baseline_artifacts/."""
+    return {f.name: f for f in BASELINE_DIR.glob("*_recipe_template_parameters.json")}
+
+
+@pytest.mark.parametrize(
+    "framework,live_path",
+    sorted(_discover_template_files().items()),
+    ids=lambda v: v if isinstance(v, str) else v.name,
+)
+def test_baseline_template_files_match_live(framework, live_path):
+    """
+    The *_recipe_template_parameters.json files copied into baseline_artifacts/
+    must be byte-for-byte identical to the live ones under
+    launcher/recipe_templatization/. Any drift means a template was changed
+    without refreshing the baseline copy.
+    """
+    baseline_path = BASELINE_DIR / live_path.name
+    assert baseline_path.exists(), (
+        f"Missing baseline copy of {live_path.name}. " f"Copy {live_path} to {baseline_path} to refresh the baseline."
+    )
+
+    with open(live_path, "r", encoding="utf-8") as f:
+        live_data = json.load(f)
+    with open(baseline_path, "r", encoding="utf-8") as f:
+        baseline_data = json.load(f)
+
+    assert live_data == baseline_data, (
+        f"Baseline copy {baseline_path} drifted from live {live_path}. " f"Re-copy the file to refresh the baseline."
+    )
+
+
+def test_no_stale_baseline_template_files():
+    """Every *_recipe_template_parameters.json in baseline_artifacts/ must
+    correspond to a live template file."""
+    live_names = {p.name for p in _discover_template_files().values()}
+    baseline_names = set(_discover_baseline_template_files().keys())
+
+    stale = baseline_names - live_names
+    assert not stale, (
+        f"Baseline copies with no matching live template: {sorted(stale)}. " f"Remove them from {BASELINE_DIR}."
     )

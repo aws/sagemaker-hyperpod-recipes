@@ -2,8 +2,6 @@ display_name: DeepSeek R1 Distill Qwen 7B Supervised Fine-Tuning Full Fine-Tunin
   on GPU
 instance_types:
 - ml.p5.48xlarge
-- ml.g6.48xlarge
-- ml.g6e.12xlarge
 run:
   hf_access_token: null
   model_type: llm_finetuning_aws

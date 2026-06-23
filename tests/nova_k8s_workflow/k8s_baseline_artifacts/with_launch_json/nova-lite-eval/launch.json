@@ -20,7 +20,7 @@
     "ServerlessMeteringType": "Token-based",
     "Model_ID": "nova-textgeneration-micro",
     "Versions": [
-      "2.2.1"
+      "2.3.0"
     ],
     "OutputConfig": {
       "SageMakerInferenceRecipeName": "default"

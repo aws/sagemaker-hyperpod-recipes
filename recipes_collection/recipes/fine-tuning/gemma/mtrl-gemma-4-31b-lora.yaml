@@ -1,69 +1,59 @@
-display_name: Agentic RFT for Gemma 4 31B Lora IT
-recipe_version: "1.0.16"
-
-run:
-  name: mtrl-gemma-4-31b-lora
-  model_type: mtrl
-
-batch:
-  training_batch_size: 128         # prompts per training step
-  group_size: 8                    # rollouts per prompt for training (GRPO)
-  val_batch_size: null            # val examples per step (null = entire dataset)
-  val_group_size: 1               # rollouts per prompt for val (typically 1 for greedy)
-  val_random_sample: false        # if true, randomly sample each val; if false, use fixed subset
-
-rl:
-  advantage_method: "group_based"  # group_based or monte_carlo
-  advantage_normalization: true
-  gamma: 1.0                      # discount factor for rewards
-  loss_fn: "ppo"                   # importance_sampling, ppo, cispo
-  clip_low_threshold: 0.8           # lower clipping threshold for PPO/CISPO
-  clip_high_threshold: 1.2          # upper clipping threshold for PPO/CISPO
-
-sampling_params:
-  temperature: 1.0
-  top_p: 1.0
-  max_tokens: 4096
-
-val_sampling_params:
-  temperature: 0.0
-  top_p: 1.0
-  max_tokens: 4096
-
-val_metrics_config:
-  pass_k_values:
-    - 1
-    - 2
-    - 4
-    - 8
-    - 16
-    - 32
-  success_threshold: 1.0
-
-schedule:
-  epochs: 1                        # number of passes through dataset
-  max_steps: 100                   # max training steps (stops early if reached)
-  save_every: 1                   # checkpoint save interval (steps)
-  val_every: 10                   # valuation interval (steps)
-  val_at_start: true              # run baseline validation before training
-
-model:
-  model_name: "google/gemma-4-31B-it"
-  max_sequence_length: 65536
-  lora_rank: 32
-  lora_alpha: 64
-  learning_rate: 1e-5
-  adam_beta1: 0.9
-  adam_beta2: 0.95
-  adam_eps: 1e-8
-  weight_decay: 0.0
-  grad_clip_norm: 1.0
-
-rollout:
-  max_concurrency: 96              # max concurrent rollout processes in flight to generator
-  timeout: 600.0                   # max seconds per collection attempt
-  max_retries: 3                   # retry attempts for failed rollouts
-  rollout_tps: 5                   # target rollout invocations per second
-
 async_config:
   max_steps_off_policy: 3
+batch:
+  group_size: 8
+  training_batch_size: 128
+  val_batch_size: null
+  val_group_size: 1
+  val_random_sample: false
+display_name: Agentic RFT for Gemma 4 31B Lora IT
+model:
+  adam_beta1: 0.9
+  adam_beta2: 0.95
+  adam_eps: 1.0e-08
+  grad_clip_norm: 1.0
+  learning_rate: 1.0e-05
+  lora_alpha: 64
+  lora_rank: 32
+  max_sequence_length: 65536
+  model_name: google/gemma-4-31B-it
+  weight_decay: 0.0
+recipe_version: 1.0.16
+rl:
+  advantage_method: group_based
+  advantage_normalization: true
+  clip_high_threshold: 1.2
+  clip_low_threshold: 0.8
+  gamma: 1.0
+  loss_fn: ppo
+rollout:
+  max_concurrency: 96
+  max_retries: 3
+  rollout_tps: 5
+  timeout: 600.0
+run:
+  model_type: mtrl
+  name: mtrl-gemma-4-31b-lora
+sampling_params:
+  max_tokens: 4096
+  temperature: 1.0
+  top_p: 1.0
+schedule:
+  epochs: 1
+  max_steps: 100
+  save_every: 1
+  val_at_start: true
+  val_every: 10
+val_metrics_config:
+  pass_k_values:
+  - 1
+  - 2
+  - 4
+  - 8
+  - 16
+  - 32
+  success_threshold: 1.0
+val_sampling_params:
+  max_tokens: 4096
+  temperature: 0.0
+  top_p: 1.0

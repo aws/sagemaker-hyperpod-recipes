@@ -17,7 +17,7 @@ rejected_key: rejected
 
 train_batch_size: 256
 
-micro_batch_size_per_gpu: null
+micro_batch_size_per_gpu: 4
 
 max_token_len_per_gpu: 8192
 

@@ -1,9 +1,11 @@
 import os
+from functools import lru_cache
 from typing import List
 
 from hyperpod_recipes.recipe import RECIPES_DIR, Recipe
 
 
+@lru_cache(maxsize=1)
 def list_recipes() -> List[Recipe]:
     """
     Returns a list of Recipe objects

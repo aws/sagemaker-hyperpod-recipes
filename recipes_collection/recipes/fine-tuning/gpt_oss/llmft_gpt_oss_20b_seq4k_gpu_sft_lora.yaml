@@ -115,10 +115,13 @@ training_config:
     peft_config:
       bias: none
       lora_alpha: 32
-      lora_dropout: 0.05
+      lora_dropout: 0.0
       peft_type: lora
       r: 16
       target_modules: all-linear
+      target_parameters:
+      - mlp.experts.gate_up_proj
+      - mlp.experts.down_proj
       task_type: CAUSAL_LM
       use_dora: false
   training_args:
@@ -177,4 +180,4 @@ training_config:
     use_tensorboard: logs
     use_wandb: null
     weight_decay: 0.0
-version: 2.2.1
+version: 2.3.0

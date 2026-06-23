@@ -1,0 +1,1477 @@
+{
+    "_comment": [
+        "LLMFT (Large Language Model Fine-Tuning) Recipe Template Parameters Configuration - Unified",
+        "",
+        "This file defines unique templates for each LLMFT recipe type instead of Required/Optional sub-templates.",
+        "Template Types:",
+        "Fine-tuning: llmft_sft_lora, llmft_dpo, llmft_fine_tuning",
+        "",
+        "HOW TO ADD A NEW TEMPLATE:",
+        "",
+        "1. ANALYZE THE RECIPE FILE:",
+        "   - Examine the actual YAML recipe file",
+        "   - Identify ALL parameters that need to be overridden with {{variable}} template syntax",
+        "   - Note the structure and nesting of parameters in the YAML",
+        "",
+        "2. CREATE THE TEMPLATE STRUCTURE:",
+        "   - Template name should follow pattern: llmft_{recipe_type}",
+        "   - Template name should also be a substring in the recipe filename",
+        "   - Must include three main sections: recipe_template, recipe_override_parameters, recipe_metadata_helpers",
+        "",
+        "3. RECIPE_TEMPLATE SECTION:",
+        "   - Mirror the exact YAML structure from the recipe file",
+        "   - Replace actual values with {{variable_name}} template variables",
+        "   - Only include sections that contain parametrizable values",
+        "   - Maintain proper nesting and hierarchy",
+        "",
+        "4. RECIPE_OVERRIDE_PARAMETERS SECTION:",
+        "   - Define each parameter with: type, required, default",
+        "   - Add constraints in scenarios where multiple recipe files using the same template have different value-sets for a parameter",
+        "     Example: Batch sizes can differ based on hardware type (GPU vs TRN). Therefore needs constraint resolution.",
+        "     Look at examples in the llmft templates for hardware-based constraints",
+        "   - Look at constraint resolution patterns section below for conventions.",
+        "",
+        "5. RECIPE_METADATA_HELPERS SECTION:",
+        "   - Just a section for you to add any information for a template which can help you in computing the metadata for a recipe file",
+        "",
+        "6. PARAMETER NAMING CONVENTIONS:",
+        "   - Use snake_case for parameter names",
+        "   - Match exactly with template variables in recipe_template",
+        "",
+        "7. CONSTRAINT RESOLUTION PATTERNS:",
+        "   - conditional_constraints section should follow the following pattern",
+        "     conditional_constraints:{field_to_be_overriden: {metadata_field_to_be_used_as_condition:{constraint_field:constraint_value}}}",
+        "     Ex: For batch size:-  conditional_constraints:{enum:{Hardware:{GPU:[8,16,32,64], TRN:[16,32,64,128]}}}",
+        "   - Only use a recipe metadata field as the constraint_field else you will have to override the base_recipe_template_processor's '_resolve_constraints_using_metadata()'",
+        "",
+        "EXAMPLE MINIMAL TEMPLATE STRUCTURE:",
+        "{",
+        "  'llmft_new_recipe': {",
+        "    'recipe_template': { /* YAML structure with {{variables}} */ },",
+        "    'recipe_override_parameters': { /* parameter definitions */ },",
+        "    'recipe_metadata_helpers': { /* For metadata generation support */ }",
+        "  }",
+        "}",
+        ""
+    ],
+    "templates": {
+        "llmft_sft_lora": {
+            "display_name": "SFT (LoRA)",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "model_config": {
+                        "model_name_or_path": "{{model_name_or_path}}",
+                        "lora_checkpoint_file_path": "{{resume_from_path}}",
+                        "peft_config": {
+                            "r": "{{lora_rank}}",
+                            "lora_alpha": "{{lora_alpha}}",
+                            "lora_dropout": "{{lora_dropout}}"
+                        },
+                        "generation_cfg": {
+                            "temperature": "{{temperature}}"
+                        }
+                    },
+                    "datasets": {
+                        "train_data": {
+                            "name": "{{training_data_name}}",
+                            "file_path": "{{data_path}}"
+                        },
+                        "val_data": {
+                            "name": "{{validation_data_name}}",
+                            "file_path": "{{validation_data_path}}"
+                        },
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "training_args": {
+                        "max_epochs": "{{max_epochs}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "training_dir": "{{output_path}}",
+                        "resume_checkpoint_path": "{{resume_from_path}}",
+                        "learning_rate": "{{learning_rate}}",
+                        "lr_scheduler": "{{lr_scheduler}}",
+                        "lr_warmup_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "gradient_clipping": "{{gradient_clipping}}",
+                        "max_len": "{{dataset_max_len}}",
+                        "seed": "{{seed}}",
+                        "logging_steps": "{{logging_steps}}",
+                        "merge_weights": "{{merge_weights}}",
+                        "gradient_clipping_threshold": "{{gradient_clipping_threshold}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llmft-sft-lora-job"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "training_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 5,
+                    "conditional_constraints": {
+                        "default": {
+                            "CustomizationTechnique": {
+                                "SFT": 5,
+                                "default": 5
+                            }
+                        }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset."
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
+                    "default": 8,
+                    "category": "hyperparameter",
+                    "description": "Total number of training samples processed per optimizer step across all compute instances."
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 5e-07,
+                    "max": 0.0001,
+                    "default": 0.0001,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO."
+                },
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ],
+                    "category": "hyperparameter",
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero."
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value."
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights."
+                },
+                "gradient_clipping": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true,
+                    "category": "hyperparameter",
+                    "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients."
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 256,
+                    "max": 131072,
+                    "default": 4096,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated."
+                },
+                "seed": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 2147483647,
+                    "default": 42,
+                    "category": "hyperparameter",
+                    "description": "Random seed for reproducibility of data shuffling and weight initialization."
+                },
+                "logging_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1,
+                    "category": "hyperparameter",
+                    "description": "Frequency in optimizer steps at which training metrics are logged."
+                },
+                "lora_rank": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 16,
+                    "category": "hyperparameter",
+                    "description": "Dimensionality of the low-rank decomposition matrices. Lower rank means fewer trainable parameters."
+                },
+                "lora_dropout": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.05,
+                    "category": "hyperparameter",
+                    "description": "Dropout probability applied to LoRA adapter layers for regularization."
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "LoRA scaling factor. The effective learning rate for adapters scales as alpha/rank."
+                },
+                "merge_weights": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true,
+                    "category": "hyperparameter",
+                    "description": "When enabled, merges LoRA adapter weights into the base model after training."
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9,
+                    "category": "hyperparameter",
+                    "description": "Fraction of the dataset allocated to training versus validation."
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "default"
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.6,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity."
+                },
+                "gradient_clipping_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 5.0,
+                    "default": 1.0,
+                    "category": "hyperparameter",
+                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "sft": "SFT"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p4d.24xlarge",
+                        "ml.p5.48xlarge",
+                        "ml.g5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "llmft_dpo": {
+            "display_name": "DPO (LoRA)",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "model_config": {
+                        "model_name_or_path": "{{model_name_or_path}}",
+                        "lora_checkpoint_file_path": "{{resume_from_path}}",
+                        "peft_config": {
+                            "r": "{{lora_rank}}",
+                            "lora_alpha": "{{lora_alpha}}",
+                            "lora_dropout": "{{lora_dropout}}"
+                        },
+                        "generation_cfg": {
+                            "temperature": "{{temperature}}"
+                        }
+                    },
+                    "datasets": {
+                        "train_data": {
+                            "name": "{{training_data_name}}",
+                            "file_path": "{{data_path}}"
+                        },
+                        "val_data": {
+                            "name": "{{validation_data_name}}",
+                            "file_path": "{{validation_data_path}}"
+                        },
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "training_args": {
+                        "beta": "{{adam_beta}}",
+                        "max_epochs": "{{max_epochs}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "training_dir": "{{output_path}}",
+                        "resume_checkpoint_path": "{{resume_from_path}}",
+                        "learning_rate": "{{learning_rate}}",
+                        "lr_scheduler": "{{lr_scheduler}}",
+                        "lr_warmup_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "gradient_clipping": "{{gradient_clipping}}",
+                        "max_len": "{{dataset_max_len}}",
+                        "seed": "{{seed}}",
+                        "logging_steps": "{{logging_steps}}",
+                        "merge_weights": "{{merge_weights}}",
+                        "gradient_clipping_threshold": "{{gradient_clipping_threshold}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llmft-dpo-job"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "training_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 3,
+                    "conditional_constraints": {
+                        "default": {
+                            "CustomizationTechnique": {
+                                "DPO": 3,
+                                "default": 3
+                            }
+                        }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset."
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 16,
+                    "category": "hyperparameter",
+                    "description": "Total number of training samples processed per optimizer step across all compute instances."
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 5e-07,
+                    "max": 0.0001,
+                    "default": 0.0001,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO."
+                },
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ],
+                    "category": "hyperparameter",
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero."
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value."
+                },
+                "adam_beta": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.001,
+                    "max": 0.1,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights."
+                },
+                "gradient_clipping": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true,
+                    "category": "hyperparameter",
+                    "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients."
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 256,
+                    "max": 131072,
+                    "default": 4096,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated."
+                },
+                "seed": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 2147483647,
+                    "default": 42,
+                    "category": "hyperparameter",
+                    "description": "Random seed for reproducibility of data shuffling and weight initialization."
+                },
+                "logging_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1,
+                    "category": "hyperparameter",
+                    "description": "Frequency in optimizer steps at which training metrics are logged."
+                },
+                "lora_rank": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 16,
+                    "category": "hyperparameter",
+                    "description": "Dimensionality of the low-rank decomposition matrices. Lower rank means fewer trainable parameters."
+                },
+                "lora_dropout": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.05,
+                    "category": "hyperparameter",
+                    "description": "Dropout probability applied to LoRA adapter layers for regularization."
+                },
+                "lora_alpha": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128,
+                        256
+                    ],
+                    "default": 32,
+                    "category": "hyperparameter",
+                    "description": "LoRA scaling factor. The effective learning rate for adapters scales as alpha/rank."
+                },
+                "merge_weights": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true,
+                    "category": "hyperparameter",
+                    "description": "When enabled, merges LoRA adapter weights into the base model after training."
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9,
+                    "category": "hyperparameter",
+                    "description": "Fraction of the dataset allocated to training versus validation."
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "default"
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.6,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity."
+                },
+                "gradient_clipping_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 5.0,
+                    "default": 1.0,
+                    "category": "hyperparameter",
+                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "dpo": "DPO"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p4d.24xlarge",
+                        "ml.p5.48xlarge",
+                        "ml.g5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "llmft_fine_tuning": {
+            "display_name": "Fine-Tuning",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "model_config": {
+                        "model_name_or_path": "{{model_name_or_path}}",
+                        "lora_checkpoint_file_path": "{{resume_from_path}}",
+                        "generation_cfg": {
+                            "temperature": "{{temperature}}"
+                        }
+                    },
+                    "datasets": {
+                        "train_data": {
+                            "name": "{{training_data_name}}",
+                            "file_path": "{{data_path}}"
+                        },
+                        "val_data": {
+                            "name": "{{validation_data_name}}",
+                            "file_path": "{{validation_data_path}}"
+                        },
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "training_args": {
+                        "max_epochs": "{{max_epochs}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "training_dir": "{{output_path}}",
+                        "resume_checkpoint_path": "{{resume_from_path}}",
+                        "learning_rate": "{{learning_rate}}",
+                        "lr_scheduler": "{{lr_scheduler}}",
+                        "lr_warmup_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "gradient_clipping": "{{gradient_clipping}}",
+                        "max_len": "{{dataset_max_len}}",
+                        "seed": "{{seed}}",
+                        "logging_steps": "{{logging_steps}}",
+                        "gradient_clipping_threshold": "{{gradient_clipping_threshold}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llmft-fine-tuning-job"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "training_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1,
+                    "conditional_constraints": {
+                        "default": {
+                            "CustomizationTechnique": {
+                                "SFT": 1,
+                                "default": 1
+                            }
+                        }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset."
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 16,
+                    "category": "hyperparameter",
+                    "description": "Total number of training samples processed per optimizer step across all compute instances."
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 5e-07,
+                    "max": 0.0001,
+                    "default": 0.0001,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO."
+                },
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ],
+                    "category": "hyperparameter",
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero."
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value."
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights."
+                },
+                "gradient_clipping": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true,
+                    "category": "hyperparameter",
+                    "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients."
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 256,
+                    "max": 131072,
+                    "default": 4096,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated."
+                },
+                "seed": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 2147483647,
+                    "default": 42,
+                    "category": "hyperparameter",
+                    "description": "Random seed for reproducibility of data shuffling and weight initialization."
+                },
+                "logging_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1,
+                    "category": "hyperparameter",
+                    "description": "Frequency in optimizer steps at which training metrics are logged."
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9,
+                    "category": "hyperparameter",
+                    "description": "Fraction of the dataset allocated to training versus validation."
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "default"
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.6,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity."
+                },
+                "gradient_clipping_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 5.0,
+                    "default": 1.0,
+                    "category": "hyperparameter",
+                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "sft": "SFT"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p4d.24xlarge",
+                        "ml.p5.48xlarge",
+                        "ml.g5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "llmft_sft_fft": {
+            "display_name": "SFT (FFT)",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "model_config": {
+                        "model_name_or_path": "{{model_name_or_path}}",
+                        "generation_cfg": {
+                            "max_new_tokens": "{{max_response_length}}",
+                            "temperature": "{{temperature}}"
+                        }
+                    },
+                    "datasets": {
+                        "train_data": {
+                            "name": "{{training_data_name}}",
+                            "file_path": "{{data_path}}"
+                        },
+                        "val_data": {
+                            "name": "{{validation_data_name}}",
+                            "file_path": "{{validation_data_path}}"
+                        },
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "training_args": {
+                        "max_epochs": "{{max_epochs}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "training_dir": "{{output_path}}",
+                        "resume_checkpoint_path": "{{resume_from_path}}",
+                        "learning_rate": "{{learning_rate}}",
+                        "lr_scheduler": "{{lr_scheduler}}",
+                        "lr_warmup_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "gradient_clipping": "{{gradient_clipping}}",
+                        "max_len": "{{dataset_max_len}}",
+                        "seed": "{{seed}}",
+                        "logging_steps": "{{logging_steps}}",
+                        "gradient_clipping_threshold": "{{gradient_clipping_threshold}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llmft-sft-lora-job"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "training_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 5,
+                    "conditional_constraints": {
+                        "default": {
+                            "CustomizationTechnique": {
+                                "SFT": 5,
+                                "default": 5
+                            }
+                        }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset."
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        8,
+                        16,
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
+                    "default": 8,
+                    "category": "hyperparameter",
+                    "description": "Total number of training samples processed per optimizer step across all compute instances."
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 5e-07,
+                    "max": 0.0001,
+                    "default": 0.0001,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO."
+                },
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ],
+                    "category": "hyperparameter",
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero."
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value."
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights."
+                },
+                "gradient_clipping": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true,
+                    "category": "hyperparameter",
+                    "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients."
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 256,
+                    "max": 131072,
+                    "default": 4096,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated."
+                },
+                "seed": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 2147483647,
+                    "default": 42,
+                    "category": "hyperparameter",
+                    "description": "Random seed for reproducibility of data shuffling and weight initialization."
+                },
+                "logging_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1,
+                    "category": "hyperparameter",
+                    "description": "Frequency in optimizer steps at which training metrics are logged."
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 100,
+                    "max": 200000,
+                    "default": 2048,
+                    "category": "hyperparameter",
+                    "description": "Maximum number of tokens allowed for the generated response portion."
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9,
+                    "category": "hyperparameter",
+                    "description": "Fraction of the dataset allocated to training versus validation."
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "default"
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.6,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity."
+                },
+                "gradient_clipping_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 5.0,
+                    "default": 1.0,
+                    "category": "hyperparameter",
+                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "sft": "SFT"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p4d.24xlarge",
+                        "ml.p5.48xlarge",
+                        "ml.g5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "llmft_dpo_fft": {
+            "display_name": "DPO (FFT)",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "model_config": {
+                        "model_name_or_path": "{{model_name_or_path}}",
+                        "generation_cfg": {
+                            "max_new_tokens": "{{max_response_length}}",
+                            "temperature": "{{temperature}}"
+                        }
+                    },
+                    "datasets": {
+                        "train_data": {
+                            "name": "{{training_data_name}}",
+                            "file_path": "{{data_path}}"
+                        },
+                        "val_data": {
+                            "name": "{{validation_data_name}}",
+                            "file_path": "{{validation_data_path}}"
+                        },
+                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                    },
+                    "training_args": {
+                        "beta": "{{adam_beta}}",
+                        "max_epochs": "{{max_epochs}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "training_dir": "{{output_path}}",
+                        "resume_checkpoint_path": "{{resume_from_path}}",
+                        "learning_rate": "{{learning_rate}}",
+                        "lr_scheduler": "{{lr_scheduler}}",
+                        "lr_warmup_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "gradient_clipping": "{{gradient_clipping}}",
+                        "max_len": "{{dataset_max_len}}",
+                        "seed": "{{seed}}",
+                        "logging_steps": "{{logging_steps}}",
+                        "gradient_clipping_threshold": "{{gradient_clipping_threshold}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llmft-dpo-job"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "training_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "validation_data_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "max_epochs": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 3,
+                    "conditional_constraints": {
+                        "default": {
+                            "CustomizationTechnique": {
+                                "DPO": 3,
+                                "default": 3
+                            }
+                        }
+                    },
+                    "category": "hyperparameter",
+                    "description": "Number of complete passes through the entire training dataset."
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        16,
+                        32,
+                        64,
+                        128
+                    ],
+                    "default": 16,
+                    "category": "hyperparameter",
+                    "description": "Total number of training samples processed per optimizer step across all compute instances."
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 5e-07,
+                    "max": 0.0001,
+                    "default": 0.0001,
+                    "category": "hyperparameter",
+                    "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO."
+                },
+                "lr_scheduler": {
+                    "type": "string",
+                    "required": true,
+                    "default": "cosine",
+                    "enum": [
+                        "cosine",
+                        "constant"
+                    ],
+                    "category": "hyperparameter",
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero."
+                },
+                "lr_warmup_steps_ratio": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0,
+                    "max": 1,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value."
+                },
+                "adam_beta": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.001,
+                    "max": 0.1,
+                    "default": 0.1,
+                    "category": "hyperparameter",
+                    "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
+                },
+                "weight_decay": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.0,
+                    "category": "hyperparameter",
+                    "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights."
+                },
+                "gradient_clipping": {
+                    "type": "boolean",
+                    "required": true,
+                    "default": true,
+                    "category": "hyperparameter",
+                    "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients."
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 256,
+                    "max": 131072,
+                    "default": 4096,
+                    "category": "hyperparameter",
+                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated."
+                },
+                "seed": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 0,
+                    "max": 2147483647,
+                    "default": 42,
+                    "category": "hyperparameter",
+                    "description": "Random seed for reproducibility of data shuffling and weight initialization."
+                },
+                "logging_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 100,
+                    "default": 1,
+                    "category": "hyperparameter",
+                    "description": "Frequency in optimizer steps at which training metrics are logged."
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 100,
+                    "max": 200000,
+                    "default": 2048,
+                    "category": "hyperparameter",
+                    "description": "Maximum number of tokens allowed for the generated response portion."
+                },
+                "train_val_split_ratio": {
+                    "type": "float",
+                    "required": false,
+                    "min": 0.0,
+                    "max": 1.0,
+                    "default": 0.9,
+                    "category": "hyperparameter",
+                    "description": "Fraction of the dataset allocated to training versus validation."
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "output_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": ""
+                },
+                "resume_from_path": {
+                    "type": "string",
+                    "required": false,
+                    "default": ""
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": true,
+                    "default": "default"
+                },
+                "temperature": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 2.0,
+                    "default": 0.6,
+                    "category": "hyperparameter",
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity."
+                },
+                "gradient_clipping_threshold": {
+                    "type": "float",
+                    "required": true,
+                    "min": 0.0,
+                    "max": 5.0,
+                    "default": 1.0,
+                    "category": "hyperparameter",
+                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "dpo": "DPO"
+                },
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p4d.24xlarge",
+                        "ml.p5.48xlarge",
+                        "ml.g5.48xlarge"
+                    ]
+                }
+            }
+        }
+    }
+}

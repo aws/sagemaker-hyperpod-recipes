@@ -18,7 +18,7 @@
     "SequenceLength": "8K",
     "Model_ID": "nova-textgeneration-pro",
     "Versions": [
-      "1.1.1"
+      "1.2.0"
     ],
     "OutputConfig": {
       "SageMakerInferenceRecipeName": "default"

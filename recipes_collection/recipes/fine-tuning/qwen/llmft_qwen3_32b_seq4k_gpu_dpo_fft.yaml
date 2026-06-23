@@ -1,5 +1,6 @@
 display_name: Qwen3 32B Direct Preference Optimization Full Fine-Tuning on GPU
 instance_types:
+- ml.p4de.24xlarge
 - ml.p5.48xlarge
 run:
   hf_access_token: null
