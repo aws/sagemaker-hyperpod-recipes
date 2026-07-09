@@ -141,5 +141,14 @@
     "verl-sft-gemma-4-31b-it-lora": "huggingface-vlm-gemma-4-31b-it",
     "verl-sft-gemma-4-26b-it-lora": "huggingface-vlm-gemma-4-26b-a4b-it",
     "verl-sft-gemma-4-e4b-it-lora": "huggingface-vlm-gemma-4-e4b-it",
+    "verl-grpo-rlvr-gemma-4-31b-it-fft": "huggingface-vlm-gemma-4-31b-it",
+    "verl-grpo-rlvr-gemma-4-26b-it-fft": "huggingface-vlm-gemma-4-26b-a4b-it",
+    "verl-grpo-rlvr-gemma-4-e4b-it-fft": "huggingface-vlm-gemma-4-e4b-it",
+    "verl-grpo-rlaif-gemma-4-31b-it-fft": "huggingface-vlm-gemma-4-31b-it",
+    "verl-grpo-rlaif-gemma-4-26b-it-fft": "huggingface-vlm-gemma-4-26b-a4b-it",
+    "verl-grpo-rlaif-gemma-4-e4b-it-fft": "huggingface-vlm-gemma-4-e4b-it",
+    "verl-sft-gemma-4-31b-it-fft": "huggingface-vlm-gemma-4-31b-it",
+    "verl-sft-gemma-4-26b-it-fft": "huggingface-vlm-gemma-4-26b-a4b-it",
+    "verl-sft-gemma-4-e4b-it-fft": "huggingface-vlm-gemma-4-e4b-it",
     "verl-sft-gpt-oss-20b-lora": "openai-reasoning-gpt-oss-20b"
 }
