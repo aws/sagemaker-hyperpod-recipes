@@ -4,12 +4,12 @@ training_config:
   model:
     path: google/gemma-4-E4B-it
     trust_remote_code: true
-    use_liger: true
-    use_fused_kernels: false
+    use_liger: false
+    use_fused_kernels: true
     target_modules: .*q_proj.*|.*k_proj.*|.*v_proj.*|.*o_proj.*|.*gate_proj.*|.*up_proj.*|.*down_proj.*
     exclude_modules: .*vision_tower.*|.*embed_vision.*|.*embed_audio.*|.*audio_tower.*|.*router.*|.*experts.*
     override_config:
       attn_implementation: flash_attention_2
     tiled_mlp:
-      enabled: true
+      enabled: false
       num_shards: 4

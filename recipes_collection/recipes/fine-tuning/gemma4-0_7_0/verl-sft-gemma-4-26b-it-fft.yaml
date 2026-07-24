@@ -69,7 +69,7 @@ training_config:
     custom_chat_template: null
     enable_activation_offload: false
     enable_gradient_checkpointing: true
-    exclude_modules: null
+    exclude_modules: .*vision_tower.*|.*embed_vision.*|.*embed_audio.*|.*audio_tower.*|.*router.*|.*experts.*
     external_lib: null
     fused_kernel_options:
       impl_backend: torch
@@ -80,7 +80,7 @@ training_config:
     override_config:
       attn_implementation: flash_attention_2
     path: google/gemma-4-26B-A4B-it
-    target_modules: all-linear
+    target_modules: .*q_proj.*|.*k_proj.*|.*v_proj.*|.*o_proj.*|.*gate_proj.*|.*up_proj.*|.*down_proj.*
     tiled_mlp:
       enabled: false
       num_shards: 4
@@ -159,7 +159,7 @@ training_config:
     resume_mode: auto
     save_freq: after_each_epoch
     test_freq: 5
-    total_epochs: 3
+    total_epochs: 1
     total_training_steps: null
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback

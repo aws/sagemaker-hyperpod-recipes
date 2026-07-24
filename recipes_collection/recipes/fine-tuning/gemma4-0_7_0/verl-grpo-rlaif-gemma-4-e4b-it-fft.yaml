@@ -678,7 +678,7 @@ training_config:
     rollout_data_dir: null
     save_freq: 5
     test_freq: 5
-    total_epochs: 3
+    total_epochs: 1
     total_training_steps: null
     use_custom_rollouts: false
     use_legacy_worker_impl: auto

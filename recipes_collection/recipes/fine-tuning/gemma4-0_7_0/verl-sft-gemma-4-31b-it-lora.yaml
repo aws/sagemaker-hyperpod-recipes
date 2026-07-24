@@ -30,7 +30,7 @@ training_config:
       path: null
     ignore_input_ids_mismatch: false
     max_length: 32768
-    max_token_len_per_gpu: 33280
+    max_token_len_per_gpu: 32768
     messages_key: messages
     micro_batch_size_per_gpu: 1
     pad_mode: no_padding
@@ -75,8 +75,8 @@ training_config:
       impl_backend: torch
     hf_config_path: null
     lora_adapter_path: null
-    lora_alpha: 128
-    lora_rank: 64
+    lora_alpha: 64
+    lora_rank: 32
     override_config:
       attn_implementation: flash_attention_2
     path: google/gemma-4-31B-it
@@ -159,9 +159,9 @@ training_config:
     resume_mode: auto
     save_freq: after_each_epoch
     test_freq: 5
-    total_epochs: 3
+    total_epochs: 1
     total_training_steps: null
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.1
+version: 2.0.3

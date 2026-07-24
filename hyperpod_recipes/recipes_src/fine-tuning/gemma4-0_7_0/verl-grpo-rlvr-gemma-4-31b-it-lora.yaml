@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Gemma 4 31B IT GRPO RLVR Fine-Tuning with LoRA (Text)
-version: 2.0.1
+version: 2.0.3
 instance_types:
   - ml.p5.48xlarge
 run:
@@ -42,7 +42,7 @@ training_config:
       clip_ratio_high: 0.28
       ppo_mini_batch_size: 64
       ppo_micro_batch_size_per_gpu: 2
-      ppo_max_token_len_per_gpu: 20992
+      ppo_max_token_len_per_gpu: 20480
       strategy: fsdp2
       freeze_vision_tower: true
       fsdp_config:
@@ -59,7 +59,7 @@ training_config:
     ref:
       log_prob_micro_batch_size_per_gpu: 1
       log_prob_use_dynamic_bsz: true
-      log_prob_max_token_len_per_gpu: 20992
+      log_prob_max_token_len_per_gpu: 20480
       fsdp_config:
         param_offload: true
         strategy: fsdp2
@@ -72,8 +72,8 @@ training_config:
       response_length: 4096
       tensor_model_parallel_size: 8
       gpu_memory_utilization: 0.6
-      max_model_len: 20992
-      max_num_batched_tokens: 20992
+      max_model_len: 20480
+      max_num_batched_tokens: 20480
       enable_chunked_prefill: true
       enable_prefix_caching: true
       free_cache_engine: true
@@ -81,7 +81,7 @@ training_config:
       skip_tokenizer_init: true
       log_prob_micro_batch_size_per_gpu: 1
       log_prob_use_dynamic_bsz: true
-      log_prob_max_token_len_per_gpu: 20992
+      log_prob_max_token_len_per_gpu: 20480
       disable_log_stats: false
       merge_lora_for_inference: true
 
@@ -109,8 +109,8 @@ training_config:
       - console
       - mlflow
     test_freq: 5
-    total_epochs: 3
-    save_freq: 20
+    total_epochs: 1
+    save_freq: 5
     default_local_dir: /opt/ml/model
     merge_lora_on_final_save: true
 
