@@ -7,6 +7,7 @@ defaults:
   - /hydra_config/verl-0_7_0/sft/trainer/default
   - /hydra_config/verl-0_7_0/profiler/profiler
   - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/model_config/gemma-4-26b-a4b-it
   - _self_
 
 display_name: "Gemma 4 26B IT SFT Full Fine-Tuning (Text)"
@@ -31,13 +32,6 @@ training_config:
       enable_thinking: false
 
   model:
-    path: google/gemma-4-26B-A4B-it
-    trust_remote_code: true
-    enable_gradient_checkpointing: true
-    use_remove_padding: true
-    use_fused_kernels: true
-    override_config:
-      attn_implementation: flash_attention_2
     lora_rank: 0
 
   engine:
@@ -55,7 +49,7 @@ training_config:
   trainer:
     project_name: gemma4-sft
     experiment_name: gemma-4-26b-it-sft-fft
-    total_epochs: 3
+    total_epochs: 1
     test_freq: 5
     resume_mode: auto
 

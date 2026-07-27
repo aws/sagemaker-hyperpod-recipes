@@ -36,7 +36,7 @@ training_config:
     dtype: bfloat16
 
   optim:
-    lr: 5.0e-5
+    lr: 1.0e-05
     weight_decay: 0.0
     lr_warmup_steps_ratio: 0.1
     min_lr_ratio: 0.1

@@ -102,7 +102,7 @@ training_config:
         loss_mode: vanilla
         ppo_kl_coef: 0.1
       ppo_epochs: 1
-      ppo_max_token_len_per_gpu: 20992
+      ppo_max_token_len_per_gpu: 20480
       ppo_micro_batch_size: null
       ppo_micro_batch_size_per_gpu: 2
       ppo_mini_batch_size: 64
@@ -201,7 +201,7 @@ training_config:
         use_torch_compile: true
         wrap_policy:
           min_num_params: 0
-      log_prob_max_token_len_per_gpu: 20992
+      log_prob_max_token_len_per_gpu: 20480
       log_prob_micro_batch_size: null
       log_prob_micro_batch_size_per_gpu: 1
       log_prob_use_dynamic_bsz: true
@@ -269,13 +269,13 @@ training_config:
       ignore_eos: false
       layered_summon: false
       load_format: safetensors
-      log_prob_max_token_len_per_gpu: 20992
+      log_prob_max_token_len_per_gpu: 20480
       log_prob_micro_batch_size: null
       log_prob_micro_batch_size_per_gpu: 1
       log_prob_use_dynamic_bsz: true
       logprobs_mode: processed_logprobs
-      max_model_len: 20992
-      max_num_batched_tokens: 20992
+      max_model_len: 20480
+      max_num_batched_tokens: 20480
       max_num_seqs: 1024
       merge_lora_for_inference: true
       mode: async
@@ -677,9 +677,9 @@ training_config:
     resume_from_path: null
     resume_mode: auto
     rollout_data_dir: null
-    save_freq: 20
+    save_freq: 5
     test_freq: 5
-    total_epochs: 3
+    total_epochs: 1
     total_training_steps: null
     use_custom_rollouts: false
     use_legacy_worker_impl: auto
@@ -688,4 +688,4 @@ training_config:
     validation_data_dir: null
   transfer_queue:
     enable: false
-version: 2.0.1
+version: 2.0.3

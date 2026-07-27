@@ -106,7 +106,7 @@ training_config:
       - mlflow
     nnodes: 2
     test_freq: 5
-    total_epochs: 3
+    total_epochs: 1
     save_freq: 5
     default_local_dir: /opt/ml/model
     merge_lora_on_final_save: true
