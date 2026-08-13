@@ -17,6 +17,9 @@ training_config:
     - chat_template_name: null
       ignore_prompt_labels: true
       type: Seq2SeqTokensProcessor
+    - tokens_labels:
+      - input_ids
+      type: SequenceLengthFilter
     - column_names:
       - messages
       type: DropColumns
@@ -109,4 +112,4 @@ training_config:
     use_tensorboard: logs
     use_wandb: null
     weight_decay: 0.0
-version: 1.1.1
+version: 1.1.4

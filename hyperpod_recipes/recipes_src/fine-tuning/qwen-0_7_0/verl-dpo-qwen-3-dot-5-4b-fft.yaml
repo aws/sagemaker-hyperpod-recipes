@@ -12,8 +12,8 @@ defaults:
   - _self_
 
 display_name: "Qwen 3.5 4B DPO Full Fine-Tuning"
-version: 2.0.3
-instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge", "ml.p4d.24xlarge"]
+version: 2.0.5
+instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
 
 run:
   name: verl-dpo-qwen-3-dot-5-4b-fft
@@ -26,11 +26,7 @@ training_config:
     train_batch_size: 32
     max_length: 4096
     max_token_len_per_gpu: 16384
-    micro_batch_size_per_gpu: 4
-
   engine:
-    use_torch_compile: true
-    model_dtype: bfloat16
     strategy: fsdp2
 
   optim:
@@ -42,7 +38,5 @@ training_config:
 
   trainer:
     beta: 0.01
-    loss_type: sigmoid
     total_epochs: 3
-    save_freq: after_each_epoch
     test_freq: 5

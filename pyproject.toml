@@ -41,6 +41,11 @@ dependencies = [
     "pathspec",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "ruamel.yaml>=0.17",
+]
+
 [project.urls]
 Homepage = "https://github.com/aws/sagemaker-hyperpod-recipes"
 Repository = "https://github.com/aws/sagemaker-hyperpod-recipes"

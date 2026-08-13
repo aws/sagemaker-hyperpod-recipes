@@ -112,37 +112,60 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "llmft-sft-lora-job"
+                    "default": "llmft-sft-lora-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "training_data_name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Name identifier for the training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Name identifier for the validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -150,16 +173,11 @@
                     "min": 1,
                     "max": 100,
                     "default": 5,
-                    "conditional_constraints": {
-                        "default": {
-                            "CustomizationTechnique": {
-                                "SFT": 5,
-                                "default": 5
-                            }
-                        }
-                    },
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -176,7 +194,10 @@
                     ],
                     "default": 8,
                     "category": "hyperparameter",
-                    "description": "Total number of training samples processed per optimizer step across all compute instances."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -185,7 +206,10 @@
                     "max": 0.0001,
                     "default": 0.0001,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_scheduler": {
                     "type": "string",
@@ -196,7 +220,8 @@
                         "constant"
                     ],
                     "category": "hyperparameter",
-                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero."
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
+                    "visibility_tier": "tertiary"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -205,7 +230,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -214,14 +242,16 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "gradient_clipping": {
                     "type": "boolean",
                     "required": true,
                     "default": true,
                     "category": "hyperparameter",
-                    "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients."
+                    "description": "Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training.",
+                    "visibility_tier": "tertiary"
                 },
                 "dataset_max_len": {
                     "type": "integer",
@@ -230,7 +260,10 @@
                     "max": 131072,
                     "default": 4096,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated."
+                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "seed": {
                     "type": "integer",
@@ -239,7 +272,8 @@
                     "max": 2147483647,
                     "default": 42,
                     "category": "hyperparameter",
-                    "description": "Random seed for reproducibility of data shuffling and weight initialization."
+                    "description": "Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations.",
+                    "visibility_tier": "tertiary"
                 },
                 "logging_steps": {
                     "type": "integer",
@@ -248,7 +282,8 @@
                     "max": 100,
                     "default": 1,
                     "category": "hyperparameter",
-                    "description": "Frequency in optimizer steps at which training metrics are logged."
+                    "description": "Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead.",
+                    "visibility_tier": "tertiary"
                 },
                 "lora_rank": {
                     "type": "integer",
@@ -262,7 +297,10 @@
                     ],
                     "default": 16,
                     "category": "hyperparameter",
-                    "description": "Dimensionality of the low-rank decomposition matrices. Lower rank means fewer trainable parameters."
+                    "description": "Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LoRA rank",
+                    "hint": "Select from available rank values"
                 },
                 "lora_dropout": {
                     "type": "float",
@@ -271,7 +309,8 @@
                     "max": 1.0,
                     "default": 0.05,
                     "category": "hyperparameter",
-                    "description": "Dropout probability applied to LoRA adapter layers for regularization."
+                    "description": "Dropout probability applied to LoRA adapter layers for regularization. Typically set to 0.05 for SFT/DPO, and 0 for Mixture-of-Experts models.",
+                    "visibility_tier": "tertiary"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -285,14 +324,19 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for adapters scales as alpha/rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "merge_weights": {
                     "type": "boolean",
                     "required": true,
                     "default": true,
                     "category": "hyperparameter",
-                    "description": "When enabled, merges LoRA adapter weights into the base model after training."
+                    "description": "When enabled, merges LoRA adapter weights into the base model weights after training, producing a single consolidated model. Disable if you need to keep adapters separate (e.g., for model merging workflows).",
+                    "visibility_tier": "advanced",
+                    "display_name": "Merge weights"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -301,32 +345,52 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "default"
+                    "default": "default",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "temperature": {
                     "type": "float",
@@ -335,7 +399,10 @@
                     "max": 2.0,
                     "default": 0.6,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "gradient_clipping_threshold": {
                     "type": "float",
@@ -344,7 +411,8 @@
                     "max": 5.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down."
+                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down.",
+                    "visibility_tier": "tertiary"
                 }
             },
             "recipe_metadata_helpers": {
@@ -422,37 +490,60 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "llmft-dpo-job"
+                    "default": "llmft-dpo-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "training_data_name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Name identifier for the training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Name identifier for the validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -460,16 +551,11 @@
                     "min": 1,
                     "max": 100,
                     "default": 3,
-                    "conditional_constraints": {
-                        "default": {
-                            "CustomizationTechnique": {
-                                "DPO": 3,
-                                "default": 3
-                            }
-                        }
-                    },
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -482,7 +568,10 @@
                     ],
                     "default": 16,
                     "category": "hyperparameter",
-                    "description": "Total number of training samples processed per optimizer step across all compute instances."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -491,7 +580,10 @@
                     "max": 0.0001,
                     "default": 0.0001,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_scheduler": {
                     "type": "string",
@@ -502,7 +594,8 @@
                         "constant"
                     ],
                     "category": "hyperparameter",
-                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero."
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
+                    "visibility_tier": "tertiary"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -511,7 +604,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "adam_beta": {
                     "type": "float",
@@ -520,7 +616,10 @@
                     "max": 0.1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
+                    "description": "Controls how strongly the model enforces preference rankings. Higher values make the model more sensitive to preference differences.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Beta value",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -529,14 +628,16 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "gradient_clipping": {
                     "type": "boolean",
                     "required": true,
                     "default": true,
                     "category": "hyperparameter",
-                    "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients."
+                    "description": "Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training.",
+                    "visibility_tier": "tertiary"
                 },
                 "dataset_max_len": {
                     "type": "integer",
@@ -545,7 +646,10 @@
                     "max": 131072,
                     "default": 4096,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated."
+                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "seed": {
                     "type": "integer",
@@ -554,7 +658,8 @@
                     "max": 2147483647,
                     "default": 42,
                     "category": "hyperparameter",
-                    "description": "Random seed for reproducibility of data shuffling and weight initialization."
+                    "description": "Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations.",
+                    "visibility_tier": "tertiary"
                 },
                 "logging_steps": {
                     "type": "integer",
@@ -563,7 +668,8 @@
                     "max": 100,
                     "default": 1,
                     "category": "hyperparameter",
-                    "description": "Frequency in optimizer steps at which training metrics are logged."
+                    "description": "Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead.",
+                    "visibility_tier": "tertiary"
                 },
                 "lora_rank": {
                     "type": "integer",
@@ -577,7 +683,10 @@
                     ],
                     "default": 16,
                     "category": "hyperparameter",
-                    "description": "Dimensionality of the low-rank decomposition matrices. Lower rank means fewer trainable parameters."
+                    "description": "Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LoRA rank",
+                    "hint": "Select from available rank values"
                 },
                 "lora_dropout": {
                     "type": "float",
@@ -586,7 +695,8 @@
                     "max": 1.0,
                     "default": 0.05,
                     "category": "hyperparameter",
-                    "description": "Dropout probability applied to LoRA adapter layers for regularization."
+                    "description": "Dropout probability applied to LoRA adapter layers for regularization. Typically set to 0.05 for SFT/DPO, and 0 for Mixture-of-Experts models.",
+                    "visibility_tier": "tertiary"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -600,14 +710,19 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for adapters scales as alpha/rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "merge_weights": {
                     "type": "boolean",
                     "required": true,
                     "default": true,
                     "category": "hyperparameter",
-                    "description": "When enabled, merges LoRA adapter weights into the base model after training."
+                    "description": "When enabled, merges LoRA adapter weights into the base model weights after training, producing a single consolidated model. Disable if you need to keep adapters separate (e.g., for model merging workflows).",
+                    "visibility_tier": "advanced",
+                    "display_name": "Merge weights"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -616,32 +731,52 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "default"
+                    "default": "default",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "temperature": {
                     "type": "float",
@@ -650,7 +785,10 @@
                     "max": 2.0,
                     "default": 0.6,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "gradient_clipping_threshold": {
                     "type": "float",
@@ -659,7 +797,8 @@
                     "max": 5.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down."
+                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down.",
+                    "visibility_tier": "tertiary"
                 }
             },
             "recipe_metadata_helpers": {
@@ -730,37 +869,60 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "llmft-fine-tuning-job"
+                    "default": "llmft-fine-tuning-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "training_data_name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Name identifier for the training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Name identifier for the validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -768,16 +930,11 @@
                     "min": 1,
                     "max": 100,
                     "default": 1,
-                    "conditional_constraints": {
-                        "default": {
-                            "CustomizationTechnique": {
-                                "SFT": 1,
-                                "default": 1
-                            }
-                        }
-                    },
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -790,7 +947,10 @@
                     ],
                     "default": 16,
                     "category": "hyperparameter",
-                    "description": "Total number of training samples processed per optimizer step across all compute instances."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -799,7 +959,10 @@
                     "max": 0.0001,
                     "default": 0.0001,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_scheduler": {
                     "type": "string",
@@ -810,7 +973,8 @@
                         "constant"
                     ],
                     "category": "hyperparameter",
-                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero."
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
+                    "visibility_tier": "tertiary"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -819,7 +983,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -828,14 +995,16 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "gradient_clipping": {
                     "type": "boolean",
                     "required": true,
                     "default": true,
                     "category": "hyperparameter",
-                    "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients."
+                    "description": "Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training.",
+                    "visibility_tier": "tertiary"
                 },
                 "dataset_max_len": {
                     "type": "integer",
@@ -844,7 +1013,10 @@
                     "max": 131072,
                     "default": 4096,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated."
+                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "seed": {
                     "type": "integer",
@@ -853,7 +1025,8 @@
                     "max": 2147483647,
                     "default": 42,
                     "category": "hyperparameter",
-                    "description": "Random seed for reproducibility of data shuffling and weight initialization."
+                    "description": "Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations.",
+                    "visibility_tier": "tertiary"
                 },
                 "logging_steps": {
                     "type": "integer",
@@ -862,7 +1035,8 @@
                     "max": 100,
                     "default": 1,
                     "category": "hyperparameter",
-                    "description": "Frequency in optimizer steps at which training metrics are logged."
+                    "description": "Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead.",
+                    "visibility_tier": "tertiary"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -871,32 +1045,52 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "default"
+                    "default": "default",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "temperature": {
                     "type": "float",
@@ -905,7 +1099,10 @@
                     "max": 2.0,
                     "default": 0.6,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "gradient_clipping_threshold": {
                     "type": "float",
@@ -914,7 +1111,8 @@
                     "max": 5.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down."
+                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down.",
+                    "visibility_tier": "tertiary"
                 }
             },
             "recipe_metadata_helpers": {
@@ -982,37 +1180,60 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "llmft-sft-lora-job"
+                    "default": "llmft-sft-lora-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "training_data_name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Name identifier for the training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Name identifier for the validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1020,16 +1241,11 @@
                     "min": 1,
                     "max": 100,
                     "default": 5,
-                    "conditional_constraints": {
-                        "default": {
-                            "CustomizationTechnique": {
-                                "SFT": 5,
-                                "default": 5
-                            }
-                        }
-                    },
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1046,7 +1262,10 @@
                     ],
                     "default": 8,
                     "category": "hyperparameter",
-                    "description": "Total number of training samples processed per optimizer step across all compute instances."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1055,7 +1274,10 @@
                     "max": 0.0001,
                     "default": 0.0001,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_scheduler": {
                     "type": "string",
@@ -1066,7 +1288,8 @@
                         "constant"
                     ],
                     "category": "hyperparameter",
-                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero."
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
+                    "visibility_tier": "tertiary"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -1075,7 +1298,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1084,14 +1310,16 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "gradient_clipping": {
                     "type": "boolean",
                     "required": true,
                     "default": true,
                     "category": "hyperparameter",
-                    "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients."
+                    "description": "Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training.",
+                    "visibility_tier": "tertiary"
                 },
                 "dataset_max_len": {
                     "type": "integer",
@@ -1100,7 +1328,10 @@
                     "max": 131072,
                     "default": 4096,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated."
+                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "seed": {
                     "type": "integer",
@@ -1109,7 +1340,8 @@
                     "max": 2147483647,
                     "default": 42,
                     "category": "hyperparameter",
-                    "description": "Random seed for reproducibility of data shuffling and weight initialization."
+                    "description": "Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations.",
+                    "visibility_tier": "tertiary"
                 },
                 "logging_steps": {
                     "type": "integer",
@@ -1118,7 +1350,8 @@
                     "max": 100,
                     "default": 1,
                     "category": "hyperparameter",
-                    "description": "Frequency in optimizer steps at which training metrics are logged."
+                    "description": "Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead.",
+                    "visibility_tier": "tertiary"
                 },
                 "max_response_length": {
                     "type": "integer",
@@ -1127,7 +1360,10 @@
                     "max": 200000,
                     "default": 2048,
                     "category": "hyperparameter",
-                    "description": "Maximum number of tokens allowed for the generated response portion."
+                    "description": "Maximum number of tokens allowed for the generated response portion.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -1136,32 +1372,52 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "default"
+                    "default": "default",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "temperature": {
                     "type": "float",
@@ -1170,7 +1426,10 @@
                     "max": 2.0,
                     "default": 0.6,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "gradient_clipping_threshold": {
                     "type": "float",
@@ -1179,7 +1438,8 @@
                     "max": 5.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down."
+                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down.",
+                    "visibility_tier": "tertiary"
                 }
             },
             "recipe_metadata_helpers": {
@@ -1251,37 +1511,60 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "llmft-dpo-job"
+                    "default": "llmft-dpo-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "training_data_name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Name identifier for the training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Name identifier for the validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1289,16 +1572,11 @@
                     "min": 1,
                     "max": 100,
                     "default": 3,
-                    "conditional_constraints": {
-                        "default": {
-                            "CustomizationTechnique": {
-                                "DPO": 3,
-                                "default": 3
-                            }
-                        }
-                    },
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1311,7 +1589,10 @@
                     ],
                     "default": 16,
                     "category": "hyperparameter",
-                    "description": "Total number of training samples processed per optimizer step across all compute instances."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1320,7 +1601,10 @@
                     "max": 0.0001,
                     "default": 0.0001,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Lower for RL to avoid policy collapse; higher for SFT/DPO."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_scheduler": {
                     "type": "string",
@@ -1331,7 +1615,8 @@
                         "constant"
                     ],
                     "category": "hyperparameter",
-                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero."
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
+                    "visibility_tier": "tertiary"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -1340,7 +1625,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 to the target value."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "adam_beta": {
                     "type": "float",
@@ -1349,7 +1637,10 @@
                     "max": 0.1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
+                    "description": "Controls how strongly the model enforces preference rankings. Higher values make the model more sensitive to preference differences.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Beta value",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1358,14 +1649,16 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "gradient_clipping": {
                     "type": "boolean",
                     "required": true,
                     "default": true,
                     "category": "hyperparameter",
-                    "description": "When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients."
+                    "description": "Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training.",
+                    "visibility_tier": "tertiary"
                 },
                 "dataset_max_len": {
                     "type": "integer",
@@ -1374,7 +1667,10 @@
                     "max": 131072,
                     "default": 4096,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated."
+                    "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "seed": {
                     "type": "integer",
@@ -1383,7 +1679,8 @@
                     "max": 2147483647,
                     "default": 42,
                     "category": "hyperparameter",
-                    "description": "Random seed for reproducibility of data shuffling and weight initialization."
+                    "description": "Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations.",
+                    "visibility_tier": "tertiary"
                 },
                 "logging_steps": {
                     "type": "integer",
@@ -1392,7 +1689,8 @@
                     "max": 100,
                     "default": 1,
                     "category": "hyperparameter",
-                    "description": "Frequency in optimizer steps at which training metrics are logged."
+                    "description": "Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead.",
+                    "visibility_tier": "tertiary"
                 },
                 "max_response_length": {
                     "type": "integer",
@@ -1401,7 +1699,10 @@
                     "max": 200000,
                     "default": 2048,
                     "category": "hyperparameter",
-                    "description": "Maximum number of tokens allowed for the generated response portion."
+                    "description": "Maximum number of tokens allowed for the generated response portion.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -1410,32 +1711,52 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "default"
+                    "default": "default",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "temperature": {
                     "type": "float",
@@ -1444,7 +1765,10 @@
                     "max": 2.0,
                     "default": 0.6,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output diversity."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "gradient_clipping_threshold": {
                     "type": "float",
@@ -1453,7 +1777,8 @@
                     "max": 5.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down."
+                    "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down.",
+                    "visibility_tier": "tertiary"
                 }
             },
             "recipe_metadata_helpers": {

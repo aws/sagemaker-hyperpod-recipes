@@ -37,71 +37,14 @@
                     "namespace": "{{namespace}}"
                 }
             },
-            "recipe_override_parameters": {
-                "model_name": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "results_directory": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "log_directory": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "time_limit": {
-                    "type": "string",
-                    "required": true,
-                    "default": "6-00:00:00"
-                },
-                "num_nodes": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 128,
-                    "default": 2
-                },
+            "override_parameters": {
                 "max_steps": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 1168251,
                     "min": 1000,
-                    "max": 10000000,
-                    "default": 1168251
-                },
-                "val_check_interval": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 100,
-                    "max": 10000,
-                    "default": 2000
-                },
-                "log_every_n_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 1000,
-                    "default": 10
-                },
-                "sequence_length": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        1024,
-                        2048,
-                        4096,
-                        8192,
-                        16384,
-                        32768
-                    ],
-                    "default": 2048
+                    "max": 10000000
                 },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 2,
                     "enum": [
                         2,
                         4,
@@ -109,39 +52,13 @@
                         16,
                         32,
                         64
-                    ],
-                    "default": 2
-                },
-                "dataset_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    ]
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-06,
-                    "max": 0.001,
-                    "default": 0.0001
-                },
-                "instance_types": {
-                    "type": "string",
-                    "required": true,
-                    "enum": [
-                        "ml.p5.48xlarge",
-                        "ml.p5e.48xlarge"
-                    ],
-                    "default": ""
-                },
-                "instance_count": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 128,
-                    "default": 1
+                    "default": 0.0001,
+                    "min": 1e-06
                 },
                 "namespace": {
-                    "type": "string",
                     "required": false,
                     "default": ""
                 }
@@ -186,71 +103,17 @@
                     "namespace": "{{namespace}}"
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "model_name": {
-                    "type": "string",
-                    "required": true,
                     "default": "llama-70b"
                 },
-                "results_directory": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "log_directory": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "time_limit": {
-                    "type": "string",
-                    "required": true,
-                    "default": "6-00:00:00"
-                },
-                "num_nodes": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 128,
-                    "default": 2
-                },
                 "max_steps": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 1000000,
                     "min": 1000,
-                    "max": 10000000,
-                    "default": 1000000
-                },
-                "val_check_interval": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 100,
-                    "max": 10000,
-                    "default": 2000
-                },
-                "log_every_n_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 1000,
-                    "default": 10
-                },
-                "sequence_length": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        1024,
-                        2048,
-                        4096,
-                        8192,
-                        16384,
-                        32768
-                    ],
-                    "default": 2048
+                    "max": 10000000
                 },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 2,
                     "enum": [
                         2,
                         4,
@@ -258,39 +121,13 @@
                         16,
                         32,
                         64
-                    ],
-                    "default": 2
-                },
-                "dataset_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    ]
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-06,
-                    "max": 0.001,
-                    "default": 0.0001
-                },
-                "instance_types": {
-                    "type": "string",
-                    "required": true,
-                    "enum": [
-                        "ml.p5.48xlarge",
-                        "ml.p5e.48xlarge"
-                    ],
-                    "default": ""
-                },
-                "instance_count": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 128,
-                    "default": 1
+                    "default": 0.0001,
+                    "min": 1e-06
                 },
                 "namespace": {
-                    "type": "string",
                     "required": false,
                     "default": ""
                 }

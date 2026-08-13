@@ -12,7 +12,7 @@ defaults:
   - _self_
 
 display_name: "Gemma 4 E4B IT SFT LoRA Fine-Tuning (Text)"
-version: 2.0.3
+version: 2.0.5
 instance_types: ["ml.p5.48xlarge"]
 
 run:
@@ -23,38 +23,22 @@ trainer:
 
 training_config:
   data:
+    ignore_input_ids_mismatch: true
     train_batch_size: 128
     micro_batch_size_per_gpu: 1
     max_length: 32768
     max_token_len_per_gpu: 32768
     truncation: left
-    use_dynamic_bsz: true
     apply_chat_template_kwargs:
       enable_thinking: false
 
-  model:
-    lora_rank: 32
-    lora_alpha: 64
-
   engine:
     strategy: fsdp2
-    model_dtype: bfloat16
-    dtype: bfloat16
-
   optim:
     lr: 5.0e-05
-    weight_decay: 0.01
-    betas: [0.9, 0.999]
-    lr_scheduler_type: constant
     lr_warmup_steps: 10
 
   trainer:
     project_name: gemma4-sft
     experiment_name: gemma-4-e4b-it-sft-lora
-    total_epochs: 1
     test_freq: 5
-    resume_mode: auto
-
-  trainer_callbacks:
-    - _target_: metering_callback.MeteringCallback
-      output_path: /opt/ml/metering

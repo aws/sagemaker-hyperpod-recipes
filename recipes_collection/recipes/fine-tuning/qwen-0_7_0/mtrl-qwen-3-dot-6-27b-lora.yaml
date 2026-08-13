@@ -18,7 +18,7 @@ model:
   max_sequence_length: 65536
   model_name: Qwen/Qwen3.6-27B
   weight_decay: 0.0
-recipe_version: 1.0.16
+recipe_version: 1.0.18
 rl:
   advantage_method: group_based
   advantage_normalization: true

@@ -11,7 +11,7 @@ defaults:
   - _self_
 
 display_name: "Nemo3 Super 120B SFT LoRA Fine-Tuning"
-version: 2.0.2
+version: 2.0.5
 instance_types: ["ml.p5.48xlarge"]
 
 run:
@@ -29,18 +29,17 @@ training_config:
     truncation: left
     train_max_samples: -1
     val_max_samples: -1
+    ignore_input_ids_mismatch: true
 
   model:
-    enable_gradient_checkpointing: true
-    use_remove_padding: true
     lora:
       rank: 128
       alpha: 256
       target_modules:
-      - linear_qkv
-      - linear_proj
-      - in_proj
-      - out_proj
+        - linear_qkv
+        - linear_proj
+        - in_proj
+        - out_proj
 
   engine:
     tensor_model_parallel_size: 8
@@ -71,9 +70,3 @@ training_config:
   trainer:
     project_name: verl_sft_nemo3_super
     experiment_name: nemo3_super_120b_sft_megatron_lora
-    total_epochs: 1
-    resume_mode: auto
-
-  trainer_callbacks:
-    - _target_: metering_callback.MeteringCallback
-      output_path: /opt/ml/metering

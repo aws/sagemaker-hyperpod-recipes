@@ -1,5 +1,5 @@
 display_name: Agentic RFT for Qwen 3.6 27B Lora
-recipe_version: "1.0.16"
+recipe_version: "1.0.18"
 
 run:
   name: mtrl-qwen-3-dot-6-27b-lora

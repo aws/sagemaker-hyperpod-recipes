@@ -740,4 +740,4 @@ training_config:
     val_before_train: true
   transfer_queue:
     enable: false
-version: 1.1.1
+version: 1.1.4

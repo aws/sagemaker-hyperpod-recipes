@@ -2,7 +2,6 @@ display_name: Qwen 2.5 14B GRPO RLAIF Fine-Tuning with LoRA
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge
-- ml.p4d.24xlarge
 ray_cluster:
   head_node:
     cpu: '16'
@@ -445,4 +444,4 @@ training_config:
       cuda-memory-usage: 'true'
       kill: none
       trace: cuda,nvtx,cublas,ucx
-version: 2.2.2
+version: 2.2.5

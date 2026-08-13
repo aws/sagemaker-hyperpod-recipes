@@ -154,22 +154,41 @@
                                 "default": 1
                             }
                         }
-                    }
+                    },
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-lora-run"
+                    "default": "my-lora-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -177,11 +196,36 @@
                     "enum": [
                         16,
                         32,
-                        64
+                        64,
+                        128
                     ],
-                    "default": 64,
+                    "default": 32,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options",
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_pro_1_0_p5_p4d_gpu_lora_sft": [
+                                    16,
+                                    32
+                                ],
+                                "default": [
+                                    16,
+                                    32,
+                                    64
+                                ]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_pro_1_0_p5_p4d_gpu_lora_sft": 32,
+                                "default": 64
+                            }
+                        }
+                    }
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -190,7 +234,10 @@
                     "max": 100,
                     "default": 2,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -199,7 +246,10 @@
                     "max": 1,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -214,7 +264,10 @@
                     ],
                     "default": 128,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "learning_rate_ratio": {
                     "type": "float",
@@ -223,12 +276,19 @@
                     "max": 70.0,
                     "default": 16.0,
                     "category": "hyperparameter",
-                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
+                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Learning rate ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -237,22 +297,37 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -261,7 +336,8 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -270,7 +346,10 @@
                     "max": 100,
                     "default": 10,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -279,7 +358,10 @@
                     "max": 1.0,
                     "default": 1e-06,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {
@@ -376,29 +458,51 @@
                                 "default": 4
                             }
                         }
-                    }
+                    },
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-lora-run"
+                    "default": "my-lora-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "reasoning_enabled": {
                     "type": "boolean",
                     "required": true,
                     "default": true,
                     "category": "hyperparameter",
-                    "description": "When enabled, activates chain-of-thought reasoning mode during training."
+                    "description": "When enabled, activates chain-of-thought reasoning mode during training.",
+                    "visibility_tier": "primary",
+                    "display_name": "Reasoning mode",
+                    "hint": "Set value to true or false to enable or disable reasoning."
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -406,12 +510,14 @@
                     "enum": [
                         32,
                         64,
-                        128,
-                        256
+                        128
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_steps": {
                     "type": "integer",
@@ -428,7 +534,10 @@
                         }
                     },
                     "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "save_steps": {
                     "type": "integer",
@@ -445,7 +554,10 @@
                         }
                     },
                     "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
+                    "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Save steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -454,7 +566,10 @@
                     "max": 1,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -469,7 +584,10 @@
                     ],
                     "default": 64,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "learning_rate_ratio": {
                     "type": "float",
@@ -478,12 +596,19 @@
                     "max": 70.0,
                     "default": 64.0,
                     "category": "hyperparameter",
-                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
+                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Learning rate ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -492,22 +617,37 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 },
                 "fine_tuned_model": {
                     "type": "float",
@@ -516,7 +656,10 @@
                     "max": 1.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only)."
+                    "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only).",
+                    "visibility_tier": "advanced",
+                    "display_name": "Fine-tuned model weight",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -525,7 +668,10 @@
                     "max": 100,
                     "default": 15,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -534,7 +680,10 @@
                     "max": 1.0,
                     "default": 1e-06,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -543,26 +692,41 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_s3_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Validation dataset location (S3 URI)"
                 },
                 "val_check_interval": {
                     "type": "integer",
                     "required": false,
                     "min": 1,
                     "max": 100000,
-                    "default": 2500
+                    "default": 2500,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Validation check interval",
+                    "hint": "Must be a value between {min} and {max}",
+                    "description": "Number of training steps between validation runs."
                 },
                 "limit_val_batches": {
                     "type": "integer",
                     "required": false,
                     "min": 0,
                     "max": 100000,
-                    "default": 2
+                    "default": 2,
+                    "description": "Number of validation batches to run per evaluation step.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Validation batches",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {
@@ -653,22 +817,41 @@
                                 "default": 4
                             }
                         }
-                    }
+                    },
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-lora-run"
+                    "default": "my-lora-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -676,19 +859,24 @@
                     "enum": [
                         32,
                         64,
-                        128,
-                        256
+                        128
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "reasoning_enabled": {
                     "type": "boolean",
                     "required": true,
                     "default": true,
                     "category": "hyperparameter",
-                    "description": "When enabled, activates chain-of-thought reasoning mode during training."
+                    "description": "When enabled, activates chain-of-thought reasoning mode during training.",
+                    "visibility_tier": "primary",
+                    "display_name": "Reasoning mode",
+                    "hint": "Set value to true or false to enable or disable reasoning."
                 },
                 "max_steps": {
                     "type": "integer",
@@ -696,16 +884,11 @@
                     "min": 4,
                     "max": 100000,
                     "default": 100,
-                    "conditional_constraints": {
-                        "default": {
-                            "Name": {
-                                "nova_lite_2_0_p5_gpu_sft": 100,
-                                "default": 100
-                            }
-                        }
-                    },
                     "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "save_steps": {
                     "type": "integer",
@@ -722,7 +905,10 @@
                         }
                     },
                     "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
+                    "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Save steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -731,12 +917,19 @@
                     "max": 1,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -745,22 +938,37 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 },
                 "fine_tuned_model": {
                     "type": "float",
@@ -769,7 +977,10 @@
                     "max": 1.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only)."
+                    "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only).",
+                    "visibility_tier": "advanced",
+                    "display_name": "Fine-tuned model weight",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -778,7 +989,10 @@
                     "max": 100,
                     "default": 15,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -787,7 +1001,10 @@
                     "max": 1.0,
                     "default": 1e-06,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -796,26 +1013,41 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_s3_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Validation dataset location (S3 URI)"
                 },
                 "val_check_interval": {
                     "type": "integer",
                     "required": false,
                     "min": 1,
                     "max": 100000,
-                    "default": 2500
+                    "default": 2500,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Validation check interval",
+                    "hint": "Must be a value between {min} and {max}",
+                    "description": "Number of training steps between validation runs."
                 },
                 "limit_val_batches": {
                     "type": "integer",
                     "required": false,
                     "min": 0,
                     "max": 100000,
-                    "default": 2
+                    "default": 2,
+                    "description": "Number of validation batches to run per evaluation step.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Validation batches",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {
@@ -935,22 +1167,41 @@
                                 "default": 1
                             }
                         }
-                    }
+                    },
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-lora-dpo-run"
+                    "default": "my-lora-dpo-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -958,11 +1209,45 @@
                     "enum": [
                         16,
                         32,
-                        64
+                        64,
+                        128
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options",
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_micro_1_0_p5_p4d_gpu_lora_dpo": [
+                                    16,
+                                    32,
+                                    64,
+                                    128,
+                                    256
+                                ],
+                                "nova_pro_1_0_p5_p4d_gpu_lora_dpo": [
+                                    16,
+                                    32,
+                                    64,
+                                    128
+                                ],
+                                "default": [
+                                    16,
+                                    32,
+                                    64
+                                ]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_pro_1_0_p5_p4d_gpu_lora_dpo": 32,
+                                "default": 64
+                            }
+                        }
+                    }
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -971,7 +1256,10 @@
                     "max": 100,
                     "default": 2,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -980,7 +1268,10 @@
                     "max": 1,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "adam_beta": {
                     "type": "float",
@@ -989,7 +1280,10 @@
                     "max": 0.1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
+                    "description": "Controls how strongly the model enforces preference rankings. Higher values make the model more sensitive to preference differences.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Beta value",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -1004,7 +1298,10 @@
                     ],
                     "default": 128,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "learning_rate_ratio": {
                     "type": "float",
@@ -1013,12 +1310,19 @@
                     "max": 70.0,
                     "default": 16.0,
                     "category": "hyperparameter",
-                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
+                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Learning rate ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -1027,22 +1331,37 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1051,7 +1370,8 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -1060,7 +1380,10 @@
                     "max": 100,
                     "default": 10,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -1069,7 +1392,10 @@
                     "max": 1.0,
                     "default": 1e-06,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {
@@ -1174,22 +1500,41 @@
                                 "default": 1
                             }
                         }
-                    }
+                    },
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-fullrank-run"
+                    "default": "my-fullrank-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1197,11 +1542,35 @@
                     "enum": [
                         16,
                         32,
-                        64
+                        64,
+                        128
                     ],
-                    "default": 16,
+                    "default": 32,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options",
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_pro_1_0_p5_gpu_sft": [
+                                    16,
+                                    32
+                                ],
+                                "default": [
+                                    16,
+                                    32,
+                                    64
+                                ]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "default": 16
+                            }
+                        }
+                    }
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1210,7 +1579,10 @@
                     "max": 100,
                     "default": 2,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1219,12 +1591,19 @@
                     "max": 1,
                     "default": 5e-06,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -1233,22 +1612,37 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1257,7 +1651,8 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -1266,7 +1661,10 @@
                     "max": 100,
                     "default": 10,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -1275,7 +1673,10 @@
                     "max": 1.0,
                     "default": 1e-06,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {
@@ -1381,22 +1782,41 @@
                                 "default": 1
                             }
                         }
-                    }
+                    },
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-fullrank-run"
+                    "default": "my-fullrank-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1409,7 +1829,42 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options",
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_pro_1_0_p4d_gpu_dpo": [
+                                    16,
+                                    32,
+                                    64,
+                                    128
+                                ],
+                                "nova_pro_1_0_p5_gpu_dpo": [
+                                    16,
+                                    32,
+                                    64,
+                                    128
+                                ],
+                                "default": [
+                                    16,
+                                    32,
+                                    64,
+                                    128,
+                                    256
+                                ]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_pro_1_0_p4d_gpu_dpo": 32,
+                                "nova_pro_1_0_p5_gpu_dpo": 32,
+                                "default": 64
+                            }
+                        }
+                    }
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1418,7 +1873,10 @@
                     "max": 100,
                     "default": 3,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1427,7 +1885,10 @@
                     "max": 1,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "adam_beta": {
                     "type": "float",
@@ -1436,12 +1897,19 @@
                     "max": 0.1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
+                    "description": "Controls how strongly the model enforces preference rankings. Higher values make the model more sensitive to preference differences.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Beta value",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -1450,22 +1918,37 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1474,7 +1957,8 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -1483,7 +1967,10 @@
                     "max": 100,
                     "default": 10,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -1492,7 +1979,10 @@
                     "max": 1.0,
                     "default": 1e-06,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {
@@ -1547,17 +2037,31 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-ppo-run"
+                    "default": "my-ppo-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1589,7 +2093,10 @@
                         }
                     },
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1598,7 +2105,10 @@
                     "max": 1,
                     "default": 3e-06,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "replicas": {
                     "type": "integer",
@@ -1630,12 +2140,21 @@
                                 "nova-textgeneration-pro": 6
                             }
                         }
-                    }
+                    },
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -1644,22 +2163,37 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 }
             },
             "recipe_metadata_helpers": {
@@ -1700,17 +2234,30 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "data-distillation-premier-teacher"
+                    "default": "data-distillation-premier-teacher",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "customer_bucket": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Customer S3 bucket for data storage",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "kms_key": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 Encryption KMS key",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "KMS key",
+                    "hint": "Must be a kms key, or kms key arn"
                 },
                 "max_response_length": {
                     "type": "integer",
@@ -1719,12 +2266,19 @@
                     "max": 5120,
                     "default": 5120,
                     "category": "hyperparameter",
-                    "description": "Maximum number of tokens allowed for the generated response portion during training or evaluation."
+                    "description": "Maximum number of tokens allowed for the generated response portion.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -1733,7 +2287,10 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {
@@ -1776,70 +2333,113 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
+                    "default": "nova-lite-mmlu-eval-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to output model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)"
                 },
                 "task": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Task"
                 },
                 "strategy": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Strategy"
                 },
                 "metric": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Metric"
                 },
                 "subtask": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Subtask"
                 },
                 "max_new_tokens": {
                     "type": "integer",
                     "required": false,
                     "min": 0,
                     "max": 100000,
-                    "default": 8196
+                    "default": 8196,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max New Tokens"
                 },
                 "top_k": {
                     "type": "integer",
                     "required": false,
-                    "default": -1
+                    "default": -1,
+                    "description": "Top-k nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-k",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "top_p": {
                     "type": "float",
                     "required": false,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 1.0
+                    "default": 1.0,
+                    "description": "Top-p nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-p",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0,
+                    "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 }
             },
             "recipe_metadata_helpers": {
@@ -1883,70 +2483,113 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
+                    "default": "nova-lite-mmlu-eval-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to output model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)"
                 },
                 "task": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Task"
                 },
                 "strategy": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Strategy"
                 },
                 "metric": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Metric"
                 },
                 "subtask": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Subtask"
                 },
                 "max_new_tokens": {
                     "type": "integer",
                     "required": false,
                     "min": 0,
                     "max": 32768,
-                    "default": 32768
+                    "default": 32768,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max New Tokens"
                 },
                 "top_k": {
                     "type": "integer",
                     "required": false,
-                    "default": -1
+                    "default": -1,
+                    "description": "Top-k nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-k",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "top_p": {
                     "type": "float",
                     "required": false,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 1.0
+                    "default": 1.0,
+                    "description": "Top-p nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-p",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0,
+                    "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 }
             },
             "recipe_metadata_helpers": {
@@ -1990,70 +2633,113 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
+                    "default": "nova-lite-mmlu-eval-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to output model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)"
                 },
                 "task": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Task"
                 },
                 "strategy": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Strategy"
                 },
                 "metric": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Metric"
                 },
                 "subtask": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Subtask"
                 },
                 "max_new_tokens": {
                     "type": "integer",
                     "required": false,
                     "min": 0,
                     "max": 100000,
-                    "default": 8196
+                    "default": 8196,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max New Tokens"
                 },
                 "top_k": {
                     "type": "integer",
                     "required": false,
-                    "default": -1
+                    "default": -1,
+                    "description": "Top-k nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-k",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "top_p": {
                     "type": "float",
                     "required": false,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 1.0
+                    "default": 1.0,
+                    "description": "Top-p nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-p",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0,
+                    "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 }
             },
             "recipe_metadata_helpers": {
@@ -2096,70 +2782,113 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
+                    "default": "nova-lite-mmlu-eval-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to output model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)"
                 },
                 "task": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Task"
                 },
                 "strategy": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Strategy"
                 },
                 "metric": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Metric"
                 },
                 "subtask": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Subtask"
                 },
                 "max_new_tokens": {
                     "type": "integer",
                     "required": false,
                     "min": 0,
                     "max": 32768,
-                    "default": 32768
+                    "default": 32768,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max New Tokens"
                 },
                 "top_k": {
                     "type": "integer",
                     "required": false,
-                    "default": -1
+                    "default": -1,
+                    "description": "Top-k nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-k",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "top_p": {
                     "type": "float",
                     "required": false,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 1.0
+                    "default": 1.0,
+                    "description": "Top-p nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-p",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0,
+                    "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 }
             },
             "recipe_metadata_helpers": {
@@ -2201,65 +2930,105 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
+                    "default": "nova-lite-mmlu-eval-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to output model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)"
                 },
                 "task": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Task"
                 },
                 "strategy": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Strategy"
                 },
                 "metric": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Metric"
                 },
                 "max_new_tokens": {
                     "type": "integer",
                     "required": false,
                     "min": 0,
                     "max": 100000,
-                    "default": 8196
+                    "default": 8196,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max New Tokens"
                 },
                 "top_k": {
                     "type": "integer",
                     "required": false,
-                    "default": -1
+                    "default": -1,
+                    "description": "Top-k nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-k",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "top_p": {
                     "type": "float",
                     "required": false,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 1.0
+                    "default": 1.0,
+                    "description": "Top-p nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-p",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0,
+                    "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 }
             },
             "recipe_metadata_helpers": {
@@ -2307,65 +3076,104 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
+                    "default": "nova-lite-mmlu-eval-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Dataset"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to output model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)"
                 },
                 "task": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Task"
                 },
                 "strategy": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Strategy"
                 },
                 "metric": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Metric"
                 },
                 "max_new_tokens": {
                     "type": "integer",
                     "required": false,
                     "min": 0,
                     "max": 100000,
-                    "default": 8196
+                    "default": 8196,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max New Tokens"
                 },
                 "top_k": {
                     "type": "integer",
                     "required": false,
-                    "default": -1
+                    "default": -1,
+                    "description": "Top-k nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-k",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "top_p": {
                     "type": "float",
                     "required": false,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 1.0
+                    "default": 1.0,
+                    "description": "Top-p nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-p",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0,
+                    "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lambda_arn": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "lambda_type": {
                     "type": "string",
@@ -2374,17 +3182,26 @@
                         "rft",
                         "custom_metrics"
                     ],
-                    "default": "rft"
+                    "default": "rft",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 }
             },
             "recipe_metadata_helpers": {
@@ -2433,65 +3250,104 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
+                    "default": "nova-lite-mmlu-eval-job",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Dataset"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to output model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)"
                 },
                 "task": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Task"
                 },
                 "strategy": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Strategy"
                 },
                 "metric": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Metric"
                 },
                 "max_new_tokens": {
                     "type": "integer",
                     "required": false,
                     "min": 0,
                     "max": 32768,
-                    "default": 32768
+                    "default": 32768,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max New Tokens"
                 },
                 "top_k": {
                     "type": "integer",
                     "required": false,
-                    "default": -1
+                    "default": -1,
+                    "description": "Top-k nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-k",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "top_p": {
                     "type": "float",
                     "required": false,
                     "min": 0.0,
                     "max": 1.0,
-                    "default": 1.0
+                    "default": 1.0,
+                    "description": "Top-p nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-p",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
                     "required": true,
                     "min": 0.0,
                     "max": 2.0,
-                    "default": 0.0,
+                    "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lambda_arn": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "lambda_type": {
                     "type": "string",
@@ -2500,7 +3356,9 @@
                         "rft",
                         "custom_metrics"
                     ],
-                    "default": "rft"
+                    "default": "rft",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "preset_reward_function": {
                     "type": "string",
@@ -2509,17 +3367,28 @@
                         "prime_math",
                         "prime_code"
                     ],
-                    "default": ""
+                    "default": "",
+                    "description": "Preset reward function for RLVR",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Metrics"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 }
             },
             "recipe_metadata_helpers": {
@@ -2611,22 +3480,41 @@
                                 "default": 2
                             }
                         }
-                    }
+                    },
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-cpt-run"
+                    "default": "my-cpt-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -2639,7 +3527,10 @@
                     ],
                     "default": 256,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -2648,7 +3539,10 @@
                     "max": 100,
                     "default": 1,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -2657,12 +3551,19 @@
                     "max": 1,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -2671,22 +3572,37 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 }
             },
             "recipe_metadata_helpers": {
@@ -2763,27 +3679,50 @@
                                 "default": 8
                             }
                         }
-                    }
+                    },
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-cpt-run"
+                    "default": "my-cpt-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "validation_s3_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Validation dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -2796,7 +3735,10 @@
                     ],
                     "default": 256,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_steps": {
                     "type": "integer",
@@ -2805,7 +3747,10 @@
                     "max": 100000,
                     "default": 10,
                     "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -2814,12 +3759,19 @@
                     "max": 1,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -2828,22 +3780,37 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 }
             },
             "recipe_metadata_helpers": {
@@ -2907,22 +3874,39 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-rft-run"
+                    "default": "my-rft-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "reward_lambda_arn": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "ARN of the Lambda function used for reward computation",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "replicas": {
                     "type": "integer",
@@ -2933,7 +3917,12 @@
                         8,
                         16
                     ],
-                    "default": 2
+                    "default": 2,
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -2942,7 +3931,10 @@
                     "max": 0.001,
                     "default": 7e-07,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_steps": {
                     "type": "integer",
@@ -2959,14 +3951,22 @@
                         }
                     },
                     "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "number_generation": {
                     "type": "integer",
                     "required": true,
                     "min": 2,
                     "max": 16,
-                    "default": 8
+                    "default": 8,
+                    "description": "Number of generations per prompt in rollout",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Number generation",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -2978,7 +3978,10 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -2987,19 +3990,31 @@
                     "max": 256,
                     "default": 256,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_length": {
                     "type": "integer",
                     "required": true,
                     "min": 4096,
                     "max": 32768,
-                    "default": 10240
+                    "default": 10240,
+                    "description": "Maximum number of tokens in a single training example. Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "learning_rate_ratio": {
                     "type": "float",
@@ -3008,22 +4023,37 @@
                     "max": 70.0,
                     "default": 64.0,
                     "category": "hyperparameter",
-                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
+                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Learning rate ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 },
                 "save_steps": {
                     "type": "integer",
@@ -3032,7 +4062,10 @@
                     "max": 100000,
                     "default": 10,
                     "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
+                    "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Save steps",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {
@@ -3091,17 +4124,31 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-rft-run"
+                    "default": "my-rft-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "output_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Output artifact location (S3 URI)",
+                    "hint": "Enter S3 URI path string"
                 },
                 "replicas": {
                     "type": "integer",
@@ -3112,12 +4159,20 @@
                         8,
                         16
                     ],
-                    "default": 4
+                    "default": 4,
+                    "description": "Number of training pods (adjust based on cluster capacity)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Pod Replicas",
+                    "hint": "Select from available options"
                 },
                 "reward_lambda_arn": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "ARN of the Lambda function used for reward computation",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -3126,7 +4181,10 @@
                     "max": 0.001,
                     "default": 7e-07,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_steps": {
                     "type": "integer",
@@ -3143,7 +4201,10 @@
                         }
                     },
                     "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -3152,26 +4213,43 @@
                     "max": 256,
                     "default": 256,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_length": {
                     "type": "integer",
                     "required": true,
                     "min": 4096,
                     "max": 32768,
-                    "default": 10240
+                    "default": 10240,
+                    "description": "Maximum number of tokens in a single training example. Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "number_generation": {
                     "type": "integer",
                     "required": true,
                     "min": 2,
                     "max": 16,
-                    "default": 8
+                    "default": 8,
+                    "description": "Number of generations per prompt in rollout",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Number generation",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "namespace": {
                     "type": "string",
                     "required": true,
-                    "default": "kubeflow"
+                    "default": "kubeflow",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -3180,22 +4258,37 @@
                     "max": 131072,
                     "default": 8192,
                     "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum Context Length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment name"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Experiment run"
                 },
                 "save_steps": {
                     "type": "integer",
@@ -3204,7 +4297,10 @@
                     "max": 100000,
                     "default": 10,
                     "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
+                    "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Save steps",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {
@@ -3258,17 +4354,29 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-rft-run"
+                    "default": "my-rft-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "reward_lambda_arn": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "ARN of the Lambda function used for reward computation",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -3277,7 +4385,10 @@
                     "max": 0.001,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_steps": {
                     "type": "integer",
@@ -3294,7 +4405,10 @@
                         }
                     },
                     "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -3306,7 +4420,10 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -3315,14 +4432,22 @@
                     "max": 128,
                     "default": 64,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_length": {
                     "type": "integer",
                     "required": true,
                     "min": 4096,
                     "max": 32768,
-                    "default": 8192
+                    "default": 8192,
+                    "description": "Maximum number of tokens in a single training example. Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "learning_rate_ratio": {
                     "type": "float",
@@ -3331,7 +4456,10 @@
                     "max": 100.0,
                     "default": 64.0,
                     "category": "hyperparameter",
-                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
+                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Learning rate ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "save_steps": {
                     "type": "integer",
@@ -3340,7 +4468,10 @@
                     "max": 100000,
                     "default": 10,
                     "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
+                    "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Save steps",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {
@@ -3392,17 +4523,29 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": "my-rft-run"
+                    "default": "my-rft-run",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Training dataset location (S3 URI)"
                 },
                 "reward_lambda_arn": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "ARN of the Lambda function used for reward computation",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -3411,7 +4554,10 @@
                     "max": 0.001,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -3420,14 +4566,22 @@
                     "max": 256,
                     "default": 64,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_length": {
                     "type": "integer",
                     "required": true,
                     "min": 4096,
                     "max": 32768,
-                    "default": 8192
+                    "default": 8192,
+                    "description": "Maximum number of tokens in a single training example. Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Maximum length",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_steps": {
                     "type": "integer",
@@ -3444,7 +4598,10 @@
                         }
                     },
                     "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "save_steps": {
                     "type": "integer",
@@ -3453,7 +4610,10 @@
                     "max": 100000,
                     "default": 10,
                     "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
+                    "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Save steps",
+                    "hint": "Must be a value between {min} and {max}"
                 }
             },
             "recipe_metadata_helpers": {

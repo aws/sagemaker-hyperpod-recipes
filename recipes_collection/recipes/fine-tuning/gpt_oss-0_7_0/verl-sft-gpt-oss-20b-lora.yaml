@@ -28,7 +28,7 @@ training_config:
     custom_cls:
       name: null
       path: null
-    ignore_input_ids_mismatch: false
+    ignore_input_ids_mismatch: true
     max_length: 4096
     max_token_len_per_gpu: 16384
     messages_key: messages
@@ -169,4 +169,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.1
+version: 2.0.3

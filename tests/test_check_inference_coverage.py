@@ -369,3 +369,38 @@ class TestIntegrationWithRealData:
         for stem in stems:
             assert len(stem) > 0
             assert " " not in stem  # No spaces in filenames
+
+    JUMPSTART_EXCLUSIONS = "recipes_collection/jumpstart_exclusions.yaml"
+
+    def _load_exclusion_patterns(self):
+        """Compile the JumpStart exclusion regexes (same list the publish Lambda uses)."""
+        import re
+
+        if not os.path.exists(self.JUMPSTART_EXCLUSIONS):
+            return []
+        with open(self.JUMPSTART_EXCLUSIONS) as f:
+            data = yaml.safe_load(f) or {}
+        return [re.compile(p) for p in data.get("exclusion_patterns", [])]
+
+    def test_all_publishable_recipes_have_hosting_config(self):
+        """Every recipe that is NOT excluded from JumpStart must have a hosting config.
+
+        Recipes on the jumpstart_exclusions list are intentionally not published,
+        so they are allowed to lack a hosting config. Every other recipe that maps
+        to a JumpStart model id must have utils/inference_configs/hosting-<stem>.json.
+        """
+        missing = check_inference_coverage(self.RECIPES_DIR, self.MODEL_ID_MAP, self.INFERENCE_CONFIGS_DIR)
+
+        patterns = self._load_exclusion_patterns()
+
+        def is_excluded(recipe_path: str) -> bool:
+            return any(p.search(recipe_path) for p in patterns)
+
+        # Only fail on recipes that are publishable (not excluded) yet lack a hosting config.
+        publishable_missing = [m for m in missing if not is_excluded(m["recipe_path"])]
+
+        assert publishable_missing == [], (
+            "The following publishable recipes are missing hosting configs in "
+            f"{self.INFERENCE_CONFIGS_DIR}:\n"
+            + "\n".join(f"  - {m['recipe_path']}: {m['reason']}" for m in publishable_missing)
+        )

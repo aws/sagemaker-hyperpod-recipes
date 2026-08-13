@@ -7,8 +7,9 @@ defaults:
   - /hydra_config/llmft/strategy/fsdp_fft
   - _self_
 
-display_name: "DeepSeek R1 Distill Llama 8B Supervised Fine-Tuning Full Fine-Tuning on GPU"
-version: 1.2.1
+display_name: "DeepSeek R1 Distill Llama 8B Supervised Fine-Tuning Full Fine-Tuning
+  on GPU"
+version: 1.2.4
 instance_types: ['ml.p4d.24xlarge', 'ml.p4de.24xlarge', 'ml.p5.48xlarge']
 
 run:
@@ -16,6 +17,5 @@ run:
 
 training_config:
   model_config:
-    model_name_or_path: "deepseek-ai/DeepSeek-R1-Distill-Llama-8B"
     model_save_name: SageMaker-FFT/DeepSeek-R1-Distill-Llama-8B
     chat_template_key: llama--meta-llama-3.1-8b

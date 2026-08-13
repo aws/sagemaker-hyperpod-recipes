@@ -1,5 +1,5 @@
 display_name: Agentic RFT for GPT OSS 20B Lora
-recipe_version: "1.0.24"
+recipe_version: "1.0.26"
 
 run:
   name: mtrl-gpt-oss-20b-lora

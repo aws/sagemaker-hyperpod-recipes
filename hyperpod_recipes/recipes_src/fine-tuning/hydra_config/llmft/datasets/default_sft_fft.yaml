@@ -21,6 +21,8 @@ datasets:
     - type: Seq2SeqTokensProcessor
       chat_template_name: null
       ignore_prompt_labels: true
+    - type: SequenceLengthFilter
+      tokens_labels: ['input_ids']
     - type: DropColumns
       column_names:
         - messages

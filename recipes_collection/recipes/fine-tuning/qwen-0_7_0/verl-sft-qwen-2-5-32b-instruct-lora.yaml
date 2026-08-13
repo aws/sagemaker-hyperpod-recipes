@@ -161,4 +161,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.1.0
+version: 2.1.2

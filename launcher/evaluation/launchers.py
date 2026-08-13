@@ -273,7 +273,7 @@ class EvaluationK8SLauncher:
             "Type": "Evaluation",
             "Hardware": "GPU",
             "InstanceTypes": [self.instance_type],
-            "Versions": ["2.0.1"],
+            "Versions": ["2.0.3"],
         }
         launch_json["metadata"] = metadata
 
