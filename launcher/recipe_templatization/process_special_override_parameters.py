@@ -40,7 +40,6 @@ class SpecialOverrideParametersProcessor:
         },
         "nova": {
             # Add nova-specific parameters here
-            "global_batch_size": "min_from_default",
         },
         "mtrl": {
             # Add mtrl-specific parameters here

@@ -21,7 +21,7 @@
     "SequenceLength": "16K",
     "Model_ID": "nova-textgeneration-micro",
     "Versions": [
-      "1.2.0"
+      "1.2.1"
     ],
     "OutputConfig": {
       "SageMakerInferenceRecipeName": "default"
@@ -52,75 +52,72 @@
     ]
   },
   "recipe_override_parameters": {
-    "replicas": {
-      "type": "integer",
-      "required": true,
-      "enum": [
-        2,
-        4,
-        8
-      ],
-      "default": 2
-    },
-    "name": {
-      "type": "string",
-      "required": true,
-      "default": "nova-lite-sft"
+    "adam_beta": {
+      "type": "float",
+      "required": false,
+      "default": 0.1,
+      "min": 0.001,
+      "max": 0.1,
+      "description": "Controls how strongly the model enforces preference rankings. Higher values make the model more sensitive to preference differences.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Beta value",
+      "hint": "Must be a value between 0.001 and 0.1"
     },
     "data_s3_path": {
       "type": "string",
       "required": true,
-      "default": ""
-    },
-    "output_s3_path": {
-      "type": "string",
-      "required": true,
-      "default": ""
+      "default": "",
+      "description": "S3 URI path to training dataset",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "Training dataset location (S3 URI)"
     },
     "global_batch_size": {
       "type": "integer",
       "required": true,
+      "default": 64,
       "enum": [
+        16,
+        32,
         64,
         128,
-        256,
-        512,
-        1024
+        256
       ],
-      "default": 64,
+      "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
       "category": "hyperparameter",
-      "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
-    },
-    "max_epochs": {
-      "type": "integer",
-      "required": true,
-      "min": 1,
-      "max": 100,
-      "default": 2,
-      "category": "hyperparameter",
-      "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+      "visibility_tier": "primary",
+      "display_name": "Batch size",
+      "hint": "Choose from the available batch size options"
     },
     "learning_rate": {
       "type": "float",
       "required": true,
+      "default": 1e-05,
       "min": 0,
       "max": 1,
-      "default": 1e-05,
+      "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
       "category": "hyperparameter",
-      "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+      "visibility_tier": "primary",
+      "display_name": "Learning rate",
+      "hint": "Must be a value between 0 and 1"
     },
-    "adam_beta": {
+    "learning_rate_ratio": {
       "type": "float",
       "required": false,
-      "min": 0.001,
-      "max": 0.1,
-      "default": 0.1,
+      "default": 20.0,
+      "min": 1.0,
+      "max": 70.0,
+      "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
       "category": "hyperparameter",
-      "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
+      "visibility_tier": "advanced",
+      "display_name": "Learning rate ratio",
+      "hint": "Must be a value between 1.0 and 70.0"
     },
     "lora_alpha": {
       "type": "integer",
       "required": true,
+      "default": 64,
       "enum": [
         32,
         64,
@@ -129,74 +126,140 @@
         160,
         192
       ],
-      "default": 64,
+      "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
       "category": "hyperparameter",
-      "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
-    },
-    "learning_rate_ratio": {
-      "type": "float",
-      "required": false,
-      "min": 1.0,
-      "max": 70.0,
-      "default": 20.0,
-      "category": "hyperparameter",
-      "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
-    },
-    "namespace": {
-      "type": "string",
-      "required": true,
-      "default": "kubeflow"
+      "visibility_tier": "advanced",
+      "display_name": "Alpha value",
+      "hint": "Select from available alpha values"
     },
     "max_context_length": {
       "type": "integer",
       "required": true,
+      "default": 8192,
       "min": 1,
       "max": 131072,
-      "default": 8192,
+      "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
       "category": "hyperparameter",
-      "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+      "visibility_tier": "primary",
+      "display_name": "Maximum Context Length",
+      "hint": "Must be a value between 1 and 131072"
     },
-    "mlflow_tracking_uri": {
-      "type": "string",
-      "required": false,
-      "default": ""
-    },
-    "mlflow_experiment_name": {
-      "type": "string",
-      "required": false,
-      "default": "my-lora-experiment"
-    },
-    "mlflow_run_name": {
-      "type": "string",
-      "required": false,
-      "default": "my-lora-run"
-    },
-    "weight_decay": {
-      "type": "float",
-      "required": true,
-      "min": 0.0,
-      "max": 1.0,
-      "default": 0.01,
-      "category": "hyperparameter",
-      "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
-    },
-    "warmup_steps": {
+    "max_epochs": {
       "type": "integer",
       "required": true,
-      "min": 0,
+      "default": 2,
+      "min": 1,
       "max": 100,
-      "default": 10,
+      "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
       "category": "hyperparameter",
-      "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+      "visibility_tier": "primary",
+      "display_name": "Number of epochs",
+      "hint": "Must be a value between 1 and 100"
     },
     "min_lr": {
       "type": "float",
       "required": true,
+      "default": 1e-06,
       "min": 1e-07,
       "max": 1.0,
-      "default": 1e-06,
+      "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
       "category": "hyperparameter",
-      "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+      "visibility_tier": "advanced",
+      "display_name": "Minimum learning rate",
+      "hint": "Must be a value between 1e-07 and 1.0"
+    },
+    "mlflow_experiment_name": {
+      "type": "string",
+      "required": false,
+      "default": "my-lora-experiment",
+      "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "Experiment name"
+    },
+    "mlflow_run_name": {
+      "type": "string",
+      "required": false,
+      "default": "my-lora-run",
+      "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "Experiment run"
+    },
+    "mlflow_tracking_uri": {
+      "type": "string",
+      "required": false,
+      "default": "",
+      "description": "MLflow tracking server URI for experiment logging",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "MLflow Resource"
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "default": "nova-lite-sft",
+      "description": "Custom model name",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "hint": "A training job with the name {name} will be created",
+      "display_name": "Custom model name"
+    },
+    "namespace": {
+      "type": "string",
+      "required": true,
+      "default": "kubeflow",
+      "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Kubernetes Namespace"
+    },
+    "output_s3_path": {
+      "type": "string",
+      "required": true,
+      "default": "",
+      "description": "The S3 path where the trained model artifacts are stored after the job completes.",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "Output artifact location (S3 URI)",
+      "hint": "Enter S3 URI path string"
+    },
+    "replicas": {
+      "type": "integer",
+      "required": true,
+      "default": 2,
+      "enum": [
+        2,
+        4,
+        8
+      ],
+      "description": "Number of training pods (adjust based on cluster capacity)",
+      "category": "hyperparameter",
+      "visibility_tier": "primary",
+      "display_name": "Pod Replicas",
+      "hint": "Select from available options"
+    },
+    "warmup_steps": {
+      "type": "integer",
+      "required": true,
+      "default": 10,
+      "min": 0,
+      "max": 100,
+      "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Warmup steps",
+      "hint": "Must be a value between 0 and 100"
+    },
+    "weight_decay": {
+      "type": "float",
+      "required": true,
+      "default": 0.01,
+      "min": 0.0,
+      "max": 1.0,
+      "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary"
     },
     "instance_type": {
       "type": "string",
@@ -206,7 +269,12 @@
         "ml.p4d.24xlarge",
         "ml.p5en.48xlarge"
       ],
-      "default": "ml.p5.48xlarge"
+      "default": "ml.p5.48xlarge",
+      "description": "Compute instance type for the HyperPod training job",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "Instance type",
+      "hint": "Select instance type"
     }
   },
   "regional_parameters": {

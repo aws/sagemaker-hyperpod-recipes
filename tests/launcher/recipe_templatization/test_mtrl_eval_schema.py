@@ -6,13 +6,17 @@ bounds, and defaults specified in Requirement 4 (and Requirement 3.1 for
 the regional parameters file).
 """
 
+import copy
 import json
 from pathlib import Path
 
 import pytest
 
+from utils.resolve_override_params import resolve_params
+
 TEMPLATE_PATH = Path("launcher/recipe_templatization/mtrl_eval/mtrl_eval_recipe_template_parameters.json")
 REGIONAL_PATH = Path("launcher/recipe_templatization/mtrl_eval/mtrl_eval_regional_parameters.json")
+BASE_PATH = Path("launcher/recipe_templatization/base_override_parameters.json")
 
 
 def _load_json(path: Path) -> dict:
@@ -33,8 +37,20 @@ def _contains_key(obj, key) -> bool:
 
 @pytest.fixture(scope="module")
 def template_data() -> dict:
+    """Returns the template data with sparse `override_parameters` resolved against
+    base_override_parameters.json and exposed as `recipe_override_parameters` for
+    backward-compatible test assertions."""
     assert TEMPLATE_PATH.exists(), f"Template parameters file not found at {TEMPLATE_PATH}"
-    return _load_json(TEMPLATE_PATH)
+    data = copy.deepcopy(_load_json(TEMPLATE_PATH))
+
+    base = _load_json(BASE_PATH)
+    eval_base = base.get("evaluation", {})
+
+    for tmpl in data.get("templates", {}).values():
+        if "override_parameters" in tmpl:
+            resolved = resolve_params(eval_base, tmpl["override_parameters"], tmpl.get("recipe_template", {}))
+            tmpl["recipe_override_parameters"] = resolved
+    return data
 
 
 @pytest.fixture(scope="module")

@@ -11,7 +11,7 @@ defaults:
   - _self_
 
 display_name: "Nemotron 3 Nano 30B SFT FFT Fine-Tuning"
-version: 2.0.1
+version: 2.0.4
 instance_types: ["ml.p5.48xlarge"]
 
 run:
@@ -29,10 +29,7 @@ training_config:
     truncation: left
     train_max_samples: -1
     val_max_samples: -1
-
-  model:
-    enable_gradient_checkpointing: true
-    use_remove_padding: true
+    ignore_input_ids_mismatch: true
 
   engine:
     tensor_model_parallel_size: 8
@@ -59,8 +56,3 @@ training_config:
     project_name: verl_sft_nemo3_nano
     experiment_name: nemo3_nano_30b_sft_megatron_fft
     total_epochs: 2
-    resume_mode: auto
-
-  trainer_callbacks:
-    - _target_: metering_callback.MeteringCallback
-      output_path: /opt/ml/metering

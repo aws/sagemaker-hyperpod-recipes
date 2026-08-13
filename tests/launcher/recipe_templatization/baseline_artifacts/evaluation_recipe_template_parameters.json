@@ -45,57 +45,93 @@
                 "name": {
                     "type": "string",
                     "default": "open-source-eval-job",
-                    "required": true
+                    "required": true,
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name"
                 },
                 "base_model_name": {
                     "type": "string",
                     "default": "",
-                    "required": true
+                    "required": true,
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "default": "",
-                    "required": true
+                    "required": true,
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "data_s3_path": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Dataset"
                 },
                 "instance_count": {
                     "type": "integer",
                     "default": 1,
-                    "required": true
+                    "required": true,
+                    "description": "Number of compute instances for training",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Instance count",
+                    "hint": "Only choose as many instances as needed for your training"
                 },
                 "output_path": {
                     "type": "string",
                     "default": "",
-                    "required": true
+                    "required": true,
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "eval_tensorboard_results_dir": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "Directory for evaluation TensorBoard results",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "MLflow experiment name for grouping runs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "Display name for the MLflow run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "task": {
                     "type": "string",
@@ -111,7 +147,10 @@
                         "inference_only"
                     ],
                     "default": "mmlu",
-                    "required": true
+                    "required": true,
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Task"
                 },
                 "strategy": {
                     "type": "string",
@@ -122,12 +161,18 @@
                         "fs_cot"
                     ],
                     "default": "zs_cot",
-                    "required": false
+                    "required": false,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Strategy"
                 },
                 "kms_key_id": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Encryption KMS key"
                 },
                 "preset_reward_function": {
                     "type": "string",
@@ -136,7 +181,11 @@
                         "prime_code",
                         "prime_math"
                     ],
-                    "default": ""
+                    "default": "",
+                    "description": "Preset reward function for RLVR",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Metrics"
                 },
                 "evaluation_metric": {
                     "default": "",
@@ -147,7 +196,9 @@
                         "exact_match"
                     ],
                     "required": false,
-                    "type": "string"
+                    "type": "string",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "subtask": {
                     "type": "string",
@@ -245,42 +296,70 @@
                         "precalculus"
                     ],
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Subtask"
                 },
                 "max_new_tokens": {
                     "type": "integer",
                     "default": 8192,
-                    "required": false
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max New Tokens"
                 },
                 "top_k": {
                     "type": "integer",
                     "default": -1,
-                    "required": false
+                    "required": false,
+                    "description": "Top-k nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-k",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "top_p": {
                     "type": "number",
                     "default": 1.0,
-                    "required": false
+                    "required": false,
+                    "description": "Top-p nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-p",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "integer",
                     "default": 0,
-                    "required": false
+                    "required": false,
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_model_len": {
                     "type": "integer",
                     "default": 12000,
-                    "required": false
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max Model Len"
                 },
                 "lambda_arn": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "postprocessing": {
                     "type": "boolean",
                     "default": false,
-                    "required": false
+                    "required": false,
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "aggregation": {
                     "type": "string",
@@ -292,7 +371,9 @@
                         "sum"
                     ],
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 }
             },
             "recipe_metadata_helpers": {
@@ -342,62 +423,97 @@
                 "name": {
                     "type": "string",
                     "default": "",
-                    "required": true
+                    "required": true,
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name"
                 },
                 "base_model_name": {
                     "type": "string",
                     "default": "",
-                    "required": true
+                    "required": true,
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "judge_model_id": {
                     "type": "string",
                     "default": "",
-                    "required": true
+                    "required": true,
+                    "description": "Bedrock model ID used as the judge for RLAIF evaluation",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Evaluator model"
                 },
                 "inference_data_s3_path": {
                     "type": "string",
                     "default": "",
-                    "required": true
+                    "required": true,
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "base_model_inference_data_s3_path": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "eval_tensorboard_results_dir": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "Directory for evaluation TensorBoard results",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "kms_key_id": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Encryption KMS key"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "MLflow experiment name for grouping runs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "mlflow_run_name": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "description": "Display name for the MLflow run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "llmaj_metrics": {
                     "type": "string",
@@ -419,12 +535,18 @@
                         "Summarization"
                     ],
                     "default": "Faithfulness",
-                    "required": false
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Metrics"
                 },
                 "custom_metrics": {
                     "type": "string",
                     "default": "",
-                    "required": false
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Custom metrics"
                 }
             },
             "recipe_metadata_helpers": {

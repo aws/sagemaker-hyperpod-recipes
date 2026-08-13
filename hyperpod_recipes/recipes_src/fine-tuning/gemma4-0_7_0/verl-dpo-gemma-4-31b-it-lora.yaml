@@ -13,7 +13,7 @@ defaults:
   - _self_
 
 display_name: "Gemma 4 31B IT DPO LoRA Fine-Tuning"
-version: 2.0.3
+version: 2.0.5
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
 
 run:
@@ -38,22 +38,11 @@ training_config:
     lora_dropout: 0.05
 
   engine:
-    use_torch_compile: true
-    model_dtype: bfloat16
     strategy: fsdp2
-    dtype: bfloat16
-
   optim:
     lr: 5.0e-5
-    weight_decay: 0.01
     lr_warmup_steps: 10
-    lr_warmup_steps_ratio: 0.0
-    min_lr_ratio: 0.0
-    lr_scheduler_type: constant
-
   trainer:
     beta: 0.01
-    loss_type: sigmoid
     total_epochs: 3
-    save_freq: after_each_epoch
     test_freq: 5

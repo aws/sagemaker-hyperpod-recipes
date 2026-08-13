@@ -2,7 +2,6 @@ display_name: Qwen 3.5 4B DPO Full Fine-Tuning
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge
-- ml.p4d.24xlarge
 run:
   model_type: verl
   name: verl-dpo-qwen-3-dot-5-4b-fft
@@ -178,4 +177,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.3
+version: 2.0.5

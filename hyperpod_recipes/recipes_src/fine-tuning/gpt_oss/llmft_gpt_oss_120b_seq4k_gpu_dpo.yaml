@@ -8,7 +8,7 @@ defaults:
   - _self_
 
 display_name: "GPT OSS 120B Direct Preference Optimization on GPU, 4K sequence length"
-version: 2.2.1
+version: 2.2.4
 instance_types: ["ml.p5.48xlarge", "ml.p5e.48xlarge", "ml.p5en.48xlarge"]
 
 run:
@@ -18,7 +18,6 @@ training_config:
   model_config:
     model_save_name: SageMaker/gpt-oss-120B-Instruct-Lora
   training_args:
-    merge_weights: true
     strategy:
       fsdp_config:
         sharding_strategy: FULL_SHARD

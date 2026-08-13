@@ -7,8 +7,9 @@ defaults:
   - /hydra_config/llmft/strategy/fsdp_dpo_fft
   - _self_
 
-display_name: "Llama 4 Scout 17B 16E Direct Preference Optimization on GPU, 4K sequence length"
-version: 2.2.1
+display_name: "Llama 4 Scout 17B 16E Direct Preference Optimization on GPU, 4K sequence
+  length"
+version: 2.2.3
 instance_types: ['ml.p5.48xlarge', 'ml.p5e.48xlarge']
 
 run:
@@ -20,17 +21,8 @@ trainer:
 training_config:
   force_rerun: true
   model_config:
-    model_name_or_path: "meta-llama/Llama-4-Scout-17B-16E-Instruct"
     model_save_name: Meta-Llama-4-Scout-17B-16E-Instruct
     peft_config:
-      peft_type: lora
-      target_modules: all-linear
-      r: 16
-      lora_alpha: 32
-      lora_dropout: 0.05
-      bias: none
-      task_type: CAUSAL_LM
-      use_dora: false
       exclude_modules:
         - model.layers.0.feed_forward.router
         - model.layers.1.feed_forward.router
@@ -80,9 +72,6 @@ training_config:
         - model.layers.45.feed_forward.router
         - model.layers.46.feed_forward.router
         - model.layers.47.feed_forward.router
-  training_args:
-    merge_weights: true
-
 elastic_policy:
   is_elastic: false
   min_nodes: 1

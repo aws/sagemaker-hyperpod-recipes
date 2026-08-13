@@ -10,6 +10,7 @@ The recipes support the following infrastructure (unless otherwise specified in 
 - **Amazon SageMaker HyperPod** with Amazon EKS for workload orchestration
 - **Amazon SageMaker HyperPod** with Slurm for workload orchestration
 - **Amazon SageMaker training jobs (SMTJ)**
+- **Amazon SageMaker serverless model customization** (fully managed, no instance selection)
 
 
 ## Version History
@@ -296,62 +297,104 @@ pip3 install --upgrade pip setuptools
 pip install --upgrade sagemaker
 ```
 
-The following Python code-snippet demonstrates how to submit a recipe to run on a SageMaker training jobs by utilizing the `PyTorch` estimator from the SageMaker Python SDK.
+The following Python code-snippet demonstrates how to submit a recipe to run on a SageMaker training job using the `ModelTrainer` class from the SageMaker Python SDK. `ModelTrainer` is the unified training interface introduced in v3 of the SDK that replaces the framework-specific estimators (such as the `PyTorch` estimator). It requires the v3 SageMaker Python SDK, which is installed by the `pip install --upgrade sagemaker` command above.
 
-For example, to run the llama3-8b recipe on a SageMaker training jobs, you need to set `training_recipe` arg to indicate which recipe: this can be a recipe from one of the available ones, or a url or a local yaml file containing a modified recipe. Please also modify the local directory paths and hf access token either by providing `recipe_overrides` or by modifying the recipe yaml file directly (the url or local file).
+For example, to run the llama3.1-8b recipe on a SageMaker training job, pass the recipe name to `ModelTrainer.from_recipe` via the `training_recipe` argument: this can be one of the available recipe names (resolved from this repository), a url, or a local yaml file containing a modified recipe. Override any recipe field (for example, the HuggingFace access token or output paths) by providing `recipe_overrides`, or modify the recipe yaml file directly (the url or local file).
 
 ```python
-import os
-import sagemaker, boto3
-from sagemaker.debugger import TensorBoardOutputConfig
-from sagemaker.pytorch import PyTorch
+from sagemaker.train import ModelTrainer
+from sagemaker.train.configs import Compute, InputData, OutputDataConfig, TensorBoardOutputConfig
 
-sagemaker_session = sagemaker.Session()
-role = sagemaker.get_execution_role()
-
-bucket = sagemaker_session.default_bucket()
-output = os.path.join(f"s3://{bucket}", "output")
-output_path = "<s3 url>"
-
+# Override any recipe fields. Here we point the recipe's output at the standard
+# SageMaker training-job container path so artifacts are uploaded to S3.
 recipe_overrides = {
     "run": {
         "results_dir": "/opt/ml/model",
     },
-    "exp_manager": {
-        "exp_dir": "",
-        "explicit_log_dir": "/opt/ml/output/tensorboard",
-        "checkpoint_dir": "/opt/ml/checkpoints",
-    },
-    "model": {
-        "data": {
-            "train_dir": "/opt/ml/input/data/train",
-            "val_dir": "/opt/ml/input/data/val",
-        },
-    },
 }
 
-tensorboard_output_config = TensorBoardOutputConfig(
-    s3_output_path=os.path.join(output, 'tensorboard'),
-    container_local_output_path=recipe_overrides["exp_manager"]["explicit_log_dir"]
-)
-
-estimator = PyTorch(
-    output_path=output_path,
-    base_job_name=f"llama-recipe",
-    role=role,
+# Compute for the training job. instance_type is required for recipes and must be
+# a GPU or Trainium instance type.
+compute = Compute(
     instance_type="ml.p5.48xlarge",
-    training_recipe="training/llama/llmft_llama3_8b_seq4k_gpu_sft_lora",
-    recipe_overrides=recipe_overrides,
-    sagemaker_session=sagemaker_session,
-    tensorboard_output_config=tensorboard_output_config,
+    keep_alive_period_in_seconds=3600,
 )
 
-estimator.fit(inputs={"train": "s3 or fsx input", "val": "s3 or fsx input"}, wait=True)
+model_trainer = ModelTrainer.from_recipe(
+    training_recipe="fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_sft_lora",
+    recipe_overrides=recipe_overrides,
+    compute=compute,
+    # See the "Container Images" section above for the image that matches your recipe.
+    training_image="327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0",
+    base_job_name="llama-recipe",
+    output_data_config=OutputDataConfig(s3_output_path="<s3 output url>"),
+)
+
+# (Optional) stream TensorBoard logs to S3.
+model_trainer.with_tensorboard_output_config(
+    TensorBoardOutputConfig(
+        s3_output_path="<s3 tensorboard url>",
+        local_path="/opt/ml/output/tensorboard",
+    )
+)
+
+model_trainer.train(
+    input_data_config=[
+        InputData(channel_name="train", data_source="s3 or fsx input"),
+        InputData(channel_name="val", data_source="s3 or fsx input"),
+    ],
+    wait=True,
+)
 ```
 
-Running the above code creates a `PyTorch` estimator object with the specified training recipe and then trains the model using the `fit()` method. The new `training_recipe` parameter enables you to specify the recipe you want to use.
+`ModelTrainer.from_recipe` builds a trainer from the specified recipe and the `instance_type` in `Compute`, and `train()` launches the job. LLMFT, VERL, and Nova recipes require you to pass `training_image` explicitly (use the image that matches your recipe from the [Container Images](#container-images) section above). Each channel passed to `train()` is mounted under `/opt/ml/input/data/<channel_name>` inside the training container, where the recipe reads its inputs. If you do not pass `role` or `sagemaker_session`, `from_recipe` uses the default SageMaker execution role and creates a new session.
 
 To learn more about running Amazon Nova recipe on SageMaker training job, refer to [this documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/nova-model-training-job.html).
+
+### Running a recipe with SageMaker serverless model customization
+
+The sections above cover *serverful* usage, where you provision and manage the compute (a HyperPod cluster or a SageMaker training job with a chosen `instance_type`). Amazon SageMaker AI also offers **serverless model customization**: a fully managed path where you choose a base model and a customization technique, and SageMaker AI automatically provisions accelerators, applies the pre-optimized recipe, and cleans up compute when the job finishes. There is no instance type or cluster to configure.
+
+For an overview of how serverless compares to SageMaker training jobs and HyperPod, see [Model customization](https://docs.aws.amazon.com/sagemaker/latest/dg/customizing-models.html) and [Serverless model customization](https://docs.aws.amazon.com/sagemaker/latest/dg/customize-model.html) in the AWS documentation.
+
+#### Using the SageMaker Python SDK
+
+Serverless jobs are launched with the model-customization trainers in the SageMaker Python SDK (`SFTTrainer`, `DPOTrainer`, `RLAIFTrainer`, and `RLVRTrainer`), rather than the `ModelTrainer` used for training jobs. Instead of a recipe path, you pass a base-model ID from the SageMaker JumpStart model catalog (for example, `meta-textgeneration-llama-3-1-8b-instruct`).
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip3 install --upgrade pip setuptools
+
+# install SageMaker SDK
+pip install --upgrade sagemaker
+```
+
+The following snippet launches a serverless SFT (LoRA) job. Swap in `DPOTrainer`, `RLAIFTrainer`, or `RLVRTrainer` for other techniques.
+
+```python
+from sagemaker.train.common import TrainingType
+from sagemaker.train.sft_trainer import SFTTrainer
+
+trainer = SFTTrainer(
+    model="meta-textgeneration-llama-3-1-8b-instruct",  # base model ID from the JumpStart catalog
+    training_type=TrainingType.LORA,                    # or TrainingType.FULL for full fine-tuning
+    model_package_group="my-custom-llama",              # group that tracks the fine-tuned model versions
+    training_dataset="s3://<your-bucket>/train/",       # S3 URI or dataset ARN
+    validation_dataset="s3://<your-bucket>/val/",       # optional
+    s3_output_path="s3://<your-bucket>/output/",        # optional
+    accept_eula=True,                                   # required for gated models
+)
+
+training_job = trainer.train(wait=True)
+print(training_job.training_job_name)
+```
+
+Hyperparameters (learning rate, LoRA rank, batch size, sequence length, etc.) are passed to the trainer per technique. See [docs/HYPERPARAMETERS.md](docs/HYPERPARAMETERS.md) for the full list of supported hyperparameters and recommended ranges for serverless usage. For the complete trainer API, see the [SageMaker Python SDK model customization reference](https://sagemaker.readthedocs.io/en/stable/model_customization/index.html).
+
+#### Using the Studio UI
+
+You can also run serverless model customization visually from the guided interface in Amazon SageMaker Studio, without writing any code. The UI walks you through selecting a base model, technique, datasets, and evaluators, and provides live metrics and logs while the job runs. For step-by-step instructions, see [Serverless model customization](https://docs.aws.amazon.com/sagemaker/latest/dg/customize-model.html) in the AWS documentation.
 
 ## Troubleshooting
 

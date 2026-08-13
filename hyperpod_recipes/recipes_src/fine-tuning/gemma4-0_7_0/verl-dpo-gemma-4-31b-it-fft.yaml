@@ -12,7 +12,7 @@ defaults:
   - _self_
 
 display_name: "Gemma 4 31B IT DPO Full Fine-Tuning"
-version: 2.0.1
+version: 2.0.3
 instance_types: ["ml.p5.48xlarge"]
 
 run:
@@ -30,11 +30,7 @@ training_config:
     micro_batch_size_per_gpu: 1
 
   engine:
-    use_torch_compile: true
-    model_dtype: bfloat16
     strategy: fsdp2
-    dtype: bfloat16
-
   optim:
     lr: 1.0e-05
     weight_decay: 0.0
@@ -44,7 +40,5 @@ training_config:
 
   trainer:
     beta: 0.01
-    loss_type: sigmoid
     total_epochs: 2
-    save_freq: after_each_epoch
     test_freq: 5

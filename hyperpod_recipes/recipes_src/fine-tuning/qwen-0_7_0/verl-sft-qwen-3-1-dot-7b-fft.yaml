@@ -10,7 +10,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 3 1.7B SFT Full Fine-Tuning"
-version: 2.1.0
+version: 2.1.2
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge", "ml.p4d.24xlarge"]
 
 run:
@@ -35,10 +35,7 @@ training_config:
 
   model:
     path: Qwen/Qwen3-1.7B
-    trust_remote_code: false
     use_liger: true
-    use_fused_kernels: false
-
   optim:
     lr: 2.0e-05
     weight_decay: 0.1
@@ -48,6 +45,5 @@ training_config:
   trainer:
     project_name: verl_sft_qwen_3_1_dot_7b
     experiment_name: qwen_3_1_dot_7b_sft_fsdp_fft_tatqa
-    total_epochs: 1
     max_ckpt_to_keep: 3
     resume_mode: resume_path

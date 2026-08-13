@@ -1,5 +1,5 @@
 {
-    "checkpointless_nemo": {
+    "checkpointless": {
         "k8s": {
             "container_image": {
                 "prod": {

@@ -11,7 +11,7 @@ defaults:
   - _self_
 
 display_name: "GPT-OSS 20B SFT LoRA Fine-Tuning"
-version: 2.0.1
+version: 2.0.3
 instance_types: ["ml.p5.48xlarge", "ml.p5e.48xlarge", "ml.p5en.48xlarge"]
 
 run:
@@ -22,8 +22,8 @@ trainer:
 
 training_config:
   data:
+    ignore_input_ids_mismatch: true
     train_batch_size: 128
-    micro_batch_size_per_gpu: 4
     max_length: 4096
     max_token_len_per_gpu: 16384
     truncation: right
@@ -32,13 +32,6 @@ training_config:
 
   model:
     path: openai/gpt-oss-20b-bf16
-    trust_remote_code: false
-    use_liger: false
-    use_fused_kernels: false
-    use_remove_padding: true
-    lora_rank: 32
-    lora_alpha: 64
-    target_modules: all-linear
     target_parameters:
       - mlp.experts.gate_up_proj
       - mlp.experts.down_proj
@@ -63,7 +56,3 @@ training_config:
     total_epochs: 3
     max_ckpt_to_keep: 3
     resume_mode: resume_path
-
-  trainer_callbacks:
-    - _target_: metering_callback.MeteringCallback
-      output_path: /opt/ml/metering

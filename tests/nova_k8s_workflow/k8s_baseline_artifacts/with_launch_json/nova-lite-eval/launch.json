@@ -20,7 +20,7 @@
     "ServerlessMeteringType": "Token-based",
     "Model_ID": "nova-textgeneration-micro",
     "Versions": [
-      "2.3.0"
+      "2.3.1"
     ],
     "OutputConfig": {
       "SageMakerInferenceRecipeName": "default"
@@ -51,73 +51,115 @@
     ]
   },
   "recipe_override_parameters": {
-    "name": {
-      "type": "string",
-      "required": true,
-      "default": "nova-lite-eval"
-    },
-    "output_s3_path": {
-      "type": "string",
-      "required": true,
-      "default": ""
-    },
-    "task": {
-      "type": "string",
-      "required": true,
-      "default": "mmlu"
-    },
-    "strategy": {
-      "type": "string",
-      "required": true,
-      "default": "zs_cot"
+    "max_new_tokens": {
+      "type": "integer",
+      "required": false,
+      "default": 8196,
+      "min": 0,
+      "max": 100000,
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Max New Tokens"
     },
     "metric": {
       "type": "string",
       "required": true,
-      "default": "accuracy"
-    },
-    "subtask": {
-      "type": "string",
-      "required": false,
-      "default": ""
-    },
-    "max_new_tokens": {
-      "type": "integer",
-      "required": false,
-      "min": 0,
-      "max": 100000,
-      "default": 8196
-    },
-    "top_k": {
-      "type": "integer",
-      "required": false,
-      "default": -1
-    },
-    "top_p": {
-      "type": "float",
-      "required": false,
-      "min": 0.0,
-      "max": 1.0,
-      "default": 1.0
-    },
-    "temperature": {
-      "type": "float",
-      "required": true,
-      "min": 0.0,
-      "max": 2.0,
-      "default": 0,
-      "category": "hyperparameter",
-      "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
-    },
-    "namespace": {
-      "type": "string",
-      "required": true,
-      "default": "kubeflow"
+      "default": "accuracy",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "Metric"
     },
     "model_name_or_path": {
       "type": "string",
       "required": false,
-      "default": "nova-micro/prod"
+      "default": "nova-micro/prod",
+      "description": "Model identifier or path to pretrained model",
+      "category": "system",
+      "visibility_tier": "tertiary"
+    },
+    "name": {
+      "type": "string",
+      "required": true,
+      "default": "nova-lite-eval",
+      "description": "Custom model name",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "Evaluation name"
+    },
+    "namespace": {
+      "type": "string",
+      "required": true,
+      "default": "kubeflow",
+      "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Kubernetes Namespace"
+    },
+    "output_s3_path": {
+      "type": "string",
+      "required": true,
+      "default": "",
+      "description": "S3 URI path to output model artifacts",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "Output artifact location (S3 URI)"
+    },
+    "strategy": {
+      "type": "string",
+      "required": true,
+      "default": "zs_cot",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "Strategy"
+    },
+    "subtask": {
+      "type": "string",
+      "required": false,
+      "default": "",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "display_name": "Subtask"
+    },
+    "task": {
+      "type": "string",
+      "required": true,
+      "default": "mmlu",
+      "category": "hyperparameter",
+      "visibility_tier": "primary",
+      "display_name": "Task"
+    },
+    "temperature": {
+      "type": "float",
+      "required": true,
+      "default": 0,
+      "min": 0.0,
+      "max": 2.0,
+      "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Temperature",
+      "hint": "Must be a value between 0.0 and 2.0"
+    },
+    "top_k": {
+      "type": "integer",
+      "required": false,
+      "default": -1,
+      "description": "Top-k nucleus sampling cutoff",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Top-k"
+    },
+    "top_p": {
+      "type": "float",
+      "required": false,
+      "default": 1.0,
+      "min": 0.0,
+      "max": 1.0,
+      "description": "Top-p nucleus sampling cutoff",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Top-p",
+      "hint": "Must be a value between 0.0 and 1.0"
     },
     "instance_type": {
       "type": "string",
@@ -129,7 +171,12 @@
         "ml.g6.12xlarge",
         "ml.g6.24xlarge"
       ],
-      "default": "ml.p5.48xlarge"
+      "default": "ml.p5.48xlarge",
+      "description": "Compute instance type for the HyperPod training job",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "display_name": "Instance type",
+      "hint": "Select instance type"
     }
   },
   "regional_parameters": {

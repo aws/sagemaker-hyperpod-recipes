@@ -7,8 +7,9 @@ defaults:
   - /hydra_config/llmft/strategy/fsdp_peft
   - _self_
 
-display_name: "DeepSeek R1 Distill Llama 70B Supervised Fine-Tuning with LoRA on GPU, 4K sequence length"
-version: 2.2.1
+display_name: "DeepSeek R1 Distill Llama 70B Supervised Fine-Tuning with LoRA on GPU,
+  4K sequence length"
+version: 2.2.4
 instance_types: ['ml.p4de.24xlarge', 'ml.p5.48xlarge']
 
 run:
@@ -17,12 +18,8 @@ run:
 training_config:
   force_rerun: true
   model_config:
-    model_name_or_path: "deepseek-ai/DeepSeek-R1-Distill-Llama-70B"
     model_save_name: SageMaker/DeepSeek-R1-Distill-Llama-70B-Lora
     chat_template_key: llama--meta-llama-3.3-70b
-  training_args:
-    merge_weights: true
-
 elastic_policy:
   is_elastic: false
   min_nodes: 1

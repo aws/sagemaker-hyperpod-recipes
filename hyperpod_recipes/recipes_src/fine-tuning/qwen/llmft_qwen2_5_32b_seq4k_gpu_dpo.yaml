@@ -8,19 +8,16 @@ defaults:
   - _self_
 
 display_name: "Qwen 2.5 32B Direct Preference Optimization on GPU, 4K sequence length"
-version: 2.2.1
-instance_types: ['ml.p4de.24xlarge', 'ml.p4d.24xlarge', 'ml.p5.48xlarge', 'ml.g6.48xlarge', 'ml.g6e.12xlarge']
+version: 2.2.4
+instance_types: ['ml.p4de.24xlarge', 'ml.p4d.24xlarge', 'ml.p5.48xlarge', 'ml.g6.48xlarge',
+  'ml.g6e.12xlarge']
 
 run:
   name: qwen-2d5-32b
 
 training_config:
   model_config:
-    model_name_or_path: "Qwen/Qwen2.5-32B-Instruct"
     model_save_name: SageMaker/Qwen2.5-32B-Instruct-Lora
-  training_args:
-    merge_weights: true
-
 elastic_policy:
   is_elastic: false
   min_nodes: 1

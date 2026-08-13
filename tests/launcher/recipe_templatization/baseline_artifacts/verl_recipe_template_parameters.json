@@ -57,7 +57,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "reward_model": {
                         "reward_kwargs": {
@@ -77,32 +79,52 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -111,7 +133,10 @@
                     "max": 0.001,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -120,7 +145,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -129,12 +157,18 @@
                     "max": 100,
                     "default": 3,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -147,21 +181,30 @@
                     ],
                     "default": 128,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_prompt_length": {
                     "type": "integer",
                     "required": true,
                     "min": 512,
-                    "max": 16384,
                     "default": 1024,
                     "category": "hyperparameter",
-                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. The remaining tokens are available for the response."
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max Prompt Length",
+                    "max": 16384
                 },
                 "judge_model_id": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Bedrock model ID used as the judge for RLAIF evaluation",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Reward model"
                 },
                 "judge_prompt_template": {
                     "type": "string",
@@ -170,10 +213,13 @@
                         "/opt/ml/code/verl/cot.jinja",
                         "/opt/ml/code/verl/evaluate.jinja",
                         "/opt/ml/code/verl/faithfulness.jinja",
-                        "/opt/ml/code/verl/summarize.jinja",
-                        "bedrock/RLAIF/PandaLM/prompts/grader.jinja"
+                        "/opt/ml/code/verl/summarize.jinja"
                     ],
-                    "default": "/opt/ml/code/verl/summarize.jinja"
+                    "default": "/opt/ml/code/verl/summarize.jinja",
+                    "description": "Judge prompt template for RLAIF",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Reward prompt type"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -182,22 +228,36 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "default": "default",
                     "required": true,
-                    "type": "string"
+                    "type": "string",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -206,7 +266,8 @@
                     "max": 1.0,
                     "default": 0.01,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "clip_ratio": {
                     "type": "float",
@@ -215,7 +276,10 @@
                     "max": 1.5,
                     "default": 0.2,
                     "category": "hyperparameter",
-                    "description": "PPO/GRPO clipping parameter that limits how much the policy can change in a single update. Too high leads to training instability; too low leads to slow learning."
+                    "description": "Limits how much the model policy changes in a single update. Values that are too high cause instability, and values that are too low slow learning.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "kl_loss_coef": {
                     "type": "float",
@@ -224,7 +288,10 @@
                     "max": 0.1,
                     "default": 0.001,
                     "category": "hyperparameter",
-                    "description": "Weight of the KL divergence penalty term in the RL loss function. Prevents the policy from diverging too far from the reference model."
+                    "description": "Controls how closely the model stays to its original behavior during training. Higher values constrain changes more, and lower values allow the model to drift further.",
+                    "visibility_tier": "primary",
+                    "display_name": "KL loss coefficient",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "rollout_n": {
                     "type": "integer",
@@ -239,7 +306,10 @@
                     ],
                     "default": 8,
                     "category": "hyperparameter",
-                    "description": "Number of candidate responses generated per prompt during GRPO rollouts. More samples improve advantage estimation quality but increase compute cost."
+                    "description": "Number of candidate responses generated per prompt during training. More samples improve training quality but increase compute time.",
+                    "visibility_tier": "primary",
+                    "display_name": "Rollout samples per prompt",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "rollout_temperature": {
                     "type": "float",
@@ -248,7 +318,10 @@
                     "max": 2.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature used during rollout generation. Higher values produce more diverse candidate responses."
+                    "description": "Controls the diversity of generated responses during training rollouts. Higher values produce more varied outputs.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Rollout temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lora_rank": {
                     "type": "integer",
@@ -262,7 +335,10 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "LoRA rank \u2014 the dimensionality of the low-rank decomposition matrices. Lower rank means fewer trainable parameters; higher rank increases model capacity but uses more memory."
+                    "description": "Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LoRA rank",
+                    "hint": "Select from available rank values"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -276,7 +352,10 @@
                     ],
                     "default": 64,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -285,7 +364,10 @@
                     "max": 100,
                     "default": -1,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -294,7 +376,10 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "clip_ratio_high": {
                     "type": "float",
@@ -303,7 +388,10 @@
                     "max": 0.5,
                     "default": 0.28,
                     "category": "hyperparameter",
-                    "description": "Upper clipping threshold for the PPO policy ratio. Limits the magnitude of positive policy updates."
+                    "description": "Sets the maximum allowed increase in token probability per update for positive-advantage tokens. Higher values allow more aggressive policy changes but may reduce output diversity.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio upper bound",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "clip_ratio_low": {
                     "type": "float",
@@ -312,7 +400,10 @@
                     "max": 0.5,
                     "default": 0.2,
                     "category": "hyperparameter",
-                    "description": "Lower clipping threshold for the PPO policy ratio. Limits the magnitude of negative policy updates."
+                    "description": "Sets the maximum allowed decrease in token probability per update for negative-advantage tokens. Lower values promote exploration and help prevent the model from converging too quickly.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio lower bound",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
@@ -321,14 +412,31 @@
                     "max": 2.0,
                     "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "use_kl_loss": {
                     "type": "boolean",
                     "required": true,
                     "default": false,
                     "category": "hyperparameter",
-                    "description": "Boolean flag to add a KL divergence penalty to the training loss. Prevents the RL-trained policy from drifting too far from the reference model."
+                    "description": "Adds a penalty that keeps the training policy close to the reference policy. Disable to rely onclipping alone for training stability.",
+                    "visibility_tier": "primary",
+                    "display_name": "KL divergence loss"
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 2048,
+                    "min": 100,
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 200000
                 }
             },
             "recipe_metadata_helpers": {
@@ -393,7 +501,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "custom_reward_function": {
                         "name": "{{preset_reward_function}}",
@@ -409,22 +519,37 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "namespace": {
                     "default": "default",
                     "required": true,
-                    "type": "string"
+                    "type": "string",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "preset_reward_function": {
                     "type": "string",
@@ -435,27 +560,44 @@
                         "prime_code",
                         "prime_math"
                     ],
-                    "default": ""
+                    "default": "",
+                    "description": "Preset reward function for RLVR",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Preset Reward Function",
+                    "hint": "Select from available reward functions"
                 },
                 "reward_lambda_arn": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "ARN of the Lambda function used for reward computation",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -464,7 +606,10 @@
                     "max": 0.001,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -473,7 +618,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -482,12 +630,18 @@
                     "max": 100,
                     "default": 3,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -500,16 +654,21 @@
                     ],
                     "default": 128,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_prompt_length": {
                     "type": "integer",
                     "required": true,
                     "min": 512,
-                    "max": 16384,
                     "default": 1024,
                     "category": "hyperparameter",
-                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. The remaining tokens are available for the response."
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max Prompt Length",
+                    "max": 16384
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -518,17 +677,27 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -537,7 +706,8 @@
                     "max": 1.0,
                     "default": 0.01,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "clip_ratio": {
                     "type": "float",
@@ -546,7 +716,10 @@
                     "max": 1.5,
                     "default": 0.2,
                     "category": "hyperparameter",
-                    "description": "PPO/GRPO clipping parameter that limits how much the policy can change in a single update. Too high leads to training instability; too low leads to slow learning."
+                    "description": "Limits how much the model policy changes in a single update. Values that are too high cause instability, and values that are too low slow learning.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "kl_loss_coef": {
                     "type": "float",
@@ -555,7 +728,10 @@
                     "max": 0.1,
                     "default": 0.001,
                     "category": "hyperparameter",
-                    "description": "Weight of the KL divergence penalty term in the RL loss function. Prevents the policy from diverging too far from the reference model."
+                    "description": "Controls how closely the model stays to its original behavior during training. Higher values constrain changes more, and lower values allow the model to drift further.",
+                    "visibility_tier": "primary",
+                    "display_name": "KL loss coefficient",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "rollout_n": {
                     "type": "integer",
@@ -570,7 +746,10 @@
                     ],
                     "default": 8,
                     "category": "hyperparameter",
-                    "description": "Number of candidate responses generated per prompt during GRPO rollouts. More samples improve advantage estimation quality but increase compute cost."
+                    "description": "Number of candidate responses generated per prompt during training. More samples improve training quality but increase compute time.",
+                    "visibility_tier": "primary",
+                    "display_name": "Rollout samples per prompt",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "rollout_temperature": {
                     "type": "float",
@@ -579,7 +758,10 @@
                     "max": 2.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature used during rollout generation. Higher values produce more diverse candidate responses."
+                    "description": "Controls the diversity of generated responses during training rollouts. Higher values produce more varied outputs.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Rollout temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lora_rank": {
                     "type": "integer",
@@ -593,7 +775,10 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "LoRA rank \u2014 the dimensionality of the low-rank decomposition matrices. Lower rank means fewer trainable parameters; higher rank increases model capacity but uses more memory."
+                    "description": "Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LoRA rank",
+                    "hint": "Select from available rank values"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -607,7 +792,10 @@
                     ],
                     "default": 64,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -616,7 +804,10 @@
                     "max": 100,
                     "default": -1,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -625,7 +816,10 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "clip_ratio_high": {
                     "type": "float",
@@ -634,7 +828,10 @@
                     "max": 0.5,
                     "default": 0.28,
                     "category": "hyperparameter",
-                    "description": "Upper clipping threshold for the PPO policy ratio. Limits the magnitude of positive policy updates."
+                    "description": "Sets the maximum allowed increase in token probability per update for positive-advantage tokens. Higher values allow more aggressive policy changes but may reduce output diversity.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio upper bound",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "clip_ratio_low": {
                     "type": "float",
@@ -643,7 +840,10 @@
                     "max": 0.5,
                     "default": 0.2,
                     "category": "hyperparameter",
-                    "description": "Lower clipping threshold for the PPO policy ratio. Limits the magnitude of negative policy updates."
+                    "description": "Sets the maximum allowed decrease in token probability per update for negative-advantage tokens. Lower values promote exploration and help prevent the model from converging too quickly.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio lower bound",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
@@ -652,14 +852,31 @@
                     "max": 2.0,
                     "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "use_kl_loss": {
                     "type": "boolean",
                     "required": true,
                     "default": false,
                     "category": "hyperparameter",
-                    "description": "Boolean flag to add a KL divergence penalty to the training loss. Prevents the RL-trained policy from drifting too far from the reference model."
+                    "description": "Adds a penalty that keeps the training policy close to the reference policy. Disable to rely onclipping alone for training stability.",
+                    "visibility_tier": "primary",
+                    "display_name": "KL divergence loss"
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 2048,
+                    "min": 100,
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 200000
                 }
             },
             "recipe_metadata_helpers": {
@@ -727,7 +944,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "reward_model": {
                         "reward_kwargs": {
@@ -747,32 +966,52 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -781,7 +1020,10 @@
                     "max": 0.001,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -790,7 +1032,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -799,12 +1044,18 @@
                     "max": 100,
                     "default": 3,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -817,21 +1068,30 @@
                     ],
                     "default": 128,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_prompt_length": {
                     "type": "integer",
                     "required": true,
                     "min": 512,
-                    "max": 16384,
                     "default": 1024,
                     "category": "hyperparameter",
-                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. The remaining tokens are available for the response."
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max Prompt Length",
+                    "max": 16384
                 },
                 "judge_model_id": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Bedrock model ID used as the judge for RLAIF evaluation",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Reward model"
                 },
                 "judge_prompt_template": {
                     "type": "string",
@@ -840,10 +1100,13 @@
                         "/opt/ml/code/verl/cot.jinja",
                         "/opt/ml/code/verl/evaluate.jinja",
                         "/opt/ml/code/verl/faithfulness.jinja",
-                        "/opt/ml/code/verl/summarize.jinja",
-                        "bedrock/RLAIF/PandaLM/prompts/grader.jinja"
+                        "/opt/ml/code/verl/summarize.jinja"
                     ],
-                    "default": "/opt/ml/code/verl/summarize.jinja"
+                    "default": "/opt/ml/code/verl/summarize.jinja",
+                    "description": "Judge prompt template for RLAIF",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Reward prompt type"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -852,22 +1115,36 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "default": "default",
                     "required": true,
-                    "type": "string"
+                    "type": "string",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -876,7 +1153,8 @@
                     "max": 1.0,
                     "default": 0.01,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "clip_ratio": {
                     "type": "float",
@@ -885,7 +1163,10 @@
                     "max": 1.5,
                     "default": 0.2,
                     "category": "hyperparameter",
-                    "description": "PPO/GRPO clipping parameter that limits how much the policy can change in a single update. Too high leads to training instability; too low leads to slow learning."
+                    "description": "Limits how much the model policy changes in a single update. Values that are too high cause instability, and values that are too low slow learning.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "kl_loss_coef": {
                     "type": "float",
@@ -894,7 +1175,10 @@
                     "max": 0.1,
                     "default": 0.001,
                     "category": "hyperparameter",
-                    "description": "Weight of the KL divergence penalty term in the RL loss function. Prevents the policy from diverging too far from the reference model."
+                    "description": "Controls how closely the model stays to its original behavior during training. Higher values constrain changes more, and lower values allow the model to drift further.",
+                    "visibility_tier": "primary",
+                    "display_name": "KL loss coefficient",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "rollout_n": {
                     "type": "integer",
@@ -909,7 +1193,10 @@
                     ],
                     "default": 8,
                     "category": "hyperparameter",
-                    "description": "Number of candidate responses generated per prompt during GRPO rollouts. More samples improve advantage estimation quality but increase compute cost."
+                    "description": "Number of candidate responses generated per prompt during training. More samples improve training quality but increase compute time.",
+                    "visibility_tier": "primary",
+                    "display_name": "Rollout samples per prompt",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "rollout_temperature": {
                     "type": "float",
@@ -918,7 +1205,10 @@
                     "max": 2.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature used during rollout generation. Higher values produce more diverse candidate responses."
+                    "description": "Controls the diversity of generated responses during training rollouts. Higher values produce more varied outputs.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Rollout temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -927,7 +1217,10 @@
                     "max": 100,
                     "default": -1,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -936,7 +1229,10 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "clip_ratio_high": {
                     "type": "float",
@@ -945,7 +1241,10 @@
                     "max": 0.5,
                     "default": 0.28,
                     "category": "hyperparameter",
-                    "description": "Upper clipping threshold for the PPO policy ratio. Limits the magnitude of positive policy updates."
+                    "description": "Sets the maximum allowed increase in token probability per update for positive-advantage tokens. Higher values allow more aggressive policy changes but may reduce output diversity.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio upper bound",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "clip_ratio_low": {
                     "type": "float",
@@ -954,7 +1253,10 @@
                     "max": 0.5,
                     "default": 0.2,
                     "category": "hyperparameter",
-                    "description": "Lower clipping threshold for the PPO policy ratio. Limits the magnitude of negative policy updates."
+                    "description": "Sets the maximum allowed decrease in token probability per update for negative-advantage tokens. Lower values promote exploration and help prevent the model from converging too quickly.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio lower bound",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
@@ -963,14 +1265,31 @@
                     "max": 2.0,
                     "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "use_kl_loss": {
                     "type": "boolean",
                     "required": true,
                     "default": false,
                     "category": "hyperparameter",
-                    "description": "Boolean flag to add a KL divergence penalty to the training loss. Prevents the RL-trained policy from drifting too far from the reference model."
+                    "description": "Adds a penalty that keeps the training policy close to the reference policy. Disable to rely onclipping alone for training stability.",
+                    "visibility_tier": "primary",
+                    "display_name": "KL divergence loss"
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 2048,
+                    "min": 100,
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 200000
                 }
             },
             "recipe_metadata_helpers": {
@@ -1020,7 +1339,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -1032,32 +1352,52 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1066,7 +1406,10 @@
                     "max": 0.001,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1075,12 +1418,18 @@
                     "max": 100,
                     "default": 3,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1095,22 +1444,36 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "default": "default",
                     "required": true,
-                    "type": "string"
+                    "type": "string",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -1119,7 +1482,10 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -1128,7 +1494,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1137,7 +1506,8 @@
                     "max": 1.0,
                     "default": 0.001,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "lora_rank": {
                     "type": "integer",
@@ -1151,7 +1521,10 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "LoRA rank \u2014 the dimensionality of the low-rank decomposition matrices. Lower rank means fewer trainable parameters; higher rank increases model capacity but uses more memory."
+                    "description": "Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LoRA rank",
+                    "hint": "Select from available rank values"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -1165,7 +1538,10 @@
                     ],
                     "default": 64,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -1174,7 +1550,10 @@
                     "max": 100,
                     "default": -1,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -1183,7 +1562,10 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_scheduler": {
                     "type": "string",
@@ -1194,7 +1576,20 @@
                         "constant"
                     ],
                     "category": "hyperparameter",
-                    "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve."
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
+                    "visibility_tier": "tertiary"
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 4096,
+                    "min": 256,
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 131072
                 }
             },
             "recipe_metadata_helpers": {
@@ -1242,7 +1637,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -1254,32 +1650,52 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1288,7 +1704,10 @@
                     "max": 0.001,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1297,12 +1716,18 @@
                     "max": 100,
                     "default": 3,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1317,22 +1742,36 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "default": "default",
                     "required": true,
-                    "type": "string"
+                    "type": "string",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -1341,7 +1780,10 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -1350,7 +1792,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1359,7 +1804,8 @@
                     "max": 1.0,
                     "default": 0.001,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -1368,7 +1814,10 @@
                     "max": 100,
                     "default": -1,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -1377,7 +1826,10 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_scheduler": {
                     "type": "string",
@@ -1388,7 +1840,20 @@
                         "constant"
                     ],
                     "category": "hyperparameter",
-                    "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve."
+                    "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
+                    "visibility_tier": "tertiary"
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 4096,
+                    "min": 256,
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 131072
                 }
             },
             "recipe_metadata_helpers": {
@@ -1451,7 +1916,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "custom_reward_function": {
                         "name": "{{preset_reward_function}}",
@@ -1467,22 +1934,37 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "namespace": {
                     "default": "default",
                     "required": true,
-                    "type": "string"
+                    "type": "string",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "preset_reward_function": {
                     "type": "string",
@@ -1493,27 +1975,44 @@
                         "prime_code",
                         "prime_math"
                     ],
-                    "default": ""
+                    "default": "",
+                    "description": "Preset reward function for RLVR",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Preset Reward Function",
+                    "hint": "Select from available reward functions"
                 },
                 "reward_lambda_arn": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "ARN of the Lambda function used for reward computation",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1522,7 +2021,10 @@
                     "max": 0.001,
                     "default": 1e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -1531,7 +2033,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                    "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1540,12 +2045,18 @@
                     "max": 100,
                     "default": 3,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1559,16 +2070,21 @@
                     ],
                     "default": 128,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "max_prompt_length": {
                     "type": "integer",
                     "required": true,
                     "min": 512,
-                    "max": 16384,
                     "default": 1024,
                     "category": "hyperparameter",
-                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. The remaining tokens are available for the response."
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max Prompt Length",
+                    "max": 16384
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -1577,17 +2093,27 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "clip_ratio": {
                     "type": "float",
@@ -1596,7 +2122,10 @@
                     "max": 1.5,
                     "default": 0.2,
                     "category": "hyperparameter",
-                    "description": "PPO/GRPO clipping parameter that limits how much the policy can change in a single update. Too high leads to training instability; too low leads to slow learning."
+                    "description": "Limits how much the model policy changes in a single update. Values that are too high cause instability, and values that are too low slow learning.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "kl_loss_coef": {
                     "type": "float",
@@ -1605,7 +2134,10 @@
                     "max": 0.1,
                     "default": 0.001,
                     "category": "hyperparameter",
-                    "description": "Weight of the KL divergence penalty term in the RL loss function. Prevents the policy from diverging too far from the reference model."
+                    "description": "Controls how closely the model stays to its original behavior during training. Higher values constrain changes more, and lower values allow the model to drift further.",
+                    "visibility_tier": "primary",
+                    "display_name": "KL loss coefficient",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "rollout_n": {
                     "type": "integer",
@@ -1620,7 +2152,10 @@
                     ],
                     "default": 8,
                     "category": "hyperparameter",
-                    "description": "Number of candidate responses generated per prompt during GRPO rollouts. More samples improve advantage estimation quality but increase compute cost."
+                    "description": "Number of candidate responses generated per prompt during training. More samples improve training quality but increase compute time.",
+                    "visibility_tier": "primary",
+                    "display_name": "Rollout samples per prompt",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "rollout_temperature": {
                     "type": "float",
@@ -1629,7 +2164,10 @@
                     "max": 2.0,
                     "default": 1.0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature used during rollout generation. Higher values produce more diverse candidate responses."
+                    "description": "Controls the diversity of generated responses during training rollouts. Higher values produce more varied outputs.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Rollout temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1638,7 +2176,8 @@
                     "max": 1.0,
                     "default": 0.01,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -1647,7 +2186,10 @@
                     "max": 100,
                     "default": -1,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -1656,7 +2198,10 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "clip_ratio_high": {
                     "type": "float",
@@ -1665,7 +2210,10 @@
                     "max": 0.5,
                     "default": 0.28,
                     "category": "hyperparameter",
-                    "description": "Upper clipping threshold for the PPO policy ratio. Limits the magnitude of positive policy updates."
+                    "description": "Sets the maximum allowed increase in token probability per update for positive-advantage tokens. Higher values allow more aggressive policy changes but may reduce output diversity.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio upper bound",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "clip_ratio_low": {
                     "type": "float",
@@ -1674,7 +2222,10 @@
                     "max": 0.5,
                     "default": 0.2,
                     "category": "hyperparameter",
-                    "description": "Lower clipping threshold for the PPO policy ratio. Limits the magnitude of negative policy updates."
+                    "description": "Sets the maximum allowed decrease in token probability per update for negative-advantage tokens. Lower values promote exploration and help prevent the model from converging too quickly.",
+                    "visibility_tier": "primary",
+                    "display_name": "Clip ratio lower bound",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "temperature": {
                     "type": "float",
@@ -1683,14 +2234,31 @@
                     "max": 2.0,
                     "default": 0,
                     "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "use_kl_loss": {
                     "type": "boolean",
                     "required": true,
                     "default": false,
                     "category": "hyperparameter",
-                    "description": "Boolean flag to add a KL divergence penalty to the training loss. Prevents the RL-trained policy from drifting too far from the reference model."
+                    "description": "Adds a penalty that keeps the training policy close to the reference policy. Disable to rely onclipping alone for training stability.",
+                    "visibility_tier": "primary",
+                    "display_name": "KL divergence loss"
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 2048,
+                    "min": 100,
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 200000
                 }
             },
             "recipe_metadata_helpers": {
@@ -1744,7 +2312,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -1756,41 +2325,64 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
                     "required": true,
                     "min": 1e-07,
                     "max": 0.001,
-                    "default": 1e-04,
+                    "default": 0.0001,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step.",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1799,12 +2391,18 @@
                     "max": 100,
                     "default": 3,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1819,22 +2417,36 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "default": "default",
                     "required": true,
-                    "type": "string"
+                    "type": "string",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -1843,7 +2455,10 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "adam_beta": {
                     "type": "float",
@@ -1852,7 +2467,10 @@
                     "max": 1.0,
                     "default": 0.01,
                     "category": "hyperparameter",
-                    "description": "KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation."
+                    "description": "KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Beta value",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -1861,7 +2479,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1870,7 +2491,8 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "lora_rank": {
                     "type": "integer",
@@ -1884,7 +2506,10 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "Rank of the low-rank decomposition in LoRA adapters. Higher rank increases expressiveness but uses more memory and compute."
+                    "description": "Rank of the low-rank decomposition in LoRA adapters. Higher rank increases expressiveness but uses more memory and compute.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LoRA rank",
+                    "hint": "Select from available rank values"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -1898,7 +2523,10 @@
                     ],
                     "default": 64,
                     "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Alpha value",
+                    "hint": "Select from available alpha values"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -1907,7 +2535,10 @@
                     "max": 100,
                     "default": -1,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -1916,7 +2547,10 @@
                     "max": 1.0,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_scheduler": {
                     "type": "string",
@@ -1927,7 +2561,20 @@
                         "constant"
                     ],
                     "category": "hyperparameter",
-                    "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve."
+                    "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve.",
+                    "visibility_tier": "tertiary"
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 4096,
+                    "min": 256,
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 131072
                 }
             },
             "recipe_metadata_helpers": {
@@ -1975,7 +2622,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -1987,32 +2635,52 @@
                 "name": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "hint": "A training job with the name {name} will be created",
+                    "display_name": "Custom model name"
                 },
                 "data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "validation_data_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "File path to validation dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "results_directory": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "output_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "resume_from_path": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "Path to checkpoint for resuming training",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -2021,7 +2689,10 @@
                     "max": 0.001,
                     "default": 5e-05,
                     "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step."
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step.",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -2030,12 +2701,18 @@
                     "max": 100,
                     "default": 3,
                     "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+                    "visibility_tier": "primary",
+                    "display_name": "Number of epochs",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "model_name_or_path": {
                     "type": "string",
                     "required": true,
-                    "default": ""
+                    "default": "",
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -2050,22 +2727,36 @@
                     ],
                     "default": 32,
                     "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory.",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "MLflow Resource"
                 },
                 "mlflow_run_id": {
                     "type": "string",
                     "required": false,
-                    "default": ""
+                    "default": "",
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary"
                 },
                 "namespace": {
                     "default": "default",
                     "required": true,
-                    "type": "string"
+                    "type": "string",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace"
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -2074,7 +2765,10 @@
                     "max": 1.0,
                     "default": 0.9,
                     "category": "hyperparameter",
-                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation."
+                    "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
+                    "visibility_tier": "primary",
+                    "display_name": "Train Val Split Ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "adam_beta": {
                     "type": "float",
@@ -2083,7 +2777,10 @@
                     "max": 1.0,
                     "default": 0.01,
                     "category": "hyperparameter",
-                    "description": "KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation."
+                    "description": "KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Beta value",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_warmup_steps_ratio": {
                     "type": "float",
@@ -2092,7 +2789,10 @@
                     "max": 1,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates.",
+                    "visibility_tier": "advanced",
+                    "display_name": "LR warmup ratio",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -2101,7 +2801,8 @@
                     "max": 1.0,
                     "default": 0.0,
                     "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
+                    "visibility_tier": "tertiary"
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -2110,7 +2811,10 @@
                     "max": 100,
                     "default": -1,
                     "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Warmup steps",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "min_lr": {
                     "type": "float",
@@ -2119,7 +2823,10 @@
                     "max": 1.0,
                     "default": 0.1,
                     "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
+                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Minimum learning rate",
+                    "hint": "Must be a value between {min} and {max}"
                 },
                 "lr_scheduler": {
                     "type": "string",
@@ -2130,7 +2837,20 @@
                         "constant"
                     ],
                     "category": "hyperparameter",
-                    "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve."
+                    "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve.",
+                    "visibility_tier": "tertiary"
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 4096,
+                    "min": 256,
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 131072
                 }
             },
             "recipe_metadata_helpers": {

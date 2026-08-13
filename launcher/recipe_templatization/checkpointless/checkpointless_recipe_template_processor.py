@@ -22,6 +22,10 @@ class CheckpointlessRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         self.platform = platform
         super().__init__(staging_cfg)
 
+    def _get_template_category(self) -> str:
+        """Return the category key for base parameter lookup."""
+        return "fine_tuning"
+
     def _load_template(self):
         """Load checkpointless template files."""
         with open(self.template_path) as f:

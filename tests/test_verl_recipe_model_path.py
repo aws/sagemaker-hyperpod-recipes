@@ -51,6 +51,21 @@ _ALGO_PREFIX_RE = re.compile(r"^verl-(?:grpo-(?:rlvr|rlaif)-|sft-)")
 # Tuning-method suffixes to strip from recipe filenames.
 _TUNING_SUFFIX_RE = re.compile(r"-(lora|fft)$")
 
+# Modality suffixes to strip from recipe filenames (not part of model identity).
+_MODALITY_SUFFIX_RE = re.compile(r"-(multimodal|text)$")
+
+# Deployment-spec infix some recipes encode between the model identity and the
+# tuning suffix: instance type + max context length + throughput marker, e.g.
+# "...-27b-p5-48xlarge-128k-tt-lora". These describe how/where the recipe runs,
+# not the model, so they are stripped before matching filename -> model.path.
+#   <instance>  = p5-48xlarge, p4de-24xlarge, ...   (family + "-" + size)
+#   <context>   = 128k, 256k, ...
+#   <throughput>= tt (optional)
+_DEPLOYMENT_SPEC_RE = re.compile(
+    r"-p\d[a-z]*-\d+xlarge-\d+k(?:-tt)?(?=-(?:lora|fft)$)",
+    re.IGNORECASE,
+)
+
 # HuggingFace suffixes that are not part of the model identity.
 _HF_STRIP_RE = re.compile(r"-bf16$", re.IGNORECASE)
 
@@ -116,10 +131,16 @@ def _model_id_from_filename(filename):
     "verl-grpo-rlvr-qwen-3-5-9b-lora.yaml"  -> "qwen 3 5 9b"
     "verl-grpo-rlvr-llama-3-dot-1-8b-instruct-fft.yaml"
                                               -> "llama 3 1 8b instruct"
+    "verl-sft-gemma-4-31b-it-multimodal-lora.yaml"
+                                              -> "gemma 4 31b it"
+    "verl-grpo-rlvr-qwen-3-dot-6-27b-p5-48xlarge-128k-tt-lora.yaml"
+                                              -> "qwen 3 6 27b"
     """
     name = filename.removesuffix(".yaml")
     name = _ALGO_PREFIX_RE.sub("", name)
+    name = _DEPLOYMENT_SPEC_RE.sub("", name)
     name = _TUNING_SUFFIX_RE.sub("", name)
+    name = _MODALITY_SUFFIX_RE.sub("", name)
     return " ".join(_to_tokens(name))
 
 

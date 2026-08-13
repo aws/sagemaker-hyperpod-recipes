@@ -22,7 +22,22 @@ exclusion_patterns:
   # Block Verl SFT recipes for Qwen models other than 3-dot-5 and 3-dot-6
   - "verl-sft-qwen-3-(?!dot-[56])"
   - "verl-sft-qwen-2-5"
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-3-14b-fft"
   # Block gpt_oss-0_7_0 and qwen-0_7_0/qwen-3-32b recipes (use verl 0.5.0 versions instead)
   - "gpt_oss-0_7_0/"
   - "qwen-0_7_0/.*qwen-3-32b"
   - "verl-sft-gpt-oss-20b-lora"
+  # FFT recipes we do not want to publish — FFT x {SFT, DPO, RLAIF, RLVR} for
+  # Llama-3-2-1b / Llama-3-1-8b / Llama-3-2-3b (pending inference endpoint fix).
+  - "fine-tuning/llama/llmft_llama3_2_1b_instruct_seq4k_gpu_dpo_fft"
+  - "fine-tuning/llama/llmft_llama3_2_1b_instruct_seq4k_gpu_sft_fft"
+  - "fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-2-1b-instruct-fft"
+  - "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-2-1b-instruct-fft"
+  - "fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_dpo_fft"
+  - "fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_sft_fft"
+  - "fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-1-8b-instruct-fft"
+  - "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-1-8b-instruct-fft"
+  - "fine-tuning/llama/llmft_llama3_2_3b_instruct_seq4k_gpu_dpo_fft"
+  - "fine-tuning/llama/llmft_llama3_2_3b_instruct_seq4k_gpu_sft_fft"
+  - "fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-2-3b-instruct-fft"
+  - "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-2-3b-instruct-fft"

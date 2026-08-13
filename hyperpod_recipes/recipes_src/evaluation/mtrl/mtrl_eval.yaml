@@ -1,5 +1,5 @@
 display_name: MTRL Evaluation
-recipe_version: "1.0.15"
+recipe_version: "1.0.17"
 
 run:
   base_model_name: ''             # override for each model
