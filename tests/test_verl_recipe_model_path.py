@@ -75,6 +75,13 @@ _HF_VENDOR_PREFIX_RE = re.compile(r"^NVIDIA-", re.IGNORECASE)
 # HuggingFace architecture suffixes to strip (e.g., "-A3B", "-A12B" active param indicators)
 _HF_ARCH_SUFFIX_RE = re.compile(r"-A\d+B", re.IGNORECASE)
 
+# Architecture suffix in filenames (e.g., "-a3b", "-a10b" active param indicators),
+# stripped after the tuning/deployment suffixes are removed.
+_FILENAME_ARCH_SUFFIX_RE = re.compile(r"-a\d+b$", re.IGNORECASE)
+
+# Architecture token in display names (e.g., "A3B" in "Qwen 3.5 35B A3B").
+_DISPLAY_ARCH_TOKEN_RE = re.compile(r"\s+A\d+B\b", re.IGNORECASE)
+
 
 def _to_tokens(s):
     """Split a string into lowercase alphanumeric tokens.
@@ -141,6 +148,7 @@ def _model_id_from_filename(filename):
     name = _DEPLOYMENT_SPEC_RE.sub("", name)
     name = _TUNING_SUFFIX_RE.sub("", name)
     name = _MODALITY_SUFFIX_RE.sub("", name)
+    name = _FILENAME_ARCH_SUFFIX_RE.sub("", name)
     return " ".join(_to_tokens(name))
 
 
@@ -154,6 +162,7 @@ def _model_id_from_display_name(display_name):
     # Truncate at the first algorithm/training keyword.
     match = _DISPLAY_NAME_STOP_WORDS.search(display_name)
     model_part = display_name[: match.start()].strip() if match else display_name
+    model_part = _DISPLAY_ARCH_TOKEN_RE.sub("", model_part)
     return " ".join(_to_tokens(model_part))
 
 

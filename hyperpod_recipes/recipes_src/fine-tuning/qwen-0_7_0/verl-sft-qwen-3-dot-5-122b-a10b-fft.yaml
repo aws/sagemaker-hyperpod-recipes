@@ -1,0 +1,60 @@
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/model_config/qwen-3-dot-5-122b-a10b
+  - _self_
+
+display_name: "Qwen 3.5 122B A10B SFT Full Fine-Tuning"
+version: 1.0.0
+instance_types: ["ml.p5.48xlarge"]
+
+run:
+  name: verl-sft-qwen-3-dot-5-122b-a10b-fft
+
+trainer:
+  num_nodes: 4
+
+training_config:
+  data:
+    train_batch_size: 256
+    micro_batch_size_per_gpu: 1
+    max_length: 16384
+    max_token_len_per_gpu: 16384
+    truncation: left
+    train_max_samples: -1
+    val_max_samples: -1
+    train_num_workers: 8
+    val_num_workers: 0
+
+  model:
+    override_config:
+      attn_implementation: flash_attention_2
+
+  engine:
+    strategy: fsdp2
+    param_offload: true
+    optimizer_offload: true
+    ulysses_sequence_parallel_size: 2
+    use_torch_compile: false
+
+  optim:
+    lr: 2.0e-05
+    lr_warmup_steps: 20
+    lr_warmup_steps_ratio: 0.1
+    betas: [0.9, 0.95]
+    lr_scheduler_type: cosine
+
+  trainer:
+    project_name: verl_sft_qwen3_5_122b_a10b
+    experiment_name: qwen3_5_122b_a10b_sft_fsdp_fft
+    total_epochs: 2
+    save_freq: 100
+    test_freq: 100
+    max_ckpt_to_keep: 3
+    resume_mode: resume_path
