@@ -41,3 +41,6 @@ exclusion_patterns:
   - "fine-tuning/llama/llmft_llama3_2_3b_instruct_seq4k_gpu_sft_fft"
   - "fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-2-3b-instruct-fft"
   - "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-2-3b-instruct-fft"
+  # Qwen 3.5 122B-A10B and Qwen 3.6 35B-A3B MoE recipes are not published to
+  # JumpStart yet — hosting configs pending.
+  - "qwen-0_7_0/verl-(grpo-(rlaif|rlvr)|sft)-qwen-3-dot-(5-122b-a10b|6-35b-a3b)"
