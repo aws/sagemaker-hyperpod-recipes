@@ -1,0 +1,11 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-dpo-llama-3-dot-1-8b-instruct-lora
+  - _self_
+
+display_name: "Llama 3.1 8B Instruct DPO LoRA Fine-Tuning (11k)"
+instance_types: ["ml.p4d.24xlarge"]
+
+training_config:
+  data:
+    max_length: 11264
+    max_token_len_per_gpu: 22528

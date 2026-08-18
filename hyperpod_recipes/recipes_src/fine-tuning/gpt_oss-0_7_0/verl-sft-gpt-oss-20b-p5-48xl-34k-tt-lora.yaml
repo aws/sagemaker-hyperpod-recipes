@@ -1,0 +1,11 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-gpt-oss-20b-lora
+  - _self_
+
+display_name: "GPT-OSS 20B SFT LoRA Fine-Tuning (34k)"
+instance_types: ["ml.p5.48xlarge"]
+
+training_config:
+  data:
+    max_length: 34816
+    max_token_len_per_gpu: 34816

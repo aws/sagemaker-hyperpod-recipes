@@ -1,0 +1,11 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-llama-3-dot-2-3b-instruct-fft
+  - _self_
+
+display_name: "Llama 3.2 3B Instruct SFT Full Fine-Tuning (26k)"
+instance_types: ["ml.p4d.24xlarge"]
+
+training_config:
+  data:
+    max_length: 26624
+    max_token_len_per_gpu: 26624

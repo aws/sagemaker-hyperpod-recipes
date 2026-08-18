@@ -1,0 +1,136 @@
+defaults:
+  - /hydra_config/verl-0_7_0/dpo_megatron_trainer
+  - /hydra_config/verl-0_7_0/dpo/default
+  - /hydra_config/verl-0_7_0/model_config/nemo3-nano-30b
+  - _self_
+
+display_name: "Nemotron 3 Nano 30B DPO LoRA Fine-Tuning with Megatron"
+version: 2.0.4
+instance_types:
+  - ml.p5.48xlarge
+  - ml.p4de.24xlarge
+
+run:
+  name: verl-dpo-nemotron-3-nano-30b-lora
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  data:
+    train_batch_size: 8
+    micro_batch_size_per_gpu: 1
+    max_length: 7000
+    # DPO packs chosen+rejected into a single sequence, so the effective length is
+    # 2 * max_length and max_token_len_per_gpu must stay >= that (seqlen_balancing.py
+    # asserts). 7000/14000 is the largest pair that fits after the MoE reduce_scatter
+    # OOM on SageMaker (2026-07-05); paired with
+    # PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True in the launch env.
+    max_token_len_per_gpu: 14000
+    truncation: left
+    train_max_samples: -1
+    train_val_split_ratio: 0.9
+
+  model:
+    enable_gradient_checkpointing: true
+    use_remove_padding: false
+    is_saving_checkpoint_in_lora: false
+    lora_rank: 64
+    lora_alpha: 16
+    lora:
+      type: lora
+      rank: 64
+      alpha: 128
+      dropout: 0.0
+      dropout_position: pre
+      dtype: null
+      exclude_modules: []
+      lora_A_init_method: xavier
+      lora_B_init_method: zero
+      a2a_experimental: false
+      adapter_path: null
+      freeze_language_model: true
+      freeze_vision_model: true
+      freeze_vision_projection: true
+      # linear_fc1 / linear_fc2 are commented out due to a shape mismatch
+      # in megatron.bridge.peft.lora_layers.forward on MoE shared_experts
+      # under EP=8 (adapter_output size is 8x smaller than expected, exactly
+      # the EP factor). a2a_experimental does not fix the shared_experts
+      # case. Removing linear_fc entries from target_modules avoids the
+      # buggy code path. Cost: fewer trained adapter params. Investigated
+      # 2026-07-05 while stabilizing DPO on SageMaker.
+      target_modules:
+        - linear_qkv
+        - linear_proj
+        # - linear_fc1
+        # - linear_fc2
+        - in_proj
+        - out_proj
+
+  engine:
+    tensor_model_parallel_size: 8
+    expert_model_parallel_size: 8
+    expert_tensor_parallel_size: 1
+    pipeline_model_parallel_size: 1
+    context_parallel_size: 1
+    sequence_parallel: true
+    use_remove_padding: true
+    use_mbridge: true
+    vanilla_mbridge: false
+    param_offload: false
+    grad_offload: false
+    optimizer_offload: false
+    dist_ckpt_optim_fully_reshardable: true
+    distrib_optim_fully_reshardable_mem_efficient: false
+    override_transformer_config:
+      apply_rope_fusion: true
+      attention_backend: flash
+      moe_router_dtype: fp32
+      recompute_granularity: full
+      recompute_method: uniform
+      recompute_modules:
+        - core_attn
+      recompute_num_layers: 1
+
+  optim:
+    lr: 1.0e-4
+    min_lr: 1.0e-5
+    betas: [0.9, 0.999]
+    weight_decay: 0.0
+    clip_grad: 1.0
+    lr_decay_style: cosine
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.1
+    override_optimizer_config:
+      use_precision_aware_optimizer: true
+
+  checkpoint:
+    save_contents:
+      - model
+      - optimizer
+      - extra
+      - hf_model
+    load_contents:
+      - model
+      - optimizer
+      - extra
+      - hf_model
+    save_only_adapter_if_lora: true
+
+  trainer:
+    project_name: verl_dpo_nemo3_nano
+    experiment_name: nemo3_nano_30b_dpo_megatron_lora
+    beta: 0.01
+    loss_type: sigmoid
+    label_smoothing: 0.0
+    reference_free: false
+    logger:
+      - console
+      - tensorboard
+    total_epochs: 5
+    save_freq: after_each_epoch
+    test_freq: 5
+    max_ckpt_to_keep: 3
+    resume_mode: auto
+    default_local_dir: /opt/ml/model
+    merge_lora_on_final_save: true

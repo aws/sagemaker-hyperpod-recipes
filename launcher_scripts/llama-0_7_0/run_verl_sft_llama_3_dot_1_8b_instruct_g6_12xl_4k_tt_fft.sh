@@ -25,10 +25,10 @@ CONTAINER=${CONTAINER}
 NAMESPACE=${NAMESPACE}
 
 # Set run name for training job
-RUN_NAME="verl-sft-gpt-oss-20b-lora"
+RUN_NAME="verl-sft-llama-3-dot-1-8b-instruct-fft"
 
 HYDRA_FULL_ERROR=1 python3 ${SAGEMAKER_TRAINING_LAUNCHER_DIR}/main.py \
-    recipes=fine-tuning/gpt_oss-0_7_0/verl-sft-gpt-oss-20b-lora \
+    recipes=fine-tuning/llama-0_7_0/verl-sft-llama-3-dot-1-8b-instruct-g6-12xl-4k-tt-fft \
     base_results_dir="${SAGEMAKER_TRAINING_LAUNCHER_DIR}/results" \
     run.name="${RUN_NAME}" \
     cluster=k8s \

@@ -65,6 +65,11 @@ recipe_type_config:
     detection_keywords: ["nemotron-0_7_0/verl-grpo-rlaif"]
     model_config_key: "verl"
     container_key: "verl_0_7_0_vllm012"
+  verl_dpo_0_7_0_nemotron_megatron:
+    detection_keywords: ["nemotron-0_7_0/verl-dpo"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0_vllm012"
+    recipe_structure: "verl_dpo"
   # Gemma 4 recipes use tf58 container (must be before generic 0_7_0 entries — first match wins)
   verl_sft_0_7_0_gemma4:
     detection_keywords: ["gemma4-0_7_0/verl-sft"]
@@ -377,6 +382,10 @@ recipe_dataset_mapping:
     slurm: ["panda"]
     k8: ["panda"]
     smjobs: ["panda"]
+  verl_dpo_0_7_0_nemotron_megatron:
+    slurm: ["ultra_feedback"]
+    k8: ["ultra_feedback"]
+    smjobs: ["ultra_feedback"]
   # Verl 0.7.0 dataset mappings (Qwen and others)
   # Gemma 4 dataset mappings (same datasets, different container)
   verl_sft_0_7_0_gemma4:
@@ -901,8 +910,9 @@ recipe_structure_config:
         - "recipes.training_config.data.train_files='{train_data_dir}'"
         - "recipes.training_config.data.val_files='{val_data_dir}'"
         - "recipes.training_config.data.train_max_samples=1000"
-        - "recipes.training_config.data.val_max_samples=0"
-        - "recipes.training_config.trainer.total_epochs=5"
+        - "recipes.training_config.data.val_max_samples=100"
+        - "recipes.training_config.data.train_val_split_ratio=1.0"
+        - "recipes.training_config.trainer.total_epochs=2"
         - "recipes.training_config.model.path='{local_model_name_or_path}'"
         - "recipes.training_config.trainer.default_local_dir='/opt/ml/model'"
         - "container='{container_path}'"
@@ -924,6 +934,10 @@ recipe_structure_config:
         - "cluster.sm_jobs_config.wait=False"
         - "cluster.sm_jobs_config.additional_estimator_kwargs.max_run=86400"
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.disable_output_compression=True"
+        # Megatron TP+SP requires this to avoid deadlocks when NCCL collectives
+        # overlap with the compute stream on the first fwd/bwd. Slurm launcher
+        # sets it by default; SMTJ containers do not.
+        - "+env_vars.CUDA_DEVICE_MAX_CONNECTIONS=1"
 
       smjobs_fsx:  # SM Jobs FSx-specific commands (FSx mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
@@ -934,6 +948,10 @@ recipe_structure_config:
         - "cluster.sm_jobs_config.wait=False"
         - "cluster.sm_jobs_config.additional_estimator_kwargs.max_run=86400"
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.disable_output_compression=True"
+        # Megatron TP+SP requires this to avoid deadlocks when NCCL collectives
+        # overlap with the compute stream on the first fwd/bwd. Slurm launcher
+        # sets it by default; SMTJ containers do not.
+        - "+env_vars.CUDA_DEVICE_MAX_CONNECTIONS=1"
 
     smjobs_overrides:
       inputs.s3.{model_name}: "{model_s3_path}"

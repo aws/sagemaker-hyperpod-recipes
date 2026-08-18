@@ -1,11 +1,9 @@
-display_name: GPT-OSS 20B SFT LoRA Fine-Tuning
+display_name: Llama 3.1 8B Instruct SFT Full Fine-Tuning (20k)
 instance_types:
-- ml.p5.48xlarge
-- ml.p5e.48xlarge
-- ml.p5en.48xlarge
+- ml.g6e.12xlarge
 run:
   model_type: verl
-  name: verl-sft-gpt-oss-20b-lora
+  name: verl-sft-llama-3-dot-1-8b-instruct-fft
   results_dir: ${base_results_dir}/${.name}
 trainer:
   devices: 8
@@ -29,19 +27,17 @@ training_config:
       name: null
       path: null
     ignore_input_ids_mismatch: true
-    max_length: 4096
-    max_token_len_per_gpu: 16384
+    max_length: 20480
+    max_token_len_per_gpu: 20480
     messages_key: messages
-    micro_batch_size_per_gpu: 4
+    micro_batch_size_per_gpu: 8
     pad_mode: no_padding
-    train_batch_size: 128
+    train_batch_size: 64
     train_files: null
-    train_max_samples: -1
     train_val_split_ratio: 1.0
     truncation: right
     use_dynamic_bsz: true
     val_files: null
-    val_max_samples: -1
   engine:
     _target_: verl.workers.config.FSDPEngineConfig
     dtype: bfloat16
@@ -77,22 +73,18 @@ training_config:
       impl_backend: torch
     hf_config_path: null
     lora_adapter_path: null
-    lora_alpha: 64
-    lora_rank: 32
-    override_config:
-      attn_implementation: kernels-community/vllm-flash-attn3
-    path: openai/gpt-oss-20b-bf16
+    lora_alpha: 16
+    lora_rank: 0
+    override_config: {}
+    path: meta-llama/Llama-3.1-8B-Instruct
     target_modules: all-linear
-    target_parameters:
-    - mlp.experts.gate_up_proj
-    - mlp.experts.down_proj
     tiled_mlp:
       enabled: false
       num_shards: 4
     tokenizer_path: null
     trust_remote_code: false
     use_fused_kernels: false
-    use_liger: false
+    use_liger: true
     use_remove_padding: true
     use_shm: false
   optim:
@@ -101,10 +93,10 @@ training_config:
     - 0.9
     - 0.95
     clip_grad: 1.0
-    lr: 0.0001
+    lr: 2.0e-05
     lr_scheduler_type: cosine
     lr_warmup_steps: -1
-    lr_warmup_steps_ratio: 0.1
+    lr_warmup_steps_ratio: 0.0
     min_lr_ratio: 0.0
     num_cycles: 0.5
     optimizer: AdamW
@@ -112,7 +104,7 @@ training_config:
     override_optimizer_config: null
     total_training_steps: -1
     warmup_style: null
-    weight_decay: 0.001
+    weight_decay: 0.1
   profiler:
     _target_: verl.utils.profiler.ProfilerConfig
     all_ranks: false
@@ -147,7 +139,7 @@ training_config:
     default_hdfs_dir: null
     default_local_dir: /opt/ml/model
     device: cuda
-    experiment_name: gpt_oss_20b_sft_fsdp_lora
+    experiment_name: llama_3_1_8b_sft_fsdp_fft_tatqa
     logger:
     - console
     - mlflow
@@ -159,14 +151,14 @@ training_config:
     profile_interval:
     - -1
     - -1
-    project_name: verl_sft_gpt_oss_20b
+    project_name: verl_sft_llama_3_1_8b
     resume_from_path: null
     resume_mode: resume_path
     save_freq: after_each_epoch
     test_freq: -1
-    total_epochs: 3
+    total_epochs: 1
     total_training_steps: null
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.3
+version: 1.0.0
