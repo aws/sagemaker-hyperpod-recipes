@@ -1,0 +1,11 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-dpo-gpt-oss-20b-fft
+  - _self_
+
+display_name: "GPT-OSS 20B DPO Full Fine-Tuning (12k)"
+instance_types: ["ml.p5.48xlarge"]
+
+training_config:
+  data:
+    max_length: 12288
+    max_token_len_per_gpu: 24576

@@ -440,7 +440,7 @@ def process_eval_recipe_metadata(
         "DisplayName": display_name,
         "Name": recipe_name,
         "Type": "Evaluation",
-        "Versions": ["2.0.1"],
+        "Versions": ["2.0.2"],
         "Hardware": hardware,
         "SupportedInstanceTypes": instance_types,
         "EvaluationType": eval_type_name,

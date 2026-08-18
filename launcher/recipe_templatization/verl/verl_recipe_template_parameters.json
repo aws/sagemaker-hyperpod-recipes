@@ -695,7 +695,9 @@
                         "weight_decay": "{{weight_decay}}",
                         "lr_warmup_steps": "{{warmup_steps}}",
                         "min_lr_ratio": "{{min_lr}}",
-                        "lr_scheduler_type": "{{lr_scheduler}}"
+                        "min_lr": "{{min_lr}}",
+                        "lr_scheduler_type": "{{lr_scheduler}}",
+                        "lr_decay_style": "{{lr_scheduler}}"
                     },
                     "data": {
                         "train_files": "{{data_path}}",
@@ -799,7 +801,9 @@
                         "weight_decay": "{{weight_decay}}",
                         "lr_warmup_steps": "{{warmup_steps}}",
                         "min_lr_ratio": "{{min_lr}}",
-                        "lr_scheduler_type": "{{lr_scheduler}}"
+                        "min_lr": "{{min_lr}}",
+                        "lr_scheduler_type": "{{lr_scheduler}}",
+                        "lr_decay_style": "{{lr_scheduler}}"
                     },
                     "data": {
                         "train_files": "{{data_path}}",

@@ -16,7 +16,7 @@ exclusion_patterns:
   - "rubric_llm_judge_eval$"
   - "full_fine_tuning$"
   - "gpu_fine_tuning$"
-  - "llama[_-]4[_-]scout"
+  - "llama[_-]?4[_-]?scout"
   # Checkpointless recipes are not published to Jumpstart
   - "checkpointless"
   # Block Verl SFT recipes for Qwen models other than 3-dot-5 and 3-dot-6
@@ -44,3 +44,7 @@ exclusion_patterns:
   # Qwen 3.5 122B-A10B and Qwen 3.6 35B-A3B MoE recipes are not published to
   # JumpStart yet — hosting configs pending.
   - "qwen-0_7_0/verl-(grpo-(rlaif|rlvr)|sft)-qwen-3-dot-(5-122b-a10b|6-35b-a3b)"
+  # Per-instance verl SFT/DPO recipes for Llama and GPT-OSS: the measured
+  # sequence lengths ship as recipes but are not published to JumpStart yet.
+  # One entry per (model, instance, length), so a single pattern covers all 49.
+  - "fine-tuning/(llama|gpt_oss)-0_7_0/verl-(sft|dpo)-.*-\\d+k-tt-(fft|lora)"
