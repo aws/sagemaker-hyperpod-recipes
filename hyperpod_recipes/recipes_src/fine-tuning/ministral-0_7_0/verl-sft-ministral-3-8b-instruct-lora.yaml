@@ -1,0 +1,61 @@
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/sft/peft/lora
+  - _self_
+display_name: "Ministral-3-8B-Instruct-2512-BF16 SFT LoRA Fine-Tuning (Text)"
+version: 2.0.1
+instance_types:
+- ml.p5.48xlarge
+- ml.p4de.24xlarge
+run:
+  name: verl-sft-ministral-3-8b-instruct-lora
+trainer:
+  num_nodes: 1
+training_config:
+  data:
+    train_batch_size: 128
+    micro_batch_size_per_gpu: 4
+    max_length: 32768
+    max_token_len_per_gpu: 32768
+    truncation: left
+    use_dynamic_bsz: true
+  model:
+    path: mistralai/Ministral-3-8B-Instruct-2512-BF16
+    trust_remote_code: true
+    enable_gradient_checkpointing: true
+    use_remove_padding: true
+    use_fused_kernels: false
+    override_config:
+      attn_implementation: flash_attention_2
+    lora_rank: 32
+    lora_alpha: 64
+    target_modules: all-linear
+    exclude_modules: null
+  engine:
+    strategy: fsdp2
+    model_dtype: bfloat16
+    dtype: bfloat16
+    param_offload: false
+    optimizer_offload: false
+  optim:
+    lr: 5.0e-05
+    weight_decay: 0.01
+    betas: [0.9, 0.999]
+    lr_scheduler_type: cosine
+    lr_warmup_steps: 20
+  trainer:
+    project_name: ministral-sft
+    experiment_name: ministral-3-8b-instruct-sft-lora
+    total_epochs: 2
+    test_freq: 10
+    resume_mode: auto
+  trainer_callbacks:
+    - _target_: metering_callback.MeteringCallback
+      output_path: /opt/ml/metering
