@@ -32,6 +32,7 @@ from ..efa import (
     efa_supported_instance,
     instanceWithMultipleEFAs,
 )
+from .constants import EVAL_RECIPE_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -273,7 +274,7 @@ class EvaluationK8SLauncher:
             "Type": "Evaluation",
             "Hardware": "GPU",
             "InstanceTypes": [self.instance_type],
-            "Versions": ["2.0.1"],
+            "Versions": [EVAL_RECIPE_VERSION],
         }
         launch_json["metadata"] = metadata
 

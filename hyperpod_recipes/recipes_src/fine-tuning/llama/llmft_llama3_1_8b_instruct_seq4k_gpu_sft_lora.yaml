@@ -8,29 +8,27 @@ defaults:
   - _self_
 
 display_name: "Llama 3.1 8B Supervised Fine-Tuning with LoRA on GPU, 4K sequence length"
-version: 2.2.1
-instance_types: ['ml.p4de.24xlarge', 'ml.p4d.24xlarge', 'ml.p5.48xlarge', 'ml.g5.48xlarge', 'ml.g6.48xlarge', 'ml.g5.12xlarge', 'ml.g6.12xlarge', 'ml.g6e.12xlarge']
+version: 2.2.4
+instance_types: ['ml.p4de.24xlarge', 'ml.p4d.24xlarge', 'ml.p5.48xlarge', 'ml.g5.48xlarge',
+  'ml.g6.48xlarge', 'ml.g5.12xlarge', 'ml.g6.12xlarge', 'ml.g6e.12xlarge']
 
 run:
   name: llama-3-1-8b-instruct
 
 training_config:
   model_config:
-    model_name_or_path: "meta-llama/Llama-3.1-8B-Instruct"
     model_save_name: SageMaker/llama-3.1-8B-Instruct-Lora
-    chat_template_key: llama--meta-llama-3.1-8b-instruct
   datasets:
     preprocessor_cfgs:
       - type: TrainingSFTSampleConverter
       - type: Seq2SeqTokensProcessor
         chat_template_name: llama_3_2_seq_instruct.jinja
         ignore_prompt_labels: true
+      - type: SequenceLengthFilter
+        tokens_labels: ['input_ids']
       - type: DropColumns
         column_names:
           - messages
-  training_args:
-    merge_weights: true
-
 elastic_policy:
   is_elastic: false
   min_nodes: 1

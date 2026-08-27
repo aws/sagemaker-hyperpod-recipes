@@ -92,21 +92,8 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        1,
-                        2,
-                        4,
-                        6,
-                        8,
-                        12,
-                        16,
-                        24
-                    ],
-                    "default": 1,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
@@ -157,53 +144,39 @@
                     }
                 },
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-lora-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        16,
-                        32,
-                        64
-                    ],
-                    "default": 64,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_pro_1_0_p5_p4d_gpu_lora_sft": [
+                                    16,
+                                    32
+                                ],
+                                "default": [
+                                    16,
+                                    32,
+                                    64
+                                ]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_pro_1_0_p5_p4d_gpu_lora_sft": 32,
+                                "default": 64
+                            }
+                        }
+                    }
                 },
                 "max_epochs": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 100,
-                    "default": 2,
-                    "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "default": 2
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0,
-                    "max": 1,
-                    "default": 1e-05,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "max": 1
                 },
                 "lora_alpha": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 128,
                     "enum": [
                         32,
                         64,
@@ -211,76 +184,25 @@
                         128,
                         160,
                         192
-                    ],
-                    "default": 128,
-                    "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    ]
                 },
                 "learning_rate_ratio": {
-                    "type": "float",
-                    "required": false,
-                    "min": 1.0,
-                    "max": 70.0,
-                    "default": 16.0,
-                    "category": "hyperparameter",
-                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
-                },
-                "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "weight_decay": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "default": 16.0
                 },
                 "warmup_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 100,
-                    "default": 10,
-                    "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "default": 10
                 },
-                "min_lr": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-07,
-                    "max": 1.0,
-                    "default": 1e-06,
-                    "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
-                }
+                "mlflow_tracking_uri": {
+                    "platform": "K8"
+                },
+                "mlflow_experiment_name": {
+                    "platform": "K8"
+                },
+                "mlflow_run_name": {
+                    "platform": "K8"
+                },
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -344,15 +266,8 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        4,
-                        8
-                    ],
-                    "default": 4,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
@@ -376,49 +291,24 @@
                                 "default": 4
                             }
                         }
-                    }
+                    },
+                    "default": 4,
+                    "enum": [
+                        4,
+                        8
+                    ]
                 },
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-lora-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "reasoning_enabled": {
-                    "type": "boolean",
-                    "required": true,
-                    "default": true,
-                    "category": "hyperparameter",
-                    "description": "When enabled, activates chain-of-thought reasoning mode during training."
-                },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
                     "enum": [
                         32,
                         64,
-                        128,
-                        256
-                    ],
-                    "default": 32,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                        128
+                    ]
                 },
                 "max_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 4,
-                    "max": 100000,
-                    "default": 10,
                     "conditional_constraints": {
                         "default": {
                             "Name": {
@@ -427,15 +317,9 @@
                             }
                         }
                     },
-                    "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    "min": 4
                 },
                 "save_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 100000,
-                    "default": 10,
                     "conditional_constraints": {
                         "default": {
                             "Name": {
@@ -444,21 +328,13 @@
                             }
                         }
                     },
-                    "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
+                    "min": 1
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0,
-                    "max": 1,
-                    "default": 1e-05,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "max": 1
                 },
                 "lora_alpha": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 64,
                     "enum": [
                         32,
                         64,
@@ -466,92 +342,27 @@
                         128,
                         160,
                         192
-                    ],
-                    "default": 64,
-                    "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
-                },
-                "learning_rate_ratio": {
-                    "type": "float",
-                    "required": false,
-                    "min": 1.0,
-                    "max": 70.0,
-                    "default": 64.0,
-                    "category": "hyperparameter",
-                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
-                },
-                "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "fine_tuned_model": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 1.0,
-                    "category": "hyperparameter",
-                    "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only)."
+                    ]
                 },
                 "warmup_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 100,
-                    "default": 15,
-                    "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "default": 15
+                },
+                "mlflow_tracking_uri": {
+                    "platform": "K8"
+                },
+                "mlflow_experiment_name": {
+                    "platform": "K8"
+                },
+                "mlflow_run_name": {
+                    "platform": "K8"
+                },
+                "fine_tuned_model": {
+                    "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only)."
                 },
                 "min_lr": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-07,
-                    "max": 1.0,
-                    "default": 1e-06,
-                    "category": "hyperparameter",
                     "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
                 },
-                "weight_decay": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
-                },
-                "validation_s3_path": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
                 "val_check_interval": {
-                    "type": "integer",
                     "required": false,
                     "min": 1,
                     "max": 100000,
@@ -563,7 +374,9 @@
                     "min": 0,
                     "max": 100000,
                     "default": 2
-                }
+                },
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -621,15 +434,8 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        4,
-                        8
-                    ],
-                    "default": 4,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
@@ -653,66 +459,28 @@
                                 "default": 4
                             }
                         }
-                    }
+                    },
+                    "default": 4,
+                    "enum": [
+                        4,
+                        8
+                    ]
                 },
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-lora-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
                     "enum": [
                         32,
                         64,
-                        128,
-                        256
-                    ],
-                    "default": 32,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
-                },
-                "reasoning_enabled": {
-                    "type": "boolean",
-                    "required": true,
-                    "default": true,
-                    "category": "hyperparameter",
-                    "description": "When enabled, activates chain-of-thought reasoning mode during training."
+                        128
+                    ]
                 },
                 "max_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 4,
-                    "max": 100000,
                     "default": 100,
-                    "conditional_constraints": {
-                        "default": {
-                            "Name": {
-                                "nova_lite_2_0_p5_gpu_sft": 100,
-                                "default": 100
-                            }
-                        }
-                    },
-                    "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    "min": 4
                 },
                 "save_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 100000,
-                    "default": 100,
                     "conditional_constraints": {
                         "default": {
                             "Name": {
@@ -721,90 +489,31 @@
                             }
                         }
                     },
-                    "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
+                    "default": 100,
+                    "min": 1
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0,
-                    "max": 1,
-                    "default": 1e-05,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
-                },
-                "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "fine_tuned_model": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 1.0,
-                    "category": "hyperparameter",
-                    "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only)."
+                    "max": 1
                 },
                 "warmup_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 100,
-                    "default": 15,
-                    "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "default": 15
+                },
+                "mlflow_tracking_uri": {
+                    "platform": "K8"
+                },
+                "mlflow_experiment_name": {
+                    "platform": "K8"
+                },
+                "mlflow_run_name": {
+                    "platform": "K8"
+                },
+                "fine_tuned_model": {
+                    "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only)."
                 },
                 "min_lr": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-07,
-                    "max": 1.0,
-                    "default": 1e-06,
-                    "category": "hyperparameter",
                     "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
                 },
-                "weight_decay": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
-                },
-                "validation_s3_path": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
                 "val_check_interval": {
-                    "type": "integer",
                     "required": false,
                     "min": 1,
                     "max": 100000,
@@ -816,7 +525,9 @@
                     "min": 0,
                     "max": 100000,
                     "default": 2
-                }
+                },
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -877,21 +588,8 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        1,
-                        2,
-                        4,
-                        6,
-                        8,
-                        12,
-                        16,
-                        24
-                    ],
-                    "default": 1,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
@@ -938,62 +636,51 @@
                     }
                 },
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-lora-dpo-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        16,
-                        32,
-                        64
-                    ],
-                    "default": 32,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_micro_1_0_p5_p4d_gpu_lora_dpo": [
+                                    16,
+                                    32,
+                                    64,
+                                    128,
+                                    256
+                                ],
+                                "nova_pro_1_0_p5_p4d_gpu_lora_dpo": [
+                                    16,
+                                    32,
+                                    64,
+                                    128
+                                ],
+                                "default": [
+                                    16,
+                                    32,
+                                    64
+                                ]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_pro_1_0_p5_p4d_gpu_lora_dpo": 32,
+                                "default": 64
+                            }
+                        }
+                    }
                 },
                 "max_epochs": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 100,
-                    "default": 2,
-                    "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "default": 2
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0,
-                    "max": 1,
-                    "default": 1e-05,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "max": 1
                 },
                 "adam_beta": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.001,
-                    "max": 0.1,
-                    "default": 0.1,
-                    "category": "hyperparameter",
-                    "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
+                    "required": false
                 },
                 "lora_alpha": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 128,
                     "enum": [
                         32,
                         64,
@@ -1001,76 +688,25 @@
                         128,
                         160,
                         192
-                    ],
-                    "default": 128,
-                    "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    ]
                 },
                 "learning_rate_ratio": {
-                    "type": "float",
-                    "required": false,
-                    "min": 1.0,
-                    "max": 70.0,
-                    "default": 16.0,
-                    "category": "hyperparameter",
-                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
-                },
-                "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "weight_decay": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "default": 16.0
                 },
                 "warmup_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 100,
-                    "default": 10,
-                    "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "default": 10
                 },
-                "min_lr": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-07,
-                    "max": 1.0,
-                    "default": 1e-06,
-                    "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
-                }
+                "mlflow_tracking_uri": {
+                    "platform": "K8"
+                },
+                "mlflow_experiment_name": {
+                    "platform": "K8"
+                },
+                "mlflow_run_name": {
+                    "platform": "K8"
+                },
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -1124,21 +760,8 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        1,
-                        2,
-                        4,
-                        6,
-                        8,
-                        12,
-                        16,
-                        24
-                    ],
-                    "default": 1,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
@@ -1177,106 +800,51 @@
                     }
                 },
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-fullrank-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        16,
-                        32,
-                        64
-                    ],
-                    "default": 16,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_pro_1_0_p5_gpu_sft": [
+                                    16,
+                                    32
+                                ],
+                                "default": [
+                                    16,
+                                    32,
+                                    64
+                                ]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "default": 16
+                            }
+                        }
+                    }
                 },
                 "max_epochs": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 100,
-                    "default": 2,
-                    "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "default": 2
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0,
-                    "max": 1,
                     "default": 5e-06,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
-                },
-                "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "weight_decay": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "max": 1
                 },
                 "warmup_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 100,
-                    "default": 10,
-                    "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "default": 10
                 },
-                "min_lr": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-07,
-                    "max": 1.0,
-                    "default": 1e-06,
-                    "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
-                }
+                "mlflow_tracking_uri": {
+                    "platform": "K8"
+                },
+                "mlflow_experiment_name": {
+                    "platform": "K8"
+                },
+                "mlflow_run_name": {
+                    "platform": "K8"
+                },
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -1330,21 +898,8 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        1,
-                        2,
-                        4,
-                        6,
-                        8,
-                        12,
-                        16,
-                        24
-                    ],
-                    "default": 1,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
@@ -1383,117 +938,63 @@
                         }
                     }
                 },
+                "global_batch_size": {
+                    "conditional_constraints": {
+                        "enum": {
+                            "Name": {
+                                "nova_pro_1_0_p4d_gpu_dpo": [
+                                    16,
+                                    32,
+                                    64,
+                                    128
+                                ],
+                                "nova_pro_1_0_p5_gpu_dpo": [
+                                    16,
+                                    32,
+                                    64,
+                                    128
+                                ],
+                                "default": [
+                                    16,
+                                    32,
+                                    64,
+                                    128,
+                                    256
+                                ]
+                            }
+                        },
+                        "default": {
+                            "Name": {
+                                "nova_pro_1_0_p4d_gpu_dpo": 32,
+                                "nova_pro_1_0_p5_gpu_dpo": 32,
+                                "default": 64
+                            }
+                        }
+                    }
+                },
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-fullrank-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        16,
-                        32,
-                        64,
-                        128
-                    ],
-                    "default": 32,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
-                },
-                "max_epochs": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 100,
-                    "default": 3,
-                    "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
-                },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0,
-                    "max": 1,
-                    "default": 1e-05,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "max": 1
                 },
                 "adam_beta": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.001,
-                    "max": 0.1,
-                    "default": 0.1,
-                    "category": "hyperparameter",
-                    "description": "DPO inverse temperature parameter. Controls how strongly the model enforces preference rankings."
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
-                },
-                "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "weight_decay": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights."
+                    "required": false
                 },
                 "warmup_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 100,
-                    "default": 10,
-                    "category": "hyperparameter",
-                    "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value."
+                    "default": 10
                 },
-                "min_lr": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-07,
-                    "max": 1.0,
-                    "default": 1e-06,
-                    "category": "hyperparameter",
-                    "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value."
-                }
+                "mlflow_tracking_uri": {
+                    "platform": "K8"
+                },
+                "mlflow_experiment_name": {
+                    "platform": "K8"
+                },
+                "mlflow_run_name": {
+                    "platform": "K8"
+                },
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -1543,29 +1044,11 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-ppo-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        160
-                    ],
-                    "default": 160,
                     "conditional_constraints": {
                         "enum": {
                             "Model_ID": {
@@ -1588,27 +1071,16 @@
                             }
                         }
                     },
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "default": 160,
+                    "enum": [
+                        160
+                    ]
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0,
-                    "max": 1,
                     "default": 3e-06,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "max": 1
                 },
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        2,
-                        4,
-                        6
-                    ],
-                    "default": 2,
                     "conditional_constraints": {
                         "enum": {
                             "Model_ID": {
@@ -1630,37 +1102,25 @@
                                 "nova-textgeneration-pro": 6
                             }
                         }
-                    }
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    },
+                    "default": 2,
+                    "enum": [
+                        2,
+                        4,
+                        6
+                    ]
                 },
                 "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
                 "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
                 "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                }
+                    "platform": "K8"
+                },
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -1696,45 +1156,18 @@
                     "kms_key": "{{kms_key}}"
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "data-distillation-premier-teacher"
                 },
-                "customer_bucket": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "kms_key": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "max_response_length": {
-                    "type": "integer",
                     "required": false,
-                    "min": 5000,
-                    "max": 5120,
                     "default": 5120,
-                    "category": "hyperparameter",
-                    "description": "Maximum number of tokens allowed for the generated response portion during training or evaluation."
+                    "min": 5000,
+                    "max": 5120
                 },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
-                }
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -1772,75 +1205,17 @@
                     "temperature": "{{temperature}}"
                 }
             },
-            "recipe_override_parameters": {
-                "name": {
-                    "type": "string",
-                    "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
+            "override_parameters": {
                 "task": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "strategy": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "metric": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "subtask": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "enum": null
                 },
-                "max_new_tokens": {
-                    "type": "integer",
-                    "required": false,
-                    "min": 0,
-                    "max": 100000,
-                    "default": 8196
-                },
-                "top_k": {
-                    "type": "integer",
-                    "required": false,
-                    "default": -1
-                },
-                "top_p": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 1.0
-                },
-                "temperature": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 2.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "model_name_or_path": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                }
+                "namespace": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -1879,75 +1254,21 @@
                     "temperature": "{{temperature}}"
                 }
             },
-            "recipe_override_parameters": {
-                "name": {
-                    "type": "string",
-                    "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
+            "override_parameters": {
                 "task": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "strategy": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "metric": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "subtask": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "enum": null
                 },
                 "max_new_tokens": {
-                    "type": "integer",
-                    "required": false,
-                    "min": 0,
-                    "max": 32768,
-                    "default": 32768
+                    "default": 32768,
+                    "max": 32768
                 },
-                "top_k": {
-                    "type": "integer",
-                    "required": false,
-                    "default": -1
-                },
-                "top_p": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 1.0
-                },
-                "temperature": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 2.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "model_name_or_path": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                }
+                "namespace": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -1986,75 +1307,17 @@
                     "temperature": "{{temperature}}"
                 }
             },
-            "recipe_override_parameters": {
-                "name": {
-                    "type": "string",
-                    "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
+            "override_parameters": {
                 "task": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "strategy": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "metric": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "subtask": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "enum": null
                 },
-                "max_new_tokens": {
-                    "type": "integer",
-                    "required": false,
-                    "min": 0,
-                    "max": 100000,
-                    "default": 8196
-                },
-                "top_k": {
-                    "type": "integer",
-                    "required": false,
-                    "default": -1
-                },
-                "top_p": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 1.0
-                },
-                "temperature": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 2.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
-                },
-                "model_name_or_path": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                }
+                "namespace": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -2092,75 +1355,21 @@
                     "temperature": "{{temperature}}"
                 }
             },
-            "recipe_override_parameters": {
-                "name": {
-                    "type": "string",
-                    "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
+            "override_parameters": {
                 "task": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "strategy": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "metric": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "subtask": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "enum": null
                 },
                 "max_new_tokens": {
-                    "type": "integer",
-                    "required": false,
-                    "min": 0,
-                    "max": 32768,
-                    "default": 32768
+                    "default": 32768,
+                    "max": 32768
                 },
-                "top_k": {
-                    "type": "integer",
-                    "required": false,
-                    "default": -1
-                },
-                "top_p": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 1.0
-                },
-                "temperature": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 2.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
-                },
-                "model_name_or_path": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                }
+                "namespace": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -2197,70 +1406,14 @@
                     "temperature": "{{temperature}}"
                 }
             },
-            "recipe_override_parameters": {
-                "name": {
-                    "type": "string",
-                    "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
+            "override_parameters": {
                 "task": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "strategy": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
-                "metric": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "max_new_tokens": {
-                    "type": "integer",
-                    "required": false,
-                    "min": 0,
-                    "max": 100000,
-                    "default": 8196
-                },
-                "top_k": {
-                    "type": "integer",
-                    "required": false,
-                    "default": -1
-                },
-                "top_p": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 1.0
-                },
-                "temperature": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 2.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
-                },
-                "model_name_or_path": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                }
+                "namespace": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -2303,89 +1456,14 @@
                     "lambda_type": "{{lambda_type}}"
                 }
             },
-            "recipe_override_parameters": {
-                "name": {
-                    "type": "string",
-                    "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
-                },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
+            "override_parameters": {
                 "task": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "strategy": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
-                "metric": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "max_new_tokens": {
-                    "type": "integer",
-                    "required": false,
-                    "min": 0,
-                    "max": 100000,
-                    "default": 8196
-                },
-                "top_k": {
-                    "type": "integer",
-                    "required": false,
-                    "default": -1
-                },
-                "top_p": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 1.0
-                },
-                "temperature": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 2.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
-                },
-                "lambda_arn": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "lambda_type": {
-                    "type": "string",
-                    "required": true,
-                    "enum": [
-                        "rft",
-                        "custom_metrics"
-                    ],
-                    "default": "rft"
-                },
-                "model_name_or_path": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                }
+                "namespace": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -2429,98 +1507,24 @@
                     "preset_reward_function": "{{preset_reward_function}}"
                 }
             },
-            "recipe_override_parameters": {
-                "name": {
-                    "type": "string",
-                    "required": true,
-                    "default": "nova-lite-mmlu-eval-job"
-                },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
+            "override_parameters": {
                 "task": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "strategy": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "metric": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    "enum": null
                 },
                 "max_new_tokens": {
-                    "type": "integer",
-                    "required": false,
-                    "min": 0,
-                    "max": 32768,
-                    "default": 32768
-                },
-                "top_k": {
-                    "type": "integer",
-                    "required": false,
-                    "default": -1
-                },
-                "top_p": {
-                    "type": "float",
-                    "required": false,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "default": 1.0
-                },
-                "temperature": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0.0,
-                    "max": 2.0,
-                    "default": 0.0,
-                    "category": "hyperparameter",
-                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic."
-                },
-                "lambda_arn": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "lambda_type": {
-                    "type": "string",
-                    "required": true,
-                    "enum": [
-                        "rft",
-                        "custom_metrics"
-                    ],
-                    "default": "rft"
+                    "default": 32768,
+                    "max": 32768
                 },
                 "preset_reward_function": {
-                    "type": "string",
-                    "required": false,
                     "enum": [
                         "prime_math",
                         "prime_code"
-                    ],
-                    "default": ""
+                    ]
                 },
-                "model_name_or_path": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                }
+                "namespace": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -2562,21 +1566,8 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        2,
-                        4,
-                        6,
-                        8,
-                        12,
-                        16,
-                        24,
-                        32
-                    ],
-                    "default": 2,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
@@ -2611,83 +1602,48 @@
                                 "default": 2
                             }
                         }
-                    }
+                    },
+                    "default": 2,
+                    "enum": [
+                        2,
+                        4,
+                        6,
+                        8,
+                        12,
+                        16,
+                        24,
+                        32
+                    ]
                 },
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-cpt-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 256,
                     "enum": [
                         32,
                         64,
                         128,
                         256
-                    ],
-                    "default": 256,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    ]
                 },
                 "max_epochs": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 100,
-                    "default": 1,
-                    "category": "hyperparameter",
-                    "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting."
+                    "default": 1
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0,
-                    "max": 1,
-                    "default": 1e-05,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "max": 1
                 },
                 "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
                 "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
                 "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                }
+                    "platform": "K8"
+                },
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -2728,21 +1684,8 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
-                    "enum": [
-                        2,
-                        4,
-                        6,
-                        8,
-                        12,
-                        16,
-                        24,
-                        32
-                    ],
-                    "default": 2,
                     "conditional_constraints": {
                         "enum": {
                             "Name": {
@@ -2763,88 +1706,48 @@
                                 "default": 8
                             }
                         }
-                    }
+                    },
+                    "default": 2,
+                    "enum": [
+                        2,
+                        4,
+                        6,
+                        8,
+                        12,
+                        16,
+                        24,
+                        32
+                    ]
                 },
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-cpt-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "validation_s3_path": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 256,
                     "enum": [
                         32,
                         64,
                         128,
                         256
-                    ],
-                    "default": 256,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    ]
                 },
                 "max_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 10,
-                    "max": 100000,
-                    "default": 10,
-                    "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    "min": 10
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 0,
-                    "max": 1,
-                    "default": 1e-05,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "max": 1
                 },
                 "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
                 "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
                 "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
-                }
+                    "platform": "K8"
+                },
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -2903,53 +1806,24 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-rft-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "reward_lambda_arn": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 2,
                     "enum": [
                         2,
                         4,
                         8,
                         16
-                    ],
-                    "default": 2
+                    ]
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-08,
-                    "max": 0.001,
                     "default": 7e-07,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "min": 1e-08
                 },
                 "max_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 5,
-                    "max": 100000,
-                    "default": 10,
                     "conditional_constraints": {
                         "default": {
                             "Name": {
@@ -2957,83 +1831,31 @@
                                 "default": 10
                             }
                         }
-                    },
-                    "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
-                },
-                "number_generation": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 2,
-                    "max": 16,
-                    "default": 8
+                    }
                 },
                 "lora_alpha": {
-                    "type": "integer",
-                    "required": true,
                     "enum": [
                         16,
                         32,
                         64
-                    ],
-                    "default": 32,
-                    "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    ]
                 },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 256,
                     "min": 16,
                     "max": 256,
-                    "default": 256,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
-                },
-                "max_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 4096,
-                    "max": 32768,
-                    "default": 10240
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "learning_rate_ratio": {
-                    "type": "float",
-                    "required": false,
-                    "min": 1.0,
-                    "max": 70.0,
-                    "default": 64.0,
-                    "category": "hyperparameter",
-                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
+                    "enum": null
                 },
                 "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
                 "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
                 "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
-                "save_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 100000,
-                    "default": 10,
-                    "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
-                }
+                "namespace": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -3087,53 +1909,24 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-rft-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "output_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "replicas": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 4,
                     "enum": [
                         2,
                         4,
                         8,
                         16
-                    ],
-                    "default": 4
-                },
-                "reward_lambda_arn": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
+                    ]
                 },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-08,
-                    "max": 0.001,
                     "default": 7e-07,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "min": 1e-08
                 },
                 "max_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 5,
-                    "max": 100000,
-                    "default": 10,
                     "conditional_constraints": {
                         "default": {
                             "Name": {
@@ -3141,71 +1934,25 @@
                                 "default": 10
                             }
                         }
-                    },
-                    "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    }
                 },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 256,
                     "min": 16,
                     "max": 256,
-                    "default": 256,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
-                },
-                "max_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 4096,
-                    "max": 32768,
-                    "default": 10240
-                },
-                "number_generation": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 2,
-                    "max": 16,
-                    "default": 8
-                },
-                "namespace": {
-                    "type": "string",
-                    "required": true,
-                    "default": "kubeflow"
-                },
-                "max_context_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 1,
-                    "max": 131072,
-                    "default": 8192,
-                    "category": "hyperparameter",
-                    "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements."
+                    "enum": null
                 },
                 "mlflow_tracking_uri": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
                 "mlflow_experiment_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
                 "mlflow_run_name": {
-                    "type": "string",
-                    "required": false,
-                    "default": ""
+                    "platform": "K8"
                 },
-                "save_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 100000,
-                    "default": 10,
-                    "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
-                }
+                "namespace": {},
+                "max_context_length": {}
             },
             "recipe_metadata_helpers": {
                 "model_variants": {
@@ -3254,37 +2001,14 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-rft-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "reward_lambda_arn": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-07,
-                    "max": 0.001,
-                    "default": 1e-05,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "min": 1e-07
                 },
                 "max_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 5,
-                    "max": 100000,
-                    "default": 10,
                     "conditional_constraints": {
                         "default": {
                             "Name": {
@@ -3292,55 +2016,27 @@
                                 "default": 10
                             }
                         }
-                    },
-                    "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
+                    }
                 },
                 "lora_alpha": {
-                    "type": "integer",
-                    "required": true,
                     "enum": [
                         16,
                         32,
                         64
-                    ],
-                    "default": 32,
-                    "category": "hyperparameter",
-                    "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank."
+                    ]
                 },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 64,
                     "min": 16,
                     "max": 128,
-                    "default": 64,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "enum": null
                 },
                 "max_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 4096,
-                    "max": 32768,
                     "default": 8192
                 },
                 "learning_rate_ratio": {
-                    "type": "float",
-                    "required": false,
                     "min": 0.0,
-                    "max": 100.0,
-                    "default": 64.0,
-                    "category": "hyperparameter",
-                    "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters."
-                },
-                "save_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 100000,
-                    "default": 10,
-                    "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
+                    "max": 100.0
                 }
             },
             "recipe_metadata_helpers": {
@@ -3388,53 +2084,23 @@
                     }
                 }
             },
-            "recipe_override_parameters": {
+            "override_parameters": {
                 "name": {
-                    "type": "string",
-                    "required": true,
                     "default": "my-rft-run"
                 },
-                "data_s3_path": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
-                "reward_lambda_arn": {
-                    "type": "string",
-                    "required": true,
-                    "default": ""
-                },
                 "learning_rate": {
-                    "type": "float",
-                    "required": true,
-                    "min": 1e-07,
-                    "max": 0.001,
-                    "default": 1e-05,
-                    "category": "hyperparameter",
-                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4)."
+                    "min": 1e-07
                 },
                 "global_batch_size": {
-                    "type": "integer",
-                    "required": true,
+                    "default": 64,
                     "min": 16,
                     "max": 256,
-                    "default": 64,
-                    "category": "hyperparameter",
-                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                    "enum": null
                 },
                 "max_length": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 4096,
-                    "max": 32768,
                     "default": 8192
                 },
                 "max_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 5,
-                    "max": 100000,
-                    "default": 10,
                     "conditional_constraints": {
                         "default": {
                             "Name": {
@@ -3442,18 +2108,7 @@
                                 "default": 10
                             }
                         }
-                    },
-                    "category": "hyperparameter",
-                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining."
-                },
-                "save_steps": {
-                    "type": "integer",
-                    "required": true,
-                    "min": 0,
-                    "max": 100000,
-                    "default": 10,
-                    "category": "hyperparameter",
-                    "description": "Frequency (in optimizer steps) at which model checkpoints are saved. A value of 0 saves only at the end of training."
+                    }
                 }
             },
             "recipe_metadata_helpers": {

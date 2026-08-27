@@ -10,64 +10,73 @@
     "Peft": "LoRA",
     "SequenceLength": "64K",
     "Versions": [
-      "1.0.24"
+      "1.0.26"
     ]
   },
   "recipe_override_parameters": {
-    "name": {
-      "type": "string",
-      "required": true,
-      "default": "mtrl-gpt-oss-20b-lora"
-    },
-    "data_path": {
-      "type": "string",
-      "required": true,
-      "default": ""
-    },
-    "model_name_or_path": {
-      "type": "string",
-      "required": true,
-      "default": "openai/gpt-oss-20b"
-    },
-    "output_path": {
-      "type": "string",
-      "required": true,
-      "default": ""
-    },
     "adam_beta1": {
       "type": "float",
       "required": true,
       "min": 0.0,
       "max": 0.999999,
-      "default": 0.9
+      "default": 0.9,
+      "description": "Exponential decay rate for the running average of the gradient (first moment) in Adam.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Adam beta1",
+      "hint": "Must be a value between 0.0 and 0.999999",
+      "control_type": "number_input",
+      "step": 0.01
     },
     "adam_beta2": {
       "type": "float",
       "required": true,
       "min": 0.0,
       "max": 0.999999,
-      "default": 0.95
+      "default": 0.95,
+      "description": "Exponential decay rate for the running average of the squared gradient (second moment) in Adam.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Adam beta2",
+      "hint": "Must be a value between 0.0 and 0.999999",
+      "control_type": "number_input",
+      "step": 0.01
     },
     "adam_eps": {
       "type": "float",
       "required": true,
       "min": 1e-16,
       "max": 0.01,
-      "default": 1e-08
-    },
-    "adam_weight_decay": {
-      "type": "float",
-      "required": true,
-      "min": 0.0,
-      "max": 1.0,
-      "default": 0.0
+      "default": 1e-08,
+      "description": "Small constant added to the denominator for numerical stability in Adam's update rule.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 0.0001
     },
     "adam_grad_clip_norm": {
       "type": "float",
       "required": true,
       "min": 0.0,
       "max": 100.0,
-      "default": 1.0
+      "default": 1.0,
+      "description": "Maximum global gradient norm.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 0.1
+    },
+    "adam_weight_decay": {
+      "type": "float",
+      "required": true,
+      "min": 0.0,
+      "max": 1.0,
+      "default": 0.0,
+      "description": "Decoupled weight-decay coefficient (AdamW-style).",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 0.1
     },
     "advantage_method": {
       "type": "string",
@@ -83,28 +92,116 @@
         "grpo_passk",
         "gpg"
       ],
-      "default": "group_based"
+      "default": "group_based",
+      "description": "Method for computing advantages for rollouts.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Advantage method",
+      "hint": "Select from available advantage methods",
+      "control_type": "dropdown"
+    },
+    "clip_high_threshold": {
+      "type": "float",
+      "required": true,
+      "min": 1,
+      "max": 10,
+      "default": 1.2,
+      "description": "Upper bound for clipping the policy probability ratio in the loss.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 0.1
+    },
+    "clip_low_threshold": {
+      "type": "float",
+      "required": true,
+      "min": 0,
+      "max": 1,
+      "default": 0.8,
+      "description": "Lower bound for clipping the policy probability ratio \u03c0_new/\u03c0_old in the PPO-style surrogate loss.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 0.1
+    },
+    "data_path": {
+      "type": "string",
+      "required": true,
+      "default": "",
+      "description": "File path to training dataset",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "control_type": "text_input"
+    },
+    "global_batch_size": {
+      "type": "integer",
+      "required": true,
+      "default": 128,
+      "enum": [
+        32,
+        64,
+        128
+      ],
+      "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+      "category": "hyperparameter",
+      "visibility_tier": "primary",
+      "display_name": "Batch size",
+      "hint": "Choose from the available batch size options",
+      "control_type": "dropdown"
+    },
+    "group_size": {
+      "type": "integer",
+      "required": true,
+      "min": 2,
+      "max": 32,
+      "default": 8,
+      "description": "Rollouts per prompt used to compute group-based advantages (GRPO / RLOO).",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Group size",
+      "hint": "Must be a value between 2 and 32",
+      "control_type": "number_input",
+      "step": 1
     },
     "learning_rate": {
       "type": "float",
       "required": true,
+      "default": 1e-05,
       "min": 0,
       "max": 0.01,
-      "default": 1e-05
-    },
-    "lora_rank": {
-      "type": "integer",
-      "required": true,
-      "min": 16,
-      "max": 64,
-      "default": 32
+      "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+      "category": "hyperparameter",
+      "visibility_tier": "primary",
+      "display_name": "Learning rate",
+      "hint": "Must be a value between 0 and 0.01",
+      "control_type": "number_input",
+      "step": 0.0001
     },
     "lora_alpha": {
       "type": "integer",
       "required": true,
+      "default": 64,
+      "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Alpha value",
+      "hint": "Select from available alpha values",
+      "control_type": "dropdown",
       "min": 16,
-      "max": 128,
-      "default": 64
+      "max": 128
+    },
+    "lora_rank": {
+      "type": "integer",
+      "required": true,
+      "default": 32,
+      "description": "Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "LoRA rank",
+      "hint": "Select from available rank values",
+      "control_type": "dropdown",
+      "min": 16,
+      "max": 64
     },
     "loss_fn": {
       "type": "string",
@@ -114,94 +211,86 @@
         "ppo",
         "cispo"
       ],
-      "default": "ppo"
-    },
-    "rollout_max_concurrency": {
-      "type": "integer",
-      "required": true,
-      "min": 32,
-      "max": 96,
-      "default": 96
-    },
-    "rollout_timeout": {
-      "type": "float",
-      "required": true,
-      "min": 300,
-      "max": 86400,
-      "default": 600.0
-    },
-    "rollout_max_retries": {
-      "type": "integer",
-      "required": true,
-      "min": 1,
-      "max": 10,
-      "default": 3
+      "default": "ppo",
+      "description": "RL loss formulation.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Loss function",
+      "hint": "Select from available loss functions",
+      "control_type": "dropdown"
     },
     "max_epochs": {
       "type": "integer",
       "required": true,
+      "default": 1,
       "min": 1,
       "max": 30,
-      "default": 1
-    },
-    "sampling_max_tokens": {
-      "type": "integer",
-      "required": true,
-      "min": 512,
-      "max": 8192,
-      "default": 4096
+      "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
+      "category": "hyperparameter",
+      "visibility_tier": "primary",
+      "display_name": "Number of epochs",
+      "hint": "Must be a value between 1 and 30",
+      "control_type": "number_input",
+      "step": 1
     },
     "max_steps": {
       "type": "integer",
       "required": true,
+      "default": 100,
       "min": 1,
       "max": 1000,
-      "default": 100
+      "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Max steps",
+      "hint": "Must be a value between 1 and 1000",
+      "control_type": "number_input",
+      "step": 1
     },
     "max_steps_off_policy": {
       "type": "integer",
       "required": true,
       "min": 0,
       "max": 10,
-      "default": 3
+      "default": 3,
+      "description": "Staleness threshold in asynchronous training. When 0, it is synchronous training.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 1
     },
-    "global_batch_size": {
-      "type": "integer",
+    "model_name_or_path": {
+      "type": "string",
       "required": true,
-      "enum": [
-        32,
-        64,
-        128
-      ],
-      "default": 128
+      "default": "openai/gpt-oss-20b",
+      "description": "Model identifier or path to pretrained model",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "control_type": "text_input"
     },
-    "group_size": {
-      "type": "integer",
+    "name": {
+      "type": "string",
       "required": true,
-      "min": 2,
-      "max": 32,
-      "default": 8
+      "default": "mtrl-gpt-oss-20b-lora",
+      "description": "Custom model name",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "hint": "A training job with the name {name} will be created",
+      "display_name": "Custom model name",
+      "control_type": "text_input",
+      "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+      "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+      "min_length": 1,
+      "max_input_length": 63
     },
-    "temperature": {
-      "type": "float",
+    "output_path": {
+      "type": "string",
       "required": true,
-      "min": 0,
-      "max": 2,
-      "default": 1.0
-    },
-    "val_every": {
-      "type": "integer",
-      "required": true,
-      "min": 0,
-      "max": 100,
-      "default": 10
-    },
-    "sampling_top_p": {
-      "type": "float",
-      "required": true,
-      "min": 0,
-      "max": 1,
-      "default": 1.0
+      "default": "",
+      "description": "Local output path for model artifacts",
+      "category": "system",
+      "visibility_tier": "tertiary",
+      "control_type": "text_input"
     },
     "pass_k_values": {
       "type": "array",
@@ -213,26 +302,107 @@
         8,
         16,
         32
-      ]
+      ],
+      "description": "List of k values for computing pass@k metrics.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "text_input"
     },
-    "success_threshold": {
+    "rollout_max_concurrency": {
+      "type": "integer",
+      "required": true,
+      "min": 32,
+      "max": 96,
+      "default": 96,
+      "description": "The max in-flight rollout processes can happen in parallel.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 1
+    },
+    "rollout_max_retries": {
+      "type": "integer",
+      "required": true,
+      "min": 0,
+      "max": 10,
+      "default": 3,
+      "description": "Number of retry attempts for failed rollouts.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 1
+    },
+    "rollout_timeout": {
       "type": "float",
       "required": true,
-      "default": 1.0
+      "min": 300,
+      "max": 86400,
+      "default": 600.0,
+      "description": "Failure handling: time after which we treat as the rollout failure.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 0.1
     },
-    "clip_low_threshold": {
+    "sampling_max_tokens": {
+      "type": "integer",
+      "required": true,
+      "min": 512,
+      "max": 8192,
+      "default": 4096,
+      "description": "Max tokens the model can generate per turn during rollout.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 1
+    },
+    "sampling_top_p": {
       "type": "float",
       "required": true,
       "min": 0,
       "max": 1,
-      "default": 0.8
+      "default": 1.0,
+      "description": "Nucleus-sampling cutoff. Samples only from the smallest set of tokens whose cumulative probability \u2265 top_p.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 0.1
     },
-    "clip_high_threshold": {
+    "success_threshold": {
       "type": "float",
       "required": true,
-      "min": 1,
-      "max": 10,
-      "default": 1.2
+      "default": 1.0,
+      "description": "Reward threshold for counting a rollout as 'successful'.",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 0.1
+    },
+    "temperature": {
+      "type": "float",
+      "required": true,
+      "default": 1.0,
+      "min": 0.0,
+      "max": 2.0,
+      "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+      "category": "hyperparameter",
+      "visibility_tier": "advanced",
+      "display_name": "Temperature",
+      "hint": "Must be a value between 0.0 and 2.0",
+      "control_type": "number_input",
+      "step": 0.1
+    },
+    "val_every": {
+      "type": "integer",
+      "required": true,
+      "min": 0,
+      "max": 100,
+      "default": 10,
+      "description": "Eval interval (steps).",
+      "category": "hyperparameter",
+      "visibility_tier": "tertiary",
+      "control_type": "number_input",
+      "step": 1
     }
   },
   "regional_parameters": {
@@ -250,7 +420,7 @@
       }
     }
   },
-  "training_recipe.yaml": "async_config:\n  max_steps_off_policy: '{{max_steps_off_policy}}'\nbatch:\n  group_size: '{{group_size}}'\n  training_batch_size: '{{global_batch_size}}'\n  val_batch_size: null\n  val_group_size: 1\n  val_random_sample: false\ndisplay_name: Agentic RFT for GPT OSS 20B Lora\neval_sampling_params:\n  max_tokens: 4096\n  temperature: 0.0\n  top_p: 1.0\nmodel:\n  adam_beta1: '{{adam_beta1}}'\n  adam_beta2: '{{adam_beta2}}'\n  adam_eps: '{{adam_eps}}'\n  grad_clip_norm: '{{adam_grad_clip_norm}}'\n  learning_rate: '{{learning_rate}}'\n  lora_alpha: '{{lora_alpha}}'\n  lora_rank: '{{lora_rank}}'\n  max_sequence_length: 65536\n  model_name: '{{model_name_or_path}}'\n  weight_decay: '{{adam_weight_decay}}'\nrecipe_version: 1.0.24\nrl:\n  advantage_method: '{{advantage_method}}'\n  advantage_normalization: true\n  clip_high_threshold: '{{clip_high_threshold}}'\n  clip_low_threshold: '{{clip_low_threshold}}'\n  gamma: 1.0\n  loss_fn: '{{loss_fn}}'\nrollout:\n  max_concurrency: '{{rollout_max_concurrency}}'\n  max_retries: '{{rollout_max_retries}}'\n  rollout_tps: 5\n  timeout: '{{rollout_timeout}}'\nrun:\n  model_type: mtrl\n  name: '{{name}}'\nsampling_params:\n  max_tokens: '{{sampling_max_tokens}}'\n  temperature: '{{temperature}}'\n  top_p: '{{sampling_top_p}}'\nschedule:\n  epochs: '{{max_epochs}}'\n  max_steps: '{{max_steps}}'\n  save_every: 1\n  val_at_start: true\n  val_every: '{{val_every}}'\nval_metrics_config:\n  pass_k_values: '{{pass_k_values}}'\n  success_threshold: '{{success_threshold}}'\n",
+  "training_recipe.yaml": "async_config:\n  max_steps_off_policy: '{{max_steps_off_policy}}'\nbatch:\n  group_size: '{{group_size}}'\n  training_batch_size: '{{global_batch_size}}'\n  val_batch_size: null\n  val_group_size: 1\n  val_random_sample: false\ndisplay_name: Agentic RFT for GPT OSS 20B Lora\neval_sampling_params:\n  max_tokens: 4096\n  temperature: 0.0\n  top_p: 1.0\nmodel:\n  adam_beta1: '{{adam_beta1}}'\n  adam_beta2: '{{adam_beta2}}'\n  adam_eps: '{{adam_eps}}'\n  grad_clip_norm: '{{adam_grad_clip_norm}}'\n  learning_rate: '{{learning_rate}}'\n  lora_alpha: '{{lora_alpha}}'\n  lora_rank: '{{lora_rank}}'\n  max_sequence_length: 65536\n  model_name: '{{model_name_or_path}}'\n  weight_decay: '{{adam_weight_decay}}'\nrecipe_version: 1.0.26\nrl:\n  advantage_method: '{{advantage_method}}'\n  advantage_normalization: true\n  clip_high_threshold: '{{clip_high_threshold}}'\n  clip_low_threshold: '{{clip_low_threshold}}'\n  gamma: 1.0\n  loss_fn: '{{loss_fn}}'\nrollout:\n  max_concurrency: '{{rollout_max_concurrency}}'\n  max_retries: '{{rollout_max_retries}}'\n  rollout_tps: 5\n  timeout: '{{rollout_timeout}}'\nrun:\n  model_type: mtrl\n  name: '{{name}}'\nsampling_params:\n  max_tokens: '{{sampling_max_tokens}}'\n  temperature: '{{temperature}}'\n  top_p: '{{sampling_top_p}}'\nschedule:\n  epochs: '{{max_epochs}}'\n  max_steps: '{{max_steps}}'\n  save_every: 1\n  val_at_start: true\n  val_every: '{{val_every}}'\nval_metrics_config:\n  pass_k_values: '{{pass_k_values}}'\n  success_threshold: '{{success_threshold}}'\n",
   "training_recipe.json": {
     "recipes": {
       "async_config": {
@@ -281,7 +451,7 @@
         "model_name": "openai/gpt-oss-20b",
         "weight_decay": 0.0
       },
-      "recipe_version": "1.0.24",
+      "recipe_version": "1.0.26",
       "rl": {
         "advantage_method": "group_based",
         "advantage_normalization": true,

@@ -15,7 +15,7 @@
 #
 # QUICK START - Adding a new template:
 # 1. Add entry under templates with model_type pattern and script template
-# 2. Run: python -m scripts.launcher_scripts_generator.generate_launcher_scripts
+# 2. Run: uv run poe generate-launcher-scripts
 #
 # =============================================================================
 

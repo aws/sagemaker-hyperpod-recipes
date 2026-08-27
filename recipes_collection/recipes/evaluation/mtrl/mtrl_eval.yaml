@@ -18,7 +18,7 @@ eval_sampling_params:
   top_p: 1
 model:
   model_name: ''
-recipe_version: 1.0.15
+recipe_version: 1.0.17
 rollout:
   max_concurrency: 96
   max_retries: 3

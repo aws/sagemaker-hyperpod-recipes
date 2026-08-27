@@ -72,6 +72,12 @@ training_config:
       max_completion_length: 2048
       max_prompt_length: 2048
       type: TokenizeSampleDPO
+    - tokens_labels:
+      - chosen_input_ids
+      type: SequenceLengthFilter
+    - tokens_labels:
+      - rejected_input_ids
+      type: SequenceLengthFilter
     save_intermediate_processing_steps: false
     train_data:
       file_path: ''
@@ -223,4 +229,4 @@ training_config:
     use_tensorboard: logs
     use_wandb: null
     weight_decay: 0.0
-version: 2.2.1
+version: 2.2.3

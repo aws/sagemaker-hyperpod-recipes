@@ -47,6 +47,7 @@ from tests.launcher.recipe_templatization.validate_field_override_constraints im
 from tests.launcher.recipe_templatization.validate_replica_overrides import (
     validate_launch_json_replica_overrides,
 )
+from utils.resolve_override_params import PRIVATE_FIELDS
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,117 @@ VALID_REGIONAL_PARAMS = {
     "serverless_sku_input",
     "serverless_sku_output",
 }
+
+
+# Map from declared `type` in recipe_override_parameters to allowed Python types
+# for default/min/max/enum values. Booleans are excluded from numeric since
+# Python booleans are int subclasses but treating True/False as numeric would
+# mask real bugs.
+_TYPE_TO_PYTHON_TYPES = {
+    "integer": (int,),
+    "float": (int, float),  # ints are acceptable wherever floats are expected
+    "number": (int, float),
+    "string": (str,),
+    "boolean": (bool,),
+    "array": (list,),
+}
+
+# Recipe path substrings to skip during type-conformance validation.
+# Use only when a recipe legitimately needs values that don't match the
+# declared type — typically because of unusual YAML coercion or in-flight migrations.
+# Add an inline comment when you add an entry so future maintainers know why.
+TYPE_CONFORMANCE_SKIP_PATTERNS = [
+    # Nova distillation recipes — defaults pulled from recipe YAML use mixed
+    # types that don't strictly match the declared base param types (same
+    # rationale as the existing nova_distill constraint-validation skip).
+    "distill",
+]
+
+
+def _should_skip_type_conformance(recipe_file_str: str) -> bool:
+    """Return True if this recipe path is in the type-conformance exception list."""
+    lower = recipe_file_str.lower()
+    return any(pattern in lower for pattern in TYPE_CONFORMANCE_SKIP_PATTERNS)
+
+
+def _get_base_section(recipe_file_str: str) -> str:
+    """Return the base_override_parameters.json section a recipe resolves against.
+
+    Mirrors the category split used by the template processors: eval recipes
+    (open-source, nova and mtrl alike) resolve against "evaluation", everything
+    else against "fine_tuning".
+    """
+    return "evaluation" if "eval" in recipe_file_str.lower() else "fine_tuning"
+
+
+# Params written directly by launcher code instead of resolved from
+# base_override_parameters.json, so they legitimately have no base entry.
+# Each must still carry its own complete metadata at the injection site.
+CODE_INJECTED_PARAMS = {
+    # nova_recipe_template_processor.py injects the k8s-only HyperPod compute
+    # knob with full category/visibility_tier/display_name/hint.
+    "instance_type",
+    # launcher/evaluation/launchers.py builds the k8s open-source eval override
+    # dict from scratch; eval_results_dir exists only there.
+    "eval_results_dir",
+}
+
+
+def _value_matches_type(value, declared_type: str) -> bool:
+    """Return True if the Python value is compatible with the declared type."""
+    allowed = _TYPE_TO_PYTHON_TYPES.get(declared_type)
+    if allowed is None:
+        return True  # unknown type — skip rather than fail
+    # Reject bools where numeric/int/float is expected
+    if declared_type in ("integer", "float", "number") and isinstance(value, bool):
+        return False
+    return isinstance(value, allowed)
+
+
+def _validate_param_type_conformance(override_params: Dict) -> List[str]:
+    """For each param in recipe_override_parameters, check that default, min,
+    max, and enum entries match the declared `type` field.
+
+    Returns a list of error strings (empty if everything is fine).
+    """
+    errors = []
+    for pname, pdef in override_params.items():
+        if not isinstance(pdef, dict):
+            continue
+        declared_type = pdef.get("type")
+        if not declared_type or declared_type not in _TYPE_TO_PYTHON_TYPES:
+            continue
+
+        # Scalar fields
+        for field in ("default", "min", "max"):
+            if field not in pdef:
+                continue
+            value = pdef[field]
+            if value is None:
+                continue  # null is a valid sentinel (unbounded)
+            if not _value_matches_type(value, declared_type):
+                errors.append(
+                    f"[Type Conformance] Parameter '{pname}': {field}={value!r} "
+                    f"(Python {type(value).__name__}) does not match declared type='{declared_type}'"
+                )
+
+        # Enum entries
+        if "enum" in pdef:
+            enum_val = pdef["enum"]
+            if not isinstance(enum_val, list):
+                errors.append(
+                    f"[Type Conformance] Parameter '{pname}': enum is not a list " f"(got {type(enum_val).__name__})"
+                )
+                continue
+            for i, item in enumerate(enum_val):
+                if item is None:
+                    continue
+                if not _value_matches_type(item, declared_type):
+                    errors.append(
+                        f"[Type Conformance] Parameter '{pname}': enum[{i}]={item!r} "
+                        f"(Python {type(item).__name__}) does not match declared type='{declared_type}'"
+                    )
+    return errors
 
 
 class LaunchJsonGeneratorWithValidation(LaunchJsonGenerator):
@@ -462,6 +574,106 @@ class TestLaunchJsonGenerationAndValidation:
 
             except Exception as e:
                 validation_errors.append(f"Recipe/override validators error: {str(e)}")
+
+        # PRIVATE FIELDS VALIDATION: Ensure private fields don't leak into launch JSON
+        override_params_for_private_check = launch_json.get("recipe_override_parameters", {})
+        for param_name, param_def in override_params_for_private_check.items():
+            leaked_fields = set(param_def.keys()) & PRIVATE_FIELDS
+            if leaked_fields:
+                validation_errors.append(
+                    f"[Private Fields] Parameter '{param_name}' contains private field(s) "
+                    f"{sorted(leaked_fields)} that should not appear in launch JSON"
+                )
+
+        # MFE METADATA VALIDATION: every param in the EMITTED sm_jobs launch JSON must
+        # carry category and visibility_tier. The MFE reads both to decide whether a
+        # field renders and which section it renders in, so a param without them has no
+        # defined rendering behavior once the MFE starts reading the contract.
+        #
+        # This asserts on the emitted artifact, not on base_override_parameters.json.
+        # Every existing metadata test inspects the resolution *inputs* (the base file,
+        # the template files, or resolve_params in isolation), so a launcher that
+        # bypasses resolution and hand-rolls its own override dict is invisible to all
+        # of them. That is exactly how eval params shipped without metadata despite the
+        # base file being complete.
+        #
+        # Deliberately placed outside the `training_content_key in launch_json` block
+        # above: eval launch JSONs carry `evaluation-config.yaml`, not
+        # `training-config.yaml`, so that gate skips every eval recipe.
+        #
+        # Covers sm_jobs on every framework, plus Nova on k8s: Nova HyperPod is an
+        # actively used publishing platform, and every param it emits carries both
+        # fields today -- the resolved ones from base_override_parameters.json and the
+        # code-injected instance_type from nova_recipe_template_processor.py.
+        #
+        # Not yet widened to k8s for the other frameworks: two launchers hand-roll
+        # override dicts without metadata -- the open-source eval dict in
+        # launcher/evaluation/launchers.py and instance_type in launcher/nemo/stages.py
+        # (the generic one, not Nova's). Those two sites must supply category and
+        # visibility_tier before this can drop the platform condition entirely.
+        if job_type == "sm_jobs" or (job_type == "k8s" and is_nova_recipe):
+            for param_name, param_def in override_params_for_private_check.items():
+                for field in ("category", "visibility_tier"):
+                    if field not in param_def:
+                        validation_errors.append(
+                            f"[MFE Metadata] Parameter '{param_name}' in the emitted {job_type} "
+                            f"launch JSON has no '{field}'. Every override param must carry it so "
+                            f"the MFE can decide whether and where to render the field."
+                        )
+
+        # TYPE CONFORMANCE VALIDATION: Ensure default/min/max/enum values match
+        # the declared `type` for each param. Critical because `default` often
+        # gets pulled from the recipe at resolution time — a recipe with the
+        # wrong type would silently produce a broken launch JSON.
+        # Some recipes are exempted via TYPE_CONFORMANCE_SKIP_PATTERNS.
+        if _should_skip_type_conformance(str(recipe_path)):
+            logger.warning(f"Skipping type conformance validation for {recipe_path.stem}")
+        else:
+            type_conformance_errors = _validate_param_type_conformance(override_params_for_private_check)
+            validation_errors.extend(type_conformance_errors)
+
+        # PLATFORM VALIDATION: Ensure K8-only params don't appear in SM Jobs and vice versa
+        base_params_path = Path("launcher/recipe_templatization/base_override_parameters.json")
+        if base_params_path.exists():
+            with open(base_params_path, "r") as f:
+                base_params_data = json.load(f)
+
+            # BASE DEFINITION VALIDATION: every emitted override param must have a
+            # definition in base_override_parameters.json. A param defined only in a
+            # framework template file resolves without category/visibility_tier
+            # (resolve_params starts from {} when the base has no entry), which the
+            # post-cutover MFE needs to decide whether and where to render the field.
+            base_section = _get_base_section(str(recipe_path))
+            defined_params = set(base_params_data.get(base_section, {}))
+            for param_name in override_params_for_private_check:
+                if param_name in CODE_INJECTED_PARAMS:
+                    continue
+                if param_name not in defined_params:
+                    validation_errors.append(
+                        f"[Base Definition] Parameter '{param_name}' is not defined in "
+                        f"base_override_parameters.json['{base_section}']. Add it there so it "
+                        f"resolves with category/visibility_tier metadata."
+                    )
+
+            # Collect platform info for all params across categories
+            param_platform_map = {}
+            for category_params in base_params_data.values():
+                if isinstance(category_params, dict):
+                    for pname, pdef in category_params.items():
+                        if isinstance(pdef, dict) and "platform" in pdef:
+                            param_platform_map[pname] = pdef["platform"]
+
+            for param_name in override_params_for_private_check:
+                param_platform = param_platform_map.get(param_name, "ALL")
+                if param_platform == "K8" and job_type == "sm_jobs":
+                    validation_errors.append(
+                        f"[Platform Mismatch] Parameter '{param_name}' is K8-only "
+                        f"but appears in SM Jobs launch JSON"
+                    )
+                elif param_platform == "SMTJ" and job_type == "k8s":
+                    validation_errors.append(
+                        f"[Platform Mismatch] Parameter '{param_name}' is SMTJ-only " f"but appears in K8s launch JSON"
+                    )
 
         # Copy failed launch.json for debugging if there are validation errors
         if validation_errors:

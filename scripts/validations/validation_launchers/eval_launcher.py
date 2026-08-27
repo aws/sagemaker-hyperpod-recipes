@@ -14,7 +14,7 @@ Usage:
     1. Set platform to "EVAL" in common_validation_config.yaml
     2. Configure eval_config section with eval_jobs list
     3. Set recipe_list to the eval recipe(s)
-    4. Run: python scripts/validations/validation_script_runner.py
+    4. Run: uv run poe validate-recipes
 """
 
 import logging

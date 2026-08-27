@@ -38,7 +38,7 @@ def parse_arguments():
     parser.add_argument(
         "--prefixes",
         nargs="+",
-        default=["llmft", "nova", "verl", "evaluation"],
+        default=["llmft", "nova", "verl", "evaluation", "mtrl", "mtrl_eval"],
         help="Recipe prefixes to process (default: llmft). Options: llmft, nova, verl, evaluation, checkpointless",
     )
     parser.add_argument(

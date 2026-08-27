@@ -2,7 +2,6 @@ display_name: Llama 3.2 3B GRPO RLVR Fine-Tuning
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge
-- ml.p4d.24xlarge
 ray_cluster:
   head_node:
     cpu: '16'
@@ -430,4 +429,4 @@ training_config:
       cuda-memory-usage: 'true'
       kill: none
       trace: cuda,nvtx,cublas,ucx
-version: 2.2.1
+version: 2.2.5

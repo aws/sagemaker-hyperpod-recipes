@@ -1,0 +1,149 @@
+defaults:
+  - /hydra_config/verl-0_7_0/default
+  - _self_
+display_name: Ministral-3-8B-Instruct-2512-BF16 GRPO RLAIF FFT Fine-Tuning (Text)
+version: 2.0.1
+instance_types:
+- ml.p5.48xlarge
+- ml.p4de.24xlarge
+run:
+    model_type: verl
+    name: verl-grpo-rlaif-ministral-3-8b-instruct-fft
+    results_dir: ${base_results_dir}/${.name}
+trainer:
+  devices: 8
+  num_nodes: 1
+ray_cluster:
+  head_node:
+    cpu: '16'
+    cpuLimit: null
+    gpu: '0'
+    memory: 32Gi
+    memoryLimit: null
+  worker_nodes:
+    cpu: '48'
+    cpuLimit: null
+    gpu: '8'
+    memory: 144Gi
+    memoryLimit: null
+    replicas: 1
+training_config:
+  algorithm:
+    adv_estimator: grpo
+    norm_adv_by_std_in_grpo: true
+  actor_rollout_ref:
+    hybrid_engine: true
+    nccl_timeout: 600
+    actor:
+      use_kl_loss: true
+      kl_loss_coef: 0.001
+      kl_loss_type: low_var_kl
+      ppo_mini_batch_size: 32
+      ppo_micro_batch_size_per_gpu: 8
+      ppo_max_token_len_per_gpu: 16384
+      strategy: fsdp2
+      fsdp_config:
+        optimizer_offload: false
+        param_offload: false
+        model_dtype: bfloat16
+        strategy: fsdp2
+      optim:
+        lr: 1.0e-06
+        warmup_style: constant
+    ref:
+      log_prob_micro_batch_size_per_gpu: 8
+      log_prob_use_dynamic_bsz: true
+      log_prob_max_token_len_per_gpu: 16384
+      fsdp_config:
+        param_offload: true
+        strategy: fsdp2
+    rollout:
+      name: vllm
+      mode: async
+      n: 8
+      prompt_length: 2048
+      response_length: 2048
+      tensor_model_parallel_size: 2
+      gpu_memory_utilization: 0.6
+      max_num_batched_tokens: 8192
+      enable_chunked_prefill: true
+      enable_prefix_caching: true
+      free_cache_engine: true
+      load_format: safetensors
+      skip_tokenizer_init: true
+      log_prob_micro_batch_size_per_gpu: 8
+      log_prob_use_dynamic_bsz: true
+      log_prob_max_token_len_per_gpu: 16384
+      disable_log_stats: true
+      layered_summon: true
+      merge_lora_for_inference: false
+      engine_kwargs:
+        vllm:
+          hf_overrides:
+            rope_scaling: null
+            text_config:
+              architectures:
+              - MistralForCausalLM
+    model:
+      path: mistralai/Ministral-3-8B-Instruct-2512-BF16
+      trust_remote_code: false
+      enable_gradient_checkpointing: true
+      use_remove_padding: true
+      lora_rank: 0
+      use_fused_kernels: false
+      tiled_mlp:
+        enabled: false
+        num_shards: 4
+  trainer:
+    merge_lora_on_final_save: true
+    project_name: ministral-rl
+    experiment_name: ministral-3-8b-instruct-grpo-rlaif-fft
+    logger:
+      - console
+      - mlflow
+    test_freq: 10
+    total_epochs: 1
+    save_freq: 20
+    default_local_dir: /opt/ml/model
+  data:
+    max_prompt_length: 2048
+    max_response_length: 2048
+    train_batch_size: 128
+    truncation: left
+    filter_overlong_prompts: true
+    trust_remote_code: false
+    train_val_split_ratio: 0.9
+  reward_model:
+    strategy: fsdp2
+    reward_manager: batch
+    rollout:
+      name: vllm
+    model:
+      input_tokenizer: mistralai/Ministral-3-8B-Instruct-2512-BF16
+    reward_kwargs:
+      kwargs:
+        aws_region_name: null
+        llmj_prompt_template_path: /opt/ml/code/verl/summarize.jinja
+        max_workers: 100
+        model_id: bedrock/openai.gpt-oss-120b-1:0
+        num_retries: 5
+        range:
+        - 0.0
+        - 1.0
+        sampling_params:
+          max_completion_tokens: 2048
+          reasoning_effort: null
+          temperature: 0.0
+          top_p: 0.9
+      reward_fn_name: llmj
+  reward_manager:
+    _target_: verl.trainer.config.config.RewardManagerConfig
+    source: register
+    name: batch
+  custom_reward_function:
+    lambda_arn: ''
+    path: ''
+    name: ''
+  mlflow:
+    run_id: ''
+    tracking_uri: ''

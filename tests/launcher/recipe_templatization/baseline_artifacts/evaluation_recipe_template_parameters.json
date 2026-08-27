@@ -1,0 +1,620 @@
+{
+    "templates": {
+        "open_source_deterministic_eval": {
+            "display_name": "Deterministic Eval",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "base_model_name": "{{base_model_name}}",
+                    "model_name_or_path": "{{model_name_or_path}}",
+                    "replicas": "{{instance_count}}",
+                    "data_s3_path": "{{data_s3_path}}"
+                },
+                "evaluation": {
+                    "task": "{{task}}",
+                    "strategy": "{{strategy}}",
+                    "metric": "{{evaluation_metric}}",
+                    "subtask": "{{subtask}}"
+                },
+                "output": {
+                    "eval_results_dir": "{{output_path}}",
+                    "eval_tensorboard_results_dir": "{{eval_tensorboard_results_dir}}",
+                    "kms_key_id": "{{kms_key_id}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_run_id": "{{mlflow_run_id}}"
+                },
+                "inference": {
+                    "max_new_tokens": "{{max_new_tokens}}",
+                    "top_k": "{{top_k}}",
+                    "top_p": "{{top_p}}",
+                    "temperature": "{{temperature}}",
+                    "max_model_len": "{{max_model_len}}"
+                },
+                "processor": {
+                    "preset_reward_function": "{{preset_reward_function}}",
+                    "lambda_arn": "{{lambda_arn}}",
+                    "postprocessing": {
+                        "enabled": "{{postprocessing}}"
+                    },
+                    "aggregation": "{{aggregation}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "default": "open-source-eval-job",
+                    "required": true,
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
+                },
+                "base_model_name": {
+                    "type": "string",
+                    "default": "",
+                    "required": true,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "model_name_or_path": {
+                    "type": "string",
+                    "default": "",
+                    "required": true,
+                    "description": "Model identifier or path to pretrained model",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "data_s3_path": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "S3 URI path to training dataset",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Dataset",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
+                },
+                "instance_count": {
+                    "type": "integer",
+                    "default": 1,
+                    "required": true,
+                    "description": "Number of compute instances for training",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Instance count",
+                    "hint": "Only choose as many instances as needed for your training",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "output_path": {
+                    "type": "string",
+                    "default": "",
+                    "required": true,
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "eval_tensorboard_results_dir": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "Directory for evaluation TensorBoard results",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "MLflow experiment name for grouping runs",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "Display name for the MLflow run",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "task": {
+                    "type": "string",
+                    "enum": [
+                        "mmlu",
+                        "mmlu_pro",
+                        "bbh",
+                        "gpqa",
+                        "math",
+                        "strong_reject",
+                        "ifeval",
+                        "gen_qa",
+                        "inference_only"
+                    ],
+                    "default": "mmlu",
+                    "required": true,
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Task",
+                    "control_type": "dropdown"
+                },
+                "strategy": {
+                    "type": "string",
+                    "enum": [
+                        "zs_cot",
+                        "gen_qa",
+                        "zs",
+                        "fs_cot"
+                    ],
+                    "default": "zs_cot",
+                    "required": false,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Strategy",
+                    "control_type": "dropdown"
+                },
+                "kms_key_id": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Encryption KMS key",
+                    "control_type": "kms_key_input"
+                },
+                "preset_reward_function": {
+                    "type": "string",
+                    "required": false,
+                    "enum": [
+                        "prime_code",
+                        "prime_math"
+                    ],
+                    "default": "",
+                    "description": "Preset reward function for RLVR",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Metrics",
+                    "control_type": "dropdown"
+                },
+                "evaluation_metric": {
+                    "default": "",
+                    "enum": [
+                        "all",
+                        "deflection",
+                        "accuracy",
+                        "exact_match"
+                    ],
+                    "required": false,
+                    "type": "string",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
+                },
+                "subtask": {
+                    "type": "string",
+                    "enum": [
+                        "abstract_algebra",
+                        "anatomy",
+                        "astronomy",
+                        "business_ethics",
+                        "clinical_knowledge",
+                        "college_biology",
+                        "college_chemistry",
+                        "college_computer_science",
+                        "college_mathematics",
+                        "college_medicine",
+                        "college_physics",
+                        "computer_security",
+                        "conceptual_physics",
+                        "econometrics",
+                        "electrical_engineering",
+                        "elementary_mathematics",
+                        "formal_logic",
+                        "global_facts",
+                        "high_school_biology",
+                        "high_school_chemistry",
+                        "high_school_computer_science",
+                        "high_school_european_history",
+                        "high_school_geography",
+                        "high_school_government_and_politics",
+                        "high_school_macroeconomics",
+                        "high_school_mathematics",
+                        "high_school_microeconomics",
+                        "high_school_physics",
+                        "high_school_psychology",
+                        "high_school_statistics",
+                        "high_school_us_history",
+                        "high_school_world_history",
+                        "human_aging",
+                        "human_sexuality",
+                        "international_law",
+                        "jurisprudence",
+                        "logical_fallacies",
+                        "machine_learning",
+                        "management",
+                        "marketing",
+                        "medical_genetics",
+                        "miscellaneous",
+                        "moral_disputes",
+                        "moral_scenarios",
+                        "nutrition",
+                        "philosophy",
+                        "prehistory",
+                        "professional_accounting",
+                        "professional_law",
+                        "professional_medicine",
+                        "professional_psychology",
+                        "public_relations",
+                        "security_studies",
+                        "sociology",
+                        "us_foreign_policy",
+                        "virology",
+                        "world_religions",
+                        "boolean_expressions",
+                        "causal_judgement",
+                        "date_understanding",
+                        "disambiguation_qa",
+                        "dyck_languages",
+                        "formal_fallacies",
+                        "geometric_shapes",
+                        "hyperbaton",
+                        "logical_deduction_five_objects",
+                        "logical_deduction_seven_objects",
+                        "logical_deduction_three_objects",
+                        "movie_recommendation",
+                        "multistep_arithmetic_two",
+                        "navigate",
+                        "object_counting",
+                        "penguins_in_a_table",
+                        "reasoning_about_colored_objects",
+                        "ruin_names",
+                        "salient_translation_error_detection",
+                        "snarks",
+                        "sports_understanding",
+                        "temporal_sequences",
+                        "tracking_shuffled_objects_five_objects",
+                        "tracking_shuffled_objects_seven_objects",
+                        "tracking_shuffled_objects_three_objects",
+                        "web_of_lies",
+                        "word_sorting",
+                        "algebra",
+                        "counting_and_probability",
+                        "geometry",
+                        "intermediate_algebra",
+                        "number_theory",
+                        "prealgebra",
+                        "precalculus"
+                    ],
+                    "default": "",
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Subtask",
+                    "control_type": "dropdown"
+                },
+                "max_new_tokens": {
+                    "type": "integer",
+                    "default": 8192,
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max New Tokens",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "top_k": {
+                    "type": "integer",
+                    "default": -1,
+                    "required": false,
+                    "description": "Top-k nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-k",
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "top_p": {
+                    "type": "number",
+                    "default": 1.0,
+                    "required": false,
+                    "description": "Top-p nucleus sampling cutoff",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Top-p",
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
+                },
+                "temperature": {
+                    "type": "integer",
+                    "default": 0,
+                    "required": false,
+                    "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Temperature",
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
+                },
+                "max_model_len": {
+                    "type": "integer",
+                    "default": 12000,
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max Model Len",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "lambda_arn": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "postprocessing": {
+                    "type": "boolean",
+                    "default": false,
+                    "required": false,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
+                },
+                "aggregation": {
+                    "type": "string",
+                    "enum": [
+                        "average",
+                        "median",
+                        "max",
+                        "min",
+                        "sum"
+                    ],
+                    "default": "",
+                    "required": false,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "evaluation_types": {
+                    "general_text_benchmark": "General Text Benchmark",
+                    "general_multi_modal_benchmark": "General Multi-Modal Benchmark",
+                    "llm_judge": "LLM Judge",
+                    "bring_your_own_dataset": "Bring Your Own Dataset"
+                },
+                "preset_reward_function": {
+                    "prime_code": "Code executions (prime_code)",
+                    "prime_math": "Math answers (prime_math)"
+                },
+                "hardware_types": {
+                    "gpu": "GPU"
+                },
+                "model_variants": {
+                    "open-source": "Open Source Models"
+                }
+            }
+        },
+        "open_source_llmaj_eval": {
+            "display_name": "LLM-as-Judge Eval",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "base_model_name": "{{base_model_name}}",
+                    "judge_model_id": "{{judge_model_id}}",
+                    "inference_data_s3_path": "{{inference_data_s3_path}}",
+                    "base_model_inference_data_s3_path": "{{base_model_inference_data_s3_path}}"
+                },
+                "llm_as_judge": {
+                    "metrics": "{{llmaj_metrics}}",
+                    "custom_metrics": "{{custom_metrics}}"
+                },
+                "output": {
+                    "eval_results_dir": "{{output_path}}",
+                    "eval_tensorboard_results_dir": "{{eval_tensorboard_results_dir}}",
+                    "kms_key_id": "{{kms_key_id}}",
+                    "mlflow_experiment_name": "{{mlflow_experiment_name}}",
+                    "mlflow_run_name": "{{mlflow_run_name}}",
+                    "mlflow_tracking_uri": "{{mlflow_tracking_uri}}",
+                    "mlflow_run_id": "{{mlflow_run_id}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "name": {
+                    "type": "string",
+                    "default": "",
+                    "required": true,
+                    "description": "Custom model name",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
+                },
+                "base_model_name": {
+                    "type": "string",
+                    "default": "",
+                    "required": true,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "judge_model_id": {
+                    "type": "string",
+                    "default": "",
+                    "required": true,
+                    "description": "Bedrock model ID used as the judge for RLAIF evaluation",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Evaluator model",
+                    "control_type": "text_input"
+                },
+                "inference_data_s3_path": {
+                    "type": "string",
+                    "default": "",
+                    "required": true,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "s3_uri_input"
+                },
+                "base_model_inference_data_s3_path": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "s3_uri_input"
+                },
+                "output_path": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "Local output path for model artifacts",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "eval_tensorboard_results_dir": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "Directory for evaluation TensorBoard results",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "kms_key_id": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Encryption KMS key",
+                    "control_type": "kms_key_input"
+                },
+                "mlflow_run_id": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "MLflow run ID for resuming or linking to an existing run",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "mlflow_experiment_name": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "MLflow experiment name for grouping runs",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "mlflow_tracking_uri": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "MLflow tracking server URI for experiment logging",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "mlflow_run_name": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "description": "Display name for the MLflow run",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "llmaj_metrics": {
+                    "type": "string",
+                    "enum": [
+                        "Correctness",
+                        "Completeness",
+                        "Faithfulness",
+                        "Helpfulness",
+                        "Coherence",
+                        "Relevance",
+                        "FollowingInstructions",
+                        "ProfessionalStyleAndTone",
+                        "Harmfulness",
+                        "Stereotyping",
+                        "Refusal",
+                        "FaithfulnessRelevance",
+                        "Evaluation",
+                        "ChainOfThought",
+                        "Summarization"
+                    ],
+                    "default": "Faithfulness",
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Metrics",
+                    "control_type": "dropdown"
+                },
+                "custom_metrics": {
+                    "type": "string",
+                    "default": "",
+                    "required": false,
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Custom metrics",
+                    "control_type": "text_input"
+                }
+            },
+            "recipe_metadata_helpers": {
+                "evaluation_types": {
+                    "llm_judge": "LLM Judge"
+                },
+                "hardware_types": {
+                    "cpu": "CPU"
+                },
+                "model_variants": {
+                    "open-source": "Open Source Models"
+                }
+            }
+        }
+    }
+}

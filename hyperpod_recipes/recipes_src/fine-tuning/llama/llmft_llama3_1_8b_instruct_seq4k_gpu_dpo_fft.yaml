@@ -7,8 +7,9 @@ defaults:
   - /hydra_config/llmft/strategy/fsdp_dpo_fft
   - _self_
 
-display_name: "Llama 3.1 8B Instruct Direct Preference Optimization Full Fine-Tuning on GPU"
-version: 1.3.1
+display_name: "Llama 3.1 8B Instruct Direct Preference Optimization Full Fine-Tuning
+  on GPU"
+version: 1.3.3
 instance_types: ['ml.p5.48xlarge']
 
 run:
@@ -16,9 +17,7 @@ run:
 
 training_config:
   model_config:
-    model_name_or_path: "meta-llama/Llama-3.1-8B-Instruct"
     model_save_name: SageMaker-FFT/llama-3.1-8B-Instruct
-    chat_template_key: llama--meta-llama-3.1-8b-instruct
   training_args:
     ulysses_sequence_parallel_size: 1
     log_run_time: false

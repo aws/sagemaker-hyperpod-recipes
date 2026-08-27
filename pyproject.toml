@@ -31,7 +31,9 @@ dependencies = [
     "tqdm==4.62.3",
     "zstandard==0.15.2",
     "tensorboard==2.12.0",
-    "boto3==1.35.66",
+    # boto3 surface (sts client, session region lookup). Floor rather than exact
+    # pin so downstream consumers can resolve a newer botocore.
+    "boto3>=1.35.66",
     "PyYAML>=6.0",
     "pydantic>=2.0.0",
     "sagemaker>=2.0.0",
@@ -39,6 +41,19 @@ dependencies = [
     "pytest-cov",
     "pytest-subtests",
     "pathspec",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruamel.yaml>=0.17",
+]
+
+# Unlike an optional-dependency extra, a group in tool.uv.default-groups is
+# installed by a bare `uv run`.
+[dependency-groups]
+scripts = [
+    "poethepoet>=0.24",
+    "ruamel.yaml>=0.17",
 ]
 
 [project.urls]
@@ -50,6 +65,9 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["launcher", "utils"]
+# Editable installs only: makes the repo root importable so scripts/ and tests/
+# can import scripts, hyperpod_recipes, etc. Does not affect the built wheel.
+dev-mode-dirs = ["."]
 
 [tool.hatch.build.targets.wheel.force-include]
 "launcher/nemo/nemo_framework_launcher/launcher_scripts/nemo_launcher" = "nemo_launcher"
@@ -106,6 +124,27 @@ disable_lockfile_update_on_build_fleet = true
 
 [tool.isort]
 profile = "black"
-known_first_party = ["hyperpod_recipes", "launcher", "utils"]
+known_first_party = ["hyperpod_recipes", "launcher", "scripts", "utils"]
 
-[tool.uv.workspace]
+[tool.uv]
+default-groups = ["scripts"]
+
+# Dev-only tasks, run as `uv run poe <task> [args]`. Poe runs these from the
+# project root with the root on sys.path. Not bundled into the wheel.
+[tool.poe.tasks]
+detect-recipes = { script = "scripts.detect_recipes:main" }
+check-jumpstart-recipes = { script = "scripts.check_jumpstart_recipes:main" }
+generate-containers-doc = { script = "scripts.generate_containers_doc:main" }
+generate-hyperparameters-doc = { script = "scripts.generate_hyperparameters_doc:main" }
+generate-launch-jsons = { script = "scripts.generate_launch_jsons:main" }
+generate-recipes-doc = { script = "scripts.generate_recipes_doc:main" }
+generate-resolved-recipes = { script = "scripts.generate_resolved_recipes:main" }
+generate-launcher-scripts = { script = "scripts.launcher_scripts_generator.generate_launcher_scripts:main" }
+hydra-prune = { script = "scripts.hydra_prune:main" }
+hydra-resolver = { script = "scripts.hydra_resolver:main" }
+record-metrics = { script = "scripts.record_metrics:main" }
+export-hub-content = { script = "scripts.model_hub.export_hub_content:main" }
+import-hub-content = { script = "scripts.model_hub.import_hub_content:main" }
+update-private-hub = { script = "scripts.model_hub.update_private_hub:main" }
+pysdk-serverless = { script = "scripts.validations.pysdk_serverless:main" }
+validate-recipes = { script = "scripts.validations.validation_script_runner:main" }

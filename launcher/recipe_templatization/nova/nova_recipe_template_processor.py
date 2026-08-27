@@ -14,6 +14,16 @@ from ..base_recipe_template_processor import (
 
 logger = logging.getLogger(__name__)
 
+NOVA_EVAL_TEMPLATES = {
+    "nova_general_text_benchmark_eval",
+    "nova_general_text_benchmark_2_0_eval",
+    "nova_general_multi_modal_benchmark_eval",
+    "nova_general_multi_modal_benchmark_2_0_eval",
+    "nova_llm_judge_eval",
+    "nova_bring_your_own_dataset_eval",
+    "nova_bring_your_own_dataset_2_0_eval",
+}
+
 
 class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     """Nova-specific recipe template processor for both fine-tuning and evaluation."""
@@ -29,6 +39,15 @@ class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         self.template_path = template_path
         self.platform = platform
         super().__init__(staging_cfg)
+
+    def _get_template_category(self) -> str:
+        """Return the category key for base parameter lookup.
+
+        Nova eval templates use 'evaluation', everything else uses 'fine_tuning'.
+        """
+        if getattr(self, "_matched_template_key", None) in NOVA_EVAL_TEMPLATES:
+            return "evaluation"
+        return "fine_tuning"
 
     def _load_template(self):
         """Load Nova unified template file."""
@@ -58,11 +77,13 @@ class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
             raise ValueError("Display name not found in nova metadata")
 
         if "Data Distillation" in displayName:
+            self._matched_template_key = "nova_distill"
             return template.get("nova_distill")
         elif "Evaluation" in displayName:
             eval_type = self._get_evaluation_type(recipe_file_path)
             computed_template_name = f"nova_{eval_type}_eval"
             if computed_template_name in template:
+                self._matched_template_key = computed_template_name
                 return template.get(computed_template_name)
             else:
                 raise ValueError(f"Template not found for evaluation type: {eval_type}")
@@ -71,11 +92,13 @@ class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
             recipe_type = self._determine_recipe_type(yaml_data, recipe_file_path)
             computed_template_name = f"nova_{recipe_type}"
             if computed_template_name in template:
+                self._matched_template_key = computed_template_name
                 return template.get(computed_template_name)
 
             # Search based on recipe filename
             for template_key, matched_template in template.items():
                 if template_key in recipe_file_name:
+                    self._matched_template_key = template_key
                     return matched_template
             raise ValueError(f"Template not found for recipe file: {recipe_file_name}")
         else:
@@ -100,19 +123,33 @@ class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         # Resolve conditional constraints using the generated metadata
         resolved_override_parameters = self._resolve_constraints_using_metadata(recipe_metadata)
 
-        # Update the instance variable so it's used in the main processing
-        resolved_override_parameters["instance_type"] = {
-            "type": "string",
-            "required": False,
-            "enum": recipe_metadata["InstanceTypes"],
-            "default": recipe_metadata["InstanceTypes"][0],
-        }
+        # instance_type is a K8-only HyperPod compute knob rendered by the MFE's
+        # dedicated InstanceTypeSelection widget, so it's only created for k8s (on
+        # sm_jobs compute is resolved server-side). The enum/default come from the
+        # recipe's supported InstanceTypes; display_name/hint mirror the MFE labels
+        # (ModelCustomizationPage.translations.ts environmentSection).
+        #
+        # category is system, not hyperparameter: the value never reaches the flat
+        # HyperParameters map through the generic form. The MFE explicitly lists
+        # instance_type in the ignoredFields of hubContractTransformer.ts ("should
+        # not be re-rendered. only the value is needed.") on both the SMTJ and
+        # HyperPod branches, so the generic form must not surface it.
+        if self.platform == "k8s":
+            resolved_override_parameters["instance_type"] = {
+                "type": "string",
+                "required": False,
+                "enum": recipe_metadata["InstanceTypes"],
+                "default": recipe_metadata["InstanceTypes"][0],
+                "description": "Compute instance type for the HyperPod training job",
+                "category": "system",
+                "visibility_tier": "tertiary",
+                "display_name": "Instance type",
+                "hint": "Select instance type",
+            }
 
         if self.platform == "sm_jobs":
             if "namespace" in resolved_override_parameters:
                 del resolved_override_parameters["namespace"]
-            if "instance_type" in resolved_override_parameters:
-                del resolved_override_parameters["instance_type"]
             if "replicas" in resolved_override_parameters:
                 del resolved_override_parameters["replicas"]
             if "instance_count" in resolved_override_parameters:

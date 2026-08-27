@@ -160,7 +160,7 @@ actor_rollout_ref:
       use_inference_chat_template: false
     'n': '{{rollout_n}}'
     name: vllm
-    prompt_length: '{{max_prompt_length}}'
+    prompt_length: 512
     response_length: 1024
     temperature: '{{rollout_temperature}}'
     tensor_model_parallel_size: 2

@@ -80,6 +80,9 @@ training_config:
       enable_thinking: false
       ignore_prompt_labels: true
       type: Seq2SeqTokensProcessor
+    - tokens_labels:
+      - input_ids
+      type: SequenceLengthFilter
     - column_names:
       - messages
       type: DropColumns
@@ -179,4 +182,4 @@ training_config:
     use_tensorboard: logs
     use_wandb: null
     weight_decay: 0.0
-version: 2.2.1
+version: 2.2.4

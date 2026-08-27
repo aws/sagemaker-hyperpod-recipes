@@ -1,0 +1,43 @@
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/model_config/gemma-4-e4b-it
+  - _self_
+
+display_name: "Gemma 4 E4B IT SFT Full Fine-Tuning (Text)"
+version: 2.0.4
+instance_types: ["ml.p5.48xlarge"]
+
+run:
+  name: verl-sft-gemma-4-e4b-it-fft
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  data:
+    ignore_input_ids_mismatch: true
+    train_batch_size: 128
+    micro_batch_size_per_gpu: 1
+    max_length: 32768
+    max_token_len_per_gpu: 32768
+    truncation: left
+    apply_chat_template_kwargs:
+      enable_thinking: false
+
+  engine:
+    strategy: fsdp2
+  optim:
+    lr: 5.0e-06
+    lr_warmup_steps: 10
+
+  trainer:
+    project_name: gemma4-sft
+    experiment_name: gemma-4-e4b-it-sft-fft
+    test_freq: 5

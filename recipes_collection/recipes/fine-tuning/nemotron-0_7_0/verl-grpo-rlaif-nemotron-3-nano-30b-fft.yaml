@@ -669,7 +669,7 @@ training_config:
     reward_kwargs:
       kwargs:
         aws_region_name: us-west-2
-        llmj_prompt_template_path: bedrock/RLAIF/PandaLM/prompts/grader.jinja
+        llmj_prompt_template_path: /opt/ml/code/verl/summarize.jinja
         max_workers: 100
         model_id: bedrock/deepseek.v3-v1:0
         num_retries: 5
@@ -746,4 +746,4 @@ training_config:
     val_before_train: true
   transfer_queue:
     enable: false
-version: 2.0.1
+version: 2.0.5

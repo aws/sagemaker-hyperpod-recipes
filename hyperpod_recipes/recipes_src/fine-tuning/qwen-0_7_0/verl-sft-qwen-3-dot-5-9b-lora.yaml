@@ -12,7 +12,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 3.5 9B SFT LoRA Fine-Tuning"
-version: 2.1.1
+version: 2.1.5
 instance_types: ["ml.p5.48xlarge"]
 
 run:
@@ -24,16 +24,11 @@ trainer:
 training_config:
   data:
     train_batch_size: 32
-    micro_batch_size_per_gpu: 4
     max_length: 4096
     max_token_len_per_gpu: 16384
     truncation: right
     train_max_samples: -1
     val_max_samples: -1
-
-  model:
-    lora_rank: 32
-    lora_alpha: 64
 
   engine:
     strategy: fsdp2
@@ -49,10 +44,5 @@ training_config:
   trainer:
     project_name: verl_sft_qwen3_5_9b
     experiment_name: qwen3_5_9b_sft_fsdp_lora_tatqa
-    total_epochs: 1
     max_ckpt_to_keep: 3
     resume_mode: resume_path
-
-  trainer_callbacks:
-    - _target_: metering_callback.MeteringCallback
-      output_path: /opt/ml/metering

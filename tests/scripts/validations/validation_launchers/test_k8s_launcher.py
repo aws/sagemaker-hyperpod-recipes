@@ -317,7 +317,7 @@ class TestCollectPodLogs:
 
         assert "verl log" in logs
         assert "-n" in mock_popen.call_args[0][0]
-        assert "ray-training" in mock_popen.call_args[0][0]
+        assert "hyperpod-ns-ray" in mock_popen.call_args[0][0]
 
     @patch("builtins.open", new_callable=mock_open)
     @patch("os.makedirs")
@@ -418,7 +418,7 @@ class TestDescribeResource:
 
         assert result.stdout == "dummy_output"
         mock_run.assert_called_once()
-        assert mock_run.call_args[0][0] == ["kubectl", "describe", "pod", "test-pod"]
+        assert mock_run.call_args[0][0] == ["kubectl", "describe", "pod", "test-pod", "-n", "hyperpod-ns-default"]
 
     @patch("subprocess.run")
     def test_describe_resource_failure(self, mock_run, launcher):
@@ -434,7 +434,7 @@ class TestDescribeResource:
         result = launcher.describe_resource("rayjobs", "verl-job", is_verl=True)
 
         assert "-n" in mock_run.call_args[0][0]
-        assert "ray-training" in mock_run.call_args[0][0]
+        assert "hyperpod-ns-ray" in mock_run.call_args[0][0]
 
 
 class TestCleanUpResource:
@@ -481,7 +481,7 @@ class TestGetPods:
 
         assert pods == ["verl-job-pod1", "verl-job-pod2"]
         assert "-n" in mock_run.call_args[0][0]
-        assert "ray-training" in mock_run.call_args[0][0]
+        assert "hyperpod-ns-ray" in mock_run.call_args[0][0]
 
 
 class TestGetHeadNode:
@@ -534,6 +534,18 @@ class TestGetHeadNode:
 
         assert head == "verl-job-launcher"
 
+    @patch("subprocess.run")
+    def test_get_head_node_verl_sidecar_mode(self, mock_run, launcher):
+        # SidecarMode: the submitter runs inside the head pod, so there is no separate
+        # submitter pod (no '-head-'/'-worker-' in its name). The head pod should be used.
+        all_pods = ["verl-job-abc-head-xyz", "verl-job-abc-worker-xyz"]
+
+        head = launcher.get_head_node("verl-job", all_pods=all_pods, is_verl=True)
+
+        assert head == "verl-job-abc-head-xyz"
+        # Falls back purely on pod names; no kubectl log scan needed.
+        mock_run.assert_not_called()
+
 
 class TestAwsEnvParameter:
     """Test that aws_env is passed to subprocess.run calls."""
@@ -585,7 +597,7 @@ class TestWaitForJobStatus:
         assert "rayjobs/verl-job" in mock_run.call_args[0][0]
         assert "--for=jsonpath={.status.jobDeploymentStatus}=Running" in mock_run.call_args[0][0]
         assert "-n" in mock_run.call_args[0][0]
-        assert "ray-training" in mock_run.call_args[0][0]
+        assert "hyperpod-ns-ray" in mock_run.call_args[0][0]
 
 
 class TestGetJobStatus:
@@ -612,7 +624,7 @@ class TestGetJobStatus:
         assert status == "RUNNING"
         assert "jsonpath={.status.jobStatus}" in mock_run.call_args[0][0]
         assert "-n" in mock_run.call_args[0][0]
-        assert "ray-training" in mock_run.call_args[0][0]
+        assert "hyperpod-ns-ray" in mock_run.call_args[0][0]
 
 
 class TestContextOverrideInit:
@@ -657,7 +669,7 @@ class TestContextOverrideInKubectl:
         mock_run.return_value = Mock(stdout="details")
         launcher.describe_resource("pod", "test-pod")
         cmd = mock_run.call_args[0][0]
-        assert cmd == ["kubectl", "describe", "pod", "test-pod"]
+        assert cmd == ["kubectl", "describe", "pod", "test-pod", "-n", "hyperpod-ns-default"]
 
     @patch("subprocess.run")
     def test_clean_up_resource_with_context(self, mock_run, launcher_with_context):
@@ -822,7 +834,7 @@ class TestWaitForPodStatusVerl:
         launcher._wait_for_pod_status("verl-pod", "Running", is_verl=True)
         cmd = mock_run.call_args[0][0]
         assert "-n" in cmd
-        assert "ray-training" in cmd
+        assert "hyperpod-ns-ray" in cmd
 
 
 class TestWaitForJobStatusDescribeFails:
@@ -844,4 +856,4 @@ class TestCleanUpResourceVerl:
         launcher.clean_up_resource("rayjobs", "verl-job", is_verl=True)
         cmd = mock_run.call_args[0][0]
         assert "-n" in cmd
-        assert "ray-training" in cmd
+        assert "hyperpod-ns-ray" in cmd

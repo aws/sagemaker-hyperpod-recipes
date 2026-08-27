@@ -120,7 +120,9 @@ class TestGetRecipeMetadata:
         key = next(k for k in templates if "mtrl" in k and "eval" not in k)
         processor.matched_template_group = templates[key]
         processor.matched_template = templates[key]["recipe_template"]
-        processor.recipe_override_parameters = copy.deepcopy(templates[key]["recipe_override_parameters"])
+        processor.recipe_override_parameters = copy.deepcopy(
+            processor.resolve_override_parameters(processor.matched_template_group, processor.matched_template)
+        )
 
     def test_metadata_has_expected_keys(self):
         processor = _make_processor()

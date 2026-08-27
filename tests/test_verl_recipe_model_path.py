@@ -51,14 +51,41 @@ _ALGO_PREFIX_RE = re.compile(r"^verl-(?:grpo-(?:rlvr|rlaif)-|sft-)")
 # Tuning-method suffixes to strip from recipe filenames.
 _TUNING_SUFFIX_RE = re.compile(r"-(lora|fft)$")
 
+# Modality suffixes to strip from recipe filenames (not part of model identity).
+_MODALITY_SUFFIX_RE = re.compile(r"-(multimodal|text)$")
+
+# Deployment-spec infix some recipes encode between the model identity and the
+# tuning suffix: instance type + max context length + throughput marker, e.g.
+# "...-27b-p5-48xlarge-128k-tt-lora". These describe how/where the recipe runs,
+# not the model, so they are stripped before matching filename -> model.path.
+#   <instance>  = p5-48xlarge, p4de-24xlarge, ...   (family + "-" + size)
+#   <context>   = 128k, 256k, ...
+#   <throughput>= tt (optional)
+_DEPLOYMENT_SPEC_RE = re.compile(
+    r"-p\d[a-z]*-\d+xlarge-\d+k(?:-tt)?(?=-(?:lora|fft)$)",
+    re.IGNORECASE,
+)
+
 # HuggingFace suffixes that are not part of the model identity.
 _HF_STRIP_RE = re.compile(r"-bf16$", re.IGNORECASE)
+
+# Release-date/version token (e.g. "-2512" in "Ministral-3-8B-Instruct-2512"). It is
+# part of the HF model id and display_name but omitted from the shorter recipe
+# filename convention, so it is not part of the canonical identity used for matching.
+_VERSION_DATE_RE = re.compile(r"-\d{4}$")
 
 # HuggingFace vendor prefixes to strip (e.g., "NVIDIA-" in "NVIDIA-Nemotron-3-...")
 _HF_VENDOR_PREFIX_RE = re.compile(r"^NVIDIA-", re.IGNORECASE)
 
 # HuggingFace architecture suffixes to strip (e.g., "-A3B", "-A12B" active param indicators)
 _HF_ARCH_SUFFIX_RE = re.compile(r"-A\d+B", re.IGNORECASE)
+
+# Architecture suffix in filenames (e.g., "-a3b", "-a10b" active param indicators),
+# stripped after the tuning/deployment suffixes are removed.
+_FILENAME_ARCH_SUFFIX_RE = re.compile(r"-a\d+b$", re.IGNORECASE)
+
+# Architecture token in display names (e.g., "A3B" in "Qwen 3.5 35B A3B").
+_DISPLAY_ARCH_TOKEN_RE = re.compile(r"\s+A\d+B\b", re.IGNORECASE)
 
 
 def _to_tokens(s):
@@ -106,6 +133,7 @@ def _model_id_from_path(model_path):
     name = model_path.rsplit("/", 1)[-1]
     name = _HF_VENDOR_PREFIX_RE.sub("", name)
     name = _HF_STRIP_RE.sub("", name)
+    name = _VERSION_DATE_RE.sub("", name)
     name = _HF_ARCH_SUFFIX_RE.sub("", name)
     return " ".join(_to_tokens(name))
 
@@ -116,10 +144,17 @@ def _model_id_from_filename(filename):
     "verl-grpo-rlvr-qwen-3-5-9b-lora.yaml"  -> "qwen 3 5 9b"
     "verl-grpo-rlvr-llama-3-dot-1-8b-instruct-fft.yaml"
                                               -> "llama 3 1 8b instruct"
+    "verl-sft-gemma-4-31b-it-multimodal-lora.yaml"
+                                              -> "gemma 4 31b it"
+    "verl-grpo-rlvr-qwen-3-dot-6-27b-p5-48xlarge-128k-tt-lora.yaml"
+                                              -> "qwen 3 6 27b"
     """
     name = filename.removesuffix(".yaml")
     name = _ALGO_PREFIX_RE.sub("", name)
+    name = _DEPLOYMENT_SPEC_RE.sub("", name)
     name = _TUNING_SUFFIX_RE.sub("", name)
+    name = _MODALITY_SUFFIX_RE.sub("", name)
+    name = _FILENAME_ARCH_SUFFIX_RE.sub("", name)
     return " ".join(_to_tokens(name))
 
 
@@ -133,6 +168,11 @@ def _model_id_from_display_name(display_name):
     # Truncate at the first algorithm/training keyword.
     match = _DISPLAY_NAME_STOP_WORDS.search(display_name)
     model_part = display_name[: match.start()].strip() if match else display_name
+    model_part = _DISPLAY_ARCH_TOKEN_RE.sub("", model_part)
+    # Drop precision (bf16) and release-date (e.g. "-2512") tokens so the identity
+    # matches the model.path and the shorter recipe-filename convention.
+    model_part = _HF_STRIP_RE.sub("", model_part.strip())
+    model_part = _VERSION_DATE_RE.sub("", model_part.strip())
     return " ".join(_to_tokens(model_part))
 
 

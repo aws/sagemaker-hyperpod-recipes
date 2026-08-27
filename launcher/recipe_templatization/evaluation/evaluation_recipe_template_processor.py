@@ -7,6 +7,9 @@ from typing import Optional
 
 from omegaconf import DictConfig, OmegaConf
 
+from utils.resolve_override_params import resolve_bound_placeholders
+
+from ...evaluation.constants import EVAL_RECIPE_VERSION
 from ..base_recipe_template_processor import BaseRecipeTemplateProcessor
 
 
@@ -22,6 +25,10 @@ class EvaluationRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         self.template_path = template_path
         self.platform = platform
         super().__init__(staging_cfg)
+
+    def _get_template_category(self) -> str:
+        """Return the category key for base parameter lookup."""
+        return "evaluation"
 
     def _load_template(self):
         """Load evaluation template file."""
@@ -104,7 +111,7 @@ class EvaluationRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         metadata["Model_ID"] = base_model_name
         metadata["Type"] = "Evaluation"
         metadata["EvaluationType"] = self.get_evaluation_type(recipe_file_path)
-        metadata["Versions"] = ["2.0.1"]
+        metadata["Versions"] = [EVAL_RECIPE_VERSION]
 
         # Extract recipe name from recipe_file_path for hosting config
         recipe_name = self.get_recipe_name_from_path(recipe_file_path)
@@ -219,6 +226,10 @@ class EvaluationRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
                         # Remove conditional_constraints from the final output
                         del param_config["conditional_constraints"]
                         break  # Only process the first matching condition key
+
+        # This override does not call super(), so substitute the {min}/{max} display
+        # text here too -- otherwise eval artifacts publish the raw placeholders.
+        resolve_bound_placeholders(resolved_parameters)
 
         return resolved_parameters
 

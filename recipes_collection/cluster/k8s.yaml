@@ -74,8 +74,15 @@ cleanPodPolicy: null
 # Use HyperPodPytorchJob instead of KubeFlow PyTorchJob (cluster-specific setting)
 use_hyperpod_pytorch_job: true  # Remove this to return to using KubeFlow PyTorchJob
 
-# Queue name for scheduling jobs using Kueue
+# Kueue LocalQueue name — routes workloads into a ClusterQueue. Required under HyperPod task
+# governance; the admission policy denies jobs missing the kueue.x-k8s.io/queue-name label.
+# Override per-run via CLI: cluster.queue_name=hyperpod-ns-<team>-localqueue
 queue_name: null
+
+# Ray job submission mode for verl RayJobs. "SidecarMode" runs the submitter inside the head pod;
+# required under HyperPod task governance, whose admission policy blocks the separate submitter
+# Job that the default "K8sJobMode" creates (it lacks the kueue.x-k8s.io/queue-name label).
+ray_submission_mode: SidecarMode
 
 # CPU instance type for Ray submitter node (optional)
 # Can be a single instance type string or a list of instance types

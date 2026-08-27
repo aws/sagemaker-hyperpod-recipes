@@ -1,8 +1,6 @@
 display_name: Qwen3 14B Supervised Fine-Tuning Full Fine-Tuning on GPU
 instance_types:
-- ml.p4d.24xlarge
 - ml.p4de.24xlarge
-- ml.p5.48xlarge
 run:
   hf_access_token: null
   model_type: llm_finetuning_aws
@@ -10,7 +8,7 @@ run:
   results_dir: ${base_results_dir}/${.name}
 trainer:
   devices: 8
-  num_nodes: 2
+  num_nodes: 1
 training_config:
   datasets:
     data_dir: null
@@ -19,6 +17,9 @@ training_config:
     - chat_template_name: null
       ignore_prompt_labels: true
       type: Seq2SeqTokensProcessor
+    - tokens_labels:
+      - input_ids
+      type: SequenceLengthFilter
     - column_names:
       - messages
       type: DropColumns
@@ -111,4 +112,4 @@ training_config:
     use_tensorboard: logs
     use_wandb: null
     weight_decay: 0.0
-version: 1.1.1
+version: 1.1.4

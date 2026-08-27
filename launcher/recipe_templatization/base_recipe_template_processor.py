@@ -2,6 +2,7 @@
 import copy
 import json
 import logging
+import os
 import re
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -12,6 +13,11 @@ import yaml
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
 from utils.recipe_utils import load_recipe_with_hydra
+from utils.resolve_override_params import (
+    extract_placeholder_names,
+    resolve_bound_placeholders,
+    resolve_params,
+)
 
 from ..nemo.constants import ROOT_DIR
 from .process_special_override_parameters import SpecialOverrideParametersProcessor
@@ -39,11 +45,48 @@ class BaseRecipeTemplateProcessor(ABC):
         self.regional_parameters = None
         self.recipe_jumpstart_model_id_mapping = None
         self.avoid_default_val_update_attributes = {"results_directory"}
+        self.base_override_parameters = None
         self._load_template()
+        self._load_base_override_parameters()
 
     @abstractmethod
     def _load_template(self):
         """Load template files. Must be implemented by subclasses."""
+
+    def _load_base_override_parameters(self) -> None:
+        """Load the centralized base override parameter definitions.
+
+        Loads base_override_parameters.json from the same directory as this module.
+        Raises FileNotFoundError if the file is missing.
+        """
+        base_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "base_override_parameters.json",
+        )
+        if not os.path.exists(base_path):
+            raise FileNotFoundError(f"Base override parameters file not found at: {base_path}")
+        with open(base_path, "r", encoding="utf-8") as f:
+            self.base_override_parameters = json.load(f)
+
+    @staticmethod
+    def extract_placeholder_names(recipe_template: dict) -> set:
+        """Delegates to resolve_override_params.extract_placeholder_names."""
+        return extract_placeholder_names(recipe_template)
+
+    def _get_template_category(self) -> str:
+        """Return the category key for base parameter lookup.
+
+        Default implementation returns 'fine_tuning'.
+        Subclasses override to return 'fine_tuning' or 'evaluation'.
+        """
+        return "fine_tuning"
+
+    def resolve_override_parameters(self, template_group: dict, recipe_template: dict) -> dict:
+        """Resolve override parameters using base definitions and template-level overrides."""
+        category = self._get_template_category()
+        base_params = self.base_override_parameters.get(category, {})
+        template_overrides = template_group.get("override_parameters", {})
+        return resolve_params(base_params, template_overrides, recipe_template)
 
     @abstractmethod
     def get_recipe_template(self, yaml_data: dict, template: dict, recipe_file_path: str = None) -> Optional[dict]:
@@ -62,7 +105,9 @@ class BaseRecipeTemplateProcessor(ABC):
 
         if self.matched_template_group:
             self.matched_template = self.matched_template_group["recipe_template"]
-            self.recipe_override_parameters = self.matched_template_group["recipe_override_parameters"]
+            self.recipe_override_parameters = self.resolve_override_parameters(
+                self.matched_template_group, self.matched_template
+            )
             result = self.apply_template(self.staging_cfg, self.matched_template, dont_override_list)
 
             # Save result
@@ -155,6 +200,12 @@ class BaseRecipeTemplateProcessor(ABC):
         # Resolve conditional constraints using the generated metadata
         resolved_override_parameters = self._resolve_constraints_using_metadata(recipe_metadata)
 
+        # Let subclasses set bounds from the recipe itself (e.g. the verl length clamp),
+        # then make the final substitution pass. This one drops any text still holding
+        # an unresolvable token, so nothing dangling reaches the published contract.
+        self._apply_recipe_specific_bounds(resolved_override_parameters, recipe_file_path)
+        resolve_bound_placeholders(resolved_override_parameters)
+
         # Update the instance variable so it's used in the main processing
         self.recipe_override_parameters = resolved_override_parameters
 
@@ -163,6 +214,14 @@ class BaseRecipeTemplateProcessor(ABC):
         regional_parameters = self._get_regional_parameters(recipe_name, recipe_metadata) if recipe_name else {}
 
         return [recipe_metadata, resolved_override_parameters, regional_parameters]
+
+    def _apply_recipe_specific_bounds(self, override_params: dict, recipe_file_path: str) -> bool:
+        """Hook for subclasses to set `min`/`max` from the recipe itself.
+
+        Return True if any bound was changed, so the caller re-substitutes the
+        {min}/{max} display text against the new values. No-op by default.
+        """
+        return False
 
     # Containers are regional objects. They are only present in some regions and support only some platforms
     # Information related to that is present in the *_regional_parameters.json
@@ -385,7 +444,31 @@ class BaseRecipeTemplateProcessor(ABC):
                 special_params_processor.process_single_param(param_name, param_config)
 
         logging.info("Constraints resolved")
+
+        # Substitute {min}/{max} in the display text now that conditional_constraints
+        # and the special-param processors above have settled the bounds. Done here
+        # rather than in resolve_params for that reason, and here rather than in
+        # get_additional_data because the nova, evaluation and mtrl_eval processors
+        # reimplement that method without calling super() -- this is the one place
+        # every processor passes through.
+        #
+        # Params whose bounds a subclass still sets from the recipe (the verl length
+        # clamp) are deferred: dropping their text now would delete a field that is
+        # about to become resolvable. _apply_recipe_specific_bounds re-substitutes them.
+        deferred = {
+            name: resolved_parameters.pop(name) for name in self._deferred_bound_params() if name in resolved_parameters
+        }
+        resolve_bound_placeholders(resolved_parameters)
+        resolved_parameters.update(deferred)
+
         return resolved_parameters
+
+    def _deferred_bound_params(self) -> tuple:
+        """Params whose min/max are set later by _apply_recipe_specific_bounds.
+
+        Their display text is substituted after that hook runs, not before.
+        """
+        return ()
 
     def _resolve_conditional_constraints(self, param_name: str, param_config: dict, metadata: dict) -> None:
         """Resolve conditional constraints for a single parameter using metadata.

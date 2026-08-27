@@ -51,7 +51,7 @@ class TestResolvedRecipeValidation:
         3. New recipes added without running generator
         4. Source recipes in recipes_src/ modified without regenerating
 
-        Fix: python scripts/generate_resolved_recipes.py
+        Fix: uv run poe generate-resolved-recipes
         Or:  GOLDEN_TEST_WRITE=true pytest tests/test_resolved_recipes.py
         """
 
@@ -62,7 +62,7 @@ class TestResolvedRecipeValidation:
         except ResolvedRecipeError as e:
             msg = [
                 "Mismatch found in resolved recipes",
-                "To fix: python scripts/generate_resolved_recipes.py",
+                "To fix: uv run poe generate-resolved-recipes",
                 "Or:     GOLDEN_TEST_WRITE=true pytest tests/test_resolved_recipes.py",
             ]
             raise RuntimeError("\n".join(msg)) from e

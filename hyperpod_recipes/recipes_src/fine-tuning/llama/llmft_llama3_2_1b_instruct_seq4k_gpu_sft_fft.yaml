@@ -8,14 +8,13 @@ defaults:
   - _self_
 
 display_name: "Llama 3.2 1B Instruct Supervised Fine-Tuning Full Fine-Tuning on GPU"
-version: 1.2.1
-instance_types: ['ml.p4d.24xlarge', 'ml.p4de.24xlarge', 'ml.p5.48xlarge', 'ml.g6.48xlarge', 'ml.g6.12xlarge', 'ml.g6e.12xlarge']
+version: 1.2.3
+instance_types: ['ml.p4d.24xlarge', 'ml.p4de.24xlarge', 'ml.p5.48xlarge', 'ml.g6.48xlarge']
 
 run:
   name: llama-3-2-1b-instruct
 
 training_config:
   model_config:
-    model_name_or_path: "meta-llama/Llama-3.2-1B-Instruct"
     model_save_name: SageMaker-FFT/Llama-3.2-1B-Instruct
     chat_template_key: llama--meta-llama-3.2-1B-instruct

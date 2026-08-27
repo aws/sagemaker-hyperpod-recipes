@@ -11,7 +11,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 3.5 4B SFT Full Fine-Tuning"
-version: 2.1.1
+version: 2.1.6
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge", "ml.p4d.24xlarge"]
 
 run:
@@ -45,10 +45,5 @@ training_config:
   trainer:
     project_name: verl_sft_qwen3_5_4b
     experiment_name: qwen3_5_4b_sft_fsdp_fft_tatqa
-    total_epochs: 1
     max_ckpt_to_keep: 3
     resume_mode: resume_path
-
-  trainer_callbacks:
-    - _target_: metering_callback.MeteringCallback
-      output_path: /opt/ml/metering

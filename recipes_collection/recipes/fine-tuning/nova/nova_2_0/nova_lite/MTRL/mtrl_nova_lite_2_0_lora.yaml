@@ -1,5 +1,5 @@
 display_name: Agentic RFT for Nova Lite 2.0 Lora
-recipe_version: "1.0.25"
+recipe_version: "1.0.28"
 
 run:
   name: mtrl-nova-lite-2-0-lora

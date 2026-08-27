@@ -16,8 +16,8 @@ defaults:
   - _self_
 
 display_name: "Qwen 2.5 32B GRPO RLVR Fine-Tuning"
-version: 1.3.1
-instance_types: ["ml.p4d.24xlarge","ml.p4de.24xlarge","ml.p5.48xlarge"]
+version: 1.3.5
+instance_types: ["ml.p4d.24xlarge", "ml.p4de.24xlarge", "ml.p5.48xlarge"]
 
 run:
   name: verl-grpo-qwen-2-dot-5-32b-instruct-fft
@@ -41,28 +41,7 @@ training_config:
       log_prob_max_token_len_per_gpu: 10240
     merge_lora_for_inference: false
     model:
-      path: Qwen/Qwen2.5-32B-Instruct
-      custom_chat_template: null
-      use_shm: false
-      external_lib: null
       override_config: {}
-      enable_gradient_checkpointing: true
-      enable_activation_offload: false
-      use_remove_padding: true
-      lora_rank: 0
-      lora_alpha: 16
-      target_modules: all-linear
-      exclude_modules: null
-      use_liger: false
-      use_fused_kernels: false
-      fused_kernel_options:
-        impl_backend: torch
-      trust_remote_code: false
-    profiler:
-      _target_: verl.utils.profiler.ProfilerConfig
-      discrete: false
-      all_ranks: false
-      ranks: []
   trainer:
     experiment_name: qwen2.5-32b-instruct-fft_grpo
     nnodes: 2
@@ -70,33 +49,7 @@ training_config:
   critic:
     rollout_n: 6
     model:
-      path: deepseek-ai/deepseek-llm-7b-chat
-      tokenizer_path: Qwen/Qwen2.5-32B-Instruct
       override_config: {}
-      external_lib: null
-      trust_remote_code: false
-      _target_: verl.workers.config.FSDPCriticModelCfg
-      use_shm: false
-      enable_gradient_checkpointing: true
-      enable_activation_offload: false
-      use_remove_padding: false
-      fsdp_config:
-        _target_: verl.workers.config.FSDPEngineConfig
-        param_offload: false
-        optimizer_offload: false
-        offload_policy: false
-        reshard_after_forward: true
-        wrap_policy:
-          min_num_params: 0
-        fsdp_size: -1
-        forward_prefetch: false
-      lora_rank: 0
-      lora_alpha: 16
-      target_modules: all-linear
-    ppo_mini_batch_size: 256
-    ppo_micro_batch_size: null
-    ppo_micro_batch_size_per_gpu: null
-    use_dynamic_bsz: true
     ppo_max_token_len_per_gpu: 20480
   custom_reward_function:
     lambda_arn: ''

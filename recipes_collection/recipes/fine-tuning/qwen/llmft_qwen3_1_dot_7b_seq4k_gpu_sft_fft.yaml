@@ -4,8 +4,6 @@ instance_types:
 - ml.p4de.24xlarge
 - ml.p5.48xlarge
 - ml.g6.48xlarge
-- ml.g6.12xlarge
-- ml.g6e.12xlarge
 run:
   hf_access_token: null
   model_type: llm_finetuning_aws
@@ -22,6 +20,9 @@ training_config:
     - chat_template_name: null
       ignore_prompt_labels: true
       type: Seq2SeqTokensProcessor
+    - tokens_labels:
+      - input_ids
+      type: SequenceLengthFilter
     - column_names:
       - messages
       type: DropColumns
@@ -114,4 +115,4 @@ training_config:
     use_tensorboard: logs
     use_wandb: null
     weight_decay: 0.0
-version: 1.1.1
+version: 1.1.4

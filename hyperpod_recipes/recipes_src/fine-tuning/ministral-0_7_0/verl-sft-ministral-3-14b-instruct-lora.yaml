@@ -1,0 +1,50 @@
+defaults:
+- /hydra_config/verl-0_7_0/sft/default
+- /hydra_config/verl-0_7_0/sft/data/default
+- /hydra_config/verl-0_7_0/model/hf_model
+- /hydra_config/verl-0_7_0/engine/fsdp
+- /hydra_config/verl-0_7_0/optim/fsdp
+- /hydra_config/verl-0_7_0/sft/trainer/default
+- /hydra_config/verl-0_7_0/profiler/profiler
+- /hydra_config/verl-0_7_0/sft/checkpoint/default
+- /hydra_config/verl-0_7_0/sft/peft/lora
+- /hydra_config/verl-0_7_0/model_config/ministral-3-14b-instruct
+- _self_
+display_name: Ministral-3-14B-Instruct-2512 SFT LoRA Fine-Tuning (Text)
+version: 2.0.1
+instance_types:
+- ml.p5.48xlarge
+- ml.p4de.24xlarge
+run:
+  name: verl-sft-ministral-3-14b-instruct-lora
+trainer:
+  num_nodes: 1
+training_config:
+  data:
+    train_batch_size: 64
+    micro_batch_size_per_gpu: 4
+    max_length: 4096
+    max_token_len_per_gpu: 16384
+    truncation: right
+  engine:
+    strategy: fsdp2
+    model_dtype: bfloat16
+  optim:
+    lr: 0.0002
+    weight_decay: 0.001
+    betas:
+    - 0.9
+    - 0.95
+    lr_scheduler_type: cosine
+  trainer:
+    merge_lora_on_final_save: true
+    project_name: verl_sft
+    experiment_name: sft_fsdp
+    total_epochs: 1
+    resume_mode: resume_path
+  trainer_callbacks:
+  - _target_: metering_callback.MeteringCallback
+    output_path: /opt/ml/metering
+  model:
+    lora_rank: 32
+    lora_alpha: 64

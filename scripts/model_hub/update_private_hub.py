@@ -10,7 +10,6 @@ from pathlib import Path
 import boto3
 import yaml
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from scripts.generate_launch_jsons import LaunchJsonGenerator
 
 # ---------------------------------------------------------------------------
@@ -440,7 +439,7 @@ def process_eval_recipe_metadata(
         "DisplayName": display_name,
         "Name": recipe_name,
         "Type": "Evaluation",
-        "Versions": ["2.0.1"],
+        "Versions": ["2.0.2"],
         "Hardware": hardware,
         "SupportedInstanceTypes": instance_types,
         "EvaluationType": eval_type_name,
@@ -496,19 +495,19 @@ def create_new_recipecollection(exported_json_path):
 
 
 def update_exported_json(exported_json_path, new_recipe_entries, model_id, version):
-    """Add new recipe entries to exported hub content JSON, deduplicating by RecipeName."""
+    """Add new recipe entries to exported hub content JSON, deduplicating by Name."""
     with open(exported_json_path, "r") as f:
         hub_content = json.load(f)
 
     existing_recipes = hub_content["HubContentDocument"]["RecipeCollection"]
-    existing_names = {r.get("RecipeName") for r in existing_recipes if r.get("RecipeName")}
+    existing_names = {r.get("Name") for r in existing_recipes if r.get("Name")}
 
     added = 0
     for entry in new_recipe_entries:
-        name = entry.get("RecipeName")
+        name = entry.get("Name")
         if name and name in existing_names:
             # Replace existing recipe with updated version
-            existing_recipes = [r for r in existing_recipes if r.get("RecipeName") != name]
+            existing_recipes = [r for r in existing_recipes if r.get("Name") != name]
             existing_recipes.append(entry)
         else:
             existing_recipes.append(entry)
@@ -527,13 +526,10 @@ def update_exported_json(exported_json_path, new_recipe_entries, model_id, versi
 
 
 def export_hub_content(hub_name, model_id, region, output, output_dir, endpoint):
-    export_script_path = os.path.join("scripts", "model_hub", "export_hub_content.py")
-    abs_export_script_path = os.path.abspath(export_script_path)
-
-    # Build command
     cmd = [
-        "python3",
-        abs_export_script_path,
+        sys.executable,
+        "-m",
+        "scripts.model_hub.export_hub_content",
         "--hub-name",
         hub_name,
         "--content-name",
@@ -586,11 +582,10 @@ def export_hub_content(hub_name, model_id, region, output, output_dir, endpoint)
 
 
 def import_hub_content(exported_json_path, private_hub_name, region, endpoint):
-    import_script_path = os.path.join("scripts", "model_hub", "import_hub_content.py")
-
     cmd = [
-        "python3",
-        import_script_path,
+        sys.executable,
+        "-m",
+        "scripts.model_hub.import_hub_content",
         "--hub-name",
         private_hub_name,
         "--input",
@@ -786,7 +781,7 @@ def main():
                 artifacts = RecipeArtifactPaths(k8s_launch_json_path, sm_jobs_launch_json_path, recipe_name)
                 s3_config = S3UploadConfig(args.s3_bucket, args.region, version_by_model[model_id])
                 eval_image = get_eval_regional_ecr_uri(eval_type, args.region, args.endpoint) or ""
-                s3_uris = upload_artifacts_to_s3(artifacts, s3_config, region=args.region, endpoint=args.endpoint)
+                s3_uris = upload_artifacts_to_s3(artifacts, s3_config)
                 results["uploaded_artifacts"][recipe_name] = s3_uris
 
                 eval_recipe_metadata = process_eval_recipe_metadata(

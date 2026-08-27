@@ -1,5 +1,5 @@
 display_name: Agentic RFT for Gemma 4 31B Lora IT
-recipe_version: "1.0.16"
+recipe_version: "1.0.18"
 
 run:
   name: mtrl-gemma-4-31b-lora

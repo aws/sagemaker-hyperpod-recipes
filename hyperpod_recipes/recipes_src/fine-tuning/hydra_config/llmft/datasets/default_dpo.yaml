@@ -30,3 +30,7 @@ preprocessor_cfgs:
     max_prompt_length: 2048
     max_completion_length: 2048
     add_special_tokens: false
+  - type: SequenceLengthFilter
+    tokens_labels: ['chosen_input_ids']
+  - type: SequenceLengthFilter
+    tokens_labels: ['rejected_input_ids']

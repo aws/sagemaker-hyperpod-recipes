@@ -962,10 +962,30 @@ class SMTraining(Training):
             values_template.trainingConfig.serviceAccountName = cluster_parameters["service_account_name"]
         if cluster_parameters.get("custom_labels", None) is not None:
             values_template.trainingConfig.customLabels = cluster_parameters["custom_labels"]
+        # Add Kueue WorkloadPriorityClass label if a priority_class is set on the cluster config.
+        # Merges with any existing custom_labels rather than replacing them.
+        priority_class = cluster_parameters.get("priority_class", None)
+        if priority_class:
+            existing_labels = values_template.trainingConfig.customLabels
+            if OmegaConf.is_missing(values_template.trainingConfig, "customLabels") or existing_labels is None:
+                merged_labels = {}
+            else:
+                merged_labels = OmegaConf.to_container(existing_labels, resolve=True) or {}
+            merged_labels["kueue.x-k8s.io/priority-class"] = priority_class
+            values_template.trainingConfig.customLabels = merged_labels
         if cluster_parameters.get("label_selector", None) is not None:
             values_template.trainingConfig.labelSelector = cluster_parameters["label_selector"]
         if cluster_parameters.get("queue_name", None) is not None:
             values_template.trainingConfig.queue_name = cluster_parameters["queue_name"]
+            # Also emit the Kueue queue-name label so RayJob/PyTorchJob workloads are routed to
+            # the right LocalQueue. Merges with existing custom_labels rather than replacing.
+            existing_labels = values_template.trainingConfig.customLabels
+            if OmegaConf.is_missing(values_template.trainingConfig, "customLabels") or existing_labels is None:
+                merged_labels = {}
+            else:
+                merged_labels = OmegaConf.to_container(existing_labels, resolve=True) or {}
+            merged_labels["kueue.x-k8s.io/queue-name"] = cluster_parameters["queue_name"]
+            values_template.trainingConfig.customLabels = merged_labels
 
         # Resource configs
         if OmegaConf.select(self.cfg, "recipes.resources.hugepages"):
@@ -1074,6 +1094,13 @@ class SMTraining(Training):
                 for key in ["replicas", "cpu", "memory", "gpu"]:
                     if ray_cfg.worker_nodes.get(key):
                         setattr(values_template.rayCluster.workerNodes, key, str(ray_cfg.worker_nodes[key]))
+
+        # Ray job submission mode from cluster config (k8s.yaml). Under HyperPod task governance,
+        # the default K8sJobMode submitter Job is rejected by the admission policy for lacking the
+        # Kueue queue-name label; SidecarMode runs the submitter inside the already-admitted head pod.
+        submission_mode = OmegaConf.select(self.cfg, "cluster.ray_submission_mode")
+        if submission_mode:
+            values_template.rayCluster.submissionMode = submission_mode
 
         # Handle instance types separately for job submitter vs head/workers
         # Get the instance type from recipe/config

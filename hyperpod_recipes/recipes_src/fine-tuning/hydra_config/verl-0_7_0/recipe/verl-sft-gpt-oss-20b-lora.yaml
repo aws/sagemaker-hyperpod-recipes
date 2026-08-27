@@ -1,0 +1,56 @@
+# @package recipes
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/sft/peft/lora
+  - _self_
+
+version: 2.0.1
+
+run:
+  name: verl-sft-gpt-oss-20b-lora
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  data:
+    ignore_input_ids_mismatch: true
+    train_batch_size: 128
+    micro_batch_size_per_gpu: 4
+    truncation: right
+    train_max_samples: -1
+    val_max_samples: -1
+
+  model:
+    path: openai/gpt-oss-20b-bf16
+    target_parameters:
+      - mlp.experts.gate_up_proj
+      - mlp.experts.down_proj
+    override_config:
+      attn_implementation: kernels-community/vllm-flash-attn3
+
+  engine:
+    strategy: fsdp2
+    model_dtype: bf16
+    forward_prefetch: true
+
+  optim:
+    lr: 1.0e-4
+    weight_decay: 0.001
+    betas: [0.9, 0.95]
+    lr_scheduler_type: cosine
+    lr_warmup_steps_ratio: 0.1
+
+  trainer:
+    project_name: verl_sft_gpt_oss_20b
+    experiment_name: gpt_oss_20b_sft_fsdp_lora
+    total_epochs: 3
+    max_ckpt_to_keep: 3
+    resume_mode: resume_path

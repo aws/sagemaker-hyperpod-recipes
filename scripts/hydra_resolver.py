@@ -20,13 +20,13 @@ This script is useful for debugging individual recipes and comparing against
 training job output.
 
 Usage:
-    python scripts/hydra_resolver.py \\
+    uv run poe hydra-resolver \\
         --config-dir hyperpod_recipes/recipes_src/fine-tuning \\
         --recipe-name qwen-0_7_0/verl-grpo-rlvr-qwen-3-5-9b-lora \\
         --output /tmp/qwen-3-5-9b-resolved.yaml
 
     # With overrides:
-    python scripts/hydra_resolver.py \\
+    uv run poe hydra-resolver \\
         --config-dir hyperpod_recipes/recipes_src/fine-tuning \\
         --recipe-name qwen-0_7_0/verl-grpo-rlvr-qwen-3-5-9b-lora \\
         --output /tmp/qwen-3-5-9b-resolved.yaml \\

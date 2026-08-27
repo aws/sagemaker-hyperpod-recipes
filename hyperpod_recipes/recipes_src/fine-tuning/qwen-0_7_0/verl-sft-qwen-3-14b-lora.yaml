@@ -11,7 +11,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 3 14B SFT LoRA Fine-Tuning"
-version: 2.1.0
+version: 2.1.2
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge", "ml.p4d.24xlarge"]
 
 run:
@@ -23,7 +23,6 @@ trainer:
 training_config:
   data:
     train_batch_size: 32
-    micro_batch_size_per_gpu: 4
     max_length: 4096
     max_token_len_per_gpu: 16384
     truncation: right
@@ -31,10 +30,7 @@ training_config:
 
   model:
     path: Qwen/Qwen3-14B
-    trust_remote_code: false
     use_liger: true
-    use_fused_kernels: false
-
   engine:
     strategy: fsdp2
     model_dtype: bf16
@@ -49,6 +45,5 @@ training_config:
   trainer:
     project_name: verl_sft_qwen_3_14b
     experiment_name: qwen_3_14b_sft_fsdp_lora_tatqa
-    total_epochs: 1
     max_ckpt_to_keep: 3
     resume_mode: resume_path

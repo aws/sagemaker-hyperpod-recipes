@@ -77,7 +77,8 @@ def load_template_file(file_path: Path) -> Dict:
 
 def validate_template_consistency(file_path: Path) -> List[str]:
     """
-    Validate that all template variables have corresponding override parameters.
+    Validate that all template variables have corresponding override parameters
+    (either in the template's override section or in the base override parameters file).
 
     Args:
         file_path: Path to the template parameters JSON file
@@ -94,6 +95,13 @@ def validate_template_consistency(file_path: Path) -> List[str]:
     except Exception as e:
         return [f"Failed to load file: {e}"]
 
+    # Load base override parameters for resolving sparse overrides
+    base_params_path = Path("launcher/recipe_templatization/base_override_parameters.json")
+    base_params = {}
+    if base_params_path.exists():
+        with open(base_params_path, "r", encoding="utf-8") as f:
+            base_params = json.load(f)
+
     # Get templates section
     templates = data.get("templates", {})
 
@@ -103,29 +111,42 @@ def validate_template_consistency(file_path: Path) -> List[str]:
     # Validate each template
     for template_name, template_data in templates.items():
         recipe_template = template_data.get("recipe_template", {})
-        recipe_override_params = template_data.get("recipe_override_parameters", {})
+        # Support both new key (override_parameters) and legacy key (recipe_override_parameters)
+        recipe_override_params = template_data.get("recipe_override_parameters", {}) or template_data.get(
+            "override_parameters", {}
+        )
 
         if not recipe_template:
             errors.append(f"{file_path.name}::{template_name}: " f"Missing 'recipe_template' section")
             continue
 
         if not recipe_override_params:
-            errors.append(f"{file_path.name}::{template_name}: " f"Missing 'recipe_override_parameters' section")
+            errors.append(
+                f"{file_path.name}::{template_name}: "
+                f"Missing 'recipe_override_parameters' or 'override_parameters' section"
+            )
             continue
 
         # Find all template variables in recipe_template
         template_variables = find_template_variables(recipe_template)
 
-        # Get all override parameter names
+        # Get all override parameter names (from template overrides)
         override_param_names = set(recipe_override_params.keys())
+
+        # Also get parameter names from the base file (all categories)
+        base_param_names = set()
+        for category_params in base_params.values():
+            if isinstance(category_params, dict):
+                base_param_names.update(category_params.keys())
 
         # Meta-parameters that may not appear in override_parameters but are handled specially
         # These are platform-specific or runtime-injected parameters
         meta_params = {"namespace", "instance_type", "instance_types", "instance_count", "lora_rank"}
 
         # Find variables that don't have corresponding override parameters
+        # Check both template overrides AND base params
         # Exclude meta-parameters from this check
-        missing_params = template_variables - override_param_names - meta_params
+        missing_params = template_variables - override_param_names - base_param_names - meta_params
 
         if missing_params:
             missing_list = sorted(missing_params)

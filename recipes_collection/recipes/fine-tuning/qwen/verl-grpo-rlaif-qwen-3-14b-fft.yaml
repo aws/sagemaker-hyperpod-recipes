@@ -1,6 +1,5 @@
 display_name: Qwen 3 14B GRPO RLAIF Fine-Tuning
 instance_types:
-- ml.p4d.24xlarge
 - ml.p4de.24xlarge
 - ml.p5.48xlarge
 ray_cluster:
@@ -436,4 +435,4 @@ training_config:
       cuda-memory-usage: 'true'
       kill: none
       trace: cuda,nvtx,cublas,ucx
-version: 1.1.2
+version: 1.1.6

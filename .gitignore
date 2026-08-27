@@ -50,3 +50,5 @@ debug_serverless/
 build/
 dev_scripts/
 *.log
+fsx-ray.yaml
+fsx-default.yaml

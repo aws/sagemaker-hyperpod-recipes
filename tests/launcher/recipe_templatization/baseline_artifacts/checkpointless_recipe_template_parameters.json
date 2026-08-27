@@ -1,0 +1,451 @@
+{
+    "_comment": [
+        "Checkpointless Recipe Template Parameters Configuration",
+        "Templates for checkpointless training recipes using NeMo framework"
+    ],
+    "templates": {
+        "checkpointless_fine_tuning": {
+            "display_name": "Fine-Tuning",
+            "recipe_template": {
+                "instance_types": "{{instance_types}}",
+                "run": {
+                    "name": "{{model_name}}",
+                    "results_dir": "{{results_directory}}",
+                    "time_limit": "{{time_limit}}"
+                },
+                "trainer": {
+                    "num_nodes": "{{num_nodes}}",
+                    "max_steps": "{{max_steps}}",
+                    "val_check_interval": "{{val_check_interval}}",
+                    "log_every_n_steps": "{{log_every_n_steps}}"
+                },
+                "data": {
+                    "seq_length": "{{sequence_length}}",
+                    "global_batch_size": "{{global_batch_size}}"
+                },
+                "dataset": {
+                    "dataset_path": "{{dataset_path}}"
+                },
+                "log_dir": "{{log_directory}}",
+                "optim": {
+                    "config": {
+                        "lr": "{{learning_rate}}"
+                    }
+                },
+                "cluster": {
+                    "instance_count": "{{instance_count}}",
+                    "namespace": "{{namespace}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "model_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "log_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "time_limit": {
+                    "type": "string",
+                    "required": true,
+                    "default": "6-00:00:00",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "num_nodes": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 128,
+                    "default": 2,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1000,
+                    "max": 10000000,
+                    "default": 1168251,
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max steps",
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "val_check_interval": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 100,
+                    "max": 10000,
+                    "default": 2000,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Validation check interval",
+                    "hint": "Must be a value between {min} and {max}",
+                    "description": "Number of training steps between validation runs.",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "log_every_n_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 1000,
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "sequence_length": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        1024,
+                        2048,
+                        4096,
+                        8192,
+                        16384,
+                        32768
+                    ],
+                    "default": 2048,
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        2,
+                        4,
+                        8,
+                        16,
+                        32,
+                        64
+                    ],
+                    "default": 2,
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
+                },
+                "dataset_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-06,
+                    "max": 0.001,
+                    "default": 0.0001,
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
+                },
+                "instance_types": {
+                    "type": "string",
+                    "required": true,
+                    "enum": [
+                        "ml.p5.48xlarge",
+                        "ml.p5e.48xlarge"
+                    ],
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
+                },
+                "instance_count": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 128,
+                    "default": 1,
+                    "description": "Number of compute instances for training",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Instance count",
+                    "hint": "Only choose as many instances as needed for your training",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": false,
+                    "default": "",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
+                }
+            },
+            "recipe_metadata_helpers": {
+                "fine_tuning_techniques": {
+                    "fine_tuning": "FineTuning"
+                }
+            }
+        },
+        "checkpointless_pretrain": {
+            "display_name": "Pretraining",
+            "recipe_template": {
+                "instance_types": "{{instance_types}}",
+                "run": {
+                    "name": "{{model_name}}",
+                    "results_dir": "{{results_directory}}",
+                    "time_limit": "{{time_limit}}"
+                },
+                "trainer": {
+                    "num_nodes": "{{num_nodes}}",
+                    "max_steps": "{{max_steps}}",
+                    "val_check_interval": "{{val_check_interval}}",
+                    "log_every_n_steps": "{{log_every_n_steps}}"
+                },
+                "data": {
+                    "seq_length": "{{sequence_length}}",
+                    "global_batch_size": "{{global_batch_size}}"
+                },
+                "dataset": {
+                    "dataset_path": "{{dataset_path}}"
+                },
+                "log_dir": "{{log_directory}}",
+                "optim": {
+                    "config": {
+                        "lr": "{{learning_rate}}"
+                    }
+                },
+                "cluster": {
+                    "instance_type": "{{instance_type}}",
+                    "instance_count": "{{instance_count}}",
+                    "namespace": "{{namespace}}"
+                }
+            },
+            "recipe_override_parameters": {
+                "model_name": {
+                    "type": "string",
+                    "required": true,
+                    "default": "llama-70b",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "results_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": "",
+                    "description": "Directory for storing training results and logs",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "log_directory": {
+                    "type": "string",
+                    "required": true,
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "time_limit": {
+                    "type": "string",
+                    "required": true,
+                    "default": "6-00:00:00",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "num_nodes": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 128,
+                    "default": 2,
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "max_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1000,
+                    "max": 10000000,
+                    "default": 1000000,
+                    "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max steps",
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "val_check_interval": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 100,
+                    "max": 10000,
+                    "default": 2000,
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Validation check interval",
+                    "hint": "Must be a value between {min} and {max}",
+                    "description": "Number of training steps between validation runs.",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "log_every_n_steps": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 1000,
+                    "default": 10,
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "sequence_length": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        1024,
+                        2048,
+                        4096,
+                        8192,
+                        16384,
+                        32768
+                    ],
+                    "default": 2048,
+                    "category": "hyperparameter",
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
+                },
+                "global_batch_size": {
+                    "type": "integer",
+                    "required": true,
+                    "enum": [
+                        2,
+                        4,
+                        8,
+                        16,
+                        32,
+                        64
+                    ],
+                    "default": 2,
+                    "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Batch size",
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
+                },
+                "dataset_path": {
+                    "type": "string",
+                    "required": true,
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
+                },
+                "learning_rate": {
+                    "type": "float",
+                    "required": true,
+                    "min": 1e-06,
+                    "max": 0.001,
+                    "default": 0.0001,
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
+                    "category": "hyperparameter",
+                    "visibility_tier": "primary",
+                    "display_name": "Learning rate",
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
+                },
+                "instance_types": {
+                    "type": "string",
+                    "required": true,
+                    "enum": [
+                        "ml.p5.48xlarge",
+                        "ml.p5e.48xlarge"
+                    ],
+                    "default": "",
+                    "category": "system",
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
+                },
+                "instance_count": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 1,
+                    "max": 128,
+                    "default": 1,
+                    "description": "Number of compute instances for training",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Instance count",
+                    "hint": "Only choose as many instances as needed for your training",
+                    "control_type": "number_input",
+                    "step": 1
+                },
+                "namespace": {
+                    "type": "string",
+                    "required": false,
+                    "default": "",
+                    "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
+                }
+            },
+            "recipe_metadata_helpers": {
+                "training_types": {
+                    "pretrain": "PreTraining"
+                }
+            }
+        }
+    }
+}

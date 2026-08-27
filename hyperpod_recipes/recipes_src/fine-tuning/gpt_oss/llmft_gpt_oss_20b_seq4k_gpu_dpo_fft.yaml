@@ -8,14 +8,13 @@ defaults:
   - _self_
 
 display_name: "GPT-OSS 20B Direct Preference Optimization Full Fine-Tuning on GPU"
-version: 1.3.1
+version: 1.3.4
 instance_types: ['ml.p5.48xlarge', 'ml.p5e.48xlarge', 'ml.p5en.48xlarge']
 
 run:
   name: openai-gpt-oss-20b
 
 trainer:
-  devices: 8
   num_nodes: 2
 
 training_config:

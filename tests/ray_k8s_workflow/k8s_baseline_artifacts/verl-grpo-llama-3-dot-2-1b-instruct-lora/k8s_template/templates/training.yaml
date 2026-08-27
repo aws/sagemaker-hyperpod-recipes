@@ -13,9 +13,18 @@ spec:
   shutdownAfterJobFinishes: {{ .Values.gc.shutdownAfterJobFinishes | default true }}
   ttlSecondsAfterFinished: {{ .Values.gc.ttlSecondsAfterFinished | default 600 }}
 
-  # Ensure submitter is a K8s Job so we can schedule it
-  submissionMode: K8sJobMode
+  # K8sJobMode uses a separate submitter Job (rendered below); SidecarMode/HTTPMode do not.
+  # SidecarMode rejects a submitterPodTemplate, so only render it for K8sJobMode.
+  submissionMode: {{ .Values.rayCluster.submissionMode | default "K8sJobMode" }}
+  {{- if eq (.Values.rayCluster.submissionMode | default "K8sJobMode") "K8sJobMode" }}
   submitterPodTemplate:
+    metadata:
+      {{- if .Values.trainingConfig.customLabels }}
+      labels:
+        {{- range $key, $value := .Values.trainingConfig.customLabels }}
+        {{ $key | quote }}: {{ $value | quote }}
+        {{- end}}
+      {{- end }}
     spec:
       restartPolicy: Never
       serviceAccountName: {{ .Values.trainingConfig.serviceAccountName | default "default" }}
@@ -50,6 +59,7 @@ spec:
               memory: {{ .Values.rayCluster.jobSubmitter.memoryLimit | quote }}
               {{- end }}
             {{- end }}
+  {{- end }}
 
   entrypoint: >-
     python -u -m verl.trainer.main_ppo --config-path /config --config-name verl_config
@@ -67,6 +77,11 @@ spec:
             ray-job-name: {{ .Values.trainingConfig.jobName | quote }}
             ray-role: "head"
             ray-co-locate: "true"
+            {{- if .Values.trainingConfig.customLabels }}
+            {{- range $key, $value := .Values.trainingConfig.customLabels }}
+            {{ $key | quote }}: {{ $value | quote }}
+            {{- end}}
+            {{- end }}
         spec:
           serviceAccountName: {{ .Values.trainingConfig.serviceAccountName | default "default" }}
 
@@ -153,6 +168,11 @@ spec:
             ray-job-name: {{ .Values.trainingConfig.jobName | quote }}
             ray-role: "worker"
             ray-co-locate: "true"
+            {{- if .Values.trainingConfig.customLabels }}
+            {{- range $key, $value := .Values.trainingConfig.customLabels }}
+            {{ $key | quote }}: {{ $value | quote }}
+            {{- end}}
+            {{- end }}
         spec:
           serviceAccountName: {{ .Values.trainingConfig.serviceAccountName | default "default" }}
 

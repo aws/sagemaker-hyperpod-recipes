@@ -153,6 +153,7 @@ class HpCliRecipeJobBuilder:
         self._training_data_name: Optional[str] = None
         self._validation_data_name: Optional[str] = None
         self._validation_data_path: Optional[str] = None
+        self._max_epochs: Optional[str] = None
 
         # Internal state
         self._parent_dir: Optional[str] = None
@@ -195,6 +196,7 @@ class HpCliRecipeJobBuilder:
         validation_data_name: str,
         validation_data_path: str,
         model_name_or_path: Optional[str] = None,
+        max_epochs: Optional[str] = None,
     ) -> "HpCliRecipeJobBuilder":
         """Set all data-related paths in one call.
 
@@ -209,6 +211,7 @@ class HpCliRecipeJobBuilder:
         self._validation_data_name = validation_data_name
         self._validation_data_path = validation_data_path
         self._model_name_or_path = model_name_or_path
+        self._max_epochs = max_epochs
         return self
 
     # ---- CLI step methods ------------------------------------------------
@@ -280,6 +283,7 @@ class HpCliRecipeJobBuilder:
             "validation-data-name": self._validation_data_name,
             "validation-data-path": self._validation_data_path,
             "model-name-or-path": getattr(self, "_model_name_or_path", None),
+            "max-epochs": getattr(self, "_max_epochs", None),
         }
         args = ["configure"]
         for key, value in params.items():
@@ -603,6 +607,7 @@ class HpCliValidationLauncher(BaseLauncher):
                 validation_data_name=self.hpcli_config.validation_data_name,
                 validation_data_path=self.hpcli_config.validation_data_path,
                 model_name_or_path=getattr(self.hpcli_config, "model_name_or_path", None),
+                max_epochs=getattr(self.hpcli_config, "max_epochs", None),
             )
         )
 

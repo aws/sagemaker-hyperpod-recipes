@@ -2,16 +2,16 @@
 """Generate HYPERPARAMETERS.md documentation from recipe template parameter JSON files.
 
 All parameter metadata is sourced from the *_recipe_template_parameters.json files
-under launcher/recipe_templatization/.
+under launcher/recipe_templatization/, merged with base_override_parameters.json.
 
-A parameter is included if:
-  - It has a 'category' field (any value, e.g. 'hyperparameter'), OR
-  - It has min/max/enum constraints and is not a purely infrastructure param
+Every resolved override parameter is documented. The `category` field
+(hyperparameter vs system) drives UI rendering only — it does not indicate
+whether a value can be overridden, and every parameter listed here can be.
 
 Usage:
-    python scripts/generate_hyperparameters_doc.py           # Generate docs/HYPERPARAMETERS.md
-    python scripts/generate_hyperparameters_doc.py --check   # Validate docs/HYPERPARAMETERS.md is up-to-date
-    python scripts/generate_hyperparameters_doc.py --check --diff  # Show what changed
+    uv run poe generate-hyperparameters-doc           # Generate docs/HYPERPARAMETERS.md
+    uv run poe generate-hyperparameters-doc --check   # Validate docs/HYPERPARAMETERS.md is up-to-date
+    uv run poe generate-hyperparameters-doc --check --diff  # Show what changed
 """
 
 import argparse
@@ -20,6 +20,8 @@ import json
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+from utils.resolve_override_params import resolve_params
 
 # =============================================================================
 # PATHS
@@ -68,14 +70,14 @@ def _template_display_name(key: str, template_data: Dict) -> str:
 
 
 def _should_include(spec: Any) -> bool:
-    """Include a parameter if it carries a 'category' annotation (any value),
-    or has min/max/enum constraints and is not a pure infrastructure param."""
-    if not isinstance(spec, dict):
-        return False
-    if "category" in spec:
-        return True
-    has_constraints = any(k in spec for k in ("min", "max", "enum"))
-    return has_constraints
+    """Include every resolved override parameter.
+
+    `category` (hyperparameter vs system) exists to tell the UI which fields to
+    render as tunable knobs; it says nothing about whether a value can be
+    overridden. As far as this repo is concerned every resolved override
+    parameter is overridable, so all of them are documented.
+    """
+    return isinstance(spec, dict)
 
 
 # =============================================================================
@@ -162,6 +164,25 @@ def _fw_anchor(title: str) -> str:
     return title.lower().replace(" ", "-").replace("(", "").replace(")", "")
 
 
+def _resolve_override_parameters(template_data: Dict) -> Dict:
+    """Resolve override parameters using the shared resolve_params function."""
+    base_path = TEMPLATIZATION_DIR / "base_override_parameters.json"
+    if not base_path.exists():
+        return template_data.get("override_parameters", {})
+
+    with open(base_path) as f:
+        base_all = json.load(f)
+
+    combined_base = {}
+    combined_base.update(base_all.get("evaluation", {}))
+    combined_base.update(base_all.get("fine_tuning", {}))
+
+    template_overrides = template_data.get("override_parameters", {})
+    recipe_template = template_data.get("recipe_template", {})
+
+    return resolve_params(combined_base, template_overrides, recipe_template)
+
+
 def _generate_framework_section(fw_title: str, rel_path: str) -> List[str]:
     templates = _load_templates(rel_path)
     if not templates:
@@ -170,7 +191,7 @@ def _generate_framework_section(fw_title: str, rel_path: str) -> List[str]:
     lines = [f"## {fw_title}", ""]
 
     for template_key, template_data in templates.items():
-        params = template_data.get("recipe_override_parameters", {})
+        params = _resolve_override_parameters(template_data)
         display = _template_display_name(template_key, template_data)
         lines.append(f"### {display}")
         lines.append("")
@@ -186,10 +207,10 @@ def _generate_framework_section(fw_title: str, rel_path: str) -> List[str]:
 
 def generate_markdown() -> str:
     lines = [
-        "# HyperPod Recipe Hyperparameter Reference",
+        "# HyperPod Recipe Overridable Parameter Reference",
         "",
-        "This document contains the list of hyperparameters available when using the recipes repo through "
-        "SMTJ Serverless Model Customization. All parameters are available in serverful usage "
+        "This document contains the list of parameters that can be overridden when using the recipes repo "
+        "through SMTJ Serverless Model Customization. All parameters are available in serverful usage "
         "but these are the ranges we recommend using for successful results.",
         "",
         "## Table of Contents",

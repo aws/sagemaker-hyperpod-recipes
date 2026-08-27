@@ -170,7 +170,9 @@ def _arm_matched_template_group(processor: MtrlEvalRecipeTemplateProcessor) -> N
     """Set matched_template_group as process_recipe would."""
     processor.matched_template_group = processor.template_data["templates"]["mtrl_eval"]
     processor.matched_template = processor.matched_template_group["recipe_template"]
-    processor.recipe_override_parameters = copy.deepcopy(processor.matched_template_group["recipe_override_parameters"])
+    processor.recipe_override_parameters = copy.deepcopy(
+        processor.resolve_override_parameters(processor.matched_template_group, processor.matched_template)
+    )
 
 
 # Sample recipes for parametrized tests (replaces hypothesis strategies).
