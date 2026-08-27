@@ -85,6 +85,12 @@ def test_deterministic_eval_recipe_k8s_workflow_with_launch_json():
     assert "metadata" in launch_data
     assert "recipe_override_parameters" in launch_data
 
+    # The published eval version comes from the single source of truth in
+    # constants; the release workflow reads it from here to send to JumpStart.
+    from launcher.evaluation.constants import EVAL_RECIPE_VERSION
+
+    assert launch_data["metadata"]["Versions"] == [EVAL_RECIPE_VERSION]
+
 
 @patch(
     "launcher.recipe_templatization.base_recipe_template_processor.BaseRecipeTemplateProcessor.load_hosting_config",

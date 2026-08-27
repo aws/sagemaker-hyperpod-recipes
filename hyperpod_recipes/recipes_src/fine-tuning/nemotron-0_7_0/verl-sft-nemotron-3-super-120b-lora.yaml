@@ -11,7 +11,7 @@ defaults:
   - _self_
 
 display_name: "Nemo3 Super 120B SFT LoRA Fine-Tuning"
-version: 2.0.5
+version: 2.0.6
 instance_types: ["ml.p5.48xlarge"]
 
 run:

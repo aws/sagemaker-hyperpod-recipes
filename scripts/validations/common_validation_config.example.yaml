@@ -504,7 +504,7 @@ k8:
 #   2. Set recipe_list to the eval recipe:
 #      recipe_list: ["evaluation/open-source/open_source_deterministic_eval.yaml"]
 #   3. Fill in eval_config below with eval_jobs list
-#   4. Run: python scripts/validations/validation_script_runner.py
+#   4. Run: uv run poe validate-recipes
 #
 # MULTI-JOB SUPPORT:
 #   eval_jobs is a list — each entry launches a separate eval job with its own
@@ -682,8 +682,8 @@ pysdk_finetune_dataset_mapping:
 #   3. Add a {recipe_type}_convergence dataset mapping if using full datasets
 #
 # RUNNING:
-#   python scripts/validations/validation_script_runner.py --convergence
-#   python scripts/validations/validation_script_runner.py --convergence --convergence_job verl_rlvr_qwen_7b_gsm8k
+#   uv run poe validate-recipes --convergence
+#   uv run poe validate-recipes --convergence --convergence_job verl_rlvr_qwen_7b_gsm8k
 convergence_validation:
   # Global runtime overrides applied to ALL convergence jobs
   # These should ONLY be infrastructure/runtime settings, NOT training parameters
@@ -813,7 +813,7 @@ serverless_hyper_parameters:
 #   1. Install the CLI: pip install -e /path/to/private-sagemaker-hyperpod-cli-staging
 #   2. Set platform: "HPCLI" (at the top of this file)
 #   3. Uncomment and fill in the fields below
-#   4. Run: python scripts/validations/validation_script_runner.py
+#   4. Run: uv run poe validate-recipes
 #
 # Example model_arn values:
 #   - "arn:aws:sagemaker:us-west-2:855988369404:hub-content/HPMCIntegTestHub/Model/meta-textgeneration-llama-3-2-3b-instruct"
@@ -855,7 +855,10 @@ recipe_structure_config:
 
       k8:  # K8-specific commands (uses torchrun via HyperPodPyTorchJob)
         - "+cluster.persistent_volume_claims.0.claimName=fsx-claim"
-        - "cluster.cleanPodPolicy=None"
+        - "cluster.cleanPodPolicy=All"
+        - "cluster.namespace=hyperpod-ns-default"
+        - "cluster.queue_name=hyperpod-ns-default-localqueue"
+        - "+cluster.priority_class=medium-priority"
 
       smjobs:  # SM Jobs-specific commands (S3 mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
@@ -923,7 +926,10 @@ recipe_structure_config:
 
       k8:  # K8-specific commands (uses torchrun via HyperPodPyTorchJob)
         - "+cluster.persistent_volume_claims.0.claimName=fsx-claim"
-        - "cluster.cleanPodPolicy=None"
+        - "cluster.cleanPodPolicy=All"
+        - "cluster.namespace=hyperpod-ns-default"
+        - "cluster.queue_name=hyperpod-ns-default-localqueue"
+        - "+cluster.priority_class=medium-priority"
 
       smjobs:  # SM Jobs-specific commands (S3 mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
@@ -991,9 +997,11 @@ recipe_structure_config:
 
       k8:  # K8-specific commands
         - "+cluster.ray.enabled=true"
-        - "cluster.namespace=ray-training"
-        - "+cluster.persistent_volume_claims.0.claimName=fsx-pvc-ray-training"
-        - "cluster.cleanPodPolicy=None"
+        - "cluster.namespace=hyperpod-ns-ray"
+        - "cluster.queue_name=hyperpod-ns-ray-localqueue"
+        - "+cluster.priority_class=medium-priority"
+        - "+cluster.persistent_volume_claims.0.claimName=fsx-claim"
+        - "cluster.cleanPodPolicy=All"
 
       smjobs:  # SM Jobs-specific commands (S3 mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
@@ -1073,8 +1081,10 @@ recipe_structure_config:
 
       k8:  # K8-specific commands
         - "+cluster.ray.enabled=true"
-        - "cluster.namespace=ray-training"
-        - "+cluster.persistent_volume_claims.0.claimName=fsx-pvc-ray-training"
+        - "cluster.namespace=hyperpod-ns-ray"
+        - "cluster.queue_name=hyperpod-ns-ray-localqueue"
+        - "+cluster.priority_class=medium-priority"
+        - "+cluster.persistent_volume_claims.0.claimName=fsx-claim"
 
       smjobs:  # SM Jobs-specific commands (S3 mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
@@ -1145,7 +1155,10 @@ recipe_structure_config:
 
       k8:  # K8-specific commands
         - "+cluster.persistent_volume_claims.0.claimName=fsx-claim"
-        - "cluster.cleanPodPolicy=None"
+        - "cluster.cleanPodPolicy=All"
+        - "cluster.namespace=hyperpod-ns-default"
+        - "cluster.queue_name=hyperpod-ns-default-localqueue"
+        - "+cluster.priority_class=medium-priority"
 
       slurm:  # SLURM-specific commands
         - "++cluster.container_mounts.0=/fsx:/fsx"

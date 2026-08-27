@@ -19,24 +19,18 @@ This script resolves Hydra composition for recipes in hyperpod_recipes/recipes_s
 and generates fully-resolved YAML files without defaults or interpolations.
 
 Usage:
-    python scripts/generate_resolved_recipes.py
-    python scripts/generate_resolved_recipes.py --check
-    python scripts/generate_resolved_recipes.py --check --diff
+    uv run poe generate-resolved-recipes
+    uv run poe generate-resolved-recipes --check
+    uv run poe generate-resolved-recipes --check --diff
 """
 
 import argparse
 import os
-import sys
 import time
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 from omegaconf import OmegaConf
-
-# Add parent directory to path to import hyperpod_recipes
-_SCRIPT_DIR = Path(__file__).resolve().parent
-_ROOT_DIR = _SCRIPT_DIR.parent.parent
-sys.path.insert(0, str(_ROOT_DIR))
 
 from hyperpod_recipes import list_recipes
 from hyperpod_recipes.recipe import RECIPES_DIR, Recipe
@@ -123,13 +117,13 @@ def generate_resolved_recipes(write=False):
                     diff_str = "".join(diff)
                     raise ResolvedRecipeError(
                         f"Mismatch in resolved recipe: {output_path}\n"
-                        f"Run `python scripts/generate_resolved_recipes.py` (without --check) to regenerate.\n"
+                        f"Run `uv run poe generate-resolved-recipes` (without --check) to regenerate.\n"
                         f"Diff:\n{diff_str}"
                     )
             else:
                 raise ResolvedRecipeError(
                     f"Missing resolved recipe file: {output_path}\n"
-                    f"Run `python scripts/generate_resolved_recipes.py` (without --check) to regenerate."
+                    f"Run `uv run poe generate-resolved-recipes` (without --check) to regenerate."
                 )
 
     for to_delete in list_resolved_files().difference(checked_files):
@@ -139,7 +133,7 @@ def generate_resolved_recipes(write=False):
         else:
             raise ResolvedRecipeError(
                 f"Unexpected resolved recipe file (no longer has a source): {to_delete}\n"
-                "Run `python scripts/generate_resolved_recipes.py` (without --check) to regenerate."
+                "Run `uv run poe generate-resolved-recipes` (without --check) to regenerate."
             )
 
     if write:

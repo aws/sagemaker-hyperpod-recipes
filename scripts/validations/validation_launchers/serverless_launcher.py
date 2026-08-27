@@ -105,7 +105,7 @@ class ServerlessValidationLauncher(BaseLauncher):
             endpoint = self.config.serverless_config.endpoint
 
             manual_cmd = (
-                f"python scripts/model_hub/update_private_hub.py "
+                f"uv run poe update-private-hub "
                 f"--hub-name {hub_name} --region {region} --endpoint {endpoint} "
                 f"--s3-bucket <your-bucket> --recipe-regex '.*llama.*'"
             )

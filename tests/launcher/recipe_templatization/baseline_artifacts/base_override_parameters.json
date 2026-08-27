@@ -12,7 +12,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Beta value",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.001
         },
         "adam_beta1": {
             "type": "float",
@@ -26,7 +28,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Adam beta1",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.01
         },
         "adam_beta2": {
             "type": "float",
@@ -40,7 +44,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Adam beta2",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.01
         },
         "adam_eps": {
             "type": "float",
@@ -52,7 +58,9 @@
             "description": "Small constant added to the denominator for numerical stability in Adam's update rule.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.0001
         },
         "adam_grad_clip_norm": {
             "type": "float",
@@ -64,7 +72,9 @@
             "description": "Maximum global gradient norm.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "adam_weight_decay": {
             "type": "float",
@@ -76,7 +86,9 @@
             "description": "Decoupled weight-decay coefficient (AdamW-style).",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "advantage_method": {
             "type": "string",
@@ -99,7 +111,8 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Advantage method",
-            "hint": "Select from available advantage methods"
+            "hint": "Select from available advantage methods",
+            "control_type": "dropdown"
         },
         "clip_high_threshold": {
             "type": "float",
@@ -111,7 +124,9 @@
             "description": "Upper bound for clipping the policy probability ratio in the loss.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "clip_low_threshold": {
             "type": "float",
@@ -123,7 +138,9 @@
             "description": "Lower bound for clipping the policy probability ratio π_new/π_old in the PPO-style surrogate loss.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "clip_ratio": {
             "type": "float",
@@ -137,7 +154,9 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Clip ratio",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "clip_ratio_high": {
             "type": "float",
@@ -151,7 +170,9 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Clip ratio upper bound",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.01
         },
         "clip_ratio_low": {
             "type": "float",
@@ -165,7 +186,9 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Clip ratio lower bound",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.01
         },
         "customer_bucket": {
             "type": "string",
@@ -175,7 +198,8 @@
             "description": "Customer S3 bucket for data storage",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "data_path": {
             "type": "string",
@@ -185,7 +209,8 @@
             "description": "File path to training dataset",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "data_s3_path": {
             "type": "string",
@@ -196,7 +221,10 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "Training dataset location (S3 URI)"
+            "display_name": "Training dataset location (S3 URI)",
+            "control_type": "s3_uri_input",
+            "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+            "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
         },
         "dataset_max_len": {
             "type": "integer",
@@ -210,7 +238,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Max sequence length",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "dataset_path": {
             "type": "string",
@@ -219,7 +249,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "fine_tuned_model": {
             "type": "float",
@@ -233,7 +264,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Fine-tuned model weight",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "global_batch_size": {
             "type": "integer",
@@ -251,7 +284,8 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Batch size",
-            "hint": "Choose from the available batch size options"
+            "hint": "Choose from the available batch size options",
+            "control_type": "dropdown"
         },
         "gradient_clipping": {
             "type": "boolean",
@@ -261,7 +295,8 @@
             "description": "Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "dropdown"
         },
         "gradient_clipping_threshold": {
             "type": "float",
@@ -273,7 +308,9 @@
             "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "group_size": {
             "type": "integer",
@@ -287,7 +324,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Group size",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "instance_count": {
             "type": "integer",
@@ -301,7 +340,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Instance count",
-            "hint": "Only choose as many instances as needed for your training"
+            "hint": "Only choose as many instances as needed for your training",
+            "control_type": "number_input",
+            "step": 1
         },
         "instance_types": {
             "type": "string",
@@ -314,7 +355,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "dropdown"
         },
         "judge_model_id": {
             "type": "string",
@@ -325,7 +367,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Reward model"
+            "display_name": "Reward model",
+            "control_type": "text_input"
         },
         "judge_prompt_template": {
             "type": "string",
@@ -342,7 +385,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Reward prompt type"
+            "display_name": "Reward prompt type",
+            "control_type": "dropdown"
         },
         "kl_loss_coef": {
             "type": "float",
@@ -356,7 +400,9 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "KL loss coefficient",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.01
         },
         "kms_key": {
             "type": "string",
@@ -368,7 +414,8 @@
             "platform": "ALL",
             "visibility_tier": "tertiary",
             "display_name": "KMS key",
-            "hint": "Must be a kms key, or kms key arn"
+            "hint": "Must be a kms key, or kms key arn",
+            "control_type": "kms_key_input"
         },
         "learning_rate": {
             "type": "float",
@@ -382,7 +429,9 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Learning rate",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.0001
         },
         "learning_rate_ratio": {
             "type": "float",
@@ -396,7 +445,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Learning rate ratio",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "limit_val_batches": {
             "type": "integer",
@@ -410,7 +461,9 @@
             "platform": "ALL",
             "visibility_tier": "tertiary",
             "display_name": "Validation batches",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "log_directory": {
             "type": "string",
@@ -419,7 +472,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "log_every_n_steps": {
             "type": "integer",
@@ -430,7 +484,9 @@
             "type_family": "numeric",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 1
         },
         "logging_steps": {
             "type": "integer",
@@ -442,7 +498,9 @@
             "description": "Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 1
         },
         "lora_alpha": {
             "type": "integer",
@@ -461,7 +519,8 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Alpha value",
-            "hint": "Select from available alpha values"
+            "hint": "Select from available alpha values",
+            "control_type": "dropdown"
         },
         "lora_dropout": {
             "type": "float",
@@ -473,7 +532,9 @@
             "description": "Dropout probability applied to LoRA adapter layers for regularization. Typically set to 0.05 for SFT/DPO, and 0 for Mixture-of-Experts models.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "lora_plus_lr_ratio": {
             "type": "float",
@@ -487,7 +548,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "LoRA+ learning rate ratio",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "lora_rank": {
             "type": "integer",
@@ -506,7 +569,8 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "LoRA rank",
-            "hint": "Select from available rank values"
+            "hint": "Select from available rank values",
+            "control_type": "dropdown"
         },
         "loss_fn": {
             "type": "string",
@@ -523,7 +587,8 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Loss function",
-            "hint": "Select from available loss functions"
+            "hint": "Select from available loss functions",
+            "control_type": "dropdown"
         },
         "lr_scheduler": {
             "type": "string",
@@ -537,7 +602,8 @@
             "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "dropdown"
         },
         "lr_warmup_steps_ratio": {
             "type": "float",
@@ -551,7 +617,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "LR warmup ratio",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "max_context_length": {
             "type": "integer",
@@ -565,7 +633,9 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Maximum Context Length",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "max_epochs": {
             "type": "integer",
@@ -579,7 +649,9 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Number of epochs",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "max_length": {
             "type": "integer",
@@ -593,7 +665,9 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Maximum length",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "max_prompt_length": {
             "type": "integer",
@@ -606,7 +680,9 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Max Prompt Length"
+            "display_name": "Max Prompt Length",
+            "control_type": "number_input",
+            "step": 1
         },
         "max_response_length": {
             "type": "integer",
@@ -620,7 +696,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Maximum response length",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "max_steps": {
             "type": "integer",
@@ -634,7 +712,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Max steps",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "max_steps_off_policy": {
             "type": "integer",
@@ -646,7 +726,9 @@
             "description": "Staleness threshold in asynchronous training. When 0, it is synchronous training.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 1
         },
         "merge_weights": {
             "type": "boolean",
@@ -657,7 +739,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "advanced",
-            "display_name": "Merge weights"
+            "display_name": "Merge weights",
+            "control_type": "dropdown"
         },
         "min_lr": {
             "type": "float",
@@ -671,7 +754,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Minimum learning rate",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.01
         },
         "mlflow_experiment_name": {
             "type": "string",
@@ -682,7 +767,8 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "Experiment name"
+            "display_name": "Experiment name",
+            "control_type": "text_input"
         },
         "mlflow_run_id": {
             "type": "string",
@@ -692,7 +778,8 @@
             "description": "MLflow run ID for resuming or linking to an existing run",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "mlflow_run_name": {
             "type": "string",
@@ -703,7 +790,8 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "Experiment run"
+            "display_name": "Experiment run",
+            "control_type": "text_input"
         },
         "mlflow_tracking_uri": {
             "type": "string",
@@ -714,7 +802,8 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "MLflow Resource"
+            "display_name": "MLflow Resource",
+            "control_type": "text_input"
         },
         "model_name": {
             "type": "string",
@@ -723,7 +812,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "model_name_or_path": {
             "type": "string",
@@ -733,7 +823,8 @@
             "description": "Model identifier or path to pretrained model",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "name": {
             "type": "string",
@@ -745,7 +836,12 @@
             "platform": "ALL",
             "visibility_tier": "tertiary",
             "hint": "A training job with the name {name} will be created",
-            "display_name": "Custom model name"
+            "display_name": "Custom model name",
+            "control_type": "text_input",
+            "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+            "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+            "min_length": 1,
+            "max_input_length": 63
         },
         "namespace": {
             "type": "string",
@@ -756,7 +852,12 @@
             "category": "hyperparameter",
             "platform": "K8",
             "visibility_tier": "advanced",
-            "display_name": "Kubernetes Namespace"
+            "display_name": "Kubernetes Namespace",
+            "control_type": "text_input",
+            "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+            "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+            "min_length": 1,
+            "max_input_length": 63
         },
         "num_nodes": {
             "type": "integer",
@@ -767,7 +868,9 @@
             "type_family": "numeric",
             "category": "system",
             "platform": "K8",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 1
         },
         "number_generation": {
             "type": "integer",
@@ -781,7 +884,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Number generation",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "output_path": {
             "type": "string",
@@ -791,7 +896,8 @@
             "description": "Local output path for model artifacts",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "output_s3_path": {
             "type": "string",
@@ -803,7 +909,11 @@
             "platform": "ALL",
             "visibility_tier": "tertiary",
             "display_name": "Output artifact location (S3 URI)",
-            "hint": "Enter S3 URI path string"
+            "hint": "Enter S3 URI path string",
+            "control_type": "s3_uri_input",
+            "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+            "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+            "placeholder": "s3://bucket-name/folder"
         },
         "pass_k_values": {
             "type": "array",
@@ -820,7 +930,8 @@
             "description": "List of k values for computing pass@k metrics.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "preset_reward_function": {
             "type": "string",
@@ -838,7 +949,8 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Preset Reward Function",
-            "hint": "Select from available reward functions"
+            "hint": "Select from available reward functions",
+            "control_type": "dropdown"
         },
         "reasoning_enabled": {
             "type": "boolean",
@@ -850,7 +962,8 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Reasoning mode",
-            "hint": "Set value to true or false to enable or disable reasoning."
+            "hint": "Set value to true or false to enable or disable reasoning.",
+            "control_type": "dropdown"
         },
         "replicas": {
             "type": "integer",
@@ -872,7 +985,8 @@
             "platform": "K8",
             "visibility_tier": "primary",
             "display_name": "Pod Replicas",
-            "hint": "Select from available options"
+            "hint": "Select from available options",
+            "control_type": "dropdown"
         },
         "results_directory": {
             "type": "string",
@@ -882,7 +996,8 @@
             "description": "Directory for storing training results and logs",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "resume_from_path": {
             "type": "string",
@@ -892,7 +1007,8 @@
             "description": "Path to checkpoint for resuming training",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "reward_lambda_arn": {
             "type": "string",
@@ -902,7 +1018,8 @@
             "description": "ARN of the Lambda function used for reward computation",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "rollout_max_concurrency": {
             "type": "integer",
@@ -914,7 +1031,9 @@
             "description": "The max in-flight rollout processes can happen in parallel.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 1
         },
         "rollout_max_retries": {
             "type": "integer",
@@ -926,7 +1045,9 @@
             "description": "Number of retry attempts for failed rollouts.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 1
         },
         "rollout_n": {
             "type": "integer",
@@ -946,7 +1067,8 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Rollout samples per prompt",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "dropdown"
         },
         "rollout_temperature": {
             "type": "float",
@@ -960,7 +1082,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Rollout temperature",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "rollout_timeout": {
             "type": "float",
@@ -972,7 +1096,9 @@
             "description": "Failure handling: time after which we treat as the rollout failure.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "sampling_max_tokens": {
             "type": "integer",
@@ -984,7 +1110,9 @@
             "description": "Max tokens the model can generate per turn during rollout.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 1
         },
         "sampling_top_p": {
             "type": "float",
@@ -996,7 +1124,9 @@
             "description": "Nucleus-sampling cutoff. Samples only from the smallest set of tokens whose cumulative probability ≥ top_p.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "save_every": {
             "type": "integer",
@@ -1010,7 +1140,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Save every",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "save_steps": {
             "type": "integer",
@@ -1024,7 +1156,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Save steps",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "seed": {
             "type": "integer",
@@ -1036,7 +1170,9 @@
             "description": "Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 1
         },
         "sequence_length": {
             "type": "integer",
@@ -1053,7 +1189,8 @@
             "type_family": "numeric",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "dropdown"
         },
         "success_threshold": {
             "type": "float",
@@ -1063,7 +1200,9 @@
             "description": "Reward threshold for counting a rollout as 'successful'.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "temperature": {
             "type": "float",
@@ -1077,7 +1216,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Temperature",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "time_limit": {
             "type": "string",
@@ -1086,7 +1227,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "train_val_split_ratio": {
             "type": "float",
@@ -1100,7 +1242,9 @@
             "platform": "ALL",
             "visibility_tier": "primary",
             "display_name": "Train Val Split Ratio",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "training_data_name": {
             "type": "string",
@@ -1110,7 +1254,8 @@
             "description": "Name identifier for the training dataset",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "use_kl_loss": {
             "type": "boolean",
@@ -1121,7 +1266,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "KL divergence loss"
+            "display_name": "KL divergence loss",
+            "control_type": "dropdown"
         },
         "val_check_interval": {
             "type": "integer",
@@ -1135,7 +1281,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Validation check interval",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "val_every": {
             "type": "integer",
@@ -1147,7 +1295,9 @@
             "description": "Eval interval (steps).",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 1
         },
         "validation_data_name": {
             "type": "string",
@@ -1157,7 +1307,8 @@
             "description": "Name identifier for the validation dataset",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "validation_data_path": {
             "type": "string",
@@ -1167,7 +1318,8 @@
             "description": "File path to validation dataset",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "validation_s3_path": {
             "type": "string",
@@ -1178,7 +1330,10 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "Validation dataset location (S3 URI)"
+            "display_name": "Validation dataset location (S3 URI)",
+            "control_type": "s3_uri_input",
+            "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+            "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
         },
         "warmup_steps": {
             "type": "integer",
@@ -1192,7 +1347,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Warmup steps",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "weight_decay": {
             "type": "float",
@@ -1204,7 +1361,9 @@
             "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
             "category": "hyperparameter",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "number_input",
+            "step": 0.1
         }
     },
     "evaluation": {
@@ -1222,7 +1381,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "dropdown"
         },
         "base_model_inference_data_s3_path": {
             "type": "string",
@@ -1231,7 +1391,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "s3_uri_input"
         },
         "base_model_name": {
             "type": "string",
@@ -1240,7 +1401,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "custom_metrics": {
             "type": "string",
@@ -1250,7 +1412,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Custom metrics"
+            "display_name": "Custom metrics",
+            "control_type": "text_input"
         },
         "data_s3_path": {
             "type": "string",
@@ -1261,7 +1424,10 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "Dataset"
+            "display_name": "Dataset",
+            "control_type": "s3_uri_input",
+            "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+            "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
         },
         "eval_group_size": {
             "type": "integer",
@@ -1274,7 +1440,9 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Samples per prompt (K)"
+            "display_name": "Samples per prompt (K)",
+            "control_type": "number_input",
+            "step": 1
         },
         "eval_tensorboard_results_dir": {
             "type": "string",
@@ -1284,7 +1452,8 @@
             "description": "Directory for evaluation TensorBoard results",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "evaluation_metric": {
             "type": "string",
@@ -1299,7 +1468,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "dropdown"
         },
         "inference_data_s3_path": {
             "type": "string",
@@ -1308,7 +1478,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "s3_uri_input"
         },
         "instance_count": {
             "type": "integer",
@@ -1320,7 +1491,9 @@
             "platform": "ALL",
             "visibility_tier": "tertiary",
             "display_name": "Instance count",
-            "hint": "Only choose as many instances as needed for your training"
+            "hint": "Only choose as many instances as needed for your training",
+            "control_type": "number_input",
+            "step": 1
         },
         "judge_model_id": {
             "type": "string",
@@ -1331,7 +1504,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Evaluator model"
+            "display_name": "Evaluator model",
+            "control_type": "text_input"
         },
         "kms_key_id": {
             "type": "string",
@@ -1341,7 +1515,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "advanced",
-            "display_name": "Encryption KMS key"
+            "display_name": "Encryption KMS key",
+            "control_type": "kms_key_input"
         },
         "lambda_arn": {
             "type": "string",
@@ -1350,7 +1525,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "lambda_type": {
             "type": "string",
@@ -1363,7 +1539,8 @@
             "type_family": "string",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "dropdown"
         },
         "llmaj_metrics": {
             "type": "string",
@@ -1390,7 +1567,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Metrics"
+            "display_name": "Metrics",
+            "control_type": "dropdown"
         },
         "max_model_len": {
             "type": "integer",
@@ -1400,7 +1578,9 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "advanced",
-            "display_name": "Max Model Len"
+            "display_name": "Max Model Len",
+            "control_type": "number_input",
+            "step": 1
         },
         "max_new_tokens": {
             "type": "integer",
@@ -1412,7 +1592,9 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "advanced",
-            "display_name": "Max New Tokens"
+            "display_name": "Max New Tokens",
+            "control_type": "number_input",
+            "step": 1
         },
         "metric": {
             "type": "string",
@@ -1422,7 +1604,8 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "Metric"
+            "display_name": "Metric",
+            "control_type": "text_input"
         },
         "mlflow_experiment_name": {
             "type": "string",
@@ -1432,7 +1615,8 @@
             "description": "MLflow experiment name for grouping runs",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "mlflow_run_id": {
             "type": "string",
@@ -1442,7 +1626,8 @@
             "description": "MLflow run ID for resuming or linking to an existing run",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "mlflow_run_name": {
             "type": "string",
@@ -1452,7 +1637,8 @@
             "description": "Display name for the MLflow run",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "mlflow_tracking_uri": {
             "type": "string",
@@ -1462,7 +1648,8 @@
             "description": "MLflow tracking server URI for experiment logging",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "model_name": {
             "type": "string",
@@ -1473,7 +1660,8 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "advanced",
-            "display_name": "Model Name"
+            "display_name": "Model Name",
+            "control_type": "text_input"
         },
         "model_name_or_path": {
             "type": "string",
@@ -1483,7 +1671,8 @@
             "description": "Model identifier or path to pretrained model",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "name": {
             "type": "string",
@@ -1494,7 +1683,12 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "Evaluation name"
+            "display_name": "Evaluation name",
+            "control_type": "text_input",
+            "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+            "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+            "min_length": 1,
+            "max_input_length": 63
         },
         "namespace": {
             "type": "string",
@@ -1505,7 +1699,12 @@
             "category": "hyperparameter",
             "platform": "K8",
             "visibility_tier": "advanced",
-            "display_name": "Kubernetes Namespace"
+            "display_name": "Kubernetes Namespace",
+            "control_type": "text_input",
+            "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+            "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+            "min_length": 1,
+            "max_input_length": 63
         },
         "output_path": {
             "type": "string",
@@ -1515,7 +1714,8 @@
             "description": "Local output path for model artifacts",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "text_input"
         },
         "output_s3_path": {
             "type": "string",
@@ -1526,7 +1726,11 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "Output artifact location (S3 URI)"
+            "display_name": "Output artifact location (S3 URI)",
+            "control_type": "s3_uri_input",
+            "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+            "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+            "placeholder": "s3://bucket-name/folder"
         },
         "pass_k_values": {
             "type": "array",
@@ -1544,7 +1748,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Pass@K values"
+            "display_name": "Pass@K values",
+            "control_type": "text_input"
         },
         "postprocessing": {
             "type": "boolean",
@@ -1553,7 +1758,8 @@
             "type_family": "boolean",
             "category": "system",
             "platform": "ALL",
-            "visibility_tier": "tertiary"
+            "visibility_tier": "tertiary",
+            "control_type": "dropdown"
         },
         "preset_reward_function": {
             "type": "string",
@@ -1568,7 +1774,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Metrics"
+            "display_name": "Metrics",
+            "control_type": "dropdown"
         },
         "rollout_max_concurrency": {
             "type": "integer",
@@ -1581,7 +1788,9 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "advanced",
-            "display_name": "Rollout Max Concurrency"
+            "display_name": "Rollout Max Concurrency",
+            "control_type": "number_input",
+            "step": 1
         },
         "rollout_max_retries": {
             "type": "integer",
@@ -1594,7 +1803,9 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "advanced",
-            "display_name": "Rollout Max Retries"
+            "display_name": "Rollout Max Retries",
+            "control_type": "number_input",
+            "step": 1
         },
         "rollout_timeout": {
             "type": "float",
@@ -1607,7 +1818,9 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "advanced",
-            "display_name": "Rollout Timeout"
+            "display_name": "Rollout Timeout",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "sampling_max_tokens": {
             "type": "integer",
@@ -1620,7 +1833,9 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "advanced",
-            "display_name": "Sampling Max Tokens"
+            "display_name": "Sampling Max Tokens",
+            "control_type": "number_input",
+            "step": 1
         },
         "sampling_top_p": {
             "type": "float",
@@ -1633,7 +1848,9 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "advanced",
-            "display_name": "Sampling Top P"
+            "display_name": "Sampling Top P",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "strategy": {
             "type": "string",
@@ -1649,7 +1866,8 @@
             "category": "system",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "Strategy"
+            "display_name": "Strategy",
+            "control_type": "dropdown"
         },
         "subtask": {
             "type": "string",
@@ -1752,7 +1970,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "tertiary",
-            "display_name": "Subtask"
+            "display_name": "Subtask",
+            "control_type": "dropdown"
         },
         "success_threshold": {
             "type": "float",
@@ -1763,7 +1982,9 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Success threshold"
+            "display_name": "Success threshold",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "task": {
             "type": "string",
@@ -1784,7 +2005,8 @@
             "category": "hyperparameter",
             "platform": "ALL",
             "visibility_tier": "primary",
-            "display_name": "Task"
+            "display_name": "Task",
+            "control_type": "dropdown"
         },
         "temperature": {
             "type": "float",
@@ -1798,7 +2020,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Temperature",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.1
         },
         "top_k": {
             "type": "integer",
@@ -1810,7 +2034,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Top-k",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 1
         },
         "top_p": {
             "type": "float",
@@ -1824,7 +2050,9 @@
             "platform": "ALL",
             "visibility_tier": "advanced",
             "display_name": "Top-p",
-            "hint": "Must be a value between {min} and {max}"
+            "hint": "Must be a value between {min} and {max}",
+            "control_type": "number_input",
+            "step": 0.1
         }
     }
 }

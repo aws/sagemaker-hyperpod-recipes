@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Nemotron 3 Nano 30B GRPO RLVR Fine-Tuning with Megatron LoRA
-version: 2.0.4
+version: 2.0.5
 instance_types:
   - ml.p5.48xlarge
   - ml.p4de.24xlarge

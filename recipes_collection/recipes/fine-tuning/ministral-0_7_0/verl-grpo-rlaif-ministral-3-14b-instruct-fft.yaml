@@ -677,6 +677,7 @@ training_config:
     - console
     max_actor_ckpt_to_keep: null
     max_critic_ckpt_to_keep: null
+    merge_lora_on_final_save: true
     n_gpus_per_node: 8
     nnodes: 1
     project_name: verl-grpo-rlaif

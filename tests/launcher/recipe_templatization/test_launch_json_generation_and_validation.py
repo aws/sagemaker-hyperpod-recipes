@@ -601,11 +601,17 @@ class TestLaunchJsonGenerationAndValidation:
         # above: eval launch JSONs carry `evaluation-config.yaml`, not
         # `training-config.yaml`, so that gate skips every eval recipe.
         #
-        # Scoped to sm_jobs because k8s is not an actively used publishing platform;
-        # its launchers still inject params without metadata (the eval override dict in
-        # launcher/evaluation/launchers.py and instance_type in launcher/nemo/stages.py).
-        # Widen this to both platforms if k8s publishing is revived.
-        if job_type == "sm_jobs":
+        # Covers sm_jobs on every framework, plus Nova on k8s: Nova HyperPod is an
+        # actively used publishing platform, and every param it emits carries both
+        # fields today -- the resolved ones from base_override_parameters.json and the
+        # code-injected instance_type from nova_recipe_template_processor.py.
+        #
+        # Not yet widened to k8s for the other frameworks: two launchers hand-roll
+        # override dicts without metadata -- the open-source eval dict in
+        # launcher/evaluation/launchers.py and instance_type in launcher/nemo/stages.py
+        # (the generic one, not Nova's). Those two sites must supply category and
+        # visibility_tier before this can drop the platform condition entirely.
+        if job_type == "sm_jobs" or (job_type == "k8s" and is_nova_recipe):
             for param_name, param_def in override_params_for_private_check.items():
                 for field in ("category", "visibility_tier"):
                     if field not in param_def:

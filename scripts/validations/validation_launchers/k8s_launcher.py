@@ -15,7 +15,13 @@ from .launcher_utils import _resolve_general_pod_name, pre_launch_setup
 
 HP_PYTORCH_JOB_RESOURCE_NAME = "hyperpodpytorchjob"
 RAY_JOBS_RESOURCE_NAME = "rayjobs"
-RAY_TRAINING_NAMESPACE = "ray-training"
+# Namespaces the recipes launch into (see recipe_structure_config in
+# common_validation_config: verl_rlvr/verl_rlaif set cluster.namespace to the
+# ray namespace, all other k8 recipes use the default namespace). These must
+# match the cluster.namespace overrides in the config so kubectl polling
+# targets the namespace the job was actually created in.
+RAY_TRAINING_NAMESPACE = "hyperpod-ns-ray"
+DEFAULT_TRAINING_NAMESPACE = "hyperpod-ns-default"
 
 # Keywords that indicate Ray-based verl jobs (RLVR/RLAIF use Ray, SFT uses torchrun)
 VERL_RAY_KEYWORDS = ["rlvr", "rlaif"]
@@ -38,6 +44,8 @@ class K8sValidationLauncher(BaseLauncher):
             config: Configuration object
         """
         super().__init__(job_recorder, config)
+        # Namespace for verl (RLVR/RLAIF) Ray jobs — configurable; defaults to ray-training
+        self._verl_namespace = config.get("k8", {}).get("verl_namespace", RAY_TRAINING_NAMESPACE)
         cluster_context_map = config.get("k8", {}).get("cluster_context_map", {})
         context_override = cluster_context_map.get(config.instance_type, None)
         self._context_override = []
@@ -248,8 +256,7 @@ class K8sValidationLauncher(BaseLauncher):
         """Collect and save pod logs"""
 
         logs_command = ["kubectl", *self._context_override, "logs", "-f", pod_name]
-        if is_verl:
-            logs_command += ["-n", RAY_TRAINING_NAMESPACE]
+        logs_command += ["-n", self._get_namespace(is_verl)]
 
         proc = subprocess.Popen(
             logs_command,
@@ -307,8 +314,7 @@ class K8sValidationLauncher(BaseLauncher):
             f"pod/{pod_name}",
             f"--timeout={timeout_in_minutes}m",
         ]
-        if is_verl:
-            wait_command += ["-n", RAY_TRAINING_NAMESPACE]
+        wait_command += ["-n", self._get_namespace(is_verl)]
         try:
             subprocess.run(
                 wait_command,
@@ -333,9 +339,10 @@ class K8sValidationLauncher(BaseLauncher):
         cmd = ["kubectl", *self._context_override, "get", resource_name, job_name, "-o"]
 
         if is_verl:
-            cmd += ["jsonpath={.status.jobStatus}", "-n", RAY_TRAINING_NAMESPACE]
+            cmd += ["jsonpath={.status.jobStatus}"]
         else:
             cmd += ["jsonpath={.status.conditions[-1].type} {.status.conditions[-1].status}"]
+        cmd += ["-n", self._get_namespace(is_verl)]
 
         return subprocess.run(cmd, capture_output=True, text=True, check=True, env=self.aws_env).stdout.strip()
 
@@ -348,15 +355,10 @@ class K8sValidationLauncher(BaseLauncher):
         try:
             if is_verl:
                 # RayJobs use jobDeploymentStatus, not conditions
-                cmd += [
-                    f"--for=jsonpath={{.status.jobDeploymentStatus}}={status}",
-                    "-n",
-                    RAY_TRAINING_NAMESPACE,
-                ]
+                cmd += [f"--for=jsonpath={{.status.jobDeploymentStatus}}={status}"]
             else:
-                cmd += [
-                    f"--for=condition={status}",
-                ]
+                cmd += [f"--for=condition={status}"]
+            cmd += ["-n", self._get_namespace(is_verl)]
 
             subprocess.run(cmd, capture_output=True, text=True, check=True, env=self.aws_env)
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
@@ -371,8 +373,7 @@ class K8sValidationLauncher(BaseLauncher):
     def describe_resource(self, resource_type: str, resource_name: str, is_verl: bool = False):
         try:
             cmd = ["kubectl", *self._context_override, "describe", resource_type, resource_name]
-            if is_verl:
-                cmd.extend(["-n", RAY_TRAINING_NAMESPACE])
+            cmd.extend(["-n", self._get_namespace(is_verl)])
 
             return subprocess.run(
                 cmd,
@@ -389,8 +390,7 @@ class K8sValidationLauncher(BaseLauncher):
         self.logger.info(f"Cleaning up {resource} job: {job_name}")
         try:
             cmd = ["kubectl", *self._context_override, "delete", resource, job_name]
-            if is_verl:
-                cmd.extend(["-n", RAY_TRAINING_NAMESPACE])
+            cmd.extend(["-n", self._get_namespace(is_verl)])
 
             subprocess.run(cmd, capture_output=True, text=True, check=True, env=self.aws_env)
         except subprocess.CalledProcessError as e:
@@ -410,8 +410,7 @@ class K8sValidationLauncher(BaseLauncher):
                 "-o",
                 "custom-columns=:metadata.name",
             ]
-            if is_verl:
-                cmd.extend(["-n", RAY_TRAINING_NAMESPACE])
+            cmd.extend(["-n", self._get_namespace(is_verl)])
 
             result = subprocess.run(
                 cmd,
@@ -437,11 +436,18 @@ class K8sValidationLauncher(BaseLauncher):
         if len(pod_names) == 1:
             return pod_names[0]
 
-        # For VERL RayJobs, head pod has '-head-' in the name
+        # For VERL RayJobs, pick the pod that carries the submitter/driver logs.
+        # K8sJobMode creates a separate submitter pod (no '-head-'/'-worker-' in its name);
+        # SidecarMode runs the submitter inside the head pod ('-head-'), so there is no
+        # separate submitter pod and we fall back to the head pod itself.
         if is_verl:
-            head_pods = [p for p in pod_names if "-head-" not in p and "-worker-" not in p]
+            submitter_pods = [p for p in pod_names if "-head-" not in p and "-worker-" not in p]
+            if submitter_pods:
+                self.logger.info(f"Returning VERL launcher pod: {submitter_pods[0]}")
+                return submitter_pods[0]
+            head_pods = [p for p in pod_names if "-head-" in p]
             if head_pods:
-                self.logger.info(f"Returning VERL launcher pod: {head_pods[0]}")
+                self.logger.info(f"Returning VERL head pod: {head_pods[0]}")
                 return head_pods[0]
 
         # For non-VERL jobs, find head by group_rank=0 in logs
@@ -449,7 +455,7 @@ class K8sValidationLauncher(BaseLauncher):
             for pod in pod_names:
                 try:
                     result = subprocess.run(
-                        ["kubectl", *self._context_override, "logs", pod],
+                        ["kubectl", *self._context_override, "logs", pod, "-n", self._get_namespace(is_verl)],
                         capture_output=True,
                         text=True,
                         timeout=10,
@@ -478,3 +484,6 @@ class K8sValidationLauncher(BaseLauncher):
 
     def _get_resource_name(self, is_verl: bool):
         return RAY_JOBS_RESOURCE_NAME if is_verl else HP_PYTORCH_JOB_RESOURCE_NAME
+
+    def _get_namespace(self, is_verl: bool):
+        return self._verl_namespace if is_verl else DEFAULT_TRAINING_NAMESPACE

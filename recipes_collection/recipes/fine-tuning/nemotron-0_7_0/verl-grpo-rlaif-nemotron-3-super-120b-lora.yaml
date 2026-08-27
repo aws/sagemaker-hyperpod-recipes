@@ -755,4 +755,4 @@ training_config:
     val_before_train: true
   transfer_queue:
     enable: false
-version: 1.1.4
+version: 1.1.5

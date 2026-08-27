@@ -63,6 +63,7 @@ rlConfig:
   verlArgs: null
 rayCluster:
   rayVersion: 2.46.0
+  submissionMode: SidecarMode
   logging:
     level: INFO
   jobSubmitter:

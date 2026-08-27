@@ -793,6 +793,19 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 | Qwen 3.6 35B A3B GRPO RLAIF Fine-Tuning | verl | GRPO + RLAIF | FFT | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlaif-qwen-3-dot-6-35b-a3b-fft.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-grpo-rlaif-qwen-3-dot-6-35b-a3b-fft.yaml) | [run_verl_grpo_rlaif_qwen_3_dot_6_35b_a3b_fft.sh](../launcher_scripts/qwen-0_7_0/run_verl_grpo_rlaif_qwen_3_dot_6_35b_a3b_fft.sh) |
 | Qwen 3.6 35B A3B GRPO RLAIF Fine-Tuning with LoRA | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlaif-qwen-3-dot-6-35b-a3b-lora.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-grpo-rlaif-qwen-3-dot-6-35b-a3b-lora.yaml) | [run_verl_grpo_rlaif_qwen_3_dot_6_35b_a3b_lora.sh](../launcher_scripts/qwen-0_7_0/run_verl_grpo_rlaif_qwen_3_dot_6_35b_a3b_lora.sh) |
 
+#### Qwen 3.8 27B
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Qwen 3.8 27B DPO Full Fine-Tuning | verl | - | FFT | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-qwen-3-dot-8-27b-fft.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-dpo-qwen-3-dot-8-27b-fft.yaml) | [run_verl_dpo_qwen_3_dot_8_27b_fft.sh](../launcher_scripts/qwen-0_7_0/run_verl_dpo_qwen_3_dot_8_27b_fft.sh) |
+| Qwen 3.8 27B SFT Full Fine-Tuning | verl | - | FFT | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-sft-qwen-3-dot-8-27b-fft.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-sft-qwen-3-dot-8-27b-fft.yaml) | [run_verl_sft_qwen_3_dot_8_27b_fft.sh](../launcher_scripts/qwen-0_7_0/run_verl_sft_qwen_3_dot_8_27b_fft.sh) |
+| Qwen 3.8 27B DPO LoRA Fine-Tuning | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-qwen-3-dot-8-27b-lora.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-dpo-qwen-3-dot-8-27b-lora.yaml) | [run_verl_dpo_qwen_3_dot_8_27b_lora.sh](../launcher_scripts/qwen-0_7_0/run_verl_dpo_qwen_3_dot_8_27b_lora.sh) |
+| Qwen 3.8 27B SFT LoRA Fine-Tuning | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-sft-qwen-3-dot-8-27b-lora.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-sft-qwen-3-dot-8-27b-lora.yaml) | [run_verl_sft_qwen_3_dot_8_27b_lora.sh](../launcher_scripts/qwen-0_7_0/run_verl_sft_qwen_3_dot_8_27b_lora.sh) |
+| Qwen 3.8 27B GRPO RLVR Fine-Tuning | verl | GRPO | FFT | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlvr-qwen-3-dot-8-27b-fft.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-grpo-rlvr-qwen-3-dot-8-27b-fft.yaml) | [run_verl_grpo_rlvr_qwen_3_dot_8_27b_fft.sh](../launcher_scripts/qwen-0_7_0/run_verl_grpo_rlvr_qwen_3_dot_8_27b_fft.sh) |
+| Qwen 3.8 27B GRPO RLVR Fine-Tuning with LoRA | verl | GRPO | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlvr-qwen-3-dot-8-27b-lora.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-grpo-rlvr-qwen-3-dot-8-27b-lora.yaml) | [run_verl_grpo_rlvr_qwen_3_dot_8_27b_lora.sh](../launcher_scripts/qwen-0_7_0/run_verl_grpo_rlvr_qwen_3_dot_8_27b_lora.sh) |
+| Qwen 3.8 27B GRPO RLAIF Fine-Tuning | verl | GRPO + RLAIF | FFT | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-qwen-3-dot-8-27b-fft.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-grpo-rlaif-qwen-3-dot-8-27b-fft.yaml) | [run_verl_grpo_rlaif_qwen_3_dot_8_27b_fft.sh](../launcher_scripts/qwen-0_7_0/run_verl_grpo_rlaif_qwen_3_dot_8_27b_fft.sh) |
+| Qwen 3.8 27B GRPO RLAIF Fine-Tuning with LoRA | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-qwen-3-dot-8-27b-lora.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-grpo-rlaif-qwen-3-dot-8-27b-lora.yaml) | [run_verl_grpo_rlaif_qwen_3_dot_8_27b_lora.sh](../launcher_scripts/qwen-0_7_0/run_verl_grpo_rlaif_qwen_3_dot_8_27b_lora.sh) |
+
 ## Amazon Nova Recipes
 
 ### Nova Models

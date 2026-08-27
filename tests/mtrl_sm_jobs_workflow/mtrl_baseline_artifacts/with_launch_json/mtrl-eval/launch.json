@@ -16,7 +16,8 @@
       "required": true,
       "default": "huggingface-vlm-gemma-4-31b-it",
       "category": "system",
-      "visibility_tier": "tertiary"
+      "visibility_tier": "tertiary",
+      "control_type": "text_input"
     },
     "eval_group_size": {
       "type": "integer",
@@ -27,7 +28,9 @@
       "description": "Rollouts per prompt. Note: To compute pass@k, set eval_group_size >= k.",
       "category": "hyperparameter",
       "visibility_tier": "primary",
-      "display_name": "Samples per prompt (K)"
+      "display_name": "Samples per prompt (K)",
+      "control_type": "number_input",
+      "step": 1
     },
     "model_name": {
       "type": "string",
@@ -36,7 +39,8 @@
       "description": "Model identifier",
       "category": "system",
       "visibility_tier": "advanced",
-      "display_name": "Model Name"
+      "display_name": "Model Name",
+      "control_type": "text_input"
     },
     "name": {
       "type": "string",
@@ -45,7 +49,12 @@
       "description": "Custom model name",
       "category": "system",
       "visibility_tier": "tertiary",
-      "display_name": "Evaluation name"
+      "display_name": "Evaluation name",
+      "control_type": "text_input",
+      "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+      "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+      "min_length": 1,
+      "max_input_length": 63
     },
     "pass_k_values": {
       "type": "array",
@@ -61,7 +70,8 @@
       "description": "List of k values for computing pass@k and pass^k metrics. pass@k = probability that at least 1 of k sampled rollouts succeeds. pass^k = probability that all k rollouts succeed.",
       "category": "hyperparameter",
       "visibility_tier": "primary",
-      "display_name": "Pass@K values"
+      "display_name": "Pass@K values",
+      "control_type": "text_input"
     },
     "rollout_max_concurrency": {
       "type": "integer",
@@ -72,7 +82,9 @@
       "description": "Maximum number of evaluation rollouts that can execute in parallel.",
       "category": "hyperparameter",
       "visibility_tier": "advanced",
-      "display_name": "Rollout Max Concurrency"
+      "display_name": "Rollout Max Concurrency",
+      "control_type": "number_input",
+      "step": 1
     },
     "rollout_max_retries": {
       "type": "integer",
@@ -83,7 +95,9 @@
       "description": "Number of retry attempts for failed evaluation rollouts before marking them as permanently failed.",
       "category": "hyperparameter",
       "visibility_tier": "advanced",
-      "display_name": "Rollout Max Retries"
+      "display_name": "Rollout Max Retries",
+      "control_type": "number_input",
+      "step": 1
     },
     "rollout_timeout": {
       "type": "float",
@@ -94,7 +108,9 @@
       "description": "Time (seconds) after which an evaluation rollout is treated as failed and may be retried.",
       "category": "hyperparameter",
       "visibility_tier": "advanced",
-      "display_name": "Rollout Timeout"
+      "display_name": "Rollout Timeout",
+      "control_type": "number_input",
+      "step": 0.1
     },
     "sampling_max_tokens": {
       "type": "integer",
@@ -105,7 +121,9 @@
       "description": "Maximum tokens the model can generate per turn during evaluation rollouts.",
       "category": "hyperparameter",
       "visibility_tier": "advanced",
-      "display_name": "Sampling Max Tokens"
+      "display_name": "Sampling Max Tokens",
+      "control_type": "number_input",
+      "step": 1
     },
     "sampling_top_p": {
       "type": "float",
@@ -116,7 +134,9 @@
       "description": "Nucleus sampling cutoff for evaluation rollouts.",
       "category": "hyperparameter",
       "visibility_tier": "advanced",
-      "display_name": "Sampling Top P"
+      "display_name": "Sampling Top P",
+      "control_type": "number_input",
+      "step": 0.1
     },
     "success_threshold": {
       "type": "float",
@@ -125,7 +145,9 @@
       "description": "A rollout is 'successful' when reward >= success_threshold. Note this applies for pass@k, pass^k, succeeded/failed count metrics.",
       "category": "hyperparameter",
       "visibility_tier": "primary",
-      "display_name": "Success threshold"
+      "display_name": "Success threshold",
+      "control_type": "number_input",
+      "step": 0.1
     },
     "temperature": {
       "type": "float",
@@ -137,7 +159,9 @@
       "category": "hyperparameter",
       "visibility_tier": "advanced",
       "display_name": "Temperature",
-      "hint": "Must be a value between 0.0 and 2.0"
+      "hint": "Must be a value between 0.0 and 2.0",
+      "control_type": "number_input",
+      "step": 0.1
     }
   },
   "regional_parameters": {

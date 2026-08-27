@@ -9,6 +9,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from utils.resolve_override_params import resolve_bound_placeholders
 
+from ...evaluation.constants import EVAL_RECIPE_VERSION
 from ..base_recipe_template_processor import BaseRecipeTemplateProcessor
 
 
@@ -110,7 +111,7 @@ class EvaluationRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         metadata["Model_ID"] = base_model_name
         metadata["Type"] = "Evaluation"
         metadata["EvaluationType"] = self.get_evaluation_type(recipe_file_path)
-        metadata["Versions"] = ["2.0.3"]
+        metadata["Versions"] = [EVAL_RECIPE_VERSION]
 
         # Extract recipe name from recipe_file_path for hosting config
         recipe_name = self.get_recipe_name_from_path(recipe_file_path)

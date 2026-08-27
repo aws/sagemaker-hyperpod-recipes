@@ -15,21 +15,16 @@ Environment variables:
 import json
 import os
 import re
-import sys
-from pathlib import Path
 
 import pytest
 
-# Add scripts to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-from generate_hyperparameters_doc import (
+from scripts.generate_hyperparameters_doc import (
     FRAMEWORKS,
     OUTPUT_FILE,
     TEMPLATIZATION_DIR,
     check_generation,
     run_generation,
 )
-
 from utils.resolve_override_params import resolve_params
 
 
@@ -52,7 +47,7 @@ class TestHyperparametersDocValidation:
         3. Template JSON files changed without regenerating doc
 
         Fix:
-          python scripts/generate_hyperparameters_doc.py
+          uv run poe generate-hyperparameters-doc
         Or:
           GOLDEN_TEST_WRITE=true pytest tests/test_hyperparameters_doc_generator.py::TestHyperparametersDocValidation::test_generated_doc_matches_disk
         """
@@ -79,13 +74,13 @@ class TestHyperparametersDocValidation:
                 [
                     "",
                     "To fix:",
-                    "  python scripts/generate_hyperparameters_doc.py",
+                    "  uv run poe generate-hyperparameters-doc",
                     "",
                     "Or with test:",
                     "  GOLDEN_TEST_WRITE=true pytest tests/test_hyperparameters_doc_generator.py",
                     "",
                     "To see diffs:",
-                    "  python scripts/generate_hyperparameters_doc.py --check --diff",
+                    "  uv run poe generate-hyperparameters-doc --check --diff",
                     "=" * 70,
                 ]
             )
@@ -101,7 +96,7 @@ class TestHyperparametersDocValidation:
         categories means a param silently dropping out of the doc fails here.
         """
         assert OUTPUT_FILE.exists(), (
-            f"HYPERPARAMETERS.md not found at {OUTPUT_FILE}. " f"Run: python scripts/generate_hyperparameters_doc.py"
+            f"HYPERPARAMETERS.md not found at {OUTPUT_FILE}. " f"Run: uv run poe generate-hyperparameters-doc"
         )
 
         doc_content = OUTPUT_FILE.read_text(encoding="utf-8")
@@ -144,5 +139,5 @@ class TestHyperparametersDocValidation:
             f"{len(missing)} resolved override parameter(s) missing from HYPERPARAMETERS.md:\n"
             + "\n".join(f"  - {m}" for m in missing[:20])
             + (f"\n  ... and {len(missing) - 20} more" if len(missing) > 20 else "")
-            + "\n\nFix: python scripts/generate_hyperparameters_doc.py"
+            + "\n\nFix: uv run poe generate-hyperparameters-doc"
         )

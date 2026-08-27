@@ -95,6 +95,7 @@ training_config:
         enabled: false
         num_shards: 4
   trainer:
+    merge_lora_on_final_save: true
     project_name: ministral-rl
     experiment_name: ministral-3-8b-instruct-grpo-rlaif-fft
     logger:

@@ -236,20 +236,10 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         assert num_nodes is not None, "Number of nodes not found in recipe config"
         metadata["InstanceCount"] = num_nodes
 
-        # SequenceLength is the recipe's supported context: the cap the customer
-        # dials up to via max_prompt_length + max_response_length (RL) or
-        # dataset_max_len (SFT/DPO). Computed from the token budget and world size
-        # (max_token_len_per_gpu x n_gpus_per_node x nnodes, floored to a power of
-        # 2) and emitted as the backend enum string ("<n>K"). This is the single
-        # source of truth: clients (UI/PySDK) parse it back to an int when they
-        # need the numeric ceiling.
-        context_length = self._extract_context_length(recipe_cfg)
-        if context_length is None:
-            # Fallback for recipes without a computable context length: derive from
-            # the configured sequence length.
-            context_length = self._extract_sequence_length(recipe_cfg)
-        assert context_length is not None, "Sequence length not found in recipe config"
-        metadata["SequenceLength"] = self.format_sequence_length(context_length)
+        # Get input sequence length
+        seq_length = self._extract_sequence_length(recipe_cfg)
+        assert seq_length is not None, "Sequence length not found in recipe config"
+        metadata["SequenceLength"] = self.format_sequence_length(seq_length)
 
         return metadata
 
@@ -359,95 +349,6 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         if max_prompt_length is not None and max_response_length is not None:
             return max_prompt_length + max_response_length
         return data.get("max_length")
-
-    # Length override params (RL prompt/response; SFT/DPO dataset_max_len) are
-    # dialable up to the recipe's supported context. That ceiling is the recipe's
-    # per-GPU token budget:
-    #   context_length = max_token_len_per_gpu
-    # (RL reads actor_rollout_ref.actor.ppo_max_token_len_per_gpu; SFT/DPO read
-    # data.max_token_len_per_gpu). Computed here from an existing recipe field so
-    # nothing extra is baked into the recipe body. The result is floored to the
-    # nearest power of 2 so the advertised ceiling is a clean, conservative value
-    # (e.g. 24576 -> 16384); flooring never over-states capacity.
-    #
-    # NOTE: we intentionally do NOT scale by the world size (n_gpus_per_node x
-    # nnodes). Scaling would only be correct if a single sequence were sharded
-    # across all ranks via sequence parallelism (ulysses_sequence_parallel_size
-    # > 1). SP is not supported yet (recipes ship ulysses_sequence_parallel_size
-    # = 1), so each rank must hold a whole sequence and the true per-sequence
-    # ceiling is just the per-GPU token budget.
-    #
-    # TODO(sequence-parallelism): this is a temporary workaround pending the SP
-    # runtime override. Once SP is supported, the effective ceiling becomes
-    #   floor_pow2(token_budget * effective_sequence_parallel_degree)
-    # The SP degree will come from the *runtime override* the customer sets, not
-    # (only) the static recipe field, so the recipe-emitted SequenceLength here
-    # can at best be an upper-bound hint. Revisit whether the true cap should be
-    # (re)computed at submission time from the effective SP once that override
-    # lands. Until then, hardcoding SP = 1 (i.e. no multiplier) is correct.
-    _CONTEXT_LENGTH_BOUND_PARAMS = ("max_prompt_length", "max_response_length", "dataset_max_len")
-
-    @staticmethod
-    def _floor_power_of_two(value: int) -> int:
-        """Largest power of 2 that is <= value (value must be positive)."""
-        return 1 << (value.bit_length() - 1)
-
-    def _extract_context_length(self, recipe_cfg) -> Optional[int]:
-        """Compute the supported-context ceiling from the recipe's token budget.
-
-        Returns None when the recipe lacks the per-GPU token budget field (e.g. a
-        non-verl or malformed config), making the clamp a no-op.
-        """
-        training_config = recipe_cfg.get("training_config")
-        if training_config is None:
-            return None
-
-        # RL recipes carry the budget under actor_rollout_ref.actor; SFT/DPO
-        # carry it directly under data.
-        actor_rollout_ref = training_config.get("actor_rollout_ref")
-        if actor_rollout_ref is not None:
-            actor = actor_rollout_ref.get("actor") or {}
-            token_budget = actor.get("ppo_max_token_len_per_gpu")
-        else:
-            data = training_config.get("data") or {}
-            token_budget = data.get("max_token_len_per_gpu")
-
-        if token_budget is None:
-            return None
-        raw = int(token_budget)
-        if raw <= 0:
-            return None
-        return self._floor_power_of_two(raw)
-
-    def get_additional_data(self, recipe_file_path: str) -> list:
-        """Set each length param's `max` to the recipe's computed sequence length.
-
-        The length params carry no static `max` in base_override_parameters.json;
-        for verl recipes we set it here to the recipe's actual ceiling
-        (max_token_len_per_gpu x world size, pow2-floored), so the advertised max
-        reflects what the recipe can serve. No-op when the ceiling can't be
-        computed (the param then stays uncapped) or no length params are exposed.
-        """
-        additional_data = super().get_additional_data(recipe_file_path)
-        if not additional_data:
-            return additional_data
-
-        recipe_metadata, override_params, regional_parameters = additional_data
-        if not override_params:
-            return additional_data
-
-        context_length = self._extract_context_length(self._load_recipe_config(recipe_file_path))
-        if context_length is not None:
-            for param in self._CONTEXT_LENGTH_BOUND_PARAMS:
-                if param in override_params:
-                    # Never let the ceiling drop below the param's floor (min, and
-                    # the default which must stay dialable); otherwise a recipe with
-                    # a tiny sequence length would produce an invalid min > max range.
-                    param_spec = override_params[param]
-                    floor = max(param_spec.get("min", 0), param_spec.get("default", 0))
-                    param_spec["max"] = max(context_length, floor)
-
-        return [recipe_metadata, override_params, regional_parameters]
 
     def _training_technique(self, algorithm_type: str, display_name: str) -> str:
         """Determine training technique based on algorithm type and display name."""

@@ -51,6 +51,7 @@ training_config:
     lr_scheduler_type: cosine
     lr_warmup_steps: 20
   trainer:
+    merge_lora_on_final_save: true
     project_name: ministral-sft
     experiment_name: ministral-3-8b-instruct-sft-lora
     total_epochs: 2

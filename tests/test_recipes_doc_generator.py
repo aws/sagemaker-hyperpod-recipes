@@ -13,15 +13,12 @@ Environment variables:
 
 import os
 import re
-import sys
 from collections import Counter
 from pathlib import Path
 
 import pytest
 
-# Add scripts to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-from generate_recipes_doc import (
+from scripts.generate_recipes_doc import (
     OUTPUT_FILE,
     RECIPES_DIR,
     Recipe,
@@ -52,7 +49,7 @@ class TestRecipesDocValidation:
         4. Recipe YAML files changed without regenerating doc
 
         Fix:
-          python scripts/generate_recipes_doc.py
+          uv run poe generate-recipes-doc
         Or:
           GOLDEN_TEST_WRITE=true pytest tests/test_recipes_doc_generator.py::TestRecipesDocValidation::test_generated_doc_matches_disk
         """
@@ -79,13 +76,13 @@ class TestRecipesDocValidation:
                 [
                     "",
                     "To fix:",
-                    "  python scripts/generate_recipes_doc.py",
+                    "  uv run poe generate-recipes-doc",
                     "",
                     "Or with test:",
                     "  GOLDEN_TEST_WRITE=true pytest tests/test_recipes_doc_generator.py",
                     "",
                     "To see diffs:",
-                    "  python scripts/generate_recipes_doc.py --check --diff",
+                    "  uv run poe generate-recipes-doc --check --diff",
                     "=" * 70,
                 ]
             )

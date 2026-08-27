@@ -11,6 +11,14 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+# Evaluation recipe version published to JumpStart. Unlike other recipe types,
+# eval recipes have no per-recipe `version` field in their YAML, so the version
+# is maintained here as the single source of truth for both the k8s launcher
+# (launchers.py) and the sm_jobs template processor
+# (recipe_templatization/evaluation/evaluation_recipe_template_processor.py).
+# Bump this when releasing an eval recipe change.
+EVAL_RECIPE_VERSION = "2.0.3"
+
 # Evaluation container constants
 EVAL_CONTAINER_IMAGE = "{account_id}.dkr.ecr.{region}.amazonaws.com/smdistributed-modelparallel:2.4.1-gpu-py311-cu121"
 

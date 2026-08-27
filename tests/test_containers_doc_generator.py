@@ -54,7 +54,7 @@ class TestContainersDocValidation:
         4. Regional parameter files changed without regenerating doc
 
         Fix:
-          python scripts/generate_containers_doc.py
+          uv run poe generate-containers-doc
         Or:
           GOLDEN_TEST_WRITE=true pytest tests/test_containers_doc_generator.py::TestContainersDocValidation::test_generated_doc_matches_disk
         """
@@ -81,13 +81,13 @@ class TestContainersDocValidation:
                 [
                     "",
                     "To fix:",
-                    "  python scripts/generate_containers_doc.py",
+                    "  uv run poe generate-containers-doc",
                     "",
                     "Or with test:",
                     "  GOLDEN_TEST_WRITE=true pytest tests/test_containers_doc_generator.py",
                     "",
                     "To see diffs:",
-                    "  python scripts/generate_containers_doc.py --check --diff",
+                    "  uv run poe generate-containers-doc --check --diff",
                     "=" * 70,
                 ]
             )

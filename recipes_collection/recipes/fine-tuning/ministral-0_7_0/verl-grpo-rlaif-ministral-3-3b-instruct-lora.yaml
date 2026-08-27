@@ -106,7 +106,7 @@ training_config:
       ppo_epochs: 1
       ppo_max_token_len_per_gpu: 32768
       ppo_micro_batch_size: null
-      ppo_micro_batch_size_per_gpu: 16
+      ppo_micro_batch_size_per_gpu: 8
       ppo_mini_batch_size: 32
       profiler:
         _target_: verl.utils.profiler.ProfilerConfig
