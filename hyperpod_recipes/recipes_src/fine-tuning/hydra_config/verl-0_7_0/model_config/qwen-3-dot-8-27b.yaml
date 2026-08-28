@@ -1,0 +1,11 @@
+# @package recipes
+# Qwen 3.8 27B model configuration for verl-0.7.0
+training_config:
+  model:
+    path: Qwen/Qwen3.8-27B
+    trust_remote_code: true
+    use_liger: true
+    use_fused_kernels: false
+    exclude_modules: .*vision_tower.*|.*visual.*|.*embed_vision.*|.*embed_audio.*|.*audio_tower.*
+    override_config:
+      language_model_only: true

@@ -44,6 +44,12 @@ exclusion_patterns:
   # Qwen 3.5 35B-A3B, Qwen 3.5 122B-A10B and Qwen 3.6 35B-A3B MoE recipes are not
   # published to JumpStart yet — hosting configs pending.
   - "qwen-0_7_0/verl-(grpo-(rlaif|rlvr)|sft)-qwen-3-dot-(5-(35b-a3b|122b-a10b)|6-35b-a3b)"
+  # Qwen 3.8 27B recipes ship but are not published to JumpStart yet —
+  # hosting (inference-serving) configs pending.
+  - "qwen-0_7_0/verl-(sft|dpo|grpo-rlvr|grpo-rlaif)-qwen-3-dot-8-27b"
+  # Ministral-3-2512 (14B/8B/3B) recipes ship but are not published to JumpStart
+  # yet — hosting (inference-serving) configs pending.
+  - "ministral-0_7_0/verl-(sft|dpo|grpo-rlvr|grpo-rlaif)-ministral-3-"
   # Per-instance verl SFT/DPO recipes for Llama and GPT-OSS: the measured
   # sequence lengths ship as recipes but are not published to JumpStart yet.
   # One entry per (model, instance, length), so a single pattern covers all 49.

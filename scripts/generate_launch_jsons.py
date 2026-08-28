@@ -15,6 +15,7 @@ import random
 import shutil
 import string
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -523,7 +524,7 @@ class LaunchJsonGenerator:
         recipe_output_dir = tempfile.mkdtemp(prefix=f"{recipe_name[:20]}_{job_type}_", dir=output_dir)
 
         job_params = self.get_job_params(recipe_path, job_type, run_name, recipe_output_dir, model_name)
-        cmd = ["python3", "main.py"] + job_params
+        cmd = [sys.executable, "main.py"] + job_params
 
         env = os.environ.copy()
         env["HYDRA_FULL_ERROR"] = "1"

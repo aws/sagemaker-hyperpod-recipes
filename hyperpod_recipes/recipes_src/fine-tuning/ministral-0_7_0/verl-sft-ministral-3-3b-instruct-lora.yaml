@@ -38,6 +38,7 @@ training_config:
     - 0.95
     lr_scheduler_type: cosine
   trainer:
+    merge_lora_on_final_save: true
     project_name: verl_sft
     experiment_name: sft_fsdp
     total_epochs: 1

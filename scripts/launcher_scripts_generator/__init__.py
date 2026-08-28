@@ -17,7 +17,7 @@ Launcher Script Generator Module
 Config-driven launcher script generation. All customization is in config.yaml.
 
 Usage:
-    python -m scripts.launcher_scripts_generator.generate_launcher_scripts
+    uv run poe generate-launcher-scripts
 """
 
 from scripts.launcher_scripts_generator.generate_launcher_scripts import (

@@ -82,6 +82,7 @@ training_config:
       use_remove_padding: true
       exclude_modules: .*visual.*
   trainer:
+    merge_lora_on_final_save: true
     project_name: verl-grpo-rlvr
     experiment_name: ministral-3-14b-instruct-fft
     logger:

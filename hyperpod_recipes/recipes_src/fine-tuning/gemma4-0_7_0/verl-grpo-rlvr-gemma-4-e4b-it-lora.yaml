@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Gemma 4 E4B IT GRPO RLVR Fine-Tuning with LoRA (Text)
-version: 2.0.5
+version: 2.0.6
 instance_types:
   - ml.p5.48xlarge
 run:

@@ -9,9 +9,9 @@ Every resolved override parameter is documented. The `category` field
 whether a value can be overridden, and every parameter listed here can be.
 
 Usage:
-    python scripts/generate_hyperparameters_doc.py           # Generate docs/HYPERPARAMETERS.md
-    python scripts/generate_hyperparameters_doc.py --check   # Validate docs/HYPERPARAMETERS.md is up-to-date
-    python scripts/generate_hyperparameters_doc.py --check --diff  # Show what changed
+    uv run poe generate-hyperparameters-doc           # Generate docs/HYPERPARAMETERS.md
+    uv run poe generate-hyperparameters-doc --check   # Validate docs/HYPERPARAMETERS.md is up-to-date
+    uv run poe generate-hyperparameters-doc --check --diff  # Show what changed
 """
 
 import argparse
@@ -20,6 +20,8 @@ import json
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+from utils.resolve_override_params import resolve_params
 
 # =============================================================================
 # PATHS
@@ -99,15 +101,7 @@ def _fmt_number(v) -> str:
     return str(v)
 
 
-# verl clamps these length params' max to each recipe's supported sequence
-# length at recipe-processing time (see VerlRecipeTemplateProcessor). The static
-# max in the base config is only an upper bound, so for verl we render the max as
-# the per-recipe ceiling rather than the misleading static number.
-_VERL_SEQUENCE_LENGTH_CLAMPED_PARAMS = frozenset({"max_prompt_length", "max_response_length", "dataset_max_len"})
-_VERL_SEQUENCE_LENGTH_CEILING = "recipe sequence length"
-
-
-def _format_range(spec: dict, *, clamp_max_to_sequence_length: bool = False) -> str:
+def _format_range(spec: dict) -> str:
     if "enum" in spec:
         values = [str(v) for v in spec["enum"]]
         if len(values) <= _MAX_ENUM_INLINE:
@@ -118,9 +112,7 @@ def _format_range(spec: dict, *, clamp_max_to_sequence_length: bool = False) -> 
     if "min" in spec:
         parts.append(_fmt_number(spec["min"]))
     if "max" in spec:
-        # For verl length params the effective max is the recipe's computed
-        # sequence-length ceiling, not the static base max.
-        parts.append(_VERL_SEQUENCE_LENGTH_CEILING if clamp_max_to_sequence_length else _fmt_number(spec["max"]))
+        parts.append(_fmt_number(spec["max"]))
     if len(parts) == 2:
         return f"{parts[0]}–{parts[1]}"
     if parts:
@@ -134,20 +126,16 @@ def _format_range(spec: dict, *, clamp_max_to_sequence_length: bool = False) -> 
 # =============================================================================
 
 
-def _make_param_table(params: Dict[str, Any], *, is_verl: bool = False) -> List[str]:
+def _make_param_table(params: Dict[str, Any]) -> List[str]:
     included = [(name, spec) for name, spec in params.items() if _should_include(spec)]
     if not included:
         return []
-
-    def _range(n: str, s: dict) -> str:
-        clamp = is_verl and n in _VERL_SEQUENCE_LENGTH_CLAMPED_PARAMS
-        return _format_range(s, clamp_max_to_sequence_length=clamp)
 
     cols = [
         ("Parameter", lambda n, s: f"`{n}`"),
         ("Type", lambda n, s: s.get("type") or "—"),
         ("Required", lambda n, s: "Yes" if s.get("required") else "No"),
-        ("Range / Values", _range),
+        ("Range / Values", lambda n, s: _format_range(s)),
         ("Description", lambda n, s: (s.get("description") or "—").replace("|", "\\|")),
     ]
 
@@ -176,10 +164,6 @@ def _fw_anchor(title: str) -> str:
     return title.lower().replace(" ", "-").replace("(", "").replace(")", "")
 
 
-sys.path.insert(0, str(REPO_ROOT))
-from utils.resolve_override_params import resolve_params
-
-
 def _resolve_override_parameters(template_data: Dict) -> Dict:
     """Resolve override parameters using the shared resolve_params function."""
     base_path = TEMPLATIZATION_DIR / "base_override_parameters.json"
@@ -204,29 +188,14 @@ def _generate_framework_section(fw_title: str, rel_path: str) -> List[str]:
     if not templates:
         return []
 
-    is_verl = rel_path.startswith("verl/")
-
     lines = [f"## {fw_title}", ""]
-
-    if is_verl:
-        # The length params' max is not the static base value for verl — the
-        # recipe processor clamps it to each recipe's supported sequence length.
-        lines.append(
-            "> **Note:** For verl recipes, `max_prompt_length`, "
-            "`max_response_length`, and `dataset_max_len` are capped at the "
-            "recipe's supported sequence length (derived from the recipe's "
-            "per-GPU token budget), not the static upper bound. The effective "
-            "maximum is per-recipe; the ranges below show it as "
-            f'"{_VERL_SEQUENCE_LENGTH_CEILING}".'
-        )
-        lines.append("")
 
     for template_key, template_data in templates.items():
         params = _resolve_override_parameters(template_data)
         display = _template_display_name(template_key, template_data)
         lines.append(f"### {display}")
         lines.append("")
-        table = _make_param_table(params, is_verl=is_verl)
+        table = _make_param_table(params)
         if table:
             lines.extend(table)
         else:

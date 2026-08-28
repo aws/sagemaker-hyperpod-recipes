@@ -411,6 +411,141 @@ def test_visibility_tier_field_uses_allowed_values(category):
 
 
 # ---------------------------------------------------------------------------
+# Test 7c–7g: self-describing UI metadata fields (control_type, step, and the
+#             S3/name/namespace regex family)
+#
+# These fields let the MFE render each param from the published artifact instead
+# of its hardcoded UI_CONTRACT_CONFIG table.
+#
+# pass_k_values HAZARD (flagged for engineers, not fixed here):
+#   pass_k_values is type:"array" (type_family:"array") in BOTH sections. Today
+#   the MFE's isValidOverrideParam drops it, so it never reaches a render branch
+#   and is harmless. But the fine_tuning copy is visibility_tier:"tertiary", and
+#   the day the MFE honors visibility_tier it will route pass_k_values into the
+#   tertiary branch of parseUIContract.ts (~:173-183), which THROWS because
+#   "array" is not a valid tertiary type — a whole-form outage. We deliberately
+#   do NOT add a test that trips on pass_k_values (it must stay green); its
+#   control_type is set like every other param. This comment is the flag.
+# ---------------------------------------------------------------------------
+
+
+# checkbox and toggle are intentionally excluded: neither has a render branch in
+# the MFE's UIContractField, so booleans use "dropdown" (see gradient_clipping,
+# merge_weights, reasoning_enabled, use_kl_loss, postprocessing).
+ALLOWED_CONTROL_TYPE_VALUES = {
+    "number_input",
+    "text_input",
+    "dropdown",
+    "s3_uri_input",
+    "kms_key_input",
+}
+
+
+@pytest.mark.parametrize("category", _get_categories())
+def test_control_type_uses_allowed_values(category):
+    """If `control_type` is present on a param, it must be one of the allowed
+    render types the MFE understands.
+    """
+    cat_params = BASE_PARAMS.get(category, {})
+    issues = []
+
+    for pname, pdef in cat_params.items():
+        if not isinstance(pdef, dict) or "control_type" not in pdef:
+            continue
+        value = pdef["control_type"]
+        if value not in ALLOWED_CONTROL_TYPE_VALUES:
+            issues.append(f"  {pname}: control_type={value!r} (allowed: {sorted(ALLOWED_CONTROL_TYPE_VALUES)})")
+
+    assert not issues, f"Invalid control_type values in '{category}':\n" + "\n".join(issues)
+
+
+@pytest.mark.parametrize("category", _get_categories())
+def test_number_inputs_have_step(category):
+    """Any param with control_type=='number_input' and no `enum` must define a
+    numeric `step`, so the MFE's number spinner has an increment.
+    """
+    cat_params = BASE_PARAMS.get(category, {})
+    issues = []
+
+    for pname, pdef in cat_params.items():
+        if not isinstance(pdef, dict):
+            continue
+        if pdef.get("control_type") != "number_input" or "enum" in pdef:
+            continue
+        step = pdef.get("step")
+        if not isinstance(step, (int, float)) or isinstance(step, bool):
+            issues.append(f"  {pname}: number_input missing numeric 'step' (got {step!r})")
+
+    assert not issues, f"number_input params missing 'step' in '{category}':\n" + "\n".join(issues)
+
+
+@pytest.mark.parametrize("category", _get_categories())
+def test_step_within_range(category):
+    """Where a param declares numeric `min` and `max` and a `step`, the step must
+    satisfy 0 < step <= (max - min); a step larger than the range is unusable.
+    """
+    cat_params = BASE_PARAMS.get(category, {})
+    issues = []
+
+    for pname, pdef in cat_params.items():
+        if not isinstance(pdef, dict) or "step" not in pdef:
+            continue
+        step, mn, mx = pdef.get("step"), pdef.get("min"), pdef.get("max")
+        for label, val in (("min", mn), ("max", mx), ("step", step)):
+            if not isinstance(val, (int, float)) or isinstance(val, bool):
+                break
+        else:
+            span = mx - mn
+            if not (0 < step <= span):
+                issues.append(f"  {pname}: step={step!r} not in (0, max-min={span!r}]")
+
+    assert not issues, f"Invalid step relative to range in '{category}':\n" + "\n".join(issues)
+
+
+@pytest.mark.parametrize("category", _get_categories())
+def test_regex_pattern_compiles(category):
+    """Every `regex_pattern` must compile under Python `re`, and (mirroring the
+    MFE's `new RegExp(pattern).test(value)` semantics via re.search) must accept
+    the param's own `default` when that default is a non-empty string.
+    """
+    cat_params = BASE_PARAMS.get(category, {})
+    issues = []
+
+    for pname, pdef in cat_params.items():
+        if not isinstance(pdef, dict) or "regex_pattern" not in pdef:
+            continue
+        pattern = pdef["regex_pattern"]
+        try:
+            compiled = re.compile(pattern)
+        except re.error as e:
+            issues.append(f"  {pname}: regex_pattern {pattern!r} does not compile ({e})")
+            continue
+        default = pdef.get("default")
+        if isinstance(default, str) and default != "":
+            if not compiled.search(default):
+                issues.append(f"  {pname}: default {default!r} rejected by regex_pattern {pattern!r}")
+
+    assert not issues, f"regex_pattern issues in '{category}':\n" + "\n".join(issues)
+
+
+@pytest.mark.parametrize("category", _get_categories())
+def test_invalid_format_error_requires_regex(category):
+    """`invalid_format_error` is the message shown when `regex_pattern` fails, so
+    it must never appear without a `regex_pattern` to trigger it.
+    """
+    cat_params = BASE_PARAMS.get(category, {})
+    issues = []
+
+    for pname, pdef in cat_params.items():
+        if not isinstance(pdef, dict):
+            continue
+        if "invalid_format_error" in pdef and "regex_pattern" not in pdef:
+            issues.append(f"  {pname}: has 'invalid_format_error' but no 'regex_pattern'")
+
+    assert not issues, f"invalid_format_error without regex_pattern in '{category}':\n" + "\n".join(issues)
+
+
+# ---------------------------------------------------------------------------
 # Test 8: data-type conformance — default / min / max / enum values must
 #         match the declared type_family
 # ---------------------------------------------------------------------------

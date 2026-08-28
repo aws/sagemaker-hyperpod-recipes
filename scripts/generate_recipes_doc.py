@@ -8,9 +8,9 @@ All metadata is derived from two sources:
 
 
 Usage:
-    python scripts/generate_recipes_doc.py           # Generate docs/RECIPES.md
-    python scripts/generate_recipes_doc.py --check   # Validate docs/RECIPES.md is up-to-date
-    python scripts/generate_recipes_doc.py --check --diff  # Show what changed
+    uv run poe generate-recipes-doc           # Generate docs/RECIPES.md
+    uv run poe generate-recipes-doc --check   # Validate docs/RECIPES.md is up-to-date
+    uv run poe generate-recipes-doc --check --diff  # Show what changed
 """
 
 import argparse

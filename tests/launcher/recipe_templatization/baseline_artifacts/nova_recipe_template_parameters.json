@@ -159,7 +159,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "name": {
                     "type": "string",
@@ -169,7 +170,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -178,7 +184,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -188,7 +197,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -225,7 +238,8 @@
                                 "default": 64
                             }
                         }
-                    }
+                    },
+                    "control_type": "dropdown"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -237,7 +251,9 @@
                     "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
                     "visibility_tier": "primary",
                     "display_name": "Number of epochs",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "learning_rate": {
                     "type": "float",
@@ -249,7 +265,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -267,7 +285,8 @@
                     "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
                     "visibility_tier": "advanced",
                     "display_name": "Alpha value",
-                    "hint": "Select from available alpha values"
+                    "hint": "Select from available alpha values",
+                    "control_type": "dropdown"
                 },
                 "learning_rate_ratio": {
                     "type": "float",
@@ -279,7 +298,9 @@
                     "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
                     "visibility_tier": "advanced",
                     "display_name": "Learning rate ratio",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "namespace": {
                     "type": "string",
@@ -288,7 +309,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -300,7 +326,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -309,7 +337,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -318,7 +347,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -327,7 +357,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -337,7 +368,9 @@
                     "default": 0.0,
                     "category": "hyperparameter",
                     "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -349,7 +382,9 @@
                     "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
                     "visibility_tier": "advanced",
                     "display_name": "Warmup steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "min_lr": {
                     "type": "float",
@@ -361,7 +396,9 @@
                     "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
                     "visibility_tier": "advanced",
                     "display_name": "Minimum learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.01
                 }
             },
             "recipe_metadata_helpers": {
@@ -463,7 +500,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "name": {
                     "type": "string",
@@ -473,7 +511,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -482,7 +525,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -492,7 +538,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "reasoning_enabled": {
                     "type": "boolean",
@@ -502,7 +552,8 @@
                     "description": "When enabled, activates chain-of-thought reasoning mode during training.",
                     "visibility_tier": "primary",
                     "display_name": "Reasoning mode",
-                    "hint": "Set value to true or false to enable or disable reasoning."
+                    "hint": "Set value to true or false to enable or disable reasoning.",
+                    "control_type": "dropdown"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -517,7 +568,8 @@
                     "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "max_steps": {
                     "type": "integer",
@@ -537,7 +589,9 @@
                     "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
                     "visibility_tier": "advanced",
                     "display_name": "Max steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "save_steps": {
                     "type": "integer",
@@ -557,7 +611,9 @@
                     "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
                     "visibility_tier": "advanced",
                     "display_name": "Save steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "learning_rate": {
                     "type": "float",
@@ -569,7 +625,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -587,7 +645,8 @@
                     "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
                     "visibility_tier": "advanced",
                     "display_name": "Alpha value",
-                    "hint": "Select from available alpha values"
+                    "hint": "Select from available alpha values",
+                    "control_type": "dropdown"
                 },
                 "learning_rate_ratio": {
                     "type": "float",
@@ -599,7 +658,9 @@
                     "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
                     "visibility_tier": "advanced",
                     "display_name": "Learning rate ratio",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "namespace": {
                     "type": "string",
@@ -608,7 +669,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -620,7 +686,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -629,7 +697,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -638,7 +707,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -647,7 +717,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 },
                 "fine_tuned_model": {
                     "type": "float",
@@ -659,7 +730,9 @@
                     "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only).",
                     "visibility_tier": "advanced",
                     "display_name": "Fine-tuned model weight",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -671,7 +744,9 @@
                     "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
                     "visibility_tier": "advanced",
                     "display_name": "Warmup steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "min_lr": {
                     "type": "float",
@@ -683,7 +758,9 @@
                     "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value.",
                     "visibility_tier": "advanced",
                     "display_name": "Minimum learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.01
                 },
                 "weight_decay": {
                     "type": "float",
@@ -693,7 +770,9 @@
                     "default": 0.0,
                     "category": "hyperparameter",
                     "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "validation_s3_path": {
                     "type": "string",
@@ -702,7 +781,10 @@
                     "description": "S3 URI path to validation dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Validation dataset location (S3 URI)"
+                    "display_name": "Validation dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "val_check_interval": {
                     "type": "integer",
@@ -714,7 +796,9 @@
                     "visibility_tier": "advanced",
                     "display_name": "Validation check interval",
                     "hint": "Must be a value between {min} and {max}",
-                    "description": "Number of training steps between validation runs."
+                    "description": "Number of training steps between validation runs.",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "limit_val_batches": {
                     "type": "integer",
@@ -726,7 +810,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "tertiary",
                     "display_name": "Validation batches",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -822,7 +908,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "name": {
                     "type": "string",
@@ -832,7 +919,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -841,7 +933,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -851,7 +946,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -866,7 +965,8 @@
                     "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "reasoning_enabled": {
                     "type": "boolean",
@@ -876,7 +976,8 @@
                     "description": "When enabled, activates chain-of-thought reasoning mode during training.",
                     "visibility_tier": "primary",
                     "display_name": "Reasoning mode",
-                    "hint": "Set value to true or false to enable or disable reasoning."
+                    "hint": "Set value to true or false to enable or disable reasoning.",
+                    "control_type": "dropdown"
                 },
                 "max_steps": {
                     "type": "integer",
@@ -888,7 +989,9 @@
                     "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
                     "visibility_tier": "advanced",
                     "display_name": "Max steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "save_steps": {
                     "type": "integer",
@@ -908,7 +1011,9 @@
                     "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
                     "visibility_tier": "advanced",
                     "display_name": "Save steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "learning_rate": {
                     "type": "float",
@@ -920,7 +1025,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "namespace": {
                     "type": "string",
@@ -929,7 +1036,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -941,7 +1053,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -950,7 +1064,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -959,7 +1074,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -968,7 +1084,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 },
                 "fine_tuned_model": {
                     "type": "float",
@@ -980,7 +1097,9 @@
                     "description": "Model merging weight controlling the contribution of the fine-tuned model when merging with the base model. Ranges from 0.0 (base model only) to 1.0 (fine-tuned model only).",
                     "visibility_tier": "advanced",
                     "display_name": "Fine-tuned model weight",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -992,7 +1111,9 @@
                     "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
                     "visibility_tier": "advanced",
                     "display_name": "Warmup steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "min_lr": {
                     "type": "float",
@@ -1004,7 +1125,9 @@
                     "description": "Minimum learning rate floor at the end of the LR schedule. Prevents the learning rate from decaying below this value.",
                     "visibility_tier": "advanced",
                     "display_name": "Minimum learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.01
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1014,7 +1137,9 @@
                     "default": 0.0,
                     "category": "hyperparameter",
                     "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "validation_s3_path": {
                     "type": "string",
@@ -1023,7 +1148,10 @@
                     "description": "S3 URI path to validation dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Validation dataset location (S3 URI)"
+                    "display_name": "Validation dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "val_check_interval": {
                     "type": "integer",
@@ -1035,7 +1163,9 @@
                     "visibility_tier": "advanced",
                     "display_name": "Validation check interval",
                     "hint": "Must be a value between {min} and {max}",
-                    "description": "Number of training steps between validation runs."
+                    "description": "Number of training steps between validation runs.",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "limit_val_batches": {
                     "type": "integer",
@@ -1047,7 +1177,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "tertiary",
                     "display_name": "Validation batches",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -1172,7 +1304,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "name": {
                     "type": "string",
@@ -1182,7 +1315,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -1191,7 +1329,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -1201,7 +1342,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1247,7 +1392,8 @@
                                 "default": 64
                             }
                         }
-                    }
+                    },
+                    "control_type": "dropdown"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1259,7 +1405,9 @@
                     "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
                     "visibility_tier": "primary",
                     "display_name": "Number of epochs",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1271,7 +1419,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "adam_beta": {
                     "type": "float",
@@ -1283,7 +1433,9 @@
                     "description": "Controls how strongly the model enforces preference rankings. Higher values make the model more sensitive to preference differences.",
                     "visibility_tier": "advanced",
                     "display_name": "Beta value",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.001
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -1301,7 +1453,8 @@
                     "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
                     "visibility_tier": "advanced",
                     "display_name": "Alpha value",
-                    "hint": "Select from available alpha values"
+                    "hint": "Select from available alpha values",
+                    "control_type": "dropdown"
                 },
                 "learning_rate_ratio": {
                     "type": "float",
@@ -1313,7 +1466,9 @@
                     "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
                     "visibility_tier": "advanced",
                     "display_name": "Learning rate ratio",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "namespace": {
                     "type": "string",
@@ -1322,7 +1477,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -1334,7 +1494,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -1343,7 +1505,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -1352,7 +1515,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -1361,7 +1525,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1371,7 +1536,9 @@
                     "default": 0.0,
                     "category": "hyperparameter",
                     "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -1383,7 +1550,9 @@
                     "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
                     "visibility_tier": "advanced",
                     "display_name": "Warmup steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "min_lr": {
                     "type": "float",
@@ -1395,7 +1564,9 @@
                     "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
                     "visibility_tier": "advanced",
                     "display_name": "Minimum learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.01
                 }
             },
             "recipe_metadata_helpers": {
@@ -1505,7 +1676,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "name": {
                     "type": "string",
@@ -1515,7 +1687,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -1524,7 +1701,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -1534,7 +1714,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1570,7 +1754,8 @@
                                 "default": 16
                             }
                         }
-                    }
+                    },
+                    "control_type": "dropdown"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1582,7 +1767,9 @@
                     "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
                     "visibility_tier": "primary",
                     "display_name": "Number of epochs",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1594,7 +1781,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "namespace": {
                     "type": "string",
@@ -1603,7 +1792,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -1615,7 +1809,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -1624,7 +1820,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -1633,7 +1830,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -1642,7 +1840,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1652,7 +1851,9 @@
                     "default": 0.0,
                     "category": "hyperparameter",
                     "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -1664,7 +1865,9 @@
                     "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
                     "visibility_tier": "advanced",
                     "display_name": "Warmup steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "min_lr": {
                     "type": "float",
@@ -1676,7 +1879,9 @@
                     "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
                     "visibility_tier": "advanced",
                     "display_name": "Minimum learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.01
                 }
             },
             "recipe_metadata_helpers": {
@@ -1787,7 +1992,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "name": {
                     "type": "string",
@@ -1797,7 +2003,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -1806,7 +2017,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -1816,7 +2030,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -1864,7 +2082,8 @@
                                 "default": 64
                             }
                         }
-                    }
+                    },
+                    "control_type": "dropdown"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -1876,7 +2095,9 @@
                     "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
                     "visibility_tier": "primary",
                     "display_name": "Number of epochs",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "learning_rate": {
                     "type": "float",
@@ -1888,7 +2109,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "adam_beta": {
                     "type": "float",
@@ -1900,7 +2123,9 @@
                     "description": "Controls how strongly the model enforces preference rankings. Higher values make the model more sensitive to preference differences.",
                     "visibility_tier": "advanced",
                     "display_name": "Beta value",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.001
                 },
                 "namespace": {
                     "type": "string",
@@ -1909,7 +2134,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -1921,7 +2151,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -1930,7 +2162,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -1939,7 +2172,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -1948,7 +2182,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 },
                 "weight_decay": {
                     "type": "float",
@@ -1958,7 +2193,9 @@
                     "default": 0.0,
                     "category": "hyperparameter",
                     "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "warmup_steps": {
                     "type": "integer",
@@ -1970,7 +2207,9 @@
                     "description": "Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value.",
                     "visibility_tier": "advanced",
                     "display_name": "Warmup steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "min_lr": {
                     "type": "float",
@@ -1982,7 +2221,9 @@
                     "description": "Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps.",
                     "visibility_tier": "advanced",
                     "display_name": "Minimum learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.01
                 }
             },
             "recipe_metadata_helpers": {
@@ -2042,7 +2283,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -2051,7 +2297,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -2061,7 +2310,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -2096,7 +2349,8 @@
                     "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -2108,7 +2362,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "replicas": {
                     "type": "integer",
@@ -2145,7 +2401,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "namespace": {
                     "type": "string",
@@ -2154,7 +2411,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -2166,7 +2428,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -2175,7 +2439,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -2184,7 +2449,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -2193,7 +2459,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 }
             },
             "recipe_metadata_helpers": {
@@ -2239,7 +2506,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "customer_bucket": {
                     "type": "string",
@@ -2247,7 +2519,8 @@
                     "default": "",
                     "description": "Customer S3 bucket for data storage",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "kms_key": {
                     "type": "string",
@@ -2257,7 +2530,8 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "KMS key",
-                    "hint": "Must be a kms key, or kms key arn"
+                    "hint": "Must be a kms key, or kms key arn",
+                    "control_type": "kms_key_input"
                 },
                 "max_response_length": {
                     "type": "integer",
@@ -2269,7 +2543,9 @@
                     "description": "Maximum number of tokens allowed for the generated response portion.",
                     "visibility_tier": "advanced",
                     "display_name": "Maximum response length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "namespace": {
                     "type": "string",
@@ -2278,7 +2554,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -2290,7 +2571,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -2337,7 +2620,12 @@
                     "description": "Custom model name",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Evaluation name"
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -2346,7 +2634,11 @@
                     "description": "S3 URI path to output model artifacts",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Output artifact location (S3 URI)"
+                    "display_name": "Output artifact location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "task": {
                     "type": "string",
@@ -2354,7 +2646,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Task"
+                    "display_name": "Task",
+                    "control_type": "dropdown"
                 },
                 "strategy": {
                     "type": "string",
@@ -2362,7 +2655,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Strategy"
+                    "display_name": "Strategy",
+                    "control_type": "dropdown"
                 },
                 "metric": {
                     "type": "string",
@@ -2370,7 +2664,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Metric"
+                    "display_name": "Metric",
+                    "control_type": "text_input"
                 },
                 "subtask": {
                     "type": "string",
@@ -2378,7 +2673,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "tertiary",
-                    "display_name": "Subtask"
+                    "display_name": "Subtask",
+                    "control_type": "dropdown"
                 },
                 "max_new_tokens": {
                     "type": "integer",
@@ -2388,7 +2684,9 @@
                     "default": 8196,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Max New Tokens"
+                    "display_name": "Max New Tokens",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_k": {
                     "type": "integer",
@@ -2398,7 +2696,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-k",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_p": {
                     "type": "float",
@@ -2410,7 +2710,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-p",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "temperature": {
                     "type": "float",
@@ -2422,7 +2724,9 @@
                     "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
                     "visibility_tier": "advanced",
                     "display_name": "Temperature",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "namespace": {
                     "type": "string",
@@ -2431,7 +2735,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -2439,7 +2748,8 @@
                     "default": "",
                     "description": "Model identifier or path to pretrained model",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 }
             },
             "recipe_metadata_helpers": {
@@ -2487,7 +2797,12 @@
                     "description": "Custom model name",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Evaluation name"
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -2496,7 +2811,11 @@
                     "description": "S3 URI path to output model artifacts",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Output artifact location (S3 URI)"
+                    "display_name": "Output artifact location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "task": {
                     "type": "string",
@@ -2504,7 +2823,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Task"
+                    "display_name": "Task",
+                    "control_type": "dropdown"
                 },
                 "strategy": {
                     "type": "string",
@@ -2512,7 +2832,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Strategy"
+                    "display_name": "Strategy",
+                    "control_type": "dropdown"
                 },
                 "metric": {
                     "type": "string",
@@ -2520,7 +2841,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Metric"
+                    "display_name": "Metric",
+                    "control_type": "text_input"
                 },
                 "subtask": {
                     "type": "string",
@@ -2528,7 +2850,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "tertiary",
-                    "display_name": "Subtask"
+                    "display_name": "Subtask",
+                    "control_type": "dropdown"
                 },
                 "max_new_tokens": {
                     "type": "integer",
@@ -2538,7 +2861,9 @@
                     "default": 32768,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Max New Tokens"
+                    "display_name": "Max New Tokens",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_k": {
                     "type": "integer",
@@ -2548,7 +2873,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-k",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_p": {
                     "type": "float",
@@ -2560,7 +2887,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-p",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "temperature": {
                     "type": "float",
@@ -2572,7 +2901,9 @@
                     "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
                     "visibility_tier": "advanced",
                     "display_name": "Temperature",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "namespace": {
                     "type": "string",
@@ -2581,7 +2912,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -2589,7 +2925,8 @@
                     "default": "",
                     "description": "Model identifier or path to pretrained model",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 }
             },
             "recipe_metadata_helpers": {
@@ -2637,7 +2974,12 @@
                     "description": "Custom model name",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Evaluation name"
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -2646,7 +2988,11 @@
                     "description": "S3 URI path to output model artifacts",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Output artifact location (S3 URI)"
+                    "display_name": "Output artifact location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "task": {
                     "type": "string",
@@ -2654,7 +3000,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Task"
+                    "display_name": "Task",
+                    "control_type": "dropdown"
                 },
                 "strategy": {
                     "type": "string",
@@ -2662,7 +3009,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Strategy"
+                    "display_name": "Strategy",
+                    "control_type": "dropdown"
                 },
                 "metric": {
                     "type": "string",
@@ -2670,7 +3018,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Metric"
+                    "display_name": "Metric",
+                    "control_type": "text_input"
                 },
                 "subtask": {
                     "type": "string",
@@ -2678,7 +3027,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "tertiary",
-                    "display_name": "Subtask"
+                    "display_name": "Subtask",
+                    "control_type": "dropdown"
                 },
                 "max_new_tokens": {
                     "type": "integer",
@@ -2688,7 +3038,9 @@
                     "default": 8196,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Max New Tokens"
+                    "display_name": "Max New Tokens",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_k": {
                     "type": "integer",
@@ -2698,7 +3050,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-k",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_p": {
                     "type": "float",
@@ -2710,7 +3064,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-p",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "temperature": {
                     "type": "float",
@@ -2722,7 +3078,9 @@
                     "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
                     "visibility_tier": "advanced",
                     "display_name": "Temperature",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -2730,7 +3088,8 @@
                     "default": "",
                     "description": "Model identifier or path to pretrained model",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "namespace": {
                     "type": "string",
@@ -2739,7 +3098,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 }
             },
             "recipe_metadata_helpers": {
@@ -2786,7 +3150,12 @@
                     "description": "Custom model name",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Evaluation name"
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -2795,7 +3164,11 @@
                     "description": "S3 URI path to output model artifacts",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Output artifact location (S3 URI)"
+                    "display_name": "Output artifact location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "task": {
                     "type": "string",
@@ -2803,7 +3176,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Task"
+                    "display_name": "Task",
+                    "control_type": "dropdown"
                 },
                 "strategy": {
                     "type": "string",
@@ -2811,7 +3185,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Strategy"
+                    "display_name": "Strategy",
+                    "control_type": "dropdown"
                 },
                 "metric": {
                     "type": "string",
@@ -2819,7 +3194,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Metric"
+                    "display_name": "Metric",
+                    "control_type": "text_input"
                 },
                 "subtask": {
                     "type": "string",
@@ -2827,7 +3203,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "tertiary",
-                    "display_name": "Subtask"
+                    "display_name": "Subtask",
+                    "control_type": "dropdown"
                 },
                 "max_new_tokens": {
                     "type": "integer",
@@ -2837,7 +3214,9 @@
                     "default": 32768,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Max New Tokens"
+                    "display_name": "Max New Tokens",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_k": {
                     "type": "integer",
@@ -2847,7 +3226,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-k",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_p": {
                     "type": "float",
@@ -2859,7 +3240,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-p",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "temperature": {
                     "type": "float",
@@ -2871,7 +3254,9 @@
                     "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
                     "visibility_tier": "advanced",
                     "display_name": "Temperature",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -2879,7 +3264,8 @@
                     "default": "",
                     "description": "Model identifier or path to pretrained model",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "namespace": {
                     "type": "string",
@@ -2888,7 +3274,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 }
             },
             "recipe_metadata_helpers": {
@@ -2934,7 +3325,12 @@
                     "description": "Custom model name",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Evaluation name"
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -2943,7 +3339,11 @@
                     "description": "S3 URI path to output model artifacts",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Output artifact location (S3 URI)"
+                    "display_name": "Output artifact location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "task": {
                     "type": "string",
@@ -2951,7 +3351,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Task"
+                    "display_name": "Task",
+                    "control_type": "dropdown"
                 },
                 "strategy": {
                     "type": "string",
@@ -2959,7 +3360,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Strategy"
+                    "display_name": "Strategy",
+                    "control_type": "dropdown"
                 },
                 "metric": {
                     "type": "string",
@@ -2967,7 +3369,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Metric"
+                    "display_name": "Metric",
+                    "control_type": "text_input"
                 },
                 "max_new_tokens": {
                     "type": "integer",
@@ -2977,7 +3380,9 @@
                     "default": 8196,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Max New Tokens"
+                    "display_name": "Max New Tokens",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_k": {
                     "type": "integer",
@@ -2987,7 +3392,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-k",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_p": {
                     "type": "float",
@@ -2999,7 +3406,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-p",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "temperature": {
                     "type": "float",
@@ -3011,7 +3420,9 @@
                     "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
                     "visibility_tier": "advanced",
                     "display_name": "Temperature",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -3019,7 +3430,8 @@
                     "default": "",
                     "description": "Model identifier or path to pretrained model",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "namespace": {
                     "type": "string",
@@ -3028,7 +3440,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 }
             },
             "recipe_metadata_helpers": {
@@ -3080,7 +3497,12 @@
                     "description": "Custom model name",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Evaluation name"
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -3089,7 +3511,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Dataset"
+                    "display_name": "Dataset",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -3098,7 +3523,11 @@
                     "description": "S3 URI path to output model artifacts",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Output artifact location (S3 URI)"
+                    "display_name": "Output artifact location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "task": {
                     "type": "string",
@@ -3106,7 +3535,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Task"
+                    "display_name": "Task",
+                    "control_type": "dropdown"
                 },
                 "strategy": {
                     "type": "string",
@@ -3114,7 +3544,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Strategy"
+                    "display_name": "Strategy",
+                    "control_type": "dropdown"
                 },
                 "metric": {
                     "type": "string",
@@ -3122,7 +3553,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Metric"
+                    "display_name": "Metric",
+                    "control_type": "text_input"
                 },
                 "max_new_tokens": {
                     "type": "integer",
@@ -3132,7 +3564,9 @@
                     "default": 8196,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Max New Tokens"
+                    "display_name": "Max New Tokens",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_k": {
                     "type": "integer",
@@ -3142,7 +3576,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-k",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_p": {
                     "type": "float",
@@ -3154,7 +3590,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-p",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "temperature": {
                     "type": "float",
@@ -3166,14 +3604,17 @@
                     "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
                     "visibility_tier": "advanced",
                     "display_name": "Temperature",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "lambda_arn": {
                     "type": "string",
                     "required": true,
                     "default": "",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "lambda_type": {
                     "type": "string",
@@ -3184,7 +3625,8 @@
                     ],
                     "default": "rft",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -3192,7 +3634,8 @@
                     "default": "",
                     "description": "Model identifier or path to pretrained model",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "namespace": {
                     "type": "string",
@@ -3201,7 +3644,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 }
             },
             "recipe_metadata_helpers": {
@@ -3254,7 +3702,12 @@
                     "description": "Custom model name",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Evaluation name"
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -3263,7 +3716,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Dataset"
+                    "display_name": "Dataset",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -3272,7 +3728,11 @@
                     "description": "S3 URI path to output model artifacts",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Output artifact location (S3 URI)"
+                    "display_name": "Output artifact location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "task": {
                     "type": "string",
@@ -3280,7 +3740,8 @@
                     "default": "",
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Task"
+                    "display_name": "Task",
+                    "control_type": "dropdown"
                 },
                 "strategy": {
                     "type": "string",
@@ -3288,7 +3749,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Strategy"
+                    "display_name": "Strategy",
+                    "control_type": "dropdown"
                 },
                 "metric": {
                     "type": "string",
@@ -3296,7 +3758,8 @@
                     "default": "",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Metric"
+                    "display_name": "Metric",
+                    "control_type": "text_input"
                 },
                 "max_new_tokens": {
                     "type": "integer",
@@ -3306,7 +3769,9 @@
                     "default": 32768,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Max New Tokens"
+                    "display_name": "Max New Tokens",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_k": {
                     "type": "integer",
@@ -3316,7 +3781,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-k",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_p": {
                     "type": "float",
@@ -3328,7 +3795,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-p",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "temperature": {
                     "type": "float",
@@ -3340,14 +3809,17 @@
                     "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
                     "visibility_tier": "advanced",
                     "display_name": "Temperature",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "lambda_arn": {
                     "type": "string",
                     "required": true,
                     "default": "",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "lambda_type": {
                     "type": "string",
@@ -3358,7 +3830,8 @@
                     ],
                     "default": "rft",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
                 },
                 "preset_reward_function": {
                     "type": "string",
@@ -3371,7 +3844,8 @@
                     "description": "Preset reward function for RLVR",
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Metrics"
+                    "display_name": "Metrics",
+                    "control_type": "dropdown"
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -3379,7 +3853,8 @@
                     "default": "",
                     "description": "Model identifier or path to pretrained model",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "namespace": {
                     "type": "string",
@@ -3388,7 +3863,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 }
             },
             "recipe_metadata_helpers": {
@@ -3485,7 +3965,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "name": {
                     "type": "string",
@@ -3495,7 +3976,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -3504,7 +3990,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -3514,7 +4003,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -3530,7 +4023,8 @@
                     "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -3542,7 +4036,9 @@
                     "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
                     "visibility_tier": "primary",
                     "display_name": "Number of epochs",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "learning_rate": {
                     "type": "float",
@@ -3554,7 +4050,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "namespace": {
                     "type": "string",
@@ -3563,7 +4061,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -3575,7 +4078,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -3584,7 +4089,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -3593,7 +4099,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -3602,7 +4109,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 }
             },
             "recipe_metadata_helpers": {
@@ -3684,7 +4192,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "name": {
                     "type": "string",
@@ -3694,7 +4203,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -3703,7 +4217,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "validation_s3_path": {
                     "type": "string",
@@ -3712,7 +4229,10 @@
                     "description": "S3 URI path to validation dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Validation dataset location (S3 URI)"
+                    "display_name": "Validation dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -3722,7 +4242,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -3738,7 +4262,8 @@
                     "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "max_steps": {
                     "type": "integer",
@@ -3750,7 +4275,9 @@
                     "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
                     "visibility_tier": "advanced",
                     "display_name": "Max steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "learning_rate": {
                     "type": "float",
@@ -3762,7 +4289,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "namespace": {
                     "type": "string",
@@ -3771,7 +4300,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -3783,7 +4317,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -3792,7 +4328,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -3801,7 +4338,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -3810,7 +4348,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 }
             },
             "recipe_metadata_helpers": {
@@ -3879,7 +4418,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -3888,7 +4432,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -3898,7 +4445,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "reward_lambda_arn": {
                     "type": "string",
@@ -3906,7 +4457,8 @@
                     "default": "",
                     "description": "ARN of the Lambda function used for reward computation",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "replicas": {
                     "type": "integer",
@@ -3922,7 +4474,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -3934,7 +4487,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "max_steps": {
                     "type": "integer",
@@ -3954,7 +4509,9 @@
                     "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
                     "visibility_tier": "advanced",
                     "display_name": "Max steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "number_generation": {
                     "type": "integer",
@@ -3966,7 +4523,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Number generation",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -3981,7 +4540,8 @@
                     "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
                     "visibility_tier": "advanced",
                     "display_name": "Alpha value",
-                    "hint": "Select from available alpha values"
+                    "hint": "Select from available alpha values",
+                    "control_type": "dropdown"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -3993,7 +4553,8 @@
                     "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "max_length": {
                     "type": "integer",
@@ -4005,7 +4566,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Maximum length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "namespace": {
                     "type": "string",
@@ -4014,7 +4577,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "learning_rate_ratio": {
                     "type": "float",
@@ -4026,7 +4594,9 @@
                     "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
                     "visibility_tier": "advanced",
                     "display_name": "Learning rate ratio",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -4035,7 +4605,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -4044,7 +4615,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -4053,7 +4625,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 },
                 "save_steps": {
                     "type": "integer",
@@ -4065,7 +4638,9 @@
                     "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
                     "visibility_tier": "advanced",
                     "display_name": "Save steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -4129,7 +4704,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -4138,7 +4718,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "output_s3_path": {
                     "type": "string",
@@ -4148,7 +4731,11 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Output artifact location (S3 URI)",
-                    "hint": "Enter S3 URI path string"
+                    "hint": "Enter S3 URI path string",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+                    "placeholder": "s3://bucket-name/folder"
                 },
                 "replicas": {
                     "type": "integer",
@@ -4164,7 +4751,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Pod Replicas",
-                    "hint": "Select from available options"
+                    "hint": "Select from available options",
+                    "control_type": "dropdown"
                 },
                 "reward_lambda_arn": {
                     "type": "string",
@@ -4172,7 +4760,8 @@
                     "default": "",
                     "description": "ARN of the Lambda function used for reward computation",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -4184,7 +4773,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "max_steps": {
                     "type": "integer",
@@ -4204,7 +4795,9 @@
                     "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
                     "visibility_tier": "advanced",
                     "display_name": "Max steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -4216,7 +4809,8 @@
                     "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "max_length": {
                     "type": "integer",
@@ -4228,7 +4822,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Maximum length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "number_generation": {
                     "type": "integer",
@@ -4240,7 +4836,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Number generation",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "namespace": {
                     "type": "string",
@@ -4249,7 +4847,12 @@
                     "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Kubernetes Namespace"
+                    "display_name": "Kubernetes Namespace",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+                    "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "max_context_length": {
                     "type": "integer",
@@ -4261,7 +4864,9 @@
                     "description": "Maximum sequence length for training inputs. Determines which instance types will be used based on memory requirements.",
                     "visibility_tier": "primary",
                     "display_name": "Maximum Context Length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -4270,7 +4875,8 @@
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "MLflow Resource"
+                    "display_name": "MLflow Resource",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -4279,7 +4885,8 @@
                     "description": "MLflow Groups related training runs for comparison. Uses the custom model name by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment name"
+                    "display_name": "Experiment name",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -4288,7 +4895,8 @@
                     "description": "Identifies this specific training run within the experiment. Autogenerated by default.",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Experiment run"
+                    "display_name": "Experiment run",
+                    "control_type": "text_input"
                 },
                 "save_steps": {
                     "type": "integer",
@@ -4300,7 +4908,9 @@
                     "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
                     "visibility_tier": "advanced",
                     "display_name": "Save steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -4359,7 +4969,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -4368,7 +4983,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "reward_lambda_arn": {
                     "type": "string",
@@ -4376,7 +4994,8 @@
                     "default": "",
                     "description": "ARN of the Lambda function used for reward computation",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -4388,7 +5007,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "max_steps": {
                     "type": "integer",
@@ -4408,7 +5029,9 @@
                     "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
                     "visibility_tier": "advanced",
                     "display_name": "Max steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -4423,7 +5046,8 @@
                     "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
                     "visibility_tier": "advanced",
                     "display_name": "Alpha value",
-                    "hint": "Select from available alpha values"
+                    "hint": "Select from available alpha values",
+                    "control_type": "dropdown"
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -4435,7 +5059,8 @@
                     "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "max_length": {
                     "type": "integer",
@@ -4447,7 +5072,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Maximum length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "learning_rate_ratio": {
                     "type": "float",
@@ -4459,7 +5086,9 @@
                     "description": "Scaling factor that controls the relative learning rate between LoRA adapter parameters and base model parameters.",
                     "visibility_tier": "advanced",
                     "display_name": "Learning rate ratio",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "save_steps": {
                     "type": "integer",
@@ -4471,7 +5100,9 @@
                     "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
                     "visibility_tier": "advanced",
                     "display_name": "Save steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -4528,7 +5159,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -4537,7 +5173,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Training dataset location (S3 URI)"
+                    "display_name": "Training dataset location (S3 URI)",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "reward_lambda_arn": {
                     "type": "string",
@@ -4545,7 +5184,8 @@
                     "default": "",
                     "description": "ARN of the Lambda function used for reward computation",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -4557,7 +5197,9 @@
                     "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -4569,7 +5211,8 @@
                     "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "max_length": {
                     "type": "integer",
@@ -4581,7 +5224,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Maximum length",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "max_steps": {
                     "type": "integer",
@@ -4601,7 +5246,9 @@
                     "description": "Maximum number of optimizer steps. When set, training stops after this many steps regardless of epochs remaining.",
                     "visibility_tier": "advanced",
                     "display_name": "Max steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "save_steps": {
                     "type": "integer",
@@ -4613,7 +5260,9 @@
                     "description": "How often to save model checkpoints, measured in optimizer steps. A value of 0 saves only at the end of training.",
                     "visibility_tier": "advanced",
                     "display_name": "Save steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {

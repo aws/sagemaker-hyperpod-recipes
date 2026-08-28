@@ -49,14 +49,20 @@
                     "description": "Custom model name",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Evaluation name"
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "base_model_name": {
                     "type": "string",
                     "default": "",
                     "required": true,
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -64,7 +70,8 @@
                     "required": true,
                     "description": "Model identifier or path to pretrained model",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "data_s3_path": {
                     "type": "string",
@@ -73,7 +80,10 @@
                     "description": "S3 URI path to training dataset",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Dataset"
+                    "display_name": "Dataset",
+                    "control_type": "s3_uri_input",
+                    "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+                    "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder/filename.ext"
                 },
                 "instance_count": {
                     "type": "integer",
@@ -83,7 +93,9 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "display_name": "Instance count",
-                    "hint": "Only choose as many instances as needed for your training"
+                    "hint": "Only choose as many instances as needed for your training",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "output_path": {
                     "type": "string",
@@ -91,7 +103,8 @@
                     "required": true,
                     "description": "Local output path for model artifacts",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "eval_tensorboard_results_dir": {
                     "type": "string",
@@ -99,7 +112,8 @@
                     "required": false,
                     "description": "Directory for evaluation TensorBoard results",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_id": {
                     "type": "string",
@@ -107,7 +121,8 @@
                     "required": false,
                     "description": "MLflow run ID for resuming or linking to an existing run",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -115,7 +130,8 @@
                     "required": false,
                     "description": "MLflow experiment name for grouping runs",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -123,7 +139,8 @@
                     "required": false,
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -131,7 +148,8 @@
                     "required": false,
                     "description": "Display name for the MLflow run",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "task": {
                     "type": "string",
@@ -150,7 +168,8 @@
                     "required": true,
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Task"
+                    "display_name": "Task",
+                    "control_type": "dropdown"
                 },
                 "strategy": {
                     "type": "string",
@@ -164,7 +183,8 @@
                     "required": false,
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Strategy"
+                    "display_name": "Strategy",
+                    "control_type": "dropdown"
                 },
                 "kms_key_id": {
                     "type": "string",
@@ -172,7 +192,8 @@
                     "required": false,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Encryption KMS key"
+                    "display_name": "Encryption KMS key",
+                    "control_type": "kms_key_input"
                 },
                 "preset_reward_function": {
                     "type": "string",
@@ -185,7 +206,8 @@
                     "description": "Preset reward function for RLVR",
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Metrics"
+                    "display_name": "Metrics",
+                    "control_type": "dropdown"
                 },
                 "evaluation_metric": {
                     "default": "",
@@ -198,7 +220,8 @@
                     "required": false,
                     "type": "string",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
                 },
                 "subtask": {
                     "type": "string",
@@ -299,7 +322,8 @@
                     "required": false,
                     "category": "hyperparameter",
                     "visibility_tier": "tertiary",
-                    "display_name": "Subtask"
+                    "display_name": "Subtask",
+                    "control_type": "dropdown"
                 },
                 "max_new_tokens": {
                     "type": "integer",
@@ -307,7 +331,9 @@
                     "required": false,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Max New Tokens"
+                    "display_name": "Max New Tokens",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_k": {
                     "type": "integer",
@@ -317,7 +343,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-k",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "top_p": {
                     "type": "number",
@@ -327,7 +355,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Top-p",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "temperature": {
                     "type": "integer",
@@ -337,7 +367,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Temperature",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "max_model_len": {
                     "type": "integer",
@@ -345,21 +377,25 @@
                     "required": false,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Max Model Len"
+                    "display_name": "Max Model Len",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "lambda_arn": {
                     "type": "string",
                     "default": "",
                     "required": false,
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "postprocessing": {
                     "type": "boolean",
                     "default": false,
                     "required": false,
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
                 },
                 "aggregation": {
                     "type": "string",
@@ -373,7 +409,8 @@
                     "default": "",
                     "required": false,
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "dropdown"
                 }
             },
             "recipe_metadata_helpers": {
@@ -427,14 +464,20 @@
                     "description": "Custom model name",
                     "category": "system",
                     "visibility_tier": "tertiary",
-                    "display_name": "Evaluation name"
+                    "display_name": "Evaluation name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "base_model_name": {
                     "type": "string",
                     "default": "",
                     "required": true,
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "judge_model_id": {
                     "type": "string",
@@ -443,21 +486,24 @@
                     "description": "Bedrock model ID used as the judge for RLAIF evaluation",
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Evaluator model"
+                    "display_name": "Evaluator model",
+                    "control_type": "text_input"
                 },
                 "inference_data_s3_path": {
                     "type": "string",
                     "default": "",
                     "required": true,
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "s3_uri_input"
                 },
                 "base_model_inference_data_s3_path": {
                     "type": "string",
                     "default": "",
                     "required": false,
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "s3_uri_input"
                 },
                 "output_path": {
                     "type": "string",
@@ -465,7 +511,8 @@
                     "required": false,
                     "description": "Local output path for model artifacts",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "eval_tensorboard_results_dir": {
                     "type": "string",
@@ -473,7 +520,8 @@
                     "required": false,
                     "description": "Directory for evaluation TensorBoard results",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "kms_key_id": {
                     "type": "string",
@@ -481,7 +529,8 @@
                     "required": false,
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
-                    "display_name": "Encryption KMS key"
+                    "display_name": "Encryption KMS key",
+                    "control_type": "kms_key_input"
                 },
                 "mlflow_run_id": {
                     "type": "string",
@@ -489,7 +538,8 @@
                     "required": false,
                     "description": "MLflow run ID for resuming or linking to an existing run",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "mlflow_experiment_name": {
                     "type": "string",
@@ -497,7 +547,8 @@
                     "required": false,
                     "description": "MLflow experiment name for grouping runs",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "mlflow_tracking_uri": {
                     "type": "string",
@@ -505,7 +556,8 @@
                     "required": false,
                     "description": "MLflow tracking server URI for experiment logging",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "mlflow_run_name": {
                     "type": "string",
@@ -513,7 +565,8 @@
                     "required": false,
                     "description": "Display name for the MLflow run",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "llmaj_metrics": {
                     "type": "string",
@@ -538,7 +591,8 @@
                     "required": false,
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Metrics"
+                    "display_name": "Metrics",
+                    "control_type": "dropdown"
                 },
                 "custom_metrics": {
                     "type": "string",
@@ -546,7 +600,8 @@
                     "required": false,
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
-                    "display_name": "Custom metrics"
+                    "display_name": "Custom metrics",
+                    "control_type": "text_input"
                 }
             },
             "recipe_metadata_helpers": {

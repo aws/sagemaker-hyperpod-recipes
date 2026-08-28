@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Nemotron 3 Super 120B GRPO RLVR Fine-Tuning with Megatron LoRA
-version: 1.1.4
+version: 1.1.5
 instance_types:
   - ml.p5.48xlarge
 

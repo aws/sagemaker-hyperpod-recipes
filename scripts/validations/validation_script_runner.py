@@ -1,12 +1,9 @@
 # How to run this script:-
-# Script should be run from inside its current folder
-# The default venv created as a part of the recipes package should contain all the required
-# packages.
 # Update common_config.yaml file with details specific to your run
 # In the run command the path to the recipe file or folder should follow a similar
 # format as the ones in the launcher scripts i.e start the path directly from inside the
 # recipes_collection/recipes/ folder like in the example below :-
-# Example run command :- python scripts/validations/run_validation.py --fileList fine-tuning/llama/filename
+# Example run command :- uv run poe validate-recipes --fileList fine-tuning/llama/filename
 
 import argparse
 import copy
@@ -15,10 +12,7 @@ import math
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from pathlib import Path
 
-# Add parent directories to path for imports
-sys.path.append(str(Path(__file__).parent.parent.parent))
 from omegaconf import OmegaConf
 
 from scripts.validations.job_recorder import JobRecorder
@@ -321,7 +315,8 @@ def run_validation_for_all_instance_types(cfg, fileList=None, save_model_files=T
     return all_results
 
 
-if __name__ == "__main__":
+def main():
+    """CLI entry point for recipe validation."""
     parser = argparse.ArgumentParser(description="Script for validating hyperpod recipes")
     parser = build_argument_parser(parser)
     args = parser.parse_args()
@@ -503,3 +498,7 @@ if __name__ == "__main__":
     # Cleans resources no longer needed like model files etc
     if not args.save_model_files:
         cleanup(cfg.models.model_parent_folder)
+
+
+if __name__ == "__main__":
+    main()

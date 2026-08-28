@@ -159,6 +159,12 @@ def test_evaluation_sm_jobs_metadata_generation(mock_load_hosting):
     assert "InstanceTypes" in metadata
     assert "Hardware" in metadata
 
+    # Version is published to JumpStart from the single source of truth in
+    # constants (the sm_jobs path flows through the template processor).
+    from launcher.evaluation.constants import EVAL_RECIPE_VERSION
+
+    assert metadata["Versions"] == [EVAL_RECIPE_VERSION]
+
     # Check recipe override parameters
     assert "recipe_override_parameters" in launch_data
     params = launch_data["recipe_override_parameters"]

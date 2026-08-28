@@ -69,7 +69,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_path": {
                     "type": "string",
@@ -77,7 +82,8 @@
                     "default": "",
                     "description": "File path to training dataset",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -85,7 +91,8 @@
                     "default": "",
                     "description": "Model identifier or path to pretrained model",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "output_path": {
                     "type": "string",
@@ -93,7 +100,8 @@
                     "default": "",
                     "description": "Local output path for model artifacts",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "adam_beta1": {
                     "type": "float",
@@ -105,7 +113,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Adam beta1",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.01
                 },
                 "adam_beta2": {
                     "type": "float",
@@ -117,7 +127,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Adam beta2",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.01
                 },
                 "adam_eps": {
                     "type": "float",
@@ -127,7 +139,9 @@
                     "default": 1e-12,
                     "description": "Small constant added to the denominator for numerical stability in Adam's update rule.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "adam_weight_decay": {
                     "type": "float",
@@ -137,7 +151,9 @@
                     "default": 0.0,
                     "description": "Decoupled weight-decay coefficient (AdamW-style).",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "adam_grad_clip_norm": {
                     "type": "float",
@@ -147,7 +163,9 @@
                     "default": 0.0,
                     "description": "Maximum global gradient norm.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "advantage_method": {
                     "type": "string",
@@ -168,7 +186,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Advantage method",
-                    "hint": "Select from available advantage methods"
+                    "hint": "Select from available advantage methods",
+                    "control_type": "dropdown"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -180,7 +199,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "lora_rank": {
                     "type": "integer",
@@ -192,7 +213,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "LoRA rank",
-                    "hint": "Select from available rank values"
+                    "hint": "Select from available rank values",
+                    "control_type": "dropdown"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -204,7 +226,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Alpha value",
-                    "hint": "Select from available alpha values"
+                    "hint": "Select from available alpha values",
+                    "control_type": "dropdown"
                 },
                 "lora_plus_lr_ratio": {
                     "type": "float",
@@ -216,7 +239,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "LoRA+ learning rate ratio",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "loss_fn": {
                     "type": "string",
@@ -231,7 +256,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Loss function",
-                    "hint": "Select from available loss functions"
+                    "hint": "Select from available loss functions",
+                    "control_type": "dropdown"
                 },
                 "rollout_max_concurrency": {
                     "type": "integer",
@@ -241,7 +267,9 @@
                     "default": 96,
                     "description": "The max in-flight rollout processes can happen in parallel.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "rollout_timeout": {
                     "type": "float",
@@ -251,7 +279,9 @@
                     "default": 600,
                     "description": "Failure handling: time after which we treat as the rollout failure.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "rollout_max_retries": {
                     "type": "integer",
@@ -261,7 +291,9 @@
                     "default": 3,
                     "description": "Number of retry attempts for failed rollouts.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -273,7 +305,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Number of epochs",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "sampling_max_tokens": {
                     "type": "integer",
@@ -283,7 +317,9 @@
                     "default": 4096,
                     "description": "Max tokens the model can generate per turn during rollout.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "max_steps": {
                     "type": "integer",
@@ -295,7 +331,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Max steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "max_steps_off_policy": {
                     "type": "integer",
@@ -305,7 +343,9 @@
                     "default": 3,
                     "description": "Staleness threshold in asynchronous training. When 0, it is synchronous training.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -321,7 +361,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "group_size": {
                     "type": "integer",
@@ -333,7 +374,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Group size",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "temperature": {
                     "type": "float",
@@ -345,7 +388,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Temperature",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "save_every": {
                     "type": "integer",
@@ -357,7 +402,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Save every",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "val_every": {
                     "type": "integer",
@@ -367,7 +414,9 @@
                     "default": 5,
                     "description": "Eval interval (steps).",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "sampling_top_p": {
                     "type": "float",
@@ -377,7 +426,9 @@
                     "default": 0.95,
                     "description": "Nucleus-sampling cutoff. Samples only from the smallest set of tokens whose cumulative probability \u2265 top_p.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "pass_k_values": {
                     "type": "array",
@@ -392,7 +443,8 @@
                     ],
                     "description": "List of k values for computing pass@k metrics.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "success_threshold": {
                     "type": "float",
@@ -400,7 +452,9 @@
                     "default": 1.0,
                     "description": "Reward threshold for counting a rollout as 'successful'.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "clip_low_threshold": {
                     "type": "float",
@@ -410,7 +464,9 @@
                     "default": 0.8,
                     "description": "Lower bound for clipping the policy probability ratio \u03c0_new/\u03c0_old in the PPO-style surrogate loss.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "clip_high_threshold": {
                     "type": "float",
@@ -420,7 +476,9 @@
                     "default": 1.2,
                     "description": "Upper bound for clipping the policy probability ratio in the loss.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 }
             },
             "recipe_metadata_helpers": {
@@ -493,7 +551,12 @@
                     "category": "system",
                     "visibility_tier": "tertiary",
                     "hint": "A training job with the name {name} will be created",
-                    "display_name": "Custom model name"
+                    "display_name": "Custom model name",
+                    "control_type": "text_input",
+                    "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+                    "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+                    "min_length": 1,
+                    "max_input_length": 63
                 },
                 "data_path": {
                     "type": "string",
@@ -501,7 +564,8 @@
                     "default": "",
                     "description": "File path to training dataset",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "model_name_or_path": {
                     "type": "string",
@@ -509,7 +573,8 @@
                     "default": "",
                     "description": "Model identifier or path to pretrained model",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "output_path": {
                     "type": "string",
@@ -517,7 +582,8 @@
                     "default": "",
                     "description": "Local output path for model artifacts",
                     "category": "system",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "adam_beta1": {
                     "type": "float",
@@ -529,7 +595,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Adam beta1",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.01
                 },
                 "adam_beta2": {
                     "type": "float",
@@ -541,7 +609,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Adam beta2",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.01
                 },
                 "adam_eps": {
                     "type": "float",
@@ -551,7 +621,9 @@
                     "default": 1e-08,
                     "description": "Small constant added to the denominator for numerical stability in Adam's update rule.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "adam_weight_decay": {
                     "type": "float",
@@ -561,7 +633,9 @@
                     "default": 0.0,
                     "description": "Decoupled weight-decay coefficient (AdamW-style).",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "adam_grad_clip_norm": {
                     "type": "float",
@@ -571,7 +645,9 @@
                     "default": 1.0,
                     "description": "Maximum global gradient norm.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "advantage_method": {
                     "type": "string",
@@ -592,7 +668,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Advantage method",
-                    "hint": "Select from available advantage methods"
+                    "hint": "Select from available advantage methods",
+                    "control_type": "dropdown"
                 },
                 "learning_rate": {
                     "type": "float",
@@ -613,7 +690,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Learning rate",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.0001
                 },
                 "lora_rank": {
                     "type": "integer",
@@ -625,7 +704,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "LoRA rank",
-                    "hint": "Select from available rank values"
+                    "hint": "Select from available rank values",
+                    "control_type": "dropdown"
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -637,7 +717,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Alpha value",
-                    "hint": "Select from available alpha values"
+                    "hint": "Select from available alpha values",
+                    "control_type": "dropdown"
                 },
                 "loss_fn": {
                     "type": "string",
@@ -652,7 +733,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Loss function",
-                    "hint": "Select from available loss functions"
+                    "hint": "Select from available loss functions",
+                    "control_type": "dropdown"
                 },
                 "rollout_max_concurrency": {
                     "type": "integer",
@@ -662,7 +744,9 @@
                     "default": 96,
                     "description": "The max in-flight rollout processes can happen in parallel.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "rollout_timeout": {
                     "type": "float",
@@ -672,7 +756,9 @@
                     "default": 600,
                     "description": "Failure handling: time after which we treat as the rollout failure.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "rollout_max_retries": {
                     "type": "integer",
@@ -682,7 +768,9 @@
                     "default": 3,
                     "description": "Number of retry attempts for failed rollouts.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "max_epochs": {
                     "type": "integer",
@@ -694,7 +782,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Number of epochs",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "sampling_max_tokens": {
                     "type": "integer",
@@ -704,7 +794,9 @@
                     "default": 4096,
                     "description": "Max tokens the model can generate per turn during rollout.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "max_steps": {
                     "type": "integer",
@@ -716,7 +808,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Max steps",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "max_steps_off_policy": {
                     "type": "integer",
@@ -726,7 +820,9 @@
                     "default": 3,
                     "description": "Staleness threshold in asynchronous training. When 0, it is synchronous training.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "global_batch_size": {
                     "type": "integer",
@@ -741,7 +837,8 @@
                     "category": "hyperparameter",
                     "visibility_tier": "primary",
                     "display_name": "Batch size",
-                    "hint": "Choose from the available batch size options"
+                    "hint": "Choose from the available batch size options",
+                    "control_type": "dropdown"
                 },
                 "group_size": {
                     "type": "integer",
@@ -753,7 +850,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Group size",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "temperature": {
                     "type": "float",
@@ -765,7 +864,9 @@
                     "category": "hyperparameter",
                     "visibility_tier": "advanced",
                     "display_name": "Temperature",
-                    "hint": "Must be a value between {min} and {max}"
+                    "hint": "Must be a value between {min} and {max}",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "val_every": {
                     "type": "integer",
@@ -775,7 +876,9 @@
                     "default": 10,
                     "description": "Eval interval (steps).",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 1
                 },
                 "sampling_top_p": {
                     "type": "float",
@@ -785,7 +888,9 @@
                     "default": 1.0,
                     "description": "Nucleus-sampling cutoff. Samples only from the smallest set of tokens whose cumulative probability \u2265 top_p.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "pass_k_values": {
                     "type": "array",
@@ -800,7 +905,8 @@
                     ],
                     "description": "List of k values for computing pass@k metrics.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "text_input"
                 },
                 "success_threshold": {
                     "type": "float",
@@ -808,7 +914,9 @@
                     "default": 1.0,
                     "description": "Reward threshold for counting a rollout as 'successful'.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "clip_low_threshold": {
                     "type": "float",
@@ -818,7 +926,9 @@
                     "default": 0.8,
                     "description": "Lower bound for clipping the policy probability ratio \u03c0_new/\u03c0_old in the PPO-style surrogate loss.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 },
                 "clip_high_threshold": {
                     "type": "float",
@@ -828,7 +938,9 @@
                     "default": 1.2,
                     "description": "Upper bound for clipping the policy probability ratio in the loss.",
                     "category": "hyperparameter",
-                    "visibility_tier": "tertiary"
+                    "visibility_tier": "tertiary",
+                    "control_type": "number_input",
+                    "step": 0.1
                 }
             },
             "recipe_metadata_helpers": {

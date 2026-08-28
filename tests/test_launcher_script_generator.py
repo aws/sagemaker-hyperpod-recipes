@@ -293,7 +293,7 @@ class TestLauncherScriptValidation:
         2. Generator updated but scripts not regenerated
         3. New recipes added without running generator
 
-        Fix: python scripts/launcher_scripts_generator/generate_launcher_scripts.py
+        Fix: uv run poe generate-launcher-scripts
         Or:  GOLDEN_TEST_WRITE=true pytest tests/test_launcher_script_generator.py
         """
         orchestrator = LauncherScriptGenerationOrchestrator()
@@ -317,9 +317,9 @@ class TestLauncherScriptValidation:
             error_lines.extend(
                 [
                     "",
-                    "To fix: python scripts/launcher_scripts_generator/generate_launcher_scripts.py",
+                    "To fix: uv run poe generate-launcher-scripts",
                     "Or:     GOLDEN_TEST_WRITE=true pytest tests/test_launcher_script_generator.py",
-                    "To see diffs: python scripts/launcher_scripts_generator/generate_launcher_scripts.py --check --diff",
+                    "To see diffs: uv run poe generate-launcher-scripts --check --diff",
                 ]
             )
             pytest.fail("\n".join(error_lines))

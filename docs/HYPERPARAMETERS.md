@@ -176,8 +176,6 @@ This document contains the list of parameters that can be overridden when using 
 
 ## VERL (Versatile Reinforcement Learning)
 
-> **Note:** For verl recipes, `max_prompt_length`, `max_response_length`, and `dataset_max_len` are capped at the recipe's supported sequence length (derived from the recipe's per-GPU token budget), not the static upper bound. The effective maximum is per-recipe; the ranges below show it as "recipe sequence length".
-
 ### GRPO RLAIF (LoRA)
 
 | Parameter | Type | Required | Range / Values | Description |
@@ -195,8 +193,6 @@ This document contains the list of parameters that can be overridden when using 
 | `lora_rank` | integer | Yes | 8, 16, 32, 64, 128 | Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory. |
 | `lr_warmup_steps_ratio` | float | Yes | 0–1 | Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training. |
 | `max_epochs` | integer | Yes | 1–100 | Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting. |
-| `max_prompt_length` | integer | Yes | 512–recipe sequence length | Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum. |
-| `max_response_length` | integer | Yes | 100–recipe sequence length | Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum. |
 | `min_lr` | float | Yes | 0.0–1.0 | Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps. |
 | `mlflow_run_id` | string | No | — | MLflow run ID for resuming or linking to an existing run |
 | `mlflow_tracking_uri` | string | No | — | MLflow tracking server URI for experiment logging |
@@ -230,8 +226,6 @@ This document contains the list of parameters that can be overridden when using 
 | `lora_rank` | integer | Yes | 8, 16, 32, 64, 128 | Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory. |
 | `lr_warmup_steps_ratio` | float | Yes | 0–1 | Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training. |
 | `max_epochs` | integer | Yes | 1–100 | Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting. |
-| `max_prompt_length` | integer | Yes | 512–recipe sequence length | Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum. |
-| `max_response_length` | integer | Yes | 100–recipe sequence length | Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum. |
 | `min_lr` | float | Yes | 0.0–1.0 | Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps. |
 | `mlflow_run_id` | string | No | — | MLflow run ID for resuming or linking to an existing run |
 | `mlflow_tracking_uri` | string | No | — | MLflow tracking server URI for experiment logging |
@@ -267,8 +261,6 @@ This document contains the list of parameters that can be overridden when using 
 | `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4). |
 | `lr_warmup_steps_ratio` | float | Yes | 0–1 | Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training. |
 | `max_epochs` | integer | Yes | 1–100 | Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting. |
-| `max_prompt_length` | integer | Yes | 512–recipe sequence length | Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum. |
-| `max_response_length` | integer | Yes | 100–recipe sequence length | Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum. |
 | `min_lr` | float | Yes | 0.0–1.0 | Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps. |
 | `mlflow_run_id` | string | No | — | MLflow run ID for resuming or linking to an existing run |
 | `mlflow_tracking_uri` | string | No | — | MLflow tracking server URI for experiment logging |
@@ -292,7 +284,6 @@ This document contains the list of parameters that can be overridden when using 
 | Parameter | Type | Required | Range / Values | Description |
 |-----|-----|-----|-----|-----|
 | `data_path` | string | Yes | — | File path to training dataset |
-| `dataset_max_len` | integer | Yes | 256–recipe sequence length | Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory. |
 | `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory. |
 | `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4). |
 | `lora_alpha` | integer | Yes | 16, 32, 64, 128, 256 | LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank. |
@@ -319,7 +310,6 @@ This document contains the list of parameters that can be overridden when using 
 | Parameter | Type | Required | Range / Values | Description |
 |-----|-----|-----|-----|-----|
 | `data_path` | string | Yes | — | File path to training dataset |
-| `dataset_max_len` | integer | Yes | 256–recipe sequence length | Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory. |
 | `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory. |
 | `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4). |
 | `lr_scheduler` | string | Yes | cosine, constant | Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero. |
@@ -352,8 +342,6 @@ This document contains the list of parameters that can be overridden when using 
 | `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4). |
 | `lr_warmup_steps_ratio` | float | Yes | 0–1 | Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training. |
 | `max_epochs` | integer | Yes | 1–100 | Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting. |
-| `max_prompt_length` | integer | Yes | 512–recipe sequence length | Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum. |
-| `max_response_length` | integer | Yes | 100–recipe sequence length | Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum. |
 | `min_lr` | float | Yes | 0.0–1.0 | Lowest learning rate the scheduler decays to during training. Prevents the learning rate from dropping to zero in later steps. |
 | `mlflow_run_id` | string | No | — | MLflow run ID for resuming or linking to an existing run |
 | `mlflow_tracking_uri` | string | No | — | MLflow tracking server URI for experiment logging |
@@ -380,7 +368,6 @@ This document contains the list of parameters that can be overridden when using 
 |-----|-----|-----|-----|-----|
 | `adam_beta` | float | Yes | 1e-03–1.0 | KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation. |
 | `data_path` | string | Yes | — | File path to training dataset |
-| `dataset_max_len` | integer | Yes | 256–recipe sequence length | Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory. |
 | `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory. |
 | `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. |
 | `lora_alpha` | integer | Yes | 16, 32, 64, 128, 256 | LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank. |
@@ -408,7 +395,6 @@ This document contains the list of parameters that can be overridden when using 
 |-----|-----|-----|-----|-----|
 | `adam_beta` | float | Yes | 1e-03–1.0 | KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation. |
 | `data_path` | string | Yes | — | File path to training dataset |
-| `dataset_max_len` | integer | Yes | 256–recipe sequence length | Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory. |
 | `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory. |
 | `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. |
 | `lr_scheduler` | string | Yes | cosine, constant | Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve. |

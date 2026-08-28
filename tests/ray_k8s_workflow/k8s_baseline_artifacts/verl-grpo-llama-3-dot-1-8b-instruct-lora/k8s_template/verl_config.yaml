@@ -160,7 +160,7 @@ actor_rollout_ref:
       use_inference_chat_template: false
     'n': '{{rollout_n}}'
     name: vllm
-    prompt_length: '{{max_prompt_length}}'
+    prompt_length: 512
     response_length: 1024
     temperature: '{{rollout_temperature}}'
     tensor_model_parallel_size: 2
@@ -277,8 +277,8 @@ data:
   filter_overlong_prompts: true
   filter_overlong_prompts_workers: 1
   image_key: images
-  max_prompt_length: '{{max_prompt_length}}'
-  max_response_length: '{{max_response_length}}'
+  max_prompt_length: 512
+  max_response_length: 1024
   prompt_key: prompt
   return_full_prompt: false
   return_multi_modal_inputs: true

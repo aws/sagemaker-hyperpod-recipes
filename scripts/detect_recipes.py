@@ -4,13 +4,11 @@ Compares recipes in the PR branch against the base branch.
 Filters out non-functional changes (dataset paths, model paths, etc.).
 """
 
+import os
 import subprocess
-import sys
-from pathlib import Path
 
 import yaml
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from utils.recipe_diff import is_functional_change
 
 RECIPES_PREFIX = "recipes_collection/recipes"
@@ -83,11 +81,13 @@ def detect_recipes(base_branch="main", include_modified=True):
     return functional
 
 
-if __name__ == "__main__":  # pragma: no cover
-    import os
-
+def main():  # pragma: no cover
     base = os.environ.get("BASE_BRANCH", "main")
     recipes = detect_recipes(base)
     print(f"Detected {len(recipes)} recipe(s) with functional changes:")
     for r in recipes:
         print(f"  {r}")
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

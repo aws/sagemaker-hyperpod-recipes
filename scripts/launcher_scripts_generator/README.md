@@ -6,13 +6,13 @@ Generates shell scripts for launching training jobs from recipe YAML files.
 
 ```bash
 # Generate all launcher scripts
-python -m scripts.launcher_scripts_generator.generate_launcher_scripts
+uv run poe generate-launcher-scripts
 
 # Check mode (exits non-zero if files would change, like formatter --check)
-python -m scripts.launcher_scripts_generator.generate_launcher_scripts --check
+uv run poe generate-launcher-scripts --check
 
 # Check with diffs shown
-python -m scripts.launcher_scripts_generator.generate_launcher_scripts --check --diff
+uv run poe generate-launcher-scripts --check --diff
 ```
 
 ## How It Works

@@ -8,9 +8,9 @@ Container data is sourced from *_regional_parameters.json files under
 launcher/recipe_templatization/.
 
 Usage:
-    python scripts/generate_containers_doc.py           # Generate docs/CONTAINERS.md
-    python scripts/generate_containers_doc.py --check   # Validate docs/CONTAINERS.md is up-to-date
-    python scripts/generate_containers_doc.py --check --diff  # Show what changed
+    uv run poe generate-containers-doc           # Generate docs/CONTAINERS.md
+    uv run poe generate-containers-doc --check   # Validate docs/CONTAINERS.md is up-to-date
+    uv run poe generate-containers-doc --check --diff  # Show what changed
 """
 
 import argparse
@@ -21,10 +21,6 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-# Import new utility
 from hyperpod_recipes import list_recipes_by_model
 
 # Import helpers from recipes doc generator

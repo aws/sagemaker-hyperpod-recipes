@@ -31,16 +31,15 @@ ruamel.yaml (only the redundant keys are surgically removed).
 
 Usage:
     # Dry-run (default): report what would be pruned, change nothing.
-    python scripts/hydra_prune.py
+    uv run poe hydra-prune
 
     # Apply the pruning to the source files.
-    python scripts/hydra_prune.py --write
+    uv run poe hydra-prune --write
 """
 
 import argparse
 import io
 import os
-import sys
 import tempfile
 import time
 from concurrent.futures import ProcessPoolExecutor
@@ -49,12 +48,6 @@ from pathlib import Path
 import yaml
 from omegaconf import OmegaConf
 from ruamel.yaml import YAML
-
-# Add parent directory to path to import hyperpod_recipes (mirrors
-# generate_resolved_recipes.py so both tools share the same import behavior).
-_SCRIPT_DIR = Path(__file__).resolve().parent
-_ROOT_DIR = _SCRIPT_DIR.parent.parent
-sys.path.insert(0, str(_ROOT_DIR))
 
 from hyperpod_recipes import list_recipes
 from hyperpod_recipes.recipe import RECIPES_DIR, Recipe
@@ -261,8 +254,7 @@ def prune_recipes(write=False):
         print(f"Recipes skipped by validation gate: {len(gate_failures)}")
     if write:
         print(
-            "\nDone. Run `python scripts/generate_resolved_recipes.py --check` to confirm "
-            "the resolved output is unchanged."
+            "\nDone. Run `uv run poe generate-resolved-recipes --check` to confirm " "the resolved output is unchanged."
         )
     else:
         print("\nDry-run only. Re-run with --write to apply.")

@@ -59,7 +59,9 @@
       "max": 100000,
       "category": "hyperparameter",
       "visibility_tier": "advanced",
-      "display_name": "Max New Tokens"
+      "display_name": "Max New Tokens",
+      "control_type": "number_input",
+      "step": 1
     },
     "metric": {
       "type": "string",
@@ -67,7 +69,8 @@
       "default": "accuracy",
       "category": "system",
       "visibility_tier": "tertiary",
-      "display_name": "Metric"
+      "display_name": "Metric",
+      "control_type": "text_input"
     },
     "model_name_or_path": {
       "type": "string",
@@ -75,7 +78,8 @@
       "default": "nova-micro/prod",
       "description": "Model identifier or path to pretrained model",
       "category": "system",
-      "visibility_tier": "tertiary"
+      "visibility_tier": "tertiary",
+      "control_type": "text_input"
     },
     "name": {
       "type": "string",
@@ -84,7 +88,12 @@
       "description": "Custom model name",
       "category": "system",
       "visibility_tier": "tertiary",
-      "display_name": "Evaluation name"
+      "display_name": "Evaluation name",
+      "control_type": "text_input",
+      "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
+      "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+      "min_length": 1,
+      "max_input_length": 63
     },
     "namespace": {
       "type": "string",
@@ -93,7 +102,12 @@
       "description": "Namespace for HyperPod cluster resources (default: kubeflow)",
       "category": "hyperparameter",
       "visibility_tier": "advanced",
-      "display_name": "Kubernetes Namespace"
+      "display_name": "Kubernetes Namespace",
+      "control_type": "text_input",
+      "regex_pattern": "^[a-z0-9]([a-z0-9-]{0,251}[a-z0-9])?$",
+      "invalid_format_error": "Please enter a valid namespace with only alphanumeric characters and hyphens and should be in lowercase",
+      "min_length": 1,
+      "max_input_length": 63
     },
     "output_s3_path": {
       "type": "string",
@@ -102,7 +116,11 @@
       "description": "S3 URI path to output model artifacts",
       "category": "system",
       "visibility_tier": "tertiary",
-      "display_name": "Output artifact location (S3 URI)"
+      "display_name": "Output artifact location (S3 URI)",
+      "control_type": "s3_uri_input",
+      "regex_pattern": "^s3://[a-z0-9.-]+(/.*)?",
+      "invalid_format_error": "Invalid S3 path. Please use the format s3://bucket-name/folder",
+      "placeholder": "s3://bucket-name/folder"
     },
     "strategy": {
       "type": "string",
@@ -110,7 +128,8 @@
       "default": "zs_cot",
       "category": "system",
       "visibility_tier": "tertiary",
-      "display_name": "Strategy"
+      "display_name": "Strategy",
+      "control_type": "dropdown"
     },
     "subtask": {
       "type": "string",
@@ -118,7 +137,8 @@
       "default": "",
       "category": "hyperparameter",
       "visibility_tier": "tertiary",
-      "display_name": "Subtask"
+      "display_name": "Subtask",
+      "control_type": "dropdown"
     },
     "task": {
       "type": "string",
@@ -126,7 +146,8 @@
       "default": "mmlu",
       "category": "hyperparameter",
       "visibility_tier": "primary",
-      "display_name": "Task"
+      "display_name": "Task",
+      "control_type": "dropdown"
     },
     "temperature": {
       "type": "float",
@@ -138,7 +159,9 @@
       "category": "hyperparameter",
       "visibility_tier": "advanced",
       "display_name": "Temperature",
-      "hint": "Must be a value between 0.0 and 2.0"
+      "hint": "Must be a value between 0.0 and 2.0",
+      "control_type": "number_input",
+      "step": 0.1
     },
     "top_k": {
       "type": "integer",
@@ -147,7 +170,9 @@
       "description": "Top-k nucleus sampling cutoff",
       "category": "hyperparameter",
       "visibility_tier": "advanced",
-      "display_name": "Top-k"
+      "display_name": "Top-k",
+      "control_type": "number_input",
+      "step": 1
     },
     "top_p": {
       "type": "float",
@@ -159,7 +184,9 @@
       "category": "hyperparameter",
       "visibility_tier": "advanced",
       "display_name": "Top-p",
-      "hint": "Must be a value between 0.0 and 1.0"
+      "hint": "Must be a value between 0.0 and 1.0",
+      "control_type": "number_input",
+      "step": 0.1
     },
     "instance_type": {
       "type": "string",

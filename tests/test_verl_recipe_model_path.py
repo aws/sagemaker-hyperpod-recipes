@@ -69,6 +69,11 @@ _DEPLOYMENT_SPEC_RE = re.compile(
 # HuggingFace suffixes that are not part of the model identity.
 _HF_STRIP_RE = re.compile(r"-bf16$", re.IGNORECASE)
 
+# Release-date/version token (e.g. "-2512" in "Ministral-3-8B-Instruct-2512"). It is
+# part of the HF model id and display_name but omitted from the shorter recipe
+# filename convention, so it is not part of the canonical identity used for matching.
+_VERSION_DATE_RE = re.compile(r"-\d{4}$")
+
 # HuggingFace vendor prefixes to strip (e.g., "NVIDIA-" in "NVIDIA-Nemotron-3-...")
 _HF_VENDOR_PREFIX_RE = re.compile(r"^NVIDIA-", re.IGNORECASE)
 
@@ -128,6 +133,7 @@ def _model_id_from_path(model_path):
     name = model_path.rsplit("/", 1)[-1]
     name = _HF_VENDOR_PREFIX_RE.sub("", name)
     name = _HF_STRIP_RE.sub("", name)
+    name = _VERSION_DATE_RE.sub("", name)
     name = _HF_ARCH_SUFFIX_RE.sub("", name)
     return " ".join(_to_tokens(name))
 
@@ -163,6 +169,10 @@ def _model_id_from_display_name(display_name):
     match = _DISPLAY_NAME_STOP_WORDS.search(display_name)
     model_part = display_name[: match.start()].strip() if match else display_name
     model_part = _DISPLAY_ARCH_TOKEN_RE.sub("", model_part)
+    # Drop precision (bf16) and release-date (e.g. "-2512") tokens so the identity
+    # matches the model.path and the shorter recipe-filename convention.
+    model_part = _HF_STRIP_RE.sub("", model_part.strip())
+    model_part = _VERSION_DATE_RE.sub("", model_part.strip())
     return " ".join(_to_tokens(model_part))
 
 

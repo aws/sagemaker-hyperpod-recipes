@@ -90,6 +90,10 @@ rlConfig:
 
 rayCluster:
   rayVersion: "2.46.0"
+  # Ray job submission mode: "K8sJobMode" (default; creates a separate submitter Job) or
+  # "SidecarMode" (submitter runs inside the head pod). SidecarMode is required under HyperPod
+  # task governance, whose admission policy rejects the unlabeled submitter Job K8sJobMode creates.
+  submissionMode: "K8sJobMode"
   logging:
     level: "INFO"
 

@@ -20,13 +20,13 @@ Template selection is based on the `run.model_type` field in recipes.
 
 Usage:
     # Generate all launcher scripts
-    python -m scripts.launcher_scripts_generator.generate_launcher_scripts
+    uv run poe generate-launcher-scripts
 
     # Check mode (like formatters: exits non-zero if files would change)
-    python -m scripts.launcher_scripts_generator.generate_launcher_scripts --check
+    uv run poe generate-launcher-scripts --check
 
     # Check with diffs shown
-    python -m scripts.launcher_scripts_generator.generate_launcher_scripts --check --diff
+    uv run poe generate-launcher-scripts --check --diff
 """
 
 import argparse

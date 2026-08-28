@@ -584,7 +584,7 @@ def construct_k8_launch_command(cfg, run_info):
         [
             "cluster=k8s",
             "cluster_type=k8s",
-            "+cluster.persistent_volume_claims.0.mountPath=/data",
+            "++cluster.persistent_volume_claims.0.mountPath=/data",
             f"+cluster.general_pod={run_info['k8_general_pod']}",
         ]
     )
@@ -912,7 +912,8 @@ def get_launch_command(cfg, run_info, use_fsx=False):
     # TODO: Consider moving these to config as well
     # service_account_name is K8s-specific, skip for slurm
     if ("rlaif" in run_info["input_file_path"] or "rlvr" in run_info["input_file_path"]) and platform != "slurm":
-        command.append("+cluster.service_account_name=bedrock-service-account")
+        verl_sa = cfg.get("k8", {}).get("verl_service_account", "bedrock-service-account")
+        command.append(f"+cluster.service_account_name={verl_sa}")
 
     if "rlvr" in run_info["input_file_path"]:
         command.append(

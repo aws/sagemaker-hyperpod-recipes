@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Gemma 4 26B IT GRPO RLVR Full Fine-Tuning (Text)
-version: 2.0.3
+version: 2.0.4
 instance_types:
   - ml.p5.48xlarge
 run:

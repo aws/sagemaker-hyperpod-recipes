@@ -59,6 +59,7 @@
   "recipe_override_parameters": {
     "data_path": {
       "category": "system",
+      "control_type": "text_input",
       "default": "",
       "description": "File path to training dataset",
       "required": true,
@@ -67,6 +68,7 @@
     },
     "dataset_max_len": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 4096,
       "description": "Maximum sequence length in tokens for tokenized training inputs. Sequences longer than this are truncated.",
       "display_name": "Max sequence length",
@@ -74,11 +76,13 @@
       "max": 131072,
       "min": 256,
       "required": true,
+      "step": 1,
       "type": "integer",
       "visibility_tier": "advanced"
     },
     "global_batch_size": {
       "category": "hyperparameter",
+      "control_type": "dropdown",
       "default": 8,
       "description": "Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory.",
       "display_name": "Batch size",
@@ -99,6 +103,7 @@
     },
     "gradient_clipping": {
       "category": "hyperparameter",
+      "control_type": "dropdown",
       "default": true,
       "description": "Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training.",
       "required": true,
@@ -107,16 +112,19 @@
     },
     "gradient_clipping_threshold": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 1.0,
       "description": "Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down.",
       "max": 5.0,
       "min": 0.0,
       "required": true,
+      "step": 0.1,
       "type": "float",
       "visibility_tier": "tertiary"
     },
     "learning_rate": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 0.0001,
       "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4).",
       "display_name": "Learning rate",
@@ -124,21 +132,25 @@
       "max": 0.0001,
       "min": 5e-07,
       "required": true,
+      "step": 0.0001,
       "type": "float",
       "visibility_tier": "primary"
     },
     "logging_steps": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 1,
       "description": "Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead.",
       "max": 100,
       "min": 1,
       "required": true,
+      "step": 1,
       "type": "integer",
       "visibility_tier": "tertiary"
     },
     "lora_alpha": {
       "category": "hyperparameter",
+      "control_type": "dropdown",
       "default": 32,
       "description": "LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank.",
       "display_name": "Alpha value",
@@ -156,16 +168,19 @@
     },
     "lora_dropout": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 0.05,
       "description": "Dropout probability applied to LoRA adapter layers for regularization. Typically set to 0.05 for SFT/DPO, and 0 for Mixture-of-Experts models.",
       "max": 1.0,
       "min": 0.0,
       "required": true,
+      "step": 0.1,
       "type": "float",
       "visibility_tier": "tertiary"
     },
     "lora_rank": {
       "category": "hyperparameter",
+      "control_type": "dropdown",
       "default": 16,
       "description": "Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory.",
       "display_name": "LoRA rank",
@@ -183,6 +198,7 @@
     },
     "lr_scheduler": {
       "category": "hyperparameter",
+      "control_type": "dropdown",
       "default": "cosine",
       "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
       "enum": [
@@ -195,6 +211,7 @@
     },
     "lr_warmup_steps_ratio": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 0.1,
       "description": "Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training.",
       "display_name": "LR warmup ratio",
@@ -202,11 +219,13 @@
       "max": 1,
       "min": 0,
       "required": true,
+      "step": 0.1,
       "type": "float",
       "visibility_tier": "advanced"
     },
     "max_epochs": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 5,
       "description": "Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting.",
       "display_name": "Number of epochs",
@@ -214,11 +233,13 @@
       "max": 100,
       "min": 1,
       "required": true,
+      "step": 1,
       "type": "integer",
       "visibility_tier": "primary"
     },
     "merge_weights": {
       "category": "hyperparameter",
+      "control_type": "dropdown",
       "default": true,
       "description": "When enabled, merges LoRA adapter weights into the base model weights after training, producing a single consolidated model. Disable if you need to keep adapters separate (e.g., for model merging workflows).",
       "display_name": "Merge weights",
@@ -228,6 +249,7 @@
     },
     "mlflow_run_id": {
       "category": "system",
+      "control_type": "text_input",
       "default": "",
       "description": "MLflow run ID for resuming or linking to an existing run",
       "required": false,
@@ -236,6 +258,7 @@
     },
     "mlflow_tracking_uri": {
       "category": "system",
+      "control_type": "text_input",
       "default": "",
       "description": "MLflow tracking server URI for experiment logging",
       "display_name": "MLflow Resource",
@@ -245,6 +268,7 @@
     },
     "model_name_or_path": {
       "category": "system",
+      "control_type": "text_input",
       "default": "meta-llama/Llama-3.2-1B-Instruct",
       "description": "Model identifier or path to pretrained model",
       "required": true,
@@ -253,16 +277,22 @@
     },
     "name": {
       "category": "system",
+      "control_type": "text_input",
       "default": "llama-3-2-1b-instruct",
       "description": "Custom model name",
       "display_name": "Custom model name",
       "hint": "A training job with the name {name} will be created",
+      "invalid_format_error": "It should be maximum 63 alphanumeric characters and cannot include spaces. It must also be unique within your account in an AWS Region",
+      "max_input_length": 63,
+      "min_length": 1,
+      "regex_pattern": "^[a-zA-Z0-9](-*[a-zA-Z0-9]){0,62}$",
       "required": true,
       "type": "string",
       "visibility_tier": "tertiary"
     },
     "output_path": {
       "category": "system",
+      "control_type": "text_input",
       "default": "",
       "description": "Local output path for model artifacts",
       "required": true,
@@ -271,6 +301,7 @@
     },
     "results_directory": {
       "category": "system",
+      "control_type": "text_input",
       "default": "",
       "description": "Directory for storing training results and logs",
       "required": true,
@@ -279,6 +310,7 @@
     },
     "resume_from_path": {
       "category": "system",
+      "control_type": "text_input",
       "default": "",
       "description": "Path to checkpoint for resuming training",
       "required": false,
@@ -287,16 +319,19 @@
     },
     "seed": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 42,
       "description": "Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations.",
       "max": 2147483647,
       "min": 0,
       "required": true,
+      "step": 1,
       "type": "integer",
       "visibility_tier": "tertiary"
     },
     "temperature": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 0.6,
       "description": "Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic.",
       "display_name": "Temperature",
@@ -304,11 +339,13 @@
       "max": 2.0,
       "min": 0.0,
       "required": true,
+      "step": 0.1,
       "type": "float",
       "visibility_tier": "advanced"
     },
     "train_val_split_ratio": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 0.9,
       "description": "Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation.",
       "display_name": "Train Val Split Ratio",
@@ -316,11 +353,13 @@
       "max": 1.0,
       "min": 0.0,
       "required": false,
+      "step": 0.1,
       "type": "float",
       "visibility_tier": "primary"
     },
     "training_data_name": {
       "category": "system",
+      "control_type": "text_input",
       "default": "",
       "description": "Name identifier for the training dataset",
       "required": true,
@@ -329,6 +368,7 @@
     },
     "validation_data_name": {
       "category": "system",
+      "control_type": "text_input",
       "default": "",
       "description": "Name identifier for the validation dataset",
       "required": true,
@@ -337,6 +377,7 @@
     },
     "validation_data_path": {
       "category": "system",
+      "control_type": "text_input",
       "default": "",
       "description": "File path to validation dataset",
       "required": true,
@@ -345,11 +386,13 @@
     },
     "weight_decay": {
       "category": "hyperparameter",
+      "control_type": "number_input",
       "default": 0.0,
       "description": "L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights.",
       "max": 1.0,
       "min": 0.0,
       "required": true,
+      "step": 0.1,
       "type": "float",
       "visibility_tier": "tertiary"
     }

@@ -27,15 +27,10 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import yaml
 
-# ---------------------------------------------------------------------------
-# Ensure the repo root is on sys.path so `hyperpod_recipes` can be imported
-# ---------------------------------------------------------------------------
+from hyperpod_recipes import list_recipes
+
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _REPO_ROOT = os.path.dirname(_SCRIPT_DIR)
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
-
-from hyperpod_recipes import list_recipes
 
 # ---------------------------------------------------------------------------
 # Constants

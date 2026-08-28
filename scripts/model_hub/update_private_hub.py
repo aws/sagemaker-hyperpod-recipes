@@ -10,7 +10,6 @@ from pathlib import Path
 import boto3
 import yaml
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from scripts.generate_launch_jsons import LaunchJsonGenerator
 
 # ---------------------------------------------------------------------------
@@ -527,13 +526,10 @@ def update_exported_json(exported_json_path, new_recipe_entries, model_id, versi
 
 
 def export_hub_content(hub_name, model_id, region, output, output_dir, endpoint):
-    export_script_path = os.path.join("scripts", "model_hub", "export_hub_content.py")
-    abs_export_script_path = os.path.abspath(export_script_path)
-
-    # Build command
     cmd = [
-        "python3",
-        abs_export_script_path,
+        sys.executable,
+        "-m",
+        "scripts.model_hub.export_hub_content",
         "--hub-name",
         hub_name,
         "--content-name",
@@ -586,11 +582,10 @@ def export_hub_content(hub_name, model_id, region, output, output_dir, endpoint)
 
 
 def import_hub_content(exported_json_path, private_hub_name, region, endpoint):
-    import_script_path = os.path.join("scripts", "model_hub", "import_hub_content.py")
-
     cmd = [
-        "python3",
-        import_script_path,
+        sys.executable,
+        "-m",
+        "scripts.model_hub.import_hub_content",
         "--hub-name",
         private_hub_name,
         "--input",
