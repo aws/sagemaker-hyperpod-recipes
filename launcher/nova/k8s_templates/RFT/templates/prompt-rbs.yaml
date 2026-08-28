@@ -1,5 +1,6 @@
 {{- $root := .Values }}
 {{- $config := .Values.trainingConfig }}
+{{- $svcLS := default $config.labelSelector $config.prompter.labelSelector }}
 ---
 apiVersion: v1
 kind: Service
@@ -106,13 +107,13 @@ spec:
                 operator: In
                 values: ["gpu-intensive-{{ .Values.trainingConfig.jobName }}"]
             topologyKey: kubernetes.io/hostname
-        {{- if (or $config.labelSelector.required $config.labelSelector.preferred) }}
+        {{- if (or $svcLS.required $svcLS.preferred) }}
         nodeAffinity:
-          {{- if $config.labelSelector.required }}
+          {{- if $svcLS.required }}
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                {{- range $key, $values := $config.labelSelector.required }}
+                {{- range $key, $values := $svcLS.required }}
                 - key: {{ $key | quote }}
                   operator: In
                   values:
@@ -121,11 +122,11 @@ spec:
                     {{- end}}
                 {{- end }}
           {{- end }}
-          {{- if $config.labelSelector.preferred }}
+          {{- if $svcLS.preferred }}
           {{- $index := 0 }}
           preferredDuringSchedulingIgnoredDuringExecution:
-            {{- range $key, $values := $config.labelSelector.preferred }}
-            - weight: {{ index $config.labelSelector.weights $index }}
+            {{- range $key, $values := $svcLS.preferred }}
+            - weight: {{ index $svcLS.weights $index }}
               preference:
                 matchExpressions:
                   - key: {{ $key | quote }}
@@ -288,13 +289,13 @@ spec:
                 operator: In
                 values: ["gpu-intensive-{{ .Values.trainingConfig.jobName }}"]
             topologyKey: kubernetes.io/hostname
-        {{- if (or $config.labelSelector.required $config.labelSelector.preferred) }}
+        {{- if (or $svcLS.required $svcLS.preferred) }}
         nodeAffinity:
-          {{- if $config.labelSelector.required }}
+          {{- if $svcLS.required }}
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                {{- range $key, $values := $config.labelSelector.required }}
+                {{- range $key, $values := $svcLS.required }}
                 - key: {{ $key | quote }}
                   operator: In
                   values:
@@ -303,11 +304,11 @@ spec:
                     {{- end}}
                 {{- end }}
           {{- end }}
-          {{- if $config.labelSelector.preferred }}
+          {{- if $svcLS.preferred }}
           {{- $index := 0 }}
           preferredDuringSchedulingIgnoredDuringExecution:
-            {{- range $key, $values := $config.labelSelector.preferred }}
-            - weight: {{ index $config.labelSelector.weights $index }}
+            {{- range $key, $values := $svcLS.preferred }}
+            - weight: {{ index $svcLS.weights $index }}
               preference:
                 matchExpressions:
                   - key: {{ $key | quote }}

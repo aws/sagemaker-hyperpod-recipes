@@ -188,6 +188,28 @@ def get_device_count_for_instance(instance_type):
     return INSTANCE_TO_DEVICE_COUNT.get(instance_type, 8)
 
 
+def get_instance_types_map(cfg, default_instance_type):
+    """
+    Build a dict mapping service names to their resolved instance types.
+    Falls back to default_instance_type for any service not explicitly listed.
+
+    Returns:
+        dict: e.g. {"training": "ml.p5.48xlarge", "hub": "ml.r6i.24xlarge", ...}
+    """
+    instance_types_cfg = cfg.get("instance_types")
+    if not instance_types_cfg:
+        return {}
+
+    result = {}
+    for service_name, inst_type in instance_types_cfg.items():
+        if inst_type is not None:
+            normalized = str(inst_type)
+            if not normalized.startswith("ml."):
+                normalized = f"ml.{normalized}"
+            result[service_name] = normalized.lower()
+    return result
+
+
 def templatize_K8_container_images(content, recipe_name):
     # Init container for nova sft/dpo recipes
     init_container_image = get_init_container_uri()
@@ -235,6 +257,7 @@ class NovaK8SLauncher:
         self._launch_json = cfg["launch_json"]
         self.instance_type = get_instance_type(cfg)
         self.num_efa_devices = get_num_efa_devices(self.instance_type)
+        self.instance_types_map = get_instance_types_map(cfg, self.instance_type)
         self.recipe_file_path = None
 
     @staticmethod
@@ -264,6 +287,26 @@ class NovaK8SLauncher:
         env_vars["AWS_REGION"] = get_current_region()
 
         return env_vars
+
+    def _get_instance_type_for_service(self, service_name):
+        """Resolve instance type for a specific service, falling back to the default."""
+        return self.instance_types_map.get(service_name, self.instance_type)
+
+    def _build_label_selector_for_instance(self, instance_type_value):
+        """
+        Build a label selector dict for a specific instance type.
+        Merges user-provided required labels with the mandatory instance type/group labels.
+        """
+        required_instances = {
+            "node.kubernetes.io/instance-type": [instance_type_value],
+            "sagemaker.amazonaws.com/instance-group-type": ["Restricted"],
+        }
+        label_selector = self.cfg.cluster.get("label_selector") or {}
+        required_labels = label_selector.get("required") or {}
+        return {
+            **label_selector,
+            "required": {**required_labels, **required_instances},
+        }
 
     def _prepare_output_dir(self):
         if self._output_dir_k8s_folder.exists():
@@ -318,40 +361,15 @@ class NovaK8SLauncher:
 
     def _get_label_selectors(self):
         """
-        Constructs and returns a dictionary of label selectors required for Nova jobs.
-
-        This method ensures that the returned label selectors always include the required
-        instance types and instance group types necessary for Nova jobs to run on the
-        appropriate hardware. It merges any user-provided required label selectors from
-        the configuration with the hardcoded required labels.
-
-        Returns:
-            dict: A dictionary containing the merged label selectors, with the "required"
-            key including both user-specified and mandatory labels.
+        Constructs and returns a dictionary of label selectors using the default instance type.
+        For per-service label selectors, use _build_label_selector_for_instance directly.
         """
-
-        # Use placeholder for launch_json mode, actual instance type otherwise
         if self._launch_json:
             instance_type_value = "PLACEHOLDER_INSTANCE_TYPE"
         else:
             instance_type_value = self.instance_type
 
-        # Default instance types for required labels
-        # Nova jobs cannot be run on any other instance types apart from these
-        # This is a hard requirement for the Nova jobs to run
-        # on the required hardware.
-        required_instances = {
-            "node.kubernetes.io/instance-type": [instance_type_value],
-            "sagemaker.amazonaws.com/instance-group-type": ["Restricted"],
-        }
-
-        # Handle labelSelector merging safely
-        label_selector = self.cfg.cluster.get("label_selector") or {}
-        required_labels = label_selector.get("required") or {}
-        return {
-            **label_selector,
-            "required": {**required_labels, **required_instances},
-        }
+        return self._build_label_selector_for_instance(instance_type_value)
 
     def _create_launch_json(self, chart_path):
         """
@@ -1150,26 +1168,30 @@ class SMNovaK8SLauncherRFT(NovaK8SLauncher):
         self._write_value_template(values_template)
 
     def _set_efa_resources(self, values_template):
-        """Set EFA device resources for training and vllmGeneration services."""
-        efa_count = self.num_efa_devices
+        """Set EFA device resources for training and vllmGeneration services.
+        Uses per-service instance types to determine correct EFA counts."""
 
-        # Set EFA resources for training service
+        # Training service EFA
+        training_instance = self._get_instance_type_for_service("training") or self.instance_type
+        training_efa = get_num_efa_devices(training_instance)
         if hasattr(values_template.trainingConfig, "training"):
             training_config = values_template.trainingConfig.training
             if hasattr(training_config, "resources"):
                 if hasattr(training_config.resources, "master"):
-                    training_config.resources.master.requests[EFA_RESOURCE_KEY] = efa_count
-                    training_config.resources.master.limits[EFA_RESOURCE_KEY] = efa_count
+                    training_config.resources.master.requests[EFA_RESOURCE_KEY] = training_efa
+                    training_config.resources.master.limits[EFA_RESOURCE_KEY] = training_efa
                 if hasattr(training_config.resources, "worker"):
-                    training_config.resources.worker.requests[EFA_RESOURCE_KEY] = efa_count
-                    training_config.resources.worker.limits[EFA_RESOURCE_KEY] = efa_count
+                    training_config.resources.worker.requests[EFA_RESOURCE_KEY] = training_efa
+                    training_config.resources.worker.limits[EFA_RESOURCE_KEY] = training_efa
 
-        # Set EFA resources for vllmGeneration service
+        # vllmGeneration service EFA
+        vllm_instance = self._get_instance_type_for_service("vllm_generation") or self.instance_type
+        vllm_efa = get_num_efa_devices(vllm_instance)
         if hasattr(values_template.trainingConfig, "vllmGeneration"):
             vllm_config = values_template.trainingConfig.vllmGeneration
             if hasattr(vllm_config, "resources"):
-                vllm_config.resources.requests[EFA_RESOURCE_KEY] = efa_count
-                vllm_config.resources.limits[EFA_RESOURCE_KEY] = efa_count
+                vllm_config.resources.requests[EFA_RESOURCE_KEY] = vllm_efa
+                vllm_config.resources.limits[EFA_RESOURCE_KEY] = vllm_efa
 
     def _map_rft_replica_config(self, values_template):
         """Map replica counts and Redis configuration."""
@@ -1214,23 +1236,55 @@ class SMNovaK8SLauncherRFT(NovaK8SLauncher):
         values_template.image.redis = get_rft_redis_container_uri()
 
     def _map_resource_config(self, values_template):
-        """Map resource configuration
-        Set instance types and apply nodeAffinity to all services."""
+        """Map resource configuration.
+        Set per-service instance types, label selectors, and EFA counts.
+        GPU services (training, vllmGeneration) use GPU instance types.
+        CPU services (hub, prompter, rbs, natsServer, redis) can use CPU instance types."""
 
-        instance_type = self.instance_type or values_template.trainingConfig.defaultResources.instanceType
+        # Service name mapping: values.yaml field name -> instance_types config key
+        service_config_keys = {
+            "training": "training",
+            "vllmGeneration": "vllm_generation",
+            "hub": "hub",
+            "prompter": "prompter",
+            "rbs": "rbs",
+            "natsServer": "nats_server",
+        }
 
-        # Set instance type and apply nodeAffinity to all services
-        services = ["training", "vllmGeneration", "hub", "prompter", "rbs", "natsServer"]
+        default_instance_type = self.instance_type or values_template.trainingConfig.defaultResources.instanceType
 
-        for service_name in services:
-            service = getattr(values_template.trainingConfig, service_name, None)
-            if service:
-                # Set instance type
-                service.instanceType = instance_type
+        for service_field, config_key in service_config_keys.items():
+            service = getattr(values_template.trainingConfig, service_field, None)
+            if not service:
+                continue
+
+            # Resolve instance type: per-service override > default
+            svc_instance_type = self._get_instance_type_for_service(config_key)
+            if svc_instance_type is None:
+                svc_instance_type = default_instance_type
+            service.instanceType = svc_instance_type
+
+            # Build per-service label selector with the service's own instance type
+            if self._launch_json:
+                svc_label_selector = self._build_label_selector_for_instance("PLACEHOLDER_INSTANCE_TYPE")
+            else:
+                svc_label_selector = self._build_label_selector_for_instance(svc_instance_type)
+            service.labelSelector = svc_label_selector
 
         # Apply to redis if enabled
         if hasattr(values_template.trainingConfig, "redis") and values_template.trainingConfig.redis.enabled:
-            values_template.trainingConfig.redis.instanceType = instance_type
+            redis_instance_type = self._get_instance_type_for_service("redis")
+            if redis_instance_type is None:
+                redis_instance_type = default_instance_type
+            values_template.trainingConfig.redis.instanceType = redis_instance_type
+            if self._launch_json:
+                values_template.trainingConfig.redis.labelSelector = self._build_label_selector_for_instance(
+                    "PLACEHOLDER_INSTANCE_TYPE"
+                )
+            else:
+                values_template.trainingConfig.redis.labelSelector = self._build_label_selector_for_instance(
+                    redis_instance_type
+                )
 
     def _to_camel_case(self, snake_str):
         """Convert snake_case to camelCase."""
