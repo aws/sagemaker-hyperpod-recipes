@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 
 
-def get_recipe_metadata(file_path, launch_json_dir):
+def get_recipe_metadata(file_path, launch_json_dir, model_name=None):
     """Extract recipe metadata from YAML file"""
     try:
         with open(file_path, "r") as f:
@@ -15,9 +15,12 @@ def get_recipe_metadata(file_path, launch_json_dir):
         rel_path = str(Path(file_path).relative_to("recipes_collection/recipes/"))
         recipe_name = rel_path.replace(".yaml", "")
 
-        # Extract latest version
+        # Extract latest version. Eval recipes fan out per model, so their
+        # launch.json is generated under "<stem>_<model_name>" (see
+        # generate_launch_jsons.py display_name). Non-eval recipes use just the stem.
         recipe_stem = Path(file_path).stem
-        version = get_version_from_launch_json(recipe_stem, launch_json_dir)
+        lookup_name = f"{recipe_stem}_{model_name}" if model_name else recipe_stem
+        version = get_version_from_launch_json(lookup_name, launch_json_dir)
 
         return {"recipe": recipe_name, "version": version}
     except Exception as e:
@@ -31,11 +34,14 @@ def get_version_from_launch_json(recipe_name, launch_json_dir):
 
     launch_json_path = f"{launch_json_dir}/{recipe_name}/k8s/launch.json"
 
-    with open(launch_json_path, "r") as f:
-        launch_data = json.load(f)
-        versions = launch_data.get("metadata", {}).get("Versions", [])
-        if versions:
-            return versions[0]
+    try:
+        with open(launch_json_path, "r") as f:
+            launch_data = json.load(f)
+            versions = launch_data.get("metadata", {}).get("Versions", [])
+            if versions:
+                return versions[0]
+    except FileNotFoundError:
+        print(f"Warning: launch.json not found for {recipe_name} at {launch_json_path}")
 
     return None
 
@@ -76,7 +82,7 @@ def main():
             continue
 
         if os.path.exists(file_path):
-            metadata = get_recipe_metadata(file_path, launch_json_dir)
+            metadata = get_recipe_metadata(file_path, launch_json_dir, model_name)
             if metadata:
                 # For eval recipes with model_name, include the model in metadata
                 if model_name:

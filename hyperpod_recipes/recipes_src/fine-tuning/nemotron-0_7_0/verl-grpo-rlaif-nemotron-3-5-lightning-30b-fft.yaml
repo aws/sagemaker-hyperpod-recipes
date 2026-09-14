@@ -1,0 +1,219 @@
+defaults:
+  - /hydra_config/verl-0_7_0/default_megatron
+  - _self_
+
+display_name: Nemotron 3.5 Lightning 30B GRPO RLAIF Fine-Tuning with Megatron FFT
+version: 2.0.1
+instance_types:
+  - ml.p5.48xlarge
+  - ml.p4de.24xlarge
+
+run:
+  model_type: verl
+  name: verl-grpo-rlaif-nemotron-3-5-lightning-30b-fft
+  results_dir: ${base_results_dir}/${.name}
+
+trainer:
+  num_nodes: 2
+
+ray_cluster:
+  worker_nodes:
+    replicas: 2
+
+training_config:
+  algorithm:
+    adv_estimator: grpo
+    use_kl_in_reward: false
+    norm_adv_by_std_in_grpo: true
+    kl_ctrl:
+      kl_coef: 0.0
+
+  actor_rollout_ref:
+    actor:
+      rollout_n: 8
+      use_kl_loss: false
+      kl_loss_coef: 0.0
+      ppo_mini_batch_size: 32
+      ppo_micro_batch_size_per_gpu: 1
+      clip_ratio_low: 0.2
+      clip_ratio_high: 0.28
+      clip_ratio_c: 10.0
+      use_dynamic_bsz: true
+      ppo_max_token_len_per_gpu: 16384
+      optim:
+        lr: 1.0e-6
+        min_lr: 0.0
+        lr_warmup_steps: 10
+        lr_decay_style: constant
+        weight_decay: 0.1
+        betas: [0.9, 0.95]
+        override_optimizer_config:
+          optimizer_cpu_offload: true
+          optimizer_offload_fraction: 1
+          overlap_cpu_optimizer_d2h_h2d: false
+          use_precision_aware_optimizer: true
+      megatron:
+        tensor_model_parallel_size: 8
+        expert_model_parallel_size: 8
+        expert_tensor_parallel_size: 1
+        pipeline_model_parallel_size: 2
+        vanilla_mbridge: false
+        param_offload: true
+        grad_offload: true
+        optimizer_offload: true
+        router_replay:
+          _target_: verl.workers.config.engine.EngineRouterReplayConfig
+          mode: R3
+        override_transformer_config:
+          recompute_granularity: full
+          recompute_method: uniform
+          recompute_num_layers: 1
+          attention_backend: auto
+          apply_rope_fusion: false
+          moe_router_dtype: fp32
+          use_fused_weighted_squared_relu: true
+          moe_shared_expert_overlap: false
+          moe_permute_fusion: false
+          moe_enable_deepep: false
+          gradient_accumulation_fusion: false
+          calculate_per_token_loss: true
+          mtp_num_layers: 2
+          mtp_hybrid_override_pattern: "*E"
+          mtp_use_repeated_layer: true
+          keep_mtp_spec_in_bf16: true
+          mtp_loss_scaling_factor: 0.3
+
+    ref:
+      rollout_n: 8
+      log_prob_micro_batch_size_per_gpu: 1
+      log_prob_max_token_len_per_gpu: 16384
+      log_prob_use_dynamic_bsz: true
+      megatron:
+        tensor_model_parallel_size: 8
+        expert_model_parallel_size: 8
+        expert_tensor_parallel_size: 1
+        pipeline_model_parallel_size: 2
+        use_mbridge: true
+        vanilla_mbridge: false
+        param_offload: true
+        override_transformer_config:
+          recompute_granularity: full
+          recompute_method: uniform
+          recompute_num_layers: 1
+          attention_backend: auto
+          apply_rope_fusion: false
+          moe_router_dtype: fp32
+          use_fused_weighted_squared_relu: true
+          moe_shared_expert_overlap: false
+          moe_permute_fusion: false
+          moe_enable_deepep: false
+          mtp_num_layers: 2
+          mtp_hybrid_override_pattern: "*E"
+          mtp_use_repeated_layer: true
+          keep_mtp_spec_in_bf16: true
+          mtp_loss_scaling_factor: 0.3
+
+    rollout:
+      name: vllm
+      n: 8
+      prompt_length: 4096
+      response_length: 12288
+      max_model_len: 16384
+      max_num_batched_tokens: 16384
+      max_num_seqs: 200
+      temperature: 1.0
+      dtype: bfloat16
+      gpu_memory_utilization: 0.5
+      enable_prefix_caching: false
+      enable_chunked_prefill: true
+      enable_sleep_mode: true
+      enable_rollout_routing_replay: true
+      logprobs_mode: raw_logprobs
+      calculate_log_probs: true
+      log_prob_micro_batch_size_per_gpu: 1
+      log_prob_max_token_len_per_gpu: 16384
+      log_prob_use_dynamic_bsz: true
+      load_format: dummy
+      val_kwargs:
+        temperature: 1.0
+        do_sample: true
+        top_p: 0.7
+
+    model:
+      path: nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16
+      trust_remote_code: true
+      use_remove_padding: true
+      external_lib: verl.models.mcore.nemotron_h_patch,verl.models.vllm.nemotron_h_latent_moe_patch
+      mtp:
+        _target_: verl.workers.config.MtpConfig
+        enable: true
+        enable_train: true
+        enable_rollout: true
+        detach_encoder: true
+        mtp_loss_scaling_factor: 0.3
+        method: mtp
+        num_speculative_tokens: 1
+
+  critic:
+    ppo_mini_batch_size: 32
+    model:
+      tokenizer_path: nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16
+
+  trainer:
+    nnodes: 2
+    use_legacy_worker_impl: disable
+    balance_batch: true
+    project_name: Nemotron-Lightning
+    experiment_name: rlaif-fft
+    merge_lora_on_final_save: true
+    logger:
+      - console
+      - mlflow
+    val_before_train: false
+    test_freq: -1
+    save_freq: 10
+    total_epochs: 1
+    default_local_dir: /opt/ml/model
+
+  data:
+    max_prompt_length: 4096
+    max_response_length: 12288
+    train_batch_size: 64
+    filter_overlong_prompts: false
+    dataloader_num_workers: 0
+    return_raw_chat: true
+    truncation: left
+    train_val_split_ratio: 0.9
+
+  reward_manager:
+    name: batch
+  reward_model:
+    reward_manager: batch
+    rollout:
+      name: vllm
+    model:
+      input_tokenizer: nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-BF16
+    reward_kwargs:
+      reward_fn_name: llmj
+      kwargs:
+        llmj_prompt_template_path: /opt/ml/code/verl/evaluate.jinja
+        model_id: bedrock/deepseek.v3-v1:0
+        service_tier: flex
+        max_workers: 100
+        num_retries: 5
+        range:
+          - 0.0
+          - 1.0
+        aws_region_name: us-west-2
+        sampling_params:
+          temperature: 0.0
+          max_completion_tokens: 2048
+
+  custom_reward_function:
+    lambda_arn: ''
+    path: ''
+    name: ''
+
+  mlflow:
+    run_id: ''
+    tracking_uri: ''

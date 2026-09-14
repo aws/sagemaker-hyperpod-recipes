@@ -137,6 +137,7 @@
     "huggingface-llm-nvidia-nemotron-3-super-120b-a12b-bf16": ["ml.p4d.24xlarge", "ml.p4de.24xlarge"],
     "huggingface-vlm-gemma-4-e4b-it": ["ml.g5.12xlarge","ml.g5.16xlarge","ml.g5.24xlarge","ml.g5.48xlarge","ml.g6.12xlarge","ml.g6.24xlarge","ml.g6.48xlarge","ml.p4d.24xlarge","ml.p4de.24xlarge"],
     "huggingface-vlm-gemma-4-26b-a4b-it": ["ml.g5.12xlarge","ml.g5.48xlarge","ml.g6.12xlarge","ml.g6.24xlarge","ml.g6.48xlarge","ml.p4d.24xlarge","ml.p4de.24xlarge"],
-    "huggingface-vlm-gemma-4-31b-it": ["ml.g6.12xlarge","ml.g6.24xlarge","ml.g6.48xlarge","ml.p4d.24xlarge","ml.p4de.24xlarge"]
+    "huggingface-vlm-gemma-4-31b-it": ["ml.g6.12xlarge","ml.g6.24xlarge","ml.g6.48xlarge","ml.p4d.24xlarge","ml.p4de.24xlarge"],
+    "huggingface-reasoning-nemotron-3-5-lightning-30b-a3b-bf16": ["ml.p4d.24xlarge","ml.p4de.24xlarge","ml.p5.48xlarge"]
   }
 }

@@ -1,0 +1,118 @@
+defaults:
+  - /hydra_config/verl-0_7_0/dpo_megatron_trainer
+  - /hydra_config/verl-0_7_0/dpo/default
+  - /hydra_config/verl-0_7_0/model_config/nemo3-5-lightning-30b
+  - _self_
+
+display_name: "Nemotron 3.5 Lightning 30B DPO FFT Fine-Tuning with Megatron"
+version: 2.0.1
+instance_types:
+  - ml.p5.48xlarge
+  - ml.p4de.24xlarge
+
+run:
+  name: verl-dpo-nemotron-3-5-lightning-30b-fft
+
+trainer:
+  num_nodes: 2
+
+training_config:
+  data:
+    dataloader_num_workers: 0
+    train_batch_size: 16
+    micro_batch_size_per_gpu: 1
+    max_length: 8192
+    # DPO packs chosen+rejected into a single sequence, so max_token_len_per_gpu
+    # must stay >= 2 * max_length (seqlen_balancing.py asserts).
+    max_token_len_per_gpu: 16384
+    truncation: left
+    train_max_samples: -1
+    train_val_split_ratio: 0.9
+
+  model:
+    enable_gradient_checkpointing: true
+    use_remove_padding: true
+    lora_rank: 0
+    mtp:
+      _target_: verl.workers.config.MtpConfig
+      enable: true
+      enable_train: true
+      enable_rollout: false
+      detach_encoder: false
+      mtp_loss_scaling_factor: 0.3
+
+  engine:
+    tensor_model_parallel_size: 8
+    expert_model_parallel_size: 8
+    expert_tensor_parallel_size: 1
+    pipeline_model_parallel_size: 2
+    context_parallel_size: 1
+    sequence_parallel: true
+    use_remove_padding: true
+    use_mbridge: true
+    vanilla_mbridge: false
+    param_offload: false
+    grad_offload: false
+    optimizer_offload: false
+    dist_ckpt_optim_fully_reshardable: true
+    distrib_optim_fully_reshardable_mem_efficient: false
+    override_transformer_config:
+      apply_rope_fusion: false
+      attention_backend: auto
+      moe_router_dtype: fp32
+      use_fused_weighted_squared_relu: true
+      gradient_accumulation_fusion: false
+      recompute_granularity: full
+      recompute_method: uniform
+      recompute_modules:
+        - core_attn
+      recompute_num_layers: 1
+      mtp_num_layers: 2
+      mtp_hybrid_override_pattern: "*E"
+      mtp_use_repeated_layer: true
+      keep_mtp_spec_in_bf16: true
+      mtp_loss_scaling_factor: 0.3
+
+  optim:
+    lr: 3.0e-7
+    min_lr: 3.0e-8
+    betas: [0.9, 0.95]
+    weight_decay: 0.1
+    clip_grad: 1.0
+    lr_decay_style: cosine
+    lr_warmup_steps: 10
+    lr_warmup_steps_ratio: 0.0
+    override_optimizer_config:
+      use_precision_aware_optimizer: true
+
+  checkpoint:
+    save_contents:
+      - model
+      - optimizer
+      - extra
+      - hf_model
+    load_contents:
+      - model
+      - optimizer
+      - extra
+      - hf_model
+    save_only_adapter_if_lora: true
+
+  trainer:
+    nnodes: 2
+    project_name: Nemotron-Lightning
+    experiment_name: dpo-fft
+    beta: 0.1
+    loss_type: sigmoid
+    label_smoothing: 0.0
+    reference_free: false
+    logger:
+      - console
+      - mlflow
+    total_epochs: 3
+    save_freq: after_each_epoch
+    test_freq: 5
+    max_ckpt_to_keep: 3
+    resume_mode: auto
+    default_local_dir: /opt/ml/model
+    merge_lora_on_final_save: false

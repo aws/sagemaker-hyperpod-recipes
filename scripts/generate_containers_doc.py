@@ -141,22 +141,62 @@ def _load_regional_parameters() -> Dict[str, Dict[str, Any]]:
     return regional_data
 
 
-def _match_recipe_to_regional_key(recipe_filename: str, regional_keys: Set[str]) -> Optional[str]:
-    """Match a recipe filename to its regional parameter key.
+def _verl_regional_key_for_path(recipe_path: str) -> str:
+    """Regional-parameters key a verl recipe resolves to, mirroring the runtime processor.
+
+    Mirrors VerlRecipeTemplateProcessor.get_recipe_metadata so the doc shows the ACTUAL
+    image each recipe uses. verl 0.7.0 recipes live under ``*-0_7_0`` dirs (the processor
+    keys off the profiler/global_profiler block, a 0.7.0-only field); within 0.7.0 the
+    container is selected by model substring:
+      nemotron-3-5-lightning -> megatron, other nemotron -> vllm012, gemma4 -> tf58,
+      everything else -> the base 0.7.0 group. verl 0.5 recipes -> the generic "verl" key.
+
+    Matches on the version dir + filename only (the recipe's location relative to its
+    family dir), NOT the absolute path: the workspace path can itself contain model tokens
+    (e.g. a worktree literally named ``nemotron-3-5``) that would otherwise pollute the
+    substring match and route every recipe as if it were nemotron. The runtime processor is
+    immune because it matches on the relative recipe path; this reproduces that.
+    """
+    parts = Path(recipe_path).parts
+    tail = "/".join(parts[-2:]).lower() if len(parts) >= 2 else Path(recipe_path).name.lower()
+    if "0_7_0" in tail:
+        if "nemotron-3-5-lightning" in tail:
+            return "verl-0.7.0-megatron"
+        if "nemotron" in tail:
+            return "verl-0.7.0-vllm012"
+        if "gemma4" in tail:
+            return "verl-0.7.0-tf58"
+        return "verl-0.7.0"
+    return "verl"
+
+
+def _match_recipe_to_regional_key(recipe_path: str, regional_keys: Set[str]) -> Optional[str]:
+    """Match a recipe (path or filename) to its regional parameter key.
 
     Regional keys use patterns like:
     - "llmft" (generic fallback)
     - "nova_lite_2_0_p5_gpu_lora_sft" (specific recipe)
+    - "verl-0.7.0-megatron" (verl version/variant group)
 
     Args:
-        recipe_filename: e.g., "llmft_llama3_1_8b_instruct_seq4k_gpu_sft_lora.yaml"
+        recipe_path: recipe path or filename, e.g.
+            "recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-sft-...-lightning-30b-lora.yaml"
+            or "llmft_llama3_1_8b_instruct_seq4k_gpu_sft_lora.yaml"
         regional_keys: Set of all keys from regional_parameters.json files
 
     Returns:
         Matching regional key or None
     """
     # Remove .yaml/.yml extension and try exact match
-    base = recipe_filename.replace(".yaml", "").replace(".yml", "")
+    base = Path(recipe_path).name.replace(".yaml", "").replace(".yml", "")
+
+    # verl recipes must resolve to their version/variant group, matching the runtime
+    # processor. Without this the generic framework fallback below maps EVERY verl recipe
+    # (all 0.7.0 variants) to the base "verl" key = the v1.0.0 image, which is wrong.
+    # (Uses the full path so the *-0_7_0 version dir and the gemma4 dir are visible.)
+    if base.startswith("verl"):
+        verl_key = _verl_regional_key_for_path(recipe_path)
+        return verl_key if verl_key in regional_keys else None
 
     # Try exact match first
     if base in regional_keys:
@@ -283,14 +323,16 @@ def _build_container_table(recipes: List[Any], regions: List[str], model_id: str
     # Build table rows
     rows = []
     for recipe in recipes:
-        # Get recipe filename
-        if hasattr(recipe, "recipe_path"):
-            recipe_filename = Path(recipe.recipe_path).name
+        # Get recipe path (full path so the version dir, e.g. nemotron-0_7_0, is visible to
+        # the verl version/variant routing in _match_recipe_to_regional_key)
+        if hasattr(recipe, "recipe_path") and recipe.recipe_path:
+            recipe_path_str = str(recipe.recipe_path)
         elif hasattr(recipe, "path"):
-            recipe_filename = Path(recipe.path).name
+            recipe_path_str = str(recipe.path)
         else:
             continue
 
+        recipe_filename = Path(recipe_path_str).name
         is_mtrl = recipe_filename.startswith("mtrl")
 
         # For mtrl eval recipes, prefer model-specific regional key, fall back to generic
@@ -299,9 +341,9 @@ def _build_container_table(recipes: List[Any], regions: List[str], model_id: str
             if model_id in regional_keys:
                 regional_key = model_id
             else:
-                regional_key = _match_recipe_to_regional_key(recipe_filename, regional_keys)
+                regional_key = _match_recipe_to_regional_key(recipe_path_str, regional_keys)
         else:
-            regional_key = _match_recipe_to_regional_key(recipe_filename, regional_keys)
+            regional_key = _match_recipe_to_regional_key(recipe_path_str, regional_keys)
 
         if not regional_key:
             # No container data for this recipe
@@ -389,15 +431,15 @@ def _get_active_regions_for_recipes(recipes: List[Any]) -> List[str]:
     active_regions = set()
 
     for recipe in recipes:
-        # Get recipe filename
-        if hasattr(recipe, "recipe_path"):
-            recipe_filename = Path(recipe.recipe_path).name
+        # Get recipe path (full path so verl version/variant routing sees the version dir)
+        if hasattr(recipe, "recipe_path") and recipe.recipe_path:
+            recipe_path_str = str(recipe.recipe_path)
         elif hasattr(recipe, "path"):
-            recipe_filename = Path(recipe.path).name
+            recipe_path_str = str(recipe.path)
         else:
             continue
 
-        regional_key = _match_recipe_to_regional_key(recipe_filename, regional_keys)
+        regional_key = _match_recipe_to_regional_key(recipe_path_str, regional_keys)
         if regional_key and regional_key in regional_params:
             recipe_data = regional_params[regional_key]
             for pipeline in ["k8s", "sm_jobs"]:

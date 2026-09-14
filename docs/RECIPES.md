@@ -576,6 +576,19 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 
 ### Nemotron Models
 
+#### Nemotron 3.5 Lightning 30B A3b Bf16
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Nemotron 3.5 Lightning 30B DPO FFT Fine-Tuning with Megatron | verl | - | FFT | - | 2 | p5.48xlarge, p4de.24xlarge | [verl-dpo-nemotron-3-5-lightning-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-dpo-nemotron-3-5-lightning-30b-fft.yaml) | [run_verl_dpo_nemotron_3_5_lightning_30b_fft.sh](../launcher_scripts/nemotron-0_7_0/run_verl_dpo_nemotron_3_5_lightning_30b_fft.sh) |
+| Nemotron 3.5 Lightning 30B SFT FFT Fine-Tuning | verl | - | FFT | - | 2 | p5.48xlarge, p4de.24xlarge | [verl-sft-nemotron-3-5-lightning-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-sft-nemotron-3-5-lightning-30b-fft.yaml) | [run_verl_sft_nemotron_3_5_lightning_30b_fft.sh](../launcher_scripts/nemotron-0_7_0/run_verl_sft_nemotron_3_5_lightning_30b_fft.sh) |
+| Nemotron 3.5 Lightning 30B DPO LoRA Fine-Tuning with Megatron | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-dpo-nemotron-3-5-lightning-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-dpo-nemotron-3-5-lightning-30b-lora.yaml) | [run_verl_dpo_nemotron_3_5_lightning_30b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_dpo_nemotron_3_5_lightning_30b_lora.sh) |
+| Nemotron 3.5 Lightning 30B SFT LoRA Fine-Tuning | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-sft-nemotron-3-5-lightning-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-sft-nemotron-3-5-lightning-30b-lora.yaml) | [run_verl_sft_nemotron_3_5_lightning_30b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_sft_nemotron_3_5_lightning_30b_lora.sh) |
+| Nemotron 3.5 Lightning 30B GRPO RLVR Fine-Tuning with Megatron FFT | verl | GRPO | FFT | 32,768 | 2 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlvr-nemotron-3-5-lightning-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlvr-nemotron-3-5-lightning-30b-fft.yaml) | [run_verl_grpo_rlvr_nemotron_3_5_lightning_30b_fft.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlvr_nemotron_3_5_lightning_30b_fft.sh) |
+| Nemotron 3.5 Lightning 30B GRPO RLVR Fine-Tuning with Megatron LoRA | verl | GRPO | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlvr-nemotron-3-5-lightning-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlvr-nemotron-3-5-lightning-30b-lora.yaml) | [run_verl_grpo_rlvr_nemotron_3_5_lightning_30b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlvr_nemotron_3_5_lightning_30b_lora.sh) |
+| Nemotron 3.5 Lightning 30B GRPO RLAIF Fine-Tuning with Megatron FFT | verl | GRPO + RLAIF | FFT | 32,768 | 2 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-nemotron-3-5-lightning-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlaif-nemotron-3-5-lightning-30b-fft.yaml) | [run_verl_grpo_rlaif_nemotron_3_5_lightning_30b_fft.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlaif_nemotron_3_5_lightning_30b_fft.sh) |
+| Nemotron 3.5 Lightning 30B GRPO RLAIF Fine-Tuning with Megatron LoRA | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-nemotron-3-5-lightning-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/nemotron-0_7_0/verl-grpo-rlaif-nemotron-3-5-lightning-30b-lora.yaml) | [run_verl_grpo_rlaif_nemotron_3_5_lightning_30b_lora.sh](../launcher_scripts/nemotron-0_7_0/run_verl_grpo_rlaif_nemotron_3_5_lightning_30b_lora.sh) |
+
 #### Nvidia Nemotron 3 Nano 30B A3b Bf16
 
 | Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |

@@ -6,6 +6,10 @@ metadata:
 data:
   config.yaml: |-
   {{ (.Files.Glob "config/*hydra.yaml").AsConfig | indent 4 }}
+{{- if .Files.Get "verl_config.yaml" }}
+  verl_config.yaml: |-
+{{ .Files.Get "verl_config.yaml" | indent 4 }}
+{{- end }}
 {{- if $config.elastic_policy.is_elastic }}
 {{- range $path, $content := .Files.Glob "config/train_config_n*.yaml" }}
     {{- $filename := base $path }}
