@@ -1,0 +1,100 @@
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/megatron
+  - /hydra_config/verl-0_7_0/optim/megatron
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/model_config/nemo3-5-lightning-30b
+  - _self_
+
+display_name: "Nemotron 3.5 Lightning 30B SFT LoRA Fine-Tuning"
+version: 2.0.1
+instance_types:
+  - ml.p5.48xlarge
+  - ml.p4de.24xlarge
+
+run:
+  name: verl-sft-nemotron-3-5-lightning-30b-lora
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  data:
+    train_batch_size: 128
+    micro_batch_size_per_gpu: 1
+    max_length: 16384
+    max_token_len_per_gpu: 16384
+    truncation: left
+    train_max_samples: -1
+    val_max_samples: -1
+    ignore_input_ids_mismatch: true
+
+  model:
+    lora_rank: 128
+    lora:
+      rank: 128
+      alpha: 256
+      target_modules:
+        - linear_qkv
+        - linear_proj
+        - linear_fc1
+        - linear_fc2
+        - in_proj
+    mtp:
+      _target_: verl.workers.config.MtpConfig
+      enable: true
+      enable_train: true
+      enable_rollout: false
+      detach_encoder: false
+      mtp_loss_scaling_factor: 0.3
+
+  engine:
+    tensor_model_parallel_size: 8
+    expert_model_parallel_size: 8
+    expert_tensor_parallel_size: 1
+    vanilla_mbridge: false
+    param_offload: true
+    grad_offload: true
+    optimizer_offload: true
+    override_transformer_config:
+      recompute_granularity: selective
+      recompute_method: null
+      recompute_num_layers: null
+      recompute_modules: [moe, layernorm, core_attn, mlp]
+      attention_backend: auto
+      calculate_per_token_loss: true
+      gradient_accumulation_fusion: false
+      moe_token_dispatcher_type: alltoall
+      moe_grouped_gemm: true
+      moe_router_dtype: fp32
+      moe_router_load_balancing_type: seq_aux_loss
+      moe_router_bias_update_rate: 0.001
+      moe_router_enable_expert_bias: true
+      moe_aux_loss_coeff: 0.0001
+      moe_permute_fusion: true
+      moe_shared_expert_overlap: false
+      moe_enable_deepep: false
+      mtp_num_layers: 2
+      mtp_hybrid_override_pattern: "*E"
+      mtp_use_repeated_layer: true
+      keep_mtp_spec_in_bf16: true
+      mtp_loss_scaling_factor: 0.3
+
+  optim:
+    lr: 1.0e-4
+    min_lr: 1.0e-6
+    lr_warmup_steps: 10
+    weight_decay: 0.1
+    betas: [0.9, 0.95]
+    lr_decay_style: cosine
+    override_optimizer_config:
+      use_precision_aware_optimizer: true
+
+  trainer:
+    project_name: verl_sft_nemo3_5_lightning
+    experiment_name: nemo3_5_lightning_30b_sft_megatron_lora
+    total_epochs: 2
