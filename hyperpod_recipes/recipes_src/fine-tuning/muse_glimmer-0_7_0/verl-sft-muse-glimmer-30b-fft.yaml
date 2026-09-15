@@ -1,0 +1,50 @@
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  # No sft/peft/lora default: omitting it leaves lora_rank at 0, which makes this a full
+  # fine-tune.
+  - /hydra_config/verl-0_7_0/model_config/muse-glimmer-30b
+  - _self_
+
+display_name: "Muse-Glimmer 30B SFT Full Fine-Tuning (Text)"
+version: 2.0.1
+instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
+
+run:
+  name: verl-sft-muse-glimmer-30b-fft
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  data:
+    ignore_input_ids_mismatch: true
+    train_batch_size: 128
+    micro_batch_size_per_gpu: 1
+    # 16384 is the validated length for full fine-tuning of this model. 32768 fits but runs at
+    # ~94% of device memory and is substantially slower per step; raise it only alongside an
+    # offload configuration.
+    max_length: 16384
+    max_token_len_per_gpu: 16384
+    truncation: left
+    apply_chat_template_kwargs:
+      enable_thinking: false
+
+  engine:
+    strategy: fsdp2
+
+  optim:
+    # 10x lower than the LoRA recipe, matching the convention for full fine-tuning.
+    lr: 5.0e-06
+    lr_warmup_steps: 10
+
+  trainer:
+    project_name: muse-glimmer-sft
+    experiment_name: muse-glimmer-30b-sft-fft
+    test_freq: 5

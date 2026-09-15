@@ -13,7 +13,7 @@
 
 import re
 
-from omegaconf import DictConfig
+from omegaconf import DictConfig, ListConfig, OmegaConf
 
 
 class ValueValidator:
@@ -52,6 +52,9 @@ class ValueValidator:
 
         # Check the git url setting
         _validate_git_url(self.config)
+
+        # Instance type override shape check for all workflows
+        _validate_instance_type_overrides(self.config)
 
 
 def _validate_mandatory_argument(argument, argument_name: str) -> None:
@@ -266,6 +269,55 @@ def _validate_k8_custom_script_workflow_mandatory_argument(config: DictConfig) -
         for argument_name in k8_custom_script_mandatory_arguments:
             argument = get_argument(config, argument_name)
             _validate_mandatory_argument(argument, argument_name)
+
+
+def _is_non_empty_instance_type_value(value) -> bool:
+    """
+    True if value is a non-empty instance type string, or a non-empty list of
+    non-empty instance type strings.
+    """
+    if isinstance(value, ListConfig):
+        value = OmegaConf.to_container(value, resolve=True)
+    if isinstance(value, str):
+        return len(value.strip()) > 0
+    if isinstance(value, list):
+        return len(value) > 0 and all(isinstance(item, str) and len(item.strip()) > 0 for item in value)
+    return False
+
+
+def _validate_instance_type_overrides(config: DictConfig) -> None:
+    """
+    Validate the shape of cluster.cpu_instance_type and cluster.override_sub_instance_type.
+
+    cpu_instance_type: a non-empty instance type string or a list of them.
+    override_sub_instance_type: a map of service name -> a single non-empty instance
+    type string (each service targets exactly one instance type).
+
+    Only the value shape is checked here (recipe-agnostic, applies to every workflow).
+    Which service keys are valid for a given recipe is validated in the launcher,
+    where the recipe's service set is known.
+    """
+    cpu_instance_type = get_argument(config, "cluster.cpu_instance_type")
+    if cpu_instance_type is not None and not _is_non_empty_instance_type_value(cpu_instance_type):
+        raise ValueError(
+            "cluster.cpu_instance_type must be a non-empty instance type string or a list of them, "
+            "got {}".format(cpu_instance_type)
+        )
+
+    override = get_argument(config, "cluster.override_sub_instance_type")
+    if override is None:
+        return
+    if not isinstance(override, DictConfig) and not isinstance(override, dict):
+        raise ValueError(
+            "cluster.override_sub_instance_type must be a map of service name to a single instance type, "
+            "got {}".format(override)
+        )
+    for service_name, value in override.items():
+        if not isinstance(value, str) or len(value.strip()) == 0:
+            raise ValueError(
+                "cluster.override_sub_instance_type['{}'] must be a single non-empty instance type string, "
+                "got {}".format(service_name, value)
+            )
 
 
 def _validate_git_url(config: DictConfig) -> None:

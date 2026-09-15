@@ -50,6 +50,27 @@ instance_type_list:
 #   - If ANY keyword in detection_keywords is found, the recipe type matches
 #   - Example: detection_keywords: ["rlvr"] matches "verl-grpo-rlvr-qwen-3-4b-lora.yaml"
 recipe_type_config:
+  # Nemotron 3.5 Lightning uses the Megatron container
+  verl_sft_0_7_0_nemotron_3_5_megatron:
+    detection_keywords: ["verl-sft-nemotron-3-5-lightning"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0_megatron"
+    recipe_structure: "verl_sft"
+  verl_rlvr_0_7_0_nemotron_3_5_megatron:
+    detection_keywords: ["verl-grpo-rlvr-nemotron-3-5-lightning"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0_megatron"
+    recipe_structure: "verl_rlvr"
+  verl_rlaif_0_7_0_nemotron_3_5_megatron:
+    detection_keywords: ["verl-grpo-rlaif-nemotron-3-5-lightning"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0_megatron"
+    recipe_structure: "verl_rlaif"
+  verl_dpo_0_7_0_nemotron_3_5_megatron:
+    detection_keywords: ["verl-dpo-nemotron-3-5-lightning"]
+    model_config_key: "verl"
+    container_key: "verl_0_7_0_megatron"
+    recipe_structure: "verl_dpo"
   # Verl 0.7.0 Nemotron recipe types (must be before generic 0.7.0 entries — first match wins)
   verl_sft_0_7_0_nemotron:
     detection_keywords: ["nemotron-0_7_0/verl-sft"]
@@ -476,17 +497,21 @@ container_info:
     k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
     smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
   verl_0_7_0:
-    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
-    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
-    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj"
+    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.3-smtj"
+    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.3-smtj"
+    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.3-smtj"
   verl_0_7_0_vllm012:
     slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
     k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
     smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
+  verl_0_7_0_megatron:
+    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.2-smtj-megatron"
+    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.2-smtj-megatron"
+    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.2-smtj-megatron"
   verl_0_7_0_tf58:
-    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-tf58"
-    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-tf58"
-    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-tf58"
+    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.3-smtj-tf58"
+    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.3-smtj-tf58"
+    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.3-smtj-tf58"
 
 git:
   use_default: false

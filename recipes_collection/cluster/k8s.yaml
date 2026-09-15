@@ -84,7 +84,23 @@ queue_name: null
 # Job that the default "K8sJobMode" creates (it lacks the kueue.x-k8s.io/queue-name label).
 ray_submission_mode: SidecarMode
 
-# CPU instance type for Ray submitter node (optional)
-# Can be a single instance type string or a list of instance types
+# CPU instance type(s) for the Ray submitter node (optional).
+# Also used as the coarse fallback for CPU sub-services that are not named
+# explicitly in override_sub_instance_type below.
+# Can be a single instance type string or a list of instance types.
 # Example: "m5.xlarge" or ["m5.xlarge", "m5.2xlarge"]
 cpu_instance_type: null
+
+# Per-service instance type override map (optional). Keys are service names; each
+# value is a single instance type (a service targets exactly one instance type).
+# Takes precedence over cpu_instance_type and the global instance_type for the
+# named services. Values may be CPU or GPU instance types. See
+# docs/INSTANCE_TYPE_OVERRIDES.md for the overridable services per recipe type.
+# Example (Nova RFT):
+#   override_sub_instance_type:
+#     hub: ml.r6i.24xlarge
+#     prompter: ml.r6i.24xlarge
+#     rbs: ml.r6i.24xlarge
+#     nats_server: ml.r6i.24xlarge
+#     redis: ml.r6i.24xlarge
+override_sub_instance_type: null

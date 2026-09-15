@@ -29,7 +29,7 @@ from nemo_launcher.utils.job_utils import JobPaths
 from omegaconf import OmegaConf, open_dict
 from pydantic import ValidationError
 
-from utils.template_utils import remove_quotes_from_numeric_params
+from utils.template_utils import remove_quotes_from_scalar_params
 
 from ..accelerator_devices import get_num_accelerator_devices
 from ..efa import (
@@ -870,6 +870,8 @@ class SMTraining(Training):
         Based on https://github.com/NVIDIA/NeMo-Framework-Launcher/blob/23.11/launcher_scripts/nemo_launcher/core/stages.py#L608
         """
         if self.cluster == "k8s":
+            if self._is_verl_non_ray_job():
+                return "--config-path=/config --config-name=verl_config"
             return "--config-path=/config --config-name=config.yaml"
         return f"--config-path={stage_cfg_path.parents[0]} --config-name={stage_cfg_path.name}"
 
@@ -1212,10 +1214,12 @@ class SMTraining(Training):
         conf = OmegaConf.create(values_template)
         OmegaConf.save(conf, k8s_template_file)
 
-        # Generate VERL config file for Ray jobs
+        # Generate VERL config file for verl jobs (both the RayJob path and the
+        # HyperPodPyTorchJob/torchrun SFT path).
         # For K8s: Creates verl_config.yaml in k8s_template/ (mounted via ConfigMap)
-        # Contains only VERL-specific configs, filters out platform-specific sections
-        if self._is_ray_job():
+        # Contains only VERL-specific configs, filters out platform-specific sections.
+        # The non-ray (SFT) path consumes it via `--config-name=verl_config` too.
+        if self._is_ray_job() or self._is_verl_non_ray_job():
             self._generate_verl_config(k8s_template_path)
 
     def update_stage_specific_k8s_values(self, values_template):
@@ -1296,8 +1300,8 @@ class SMTraining(Training):
         for path in sorted(render_dir.rglob("*.yaml"), key=lambda p: p.name):
             content = path.read_text()
 
-            # Remove quotes from numeric parameters in YAML
-            content = remove_quotes_from_numeric_params(content, override_spec)
+            # Remove quotes from scalar (numeric/boolean) parameters in YAML
+            content = remove_quotes_from_scalar_params(content, override_spec)
 
             # Replace following references in content
             # Replace following references in content. String replace is followed here instead of templatization because
@@ -1433,6 +1437,14 @@ class SMTraining(Training):
         ray_cluster = OmegaConf.select(self.cfg, "recipes.ray_cluster") is not None
 
         return verl_model and ray_cluster
+
+    def _is_verl_non_ray_job(self):
+        model_type = OmegaConf.select(self.cfg, "recipes.run.model_type")
+        verl_model = model_type is not None and str(model_type).lower() == "verl"
+
+        ray_cluster = OmegaConf.select(self.cfg, "recipes.ray_cluster") is not None
+
+        return verl_model and not ray_cluster
 
     # @override - available in Python 3.12 - `template_root` is required by parent implementation
     def _make_k8s_spec_file(

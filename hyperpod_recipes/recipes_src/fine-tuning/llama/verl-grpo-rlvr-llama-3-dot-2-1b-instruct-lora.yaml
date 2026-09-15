@@ -32,6 +32,7 @@ training_config:
     ref:
       log_prob_micro_batch_size_per_gpu: 16
     rollout:
+      max_num_batched_tokens: 24576
       log_prob_micro_batch_size_per_gpu: 16
       enable_chunked_prefill: true
       layered_summon: false

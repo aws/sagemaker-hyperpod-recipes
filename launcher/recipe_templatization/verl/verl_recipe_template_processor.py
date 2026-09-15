@@ -133,7 +133,9 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         # while RL 0.7.0 recipes (GRPO/PPO) have "global_profiler" instead.
         is_verl_0_7_0 = "profiler" in recipe_cfg.training_config or "global_profiler" in recipe_cfg.training_config
         if is_verl_0_7_0:
-            if "nemotron" in recipe_file_path.lower():
+            if "nemotron-3-5-lightning" in recipe_file_path.lower():
+                self._verl_regional_key = "verl-0.7.0-megatron"
+            elif "nemotron" in recipe_file_path.lower():
                 self._verl_regional_key = "verl-0.7.0-vllm012"
             elif "gemma4" in recipe_file_path.lower():
                 self._verl_regional_key = "verl-0.7.0-tf58"
@@ -236,10 +238,23 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         assert num_nodes is not None, "Number of nodes not found in recipe config"
         metadata["InstanceCount"] = num_nodes
 
-        # Get input sequence length
-        seq_length = self._extract_sequence_length(recipe_cfg)
-        assert seq_length is not None, "Sequence length not found in recipe config"
-        metadata["SequenceLength"] = self.format_sequence_length(seq_length)
+        # SequenceLength is the recipe's supported context: the cap the customer
+        # dials up to via max_prompt_length + max_response_length (RL) or
+        # dataset_max_len (SFT/DPO). It is the DISPLAY/selection label -- the token
+        # budget (max_token_len_per_gpu * ulysses_sequence_parallel_size) bucketed
+        # DOWN to the backend power-of-2 enum string ("<n>K") by format_sequence_length.
+        # The hub content schema (v2_4_0) enforces this power-of-2 enum, so the label
+        # MUST floor to it. The numeric ceiling the UI actually enforces is the length
+        # params' override `max` (set to the exact budget in get_additional_data), NOT
+        # this bucketed label -- so the enforced cap is the true budget even when the
+        # label floors below it (e.g. budget 24576 -> label "16K", override max 24576).
+        context_length = self._extract_context_length(recipe_cfg)
+        if context_length is None:
+            # Fallback for recipes without a computable context length: derive from
+            # the configured sequence length.
+            context_length = self._extract_sequence_length(recipe_cfg)
+        assert context_length is not None, "Sequence length not found in recipe config"
+        metadata["SequenceLength"] = self.format_sequence_length(context_length)
 
         return metadata
 
@@ -349,6 +364,95 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         if max_prompt_length is not None and max_response_length is not None:
             return max_prompt_length + max_response_length
         return data.get("max_length")
+
+    # Length override params (RL prompt/response; SFT/DPO dataset_max_len) are
+    # dialable up to the recipe's supported sequence length = its effective per-GPU
+    # token budget under sequence parallelism:
+    #   budget = max_token_len_per_gpu * ulysses_sequence_parallel_size
+    # (RL reads actor_rollout_ref.actor.ppo_max_token_len_per_gpu and
+    # actor_rollout_ref.actor.ulysses_sequence_parallel_size; SFT/DPO read
+    # data.max_token_len_per_gpu and engine.ulysses_sequence_parallel_size). This is
+    # published as each length param's override `max` -- the ceiling the UI enforces
+    # prompt+response (RL) / dataset_max_len (SFT/DPO) against -- and is NOT floored:
+    # the override max must equal the true budget so the UI admits everything the
+    # recipe supports (flooring below it would reject the recipe's own baked lengths).
+    #
+    # Why * sp: under Ulysses sequence parallelism a single sequence is sharded across
+    # sp ranks, so verl's packing assert compares max_token_len_per_gpu * sp against
+    # the sequence (dp_actor scales the gate by sp before the assert). A recipe
+    # shipping sp=2 (e.g. qwen-3-14b) holds 2x its per-GPU gate in one sequence; not
+    # crediting sp would under-state its true ceiling and wrongly reject its own baked
+    # lengths. Recipes ship sp=1 by default (the multiplier is then a no-op).
+    #
+    # The published SequenceLength *label* is separately bucketed to the power-of-2
+    # enum by format_sequence_length(); that label is display / recipe-selection only
+    # and is never the enforced ceiling.
+    _CONTEXT_LENGTH_BOUND_PARAMS = ("max_prompt_length", "max_response_length", "dataset_max_len")
+
+    def _extract_context_length(self, recipe_cfg) -> Optional[int]:
+        """The recipe's supported sequence length = max_token_len_per_gpu * sp.
+
+        RL reads actor_rollout_ref.actor.ppo_max_token_len_per_gpu and its
+        ulysses_sequence_parallel_size; SFT/DPO read data.max_token_len_per_gpu and
+        engine.ulysses_sequence_parallel_size. sp defaults to 1 when absent. Returns
+        None when the token-budget field is absent (non-verl or malformed config),
+        making the clamp a no-op.
+        """
+        training_config = recipe_cfg.get("training_config")
+        if training_config is None:
+            return None
+
+        # RL recipes carry the budget under actor_rollout_ref.actor (its sp gates
+        # ppo_max_token_len_per_gpu); SFT/DPO carry it under data (with sp on engine).
+        actor_rollout_ref = training_config.get("actor_rollout_ref")
+        if actor_rollout_ref is not None:
+            actor = actor_rollout_ref.get("actor") or {}
+            token_budget = actor.get("ppo_max_token_len_per_gpu")
+            sp = actor.get("ulysses_sequence_parallel_size")
+        else:
+            data = training_config.get("data") or {}
+            token_budget = data.get("max_token_len_per_gpu")
+            engine = training_config.get("engine") or {}
+            sp = engine.get("ulysses_sequence_parallel_size")
+
+        if token_budget is None:
+            return None
+        budget = int(token_budget)
+        if budget <= 0:
+            return None
+        sp = int(sp) if sp else 1
+        return budget * max(sp, 1)
+
+    def get_additional_data(self, recipe_file_path: str) -> list:
+        """Set each length param's `max` to the recipe's sequence length.
+
+        The length params carry no static `max` in base_override_parameters.json;
+        for verl recipes we set it here to the recipe's effective token budget
+        (max_token_len_per_gpu * ulysses_sequence_parallel_size; not floored), so the
+        enforced max equals the true sequence length the recipe can serve. No-op when
+        the budget can't be computed (the param then stays uncapped) or no length
+        params are exposed.
+        """
+        additional_data = super().get_additional_data(recipe_file_path)
+        if not additional_data:
+            return additional_data
+
+        recipe_metadata, override_params, regional_parameters = additional_data
+        if not override_params:
+            return additional_data
+
+        context_length = self._extract_context_length(self._load_recipe_config(recipe_file_path))
+        if context_length is not None:
+            for param in self._CONTEXT_LENGTH_BOUND_PARAMS:
+                if param in override_params:
+                    # Never let the ceiling drop below the param's floor (min, and
+                    # the default which must stay dialable); otherwise a recipe with
+                    # a tiny sequence length would produce an invalid min > max range.
+                    param_spec = override_params[param]
+                    floor = max(param_spec.get("min", 0), param_spec.get("default", 0))
+                    param_spec["max"] = max(context_length, floor)
+
+        return [recipe_metadata, override_params, regional_parameters]
 
     def _training_technique(self, algorithm_type: str, display_name: str) -> str:
         """Determine training technique based on algorithm type and display name."""

@@ -42,6 +42,8 @@ class SMTrainingGPURecipe(SMTraining):
 
     @property
     def _default_repo(self):
+        if self._is_verl_non_ray_job():
+            return None
         use_default = self.cfg.get("git", {}).get("use_default", True)
         return SM_ADAPTER_REPO if use_default else None
 
@@ -66,6 +68,11 @@ class SMTrainingGPURecipe(SMTraining):
     def _entry_module(self):
         if self.cfg.get("entry_module", None):
             return self.cfg.entry_module
+        if self._is_verl_non_ray_job():
+            trainer_cfg = OmegaConf.select(self.cfg, "recipes.training_config.trainer") or {}
+            if "beta" in trainer_cfg:
+                return "verl.trainer.dpo_trainer"
+            return "verl.trainer.sft_trainer"
         return None
 
     def get_stage_config_choice(self):

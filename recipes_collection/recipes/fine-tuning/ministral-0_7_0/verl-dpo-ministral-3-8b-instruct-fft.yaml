@@ -87,7 +87,7 @@ training_config:
     lora_alpha: 16
     lora_rank: 0
     override_config:
-      attn_implementation: sdpa
+      attn_implementation: flash_attention_2
     path: mistralai/Ministral-3-8B-Instruct-2512-BF16
     target_modules: .*q_proj.*|.*k_proj.*|.*v_proj.*|.*o_proj.*|.*gate_proj.*|.*up_proj.*|.*down_proj.*
     tiled_mlp:

@@ -27,6 +27,7 @@ trainer:
 training_config:
   actor_rollout_ref:
     rollout:
+      max_num_batched_tokens: 12288
       merge_lora_for_inference: false
     model:
       attn_implementation: null

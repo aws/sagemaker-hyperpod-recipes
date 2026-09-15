@@ -1,3 +1,4 @@
+import json
 import os
 import unittest
 from pathlib import Path
@@ -9,7 +10,61 @@ from launcher.nova.launchers import (
     SMNovaK8SLauncherPPO,
     SMNovaK8SLauncherRFT,
     SMNovaK8SLauncherSFT,
+    get_cpu_instance_types,
+    get_legacy_quoted_recipes,
+    get_override_sub_instance_types,
+    should_strip_scalar_quotes,
 )
+from utils.template_utils import remove_quotes_from_scalar_params
+
+
+class TestGetCpuInstanceTypes(unittest.TestCase):
+    def test_returns_none_when_unset(self):
+        cfg = OmegaConf.create({"cluster": {"instance_type": "p5.48xlarge"}})
+        self.assertIsNone(get_cpu_instance_types(cfg))
+
+    def test_returns_none_when_no_cluster(self):
+        cfg = OmegaConf.create({"instance_type": "p5.48xlarge"})
+        self.assertIsNone(get_cpu_instance_types(cfg))
+
+    def test_string_gets_ml_prefix(self):
+        cfg = OmegaConf.create({"cluster": {"cpu_instance_type": "m5.xlarge"}})
+        self.assertEqual(get_cpu_instance_types(cfg), ["ml.m5.xlarge"])
+
+    def test_normalized_lowercase(self):
+        cfg = OmegaConf.create({"cluster": {"cpu_instance_type": "ML.M5.XLARGE"}})
+        self.assertEqual(get_cpu_instance_types(cfg), ["ml.m5.xlarge"])
+
+    def test_list(self):
+        cfg = OmegaConf.create({"cluster": {"cpu_instance_type": ["m5.xlarge", "ml.m5.2xlarge"]}})
+        self.assertEqual(get_cpu_instance_types(cfg), ["ml.m5.xlarge", "ml.m5.2xlarge"])
+
+    def test_list_of_none_returns_none(self):
+        cfg = OmegaConf.create({"cluster": {"cpu_instance_type": [None]}})
+        self.assertIsNone(get_cpu_instance_types(cfg))
+
+
+class TestGetOverrideSubInstanceTypes(unittest.TestCase):
+    def test_returns_empty_when_unset(self):
+        cfg = OmegaConf.create({"cluster": {"instance_type": "p5.48xlarge"}})
+        self.assertEqual(get_override_sub_instance_types(cfg), {})
+
+    def test_returns_empty_when_no_cluster(self):
+        cfg = OmegaConf.create({"instance_type": "p5.48xlarge"})
+        self.assertEqual(get_override_sub_instance_types(cfg), {})
+
+    def test_map_values_normalized(self):
+        cfg = OmegaConf.create(
+            {"cluster": {"override_sub_instance_type": {"hub": "r6i.24xlarge", "training": "ML.P5.48XLARGE"}}}
+        )
+        self.assertEqual(
+            get_override_sub_instance_types(cfg),
+            {"hub": "ml.r6i.24xlarge", "training": "ml.p5.48xlarge"},
+        )
+
+    def test_empty_value_dropped(self):
+        cfg = OmegaConf.create({"cluster": {"override_sub_instance_type": {"hub": None, "rbs": "r6i.24xlarge"}}})
+        self.assertEqual(get_override_sub_instance_types(cfg), {"rbs": "ml.r6i.24xlarge"})
 
 
 class TestSMNovaK8SLauncherSFT(unittest.TestCase):
@@ -522,6 +577,194 @@ class TestSMNovaK8SLauncherRFT(unittest.TestCase):
         # Test passes if method runs without error
         self.assertTrue(True)
 
+    @staticmethod
+    def _rft_values_template():
+        # Services must be non-empty: _map_resource_config skips falsy service nodes,
+        # matching the real values.yaml where each service has instanceType/labelSelector.
+        svc = {"instanceType": "ml.p5.48xlarge", "labelSelector": None}
+        return OmegaConf.create(
+            {
+                "trainingConfig": {
+                    "defaultResources": {"instanceType": "ml.p5.48xlarge"},
+                    "training": dict(svc),
+                    "vllmGeneration": dict(svc),
+                    "hub": dict(svc),
+                    "prompter": dict(svc),
+                    "rbs": dict(svc),
+                    "natsServer": dict(svc),
+                    "redis": {"enabled": True, "instanceType": "ml.p5.48xlarge", "labelSelector": None},
+                }
+            }
+        )
+
+    INSTANCE_KEY = "node.kubernetes.io/instance-type"
+
+    def test_map_resource_config_cpu_instance_type_fallback(self):
+        """cpu_instance_type applies to all CPU services; GPU services keep the global type."""
+        launcher = SMNovaK8SLauncherRFT(self.cfg)
+        launcher.instance_type = "ml.p5.48xlarge"
+        launcher.cpu_instance_types = ["ml.r6i.24xlarge"]
+        launcher.override_sub_instance_types = {}
+
+        values_template = self._rft_values_template()
+        launcher._map_resource_config(values_template)
+
+        tc = values_template.trainingConfig
+
+        # GPU services stay on the global instance type
+        self.assertEqual(tc.training.instanceType, "ml.p5.48xlarge")
+        self.assertEqual(tc.vllmGeneration.instanceType, "ml.p5.48xlarge")
+        self.assertEqual(tc.training.labelSelector["required"][self.INSTANCE_KEY], ["ml.p5.48xlarge"])
+
+        # CPU services (incl. redis) fall back to cpu_instance_type
+        for svc in ("hub", "prompter", "rbs", "natsServer", "redis"):
+            self.assertEqual(getattr(tc, svc).instanceType, "ml.r6i.24xlarge")
+            self.assertEqual(getattr(tc, svc).labelSelector["required"][self.INSTANCE_KEY], ["ml.r6i.24xlarge"])
+
+    def test_map_resource_config_per_service_override_map(self):
+        """override_sub_instance_type map targets named services; others fall back per rules."""
+        launcher = SMNovaK8SLauncherRFT(self.cfg)
+        launcher.instance_type = "ml.p5.48xlarge"
+        launcher.cpu_instance_types = ["ml.r6i.24xlarge"]
+        # Per-service map: rbs gets its own type; training (a GPU service) is overridden too.
+        launcher.override_sub_instance_types = {
+            "rbs": "ml.r6i.12xlarge",
+            "training": "ml.p5en.48xlarge",
+        }
+
+        values_template = self._rft_values_template()
+        launcher._map_resource_config(values_template)
+
+        tc = values_template.trainingConfig
+
+        # Named override wins
+        self.assertEqual(tc.rbs.instanceType, "ml.r6i.12xlarge")
+        self.assertEqual(tc.rbs.labelSelector["required"][self.INSTANCE_KEY], ["ml.r6i.12xlarge"])
+        self.assertEqual(tc.training.instanceType, "ml.p5en.48xlarge")
+
+        # Unnamed CPU services fall back to cpu_instance_type
+        self.assertEqual(tc.hub.instanceType, "ml.r6i.24xlarge")
+        # Unnamed GPU service falls back to global instance_type (no cpu fallback)
+        self.assertEqual(tc.vllmGeneration.instanceType, "ml.p5.48xlarge")
+
+    def test_map_resource_config_cpu_instance_type_list(self):
+        """A cpu_instance_type list: scalar instanceType takes the first, selector carries all."""
+        launcher = SMNovaK8SLauncherRFT(self.cfg)
+        launcher.instance_type = "ml.p5.48xlarge"
+        launcher.cpu_instance_types = ["ml.r6i.24xlarge", "ml.r6i.12xlarge"]
+        launcher.override_sub_instance_types = {}
+
+        values_template = self._rft_values_template()
+        launcher._map_resource_config(values_template)
+
+        hub = values_template.trainingConfig.hub
+        self.assertEqual(hub.instanceType, "ml.r6i.24xlarge")
+        self.assertEqual(hub.labelSelector["required"][self.INSTANCE_KEY], ["ml.r6i.24xlarge", "ml.r6i.12xlarge"])
+
+    def test_map_resource_config_defaults_to_global_when_nothing_set(self):
+        """With no override and no cpu_instance_type, every service uses the global type."""
+        launcher = SMNovaK8SLauncherRFT(self.cfg)
+        launcher.instance_type = "ml.p5.48xlarge"
+        launcher.cpu_instance_types = None
+        launcher.override_sub_instance_types = {}
+
+        values_template = self._rft_values_template()
+        launcher._map_resource_config(values_template)
+
+        tc = values_template.trainingConfig
+        self.assertEqual(tc.hub.instanceType, "ml.p5.48xlarge")
+        self.assertEqual(tc.redis.instanceType, "ml.p5.48xlarge")
+
+    def test_map_resource_config_launch_json_uses_placeholder(self):
+        """In launch_json mode the label selector uses the placeholder instance type."""
+        launcher = SMNovaK8SLauncherRFT(self.cfg)
+        launcher.instance_type = "ml.p5.48xlarge"
+        launcher.cpu_instance_types = ["ml.r6i.24xlarge"]
+        launcher.override_sub_instance_types = {}
+        launcher._launch_json = True
+
+        values_template = self._rft_values_template()
+        launcher._map_resource_config(values_template)
+
+        tc = values_template.trainingConfig
+        self.assertEqual(tc.training.labelSelector["required"][self.INSTANCE_KEY], ["PLACEHOLDER_INSTANCE_TYPE"])
+        self.assertEqual(tc.hub.labelSelector["required"][self.INSTANCE_KEY], ["PLACEHOLDER_INSTANCE_TYPE"])
+        self.assertEqual(tc.redis.labelSelector["required"][self.INSTANCE_KEY], ["PLACEHOLDER_INSTANCE_TYPE"])
+
+    def test_set_efa_resources_uses_override_instance_type(self):
+        """EFA counts follow the instance type resolved for each GPU service."""
+        launcher = SMNovaK8SLauncherRFT(self.cfg)
+        launcher.instance_type = "ml.p5.48xlarge"
+        launcher.num_efa_devices = 32
+        launcher.cpu_instance_types = None
+        # Override vllm_generation onto a single-EFA instance type.
+        launcher.override_sub_instance_types = {"vllm_generation": "ml.g5.8xlarge"}
+
+        values_template = OmegaConf.create(
+            {
+                "trainingConfig": {
+                    "training": {
+                        "resources": {
+                            "master": {"requests": {}, "limits": {}},
+                            "worker": {"requests": {}, "limits": {}},
+                        }
+                    },
+                    "vllmGeneration": {"resources": {"requests": {}, "limits": {}}},
+                }
+            }
+        )
+        launcher._set_efa_resources(values_template)
+
+        efa_key = "vpc.amazonaws.com/efa"
+        # training keeps the global p5.48xlarge EFA count (master + worker)
+        self.assertEqual(values_template.trainingConfig.training.resources.master.requests[efa_key], 32)
+        self.assertEqual(values_template.trainingConfig.training.resources.worker.limits[efa_key], 32)
+        # vllmGeneration uses the overridden instance type's EFA count
+        self.assertEqual(
+            values_template.trainingConfig.vllmGeneration.resources.requests[efa_key],
+            launcher._efa_devices_for("ml.g5.8xlarge"),
+        )
+
+    def test_map_resource_config_falls_back_to_default_resources(self):
+        """When the global instance_type is None, services fall back to defaultResources."""
+        launcher = SMNovaK8SLauncherRFT(self.cfg)
+        launcher.instance_type = None
+        launcher.cpu_instance_types = None
+        launcher.override_sub_instance_types = {}
+
+        values_template = self._rft_values_template()
+        launcher._map_resource_config(values_template)
+
+        # defaultResources.instanceType is ml.p5.48xlarge in the fixture
+        self.assertEqual(values_template.trainingConfig.hub.instanceType, "ml.p5.48xlarge")
+        self.assertEqual(values_template.trainingConfig.training.instanceType, "ml.p5.48xlarge")
+
+    def test_override_service_keys_accepts_valid_rft_keys(self):
+        """RFT launcher accepts override keys within its supported service set."""
+        self.cfg.cluster.override_sub_instance_type = OmegaConf.create(
+            {"hub": "ml.r6i.24xlarge", "training": "ml.p5.48xlarge"}
+        )
+        launcher = SMNovaK8SLauncherRFT(self.cfg)
+        self.assertEqual(
+            launcher.override_sub_instance_types,
+            {"hub": "ml.r6i.24xlarge", "training": "ml.p5.48xlarge"},
+        )
+
+    def test_override_service_keys_rejects_unknown_key(self):
+        """RFT launcher rejects an override key outside its supported service set."""
+        self.cfg.cluster.override_sub_instance_type = OmegaConf.create({"hubb": "ml.r6i.24xlarge"})
+        with self.assertRaises(ValueError) as ctx:
+            SMNovaK8SLauncherRFT(self.cfg)
+        self.assertIn("hubb", str(ctx.exception))
+        self.assertIn("Valid keys", str(ctx.exception))
+
+    def test_override_not_supported_for_sft(self):
+        """A recipe type with no overridable services rejects any override key."""
+        self.cfg.cluster.override_sub_instance_type = OmegaConf.create({"hub": "ml.r6i.24xlarge"})
+        with self.assertRaises(ValueError) as ctx:
+            SMNovaK8SLauncherSFT(self.cfg)
+        self.assertIn("not supported", str(ctx.exception))
+
     def test_to_camel_case(self):
         """Test _to_camel_case converts snake_case to camelCase."""
         launcher = SMNovaK8SLauncherRFT(self.cfg)
@@ -812,3 +1055,51 @@ class TestSMNovaK8SLauncherRFT(unittest.TestCase):
         with patch("launcher.nova.launchers.get_recipe_file_path", return_value=None):
             launcher = SMNovaK8SLauncherRFT(self.cfg)
             self.assertIsNone(launcher.recipe_file_path)
+
+
+class TestNovaLegacyQuotedRecipesBackwardCompat(unittest.TestCase):
+    """Legacy nova recipes must keep quoted scalar placeholders; new recipes get them stripped."""
+
+    NOVA_METADATA_PATH = "./launcher/recipe_templatization/nova/nova_metadata.json"
+
+    # Mixed numeric + boolean placeholders, both quoted (as legacy recipes render them).
+    SAMPLE_CONTENT = "run:\n  replicas: '{{replicas}}'\n  use_kl_loss: '{{use_kl_loss}}'\n"
+    SAMPLE_OVERRIDE_SPEC = {"replicas": {"type": "integer"}, "use_kl_loss": {"type": "boolean"}}
+
+    def _apply_launcher_quote_logic(self, recipe_name):
+        """Mirror the launcher: strip scalar quotes only when the gate allows it."""
+        if should_strip_scalar_quotes(recipe_name):
+            return remove_quotes_from_scalar_params(self.SAMPLE_CONTENT, self.SAMPLE_OVERRIDE_SPEC)
+        return self.SAMPLE_CONTENT
+
+    def test_legacy_snapshot_is_non_empty_subset_of_metadata(self):
+        """Every grandfathered recipe must be a real nova recipe (guards typos/drift)."""
+        legacy = get_legacy_quoted_recipes()
+        self.assertTrue(legacy, "legacy quoted-recipes snapshot must not be empty")
+        with open(self.NOVA_METADATA_PATH, "r") as f:
+            metadata_recipes = set(json.load(f))
+        self.assertTrue(
+            legacy <= metadata_recipes,
+            f"legacy recipes missing from nova_metadata.json: {sorted(legacy - metadata_recipes)}",
+        )
+
+    def test_legacy_recipe_keeps_scalar_quotes(self):
+        """Backward compat: a legacy recipe must NOT have numeric/boolean quotes stripped."""
+        legacy_recipe = next(iter(get_legacy_quoted_recipes()))
+        self.assertFalse(should_strip_scalar_quotes(legacy_recipe))
+
+        result = self._apply_launcher_quote_logic(legacy_recipe)
+        self.assertIn("replicas: '{{replicas}}'", result)
+        self.assertIn("use_kl_loss: '{{use_kl_loss}}'", result)
+
+    def test_new_recipe_strips_scalar_quotes(self):
+        """A new (non-legacy) recipe DOES get numeric and boolean quotes stripped."""
+        new_recipe = "nova_future_recipe_not_yet_shipped"
+        self.assertNotIn(new_recipe, get_legacy_quoted_recipes())
+        self.assertTrue(should_strip_scalar_quotes(new_recipe))
+
+        result = self._apply_launcher_quote_logic(new_recipe)
+        self.assertIn("replicas: {{replicas}}", result)
+        self.assertIn("use_kl_loss: {{use_kl_loss}}", result)
+        self.assertNotIn("'{{replicas}}'", result)
+        self.assertNotIn("'{{use_kl_loss}}'", result)

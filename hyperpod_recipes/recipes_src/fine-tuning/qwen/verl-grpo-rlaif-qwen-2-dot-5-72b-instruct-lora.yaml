@@ -39,6 +39,7 @@ training_config:
       fsdp_config:
         model_dtype: true
     rollout:
+      max_num_batched_tokens: 16384
       prompt_length: 4000
       log_prob_micro_batch_size_per_gpu: 16
       log_prob_max_token_len_per_gpu: 16384
