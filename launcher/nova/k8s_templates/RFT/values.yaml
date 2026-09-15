@@ -47,6 +47,7 @@ trainingConfig:
     instanceType: "ml.p5.48xlarge"
     nodeSelector: null
     affinity: null
+    labelSelector: null  # Per-service label selector; falls back to global labelSelector if null
     resources:
       master:
         requests:
@@ -69,6 +70,7 @@ trainingConfig:
     instanceType: "ml.p5.48xlarge"
     nodeSelector: null
     affinity: null
+    labelSelector: null  # Per-service label selector; falls back to global labelSelector if null
     resources:
       requests:
         nvidia.com/gpu: "8"
@@ -87,6 +89,7 @@ trainingConfig:
     instanceType: "ml.p5.48xlarge"
     nodeSelector: null
     affinity: null
+    labelSelector: null  # Per-service label selector; falls back to global labelSelector if null
     resources:
       requests:
         cpu: "90"
@@ -102,6 +105,7 @@ trainingConfig:
     replicas: 1
     instanceType: "ml.p5.48xlarge"
     affinity: null
+    labelSelector: null  # Per-service label selector; falls back to global labelSelector if null
     resources:
       requests:
         cpu: "5"
@@ -117,6 +121,7 @@ trainingConfig:
     replicas: 1
     instanceType: "ml.p5.48xlarge"
     affinity: null
+    labelSelector: null  # Per-service label selector; falls back to global labelSelector if null
     resources:
       requests:
         cpu: "85"
@@ -133,6 +138,7 @@ trainingConfig:
     instanceType: "ml.p5.48xlarge"
     nodeSelector: null
     affinity: null
+    labelSelector: null  # Per-service label selector; falls back to global labelSelector if null
     resources:
       requests:
         cpu: "30"
@@ -153,6 +159,7 @@ trainingConfig:
     replicas: 1
     instanceType: "ml.p5.48xlarge"
     affinity: null
+    labelSelector: null  # Per-service label selector; falls back to global labelSelector if null
     resources:
       requests:
         cpu: "500m"

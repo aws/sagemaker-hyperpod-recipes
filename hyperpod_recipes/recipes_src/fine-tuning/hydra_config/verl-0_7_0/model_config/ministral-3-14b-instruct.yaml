@@ -9,4 +9,4 @@ training_config:
     target_modules: .*q_proj.*|.*k_proj.*|.*v_proj.*|.*o_proj.*|.*gate_proj.*|.*up_proj.*|.*down_proj.*
     exclude_modules: .*vision_tower.*|.*visual.*|.*embed_vision.*|.*embed_audio.*|.*audio_tower.*
     override_config:
-      attn_implementation: sdpa
+      attn_implementation: flash_attention_2

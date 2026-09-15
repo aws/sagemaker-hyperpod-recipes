@@ -6818,6 +6818,20 @@
             "type": "string",
             "visibility_tier": "tertiary"
         },
+        "dataset_max_len": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 4096,
+            "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+            "display_name": "Max sequence length",
+            "hint": "Must be a value between {min} and {max}",
+            "max": 131072,
+            "min": 256,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
+        },
         "global_batch_size": {
             "category": "hyperparameter",
             "control_type": "dropdown",
@@ -7099,6 +7113,20 @@
             "required": true,
             "type": "string",
             "visibility_tier": "tertiary"
+        },
+        "dataset_max_len": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 4096,
+            "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+            "display_name": "Max sequence length",
+            "hint": "Must be a value between {min} and {max}",
+            "max": 131072,
+            "min": 256,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
         },
         "global_batch_size": {
             "category": "hyperparameter",
@@ -7509,6 +7537,33 @@
             "type": "integer",
             "visibility_tier": "primary"
         },
+        "max_prompt_length": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 1024,
+            "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+            "display_name": "Max Prompt Length",
+            "max": 16384,
+            "min": 512,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
+        },
+        "max_response_length": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 2048,
+            "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+            "display_name": "Maximum response length",
+            "hint": "Must be a value between {min} and {max}",
+            "max": 200000,
+            "min": 100,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
+        },
         "min_lr": {
             "category": "hyperparameter",
             "control_type": "number_input",
@@ -7864,6 +7919,33 @@
             "step": 1,
             "type": "integer",
             "visibility_tier": "primary"
+        },
+        "max_prompt_length": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 1024,
+            "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+            "display_name": "Max Prompt Length",
+            "max": 16384,
+            "min": 512,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
+        },
+        "max_response_length": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 2048,
+            "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+            "display_name": "Maximum response length",
+            "hint": "Must be a value between {min} and {max}",
+            "max": 200000,
+            "min": 100,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
         },
         "min_lr": {
             "category": "hyperparameter",
@@ -8231,6 +8313,33 @@
             "type": "integer",
             "visibility_tier": "primary"
         },
+        "max_prompt_length": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 1024,
+            "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+            "display_name": "Max Prompt Length",
+            "max": 16384,
+            "min": 512,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
+        },
+        "max_response_length": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 2048,
+            "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+            "display_name": "Maximum response length",
+            "hint": "Must be a value between {min} and {max}",
+            "max": 200000,
+            "min": 100,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
+        },
         "min_lr": {
             "category": "hyperparameter",
             "control_type": "number_input",
@@ -8588,6 +8697,33 @@
             "type": "integer",
             "visibility_tier": "primary"
         },
+        "max_prompt_length": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 1024,
+            "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+            "display_name": "Max Prompt Length",
+            "max": 16384,
+            "min": 512,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
+        },
+        "max_response_length": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 2048,
+            "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+            "display_name": "Maximum response length",
+            "hint": "Must be a value between {min} and {max}",
+            "max": 200000,
+            "min": 100,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
+        },
         "min_lr": {
             "category": "hyperparameter",
             "control_type": "number_input",
@@ -8828,6 +8964,20 @@
             "required": true,
             "type": "string",
             "visibility_tier": "tertiary"
+        },
+        "dataset_max_len": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 4096,
+            "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+            "display_name": "Max sequence length",
+            "hint": "Must be a value between {min} and {max}",
+            "max": 131072,
+            "min": 256,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
         },
         "global_batch_size": {
             "category": "hyperparameter",
@@ -9096,6 +9246,20 @@
             "required": true,
             "type": "string",
             "visibility_tier": "tertiary"
+        },
+        "dataset_max_len": {
+            "category": "hyperparameter",
+            "control_type": "number_input",
+            "default": 4096,
+            "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+            "display_name": "Max sequence length",
+            "hint": "Must be a value between {min} and {max}",
+            "max": 131072,
+            "min": 256,
+            "required": true,
+            "step": 1,
+            "type": "integer",
+            "visibility_tier": "advanced"
         },
         "global_batch_size": {
             "category": "hyperparameter",

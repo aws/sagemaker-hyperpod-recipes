@@ -382,6 +382,7 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 
 | Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
 |-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| DeepSeek R1 Distill Qwen 7B GRPO RLVR Fine-Tuning | verl | GRPO | FFT | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-fft.yaml](../recipes_collection/recipes/fine-tuning/deepseek/verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-fft.yaml) | [run_verl_grpo_rlvr_deepseek_r1_distilled_qwen_7b_fft.sh](../launcher_scripts/deepseek/run_verl_grpo_rlvr_deepseek_r1_distilled_qwen_7b_fft.sh) |
 | Deepseek R1 Distilled Qwen 7B GRPO RLVR Fine-Tuning with LoRA | verl | GRPO | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge, p4d.24xlarge | [verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-lora.yaml](../recipes_collection/recipes/fine-tuning/deepseek/verl-grpo-rlvr-deepseek-r1-distilled-qwen-7b-lora.yaml) | [run_verl_grpo_rlvr_deepseek_r1_distilled_qwen_7b_lora.sh](../launcher_scripts/deepseek/run_verl_grpo_rlvr_deepseek_r1_distilled_qwen_7b_lora.sh) |
 | Deepseek R1 Distilled Qwen 7B GRPO RLAIF Fine-Tuning | verl | GRPO + RLAIF | FFT | 32,768 | 1 | p4d.24xlarge, p4de.24xlarge, p5.48xlarge | [verl-grpo-rlaif-deepseek-r1-distilled-qwen-7b-fft.yaml](../recipes_collection/recipes/fine-tuning/deepseek/verl-grpo-rlaif-deepseek-r1-distilled-qwen-7b-fft.yaml) | [run_verl_grpo_rlaif_deepseek_r1_distilled_qwen_7b_fft.sh](../launcher_scripts/deepseek/run_verl_grpo_rlaif_deepseek_r1_distilled_qwen_7b_fft.sh) |
 | Deepseek R1 Distilled Qwen 7B GRPO RLAIF Fine-Tuning with LoRA | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge, p4d.24xlarge | [verl-grpo-rlaif-deepseek-r1-distilled-qwen-7b-lora.yaml](../recipes_collection/recipes/fine-tuning/deepseek/verl-grpo-rlaif-deepseek-r1-distilled-qwen-7b-lora.yaml) | [run_verl_grpo_rlaif_deepseek_r1_distilled_qwen_7b_lora.sh](../launcher_scripts/deepseek/run_verl_grpo_rlaif_deepseek_r1_distilled_qwen_7b_lora.sh) |
@@ -574,6 +575,15 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 | Ministral-3-8B-Instruct-2512-BF16 GRPO RLAIF FFT Fine-Tuning (Text) | verl | GRPO + RLAIF | FFT | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-ministral-3-8b-instruct-fft.yaml](../recipes_collection/recipes/fine-tuning/ministral-0_7_0/verl-grpo-rlaif-ministral-3-8b-instruct-fft.yaml) | [run_verl_grpo_rlaif_ministral_3_8b_instruct_fft.sh](../launcher_scripts/ministral-0_7_0/run_verl_grpo_rlaif_ministral_3_8b_instruct_fft.sh) |
 | Ministral-3-8B-Instruct-2512-BF16 GRPO RLAIF LoRA Fine-Tuning (Text) | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlaif-ministral-3-8b-instruct-lora.yaml](../recipes_collection/recipes/fine-tuning/ministral-0_7_0/verl-grpo-rlaif-ministral-3-8b-instruct-lora.yaml) | [run_verl_grpo_rlaif_ministral_3_8b_instruct_lora.sh](../launcher_scripts/ministral-0_7_0/run_verl_grpo_rlaif_ministral_3_8b_instruct_lora.sh) |
 
+### Muse-Glimmer Models
+
+#### Meta Muse Glimmer 30B
+
+| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Muse-Glimmer 30B SFT Full Fine-Tuning (Text) | verl | - | FFT | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-sft-muse-glimmer-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-fft.yaml) | [run_verl_sft_muse_glimmer_30b_fft.sh](../launcher_scripts/muse_glimmer-0_7_0/run_verl_sft_muse_glimmer_30b_fft.sh) |
+| Muse-Glimmer 30B SFT LoRA Fine-Tuning (Text) | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-sft-muse-glimmer-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-lora.yaml) | [run_verl_sft_muse_glimmer_30b_lora.sh](../launcher_scripts/muse_glimmer-0_7_0/run_verl_sft_muse_glimmer_30b_lora.sh) |
+
 ### Nemotron Models
 
 #### Nemotron 3.5 Lightning 30B A3b Bf16
@@ -717,6 +727,7 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 |-----|-----|-----|-----|-----|-----|-----|-----|-----|
 | Qwen 3 1.7B SFT Full Fine-Tuning | verl | - | FFT | - | 1 | p5.48xlarge, p4de.24xlarge, p4d.24xlarge | [verl-sft-qwen-3-1-dot-7b-fft.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-sft-qwen-3-1-dot-7b-fft.yaml) | [run_verl_sft_qwen_3_1_dot_7b_fft.sh](../launcher_scripts/qwen-0_7_0/run_verl_sft_qwen_3_1_dot_7b_fft.sh) |
 | Qwen 3 1.7B SFT LoRA Fine-Tuning | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge, p4d.24xlarge | [verl-sft-qwen-3-1-dot-7b-lora.yaml](../recipes_collection/recipes/fine-tuning/qwen-0_7_0/verl-sft-qwen-3-1-dot-7b-lora.yaml) | [run_verl_sft_qwen_3_1_dot_7b_lora.sh](../launcher_scripts/qwen-0_7_0/run_verl_sft_qwen_3_1_dot_7b_lora.sh) |
+| Qwen 3 1.7B GRPO RLVR Fine-Tuning | verl | GRPO | FFT | 32,768 | 1 | p5.48xlarge | [verl-grpo-rlvr-qwen-3-1-dot-7b-fft.yaml](../recipes_collection/recipes/fine-tuning/qwen/verl-grpo-rlvr-qwen-3-1-dot-7b-fft.yaml) | [run_verl_grpo_rlvr_qwen_3_1_dot_7b_fft.sh](../launcher_scripts/qwen/run_verl_grpo_rlvr_qwen_3_1_dot_7b_fft.sh) |
 | Qwen 3 1.7B GRPO RLVR Fine-Tuning with LoRA | verl | GRPO | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-grpo-rlvr-qwen-3-1-dot-7b-lora.yaml](../recipes_collection/recipes/fine-tuning/qwen/verl-grpo-rlvr-qwen-3-1-dot-7b-lora.yaml) | [run_verl_grpo_rlvr_qwen_3_1_dot_7b_lora.sh](../launcher_scripts/qwen/run_verl_grpo_rlvr_qwen_3_1_dot_7b_lora.sh) |
 | Qwen 3 1.7B GRPO RLAIF Fine-Tuning | verl | GRPO + RLAIF | FFT | 32,768 | 1 | p4d.24xlarge, p4de.24xlarge, p5.48xlarge | [verl-grpo-rlaif-qwen-3-1-dot-7b-fft.yaml](../recipes_collection/recipes/fine-tuning/qwen/verl-grpo-rlaif-qwen-3-1-dot-7b-fft.yaml) | [run_verl_grpo_rlaif_qwen_3_1_dot_7b_fft.sh](../launcher_scripts/qwen/run_verl_grpo_rlaif_qwen_3_1_dot_7b_fft.sh) |
 | Qwen 3 1.7B GRPO RLAIF Fine-Tuning with LoRA | verl | GRPO + RLAIF | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge, p4d.24xlarge | [verl-grpo-rlaif-qwen-3-1-dot-7b-lora.yaml](../recipes_collection/recipes/fine-tuning/qwen/verl-grpo-rlaif-qwen-3-1-dot-7b-lora.yaml) | [run_verl_grpo_rlaif_qwen_3_1_dot_7b_lora.sh](../launcher_scripts/qwen/run_verl_grpo_rlaif_qwen_3_1_dot_7b_lora.sh) |

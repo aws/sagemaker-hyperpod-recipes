@@ -393,7 +393,10 @@ def validate_metadata_schema(metadata: Dict) -> List[str]:
         if not isinstance(metadata["SequenceLength"], str):
             errors.append(f"SequenceLength must be string, got {type(metadata['SequenceLength']).__name__}")
         else:
-            valid_seq_lengths = ["1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K"]
+            # Includes 256K/512K ahead of the backend SequenceLength enum (which
+            # tops out at 128K today) so recipes can advertise the model's native
+            # max context; the backend enum is being extended to match.
+            valid_seq_lengths = ["1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K", "256K", "512K"]
             if metadata["SequenceLength"] not in valid_seq_lengths:
                 errors.append(
                     f"Invalid SequenceLength: {metadata['SequenceLength']}. Must be one of: {', '.join(valid_seq_lengths)}"

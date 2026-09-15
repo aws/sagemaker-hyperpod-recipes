@@ -37,6 +37,7 @@ training_config:
       log_prob_max_token_len_per_gpu: 32768
       entropy_from_logits_with_chunking: true
     rollout:
+      max_num_batched_tokens: 32768
       gpu_memory_utilization: 0.5
       log_prob_micro_batch_size_per_gpu: null
       log_prob_max_token_len_per_gpu: 32768

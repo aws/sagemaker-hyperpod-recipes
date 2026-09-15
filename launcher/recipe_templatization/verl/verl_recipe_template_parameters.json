@@ -40,6 +40,8 @@
                             "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "response_length": "{{max_response_length}}",
                             "n": "{{rollout_n}}",
                             "temperature": "{{rollout_temperature}}",
                             "val_kwargs": {
@@ -56,7 +58,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "reward_model": {
                         "reward_kwargs": {
@@ -103,6 +107,14 @@
                 },
                 "temperature": {
                     "default": 0
+                },
+                "max_prompt_length": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum."
+                },
+                "max_response_length": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum."
                 }
             },
             "recipe_metadata_helpers": {
@@ -150,6 +162,8 @@
                             "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "response_length": "{{max_response_length}}",
                             "n": "{{rollout_n}}",
                             "temperature": "{{rollout_temperature}}",
                             "val_kwargs": {
@@ -166,7 +180,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "custom_reward_function": {
                         "name": "{{preset_reward_function}}",
@@ -212,6 +228,14 @@
                 },
                 "temperature": {
                     "default": 0
+                },
+                "max_prompt_length": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum."
+                },
+                "max_response_length": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum."
                 }
             },
             "recipe_metadata_helpers": {
@@ -264,6 +288,8 @@
                             "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "response_length": "{{max_response_length}}",
                             "n": "{{rollout_n}}",
                             "temperature": "{{rollout_temperature}}",
                             "val_kwargs": {
@@ -278,7 +304,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "reward_model": {
                         "reward_kwargs": {
@@ -322,6 +350,14 @@
                 },
                 "temperature": {
                     "default": 0
+                },
+                "max_prompt_length": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum."
+                },
+                "max_response_length": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum."
                 }
             },
             "recipe_metadata_helpers": {
@@ -371,7 +407,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -408,6 +445,10 @@
                 "min_lr": {
                     "default": 0.0,
                     "min": 0.0
+                },
+                "dataset_max_len": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory."
                 }
             },
             "recipe_metadata_helpers": {
@@ -455,7 +496,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -489,6 +531,10 @@
                 "min_lr": {
                     "default": 0.0,
                     "min": 0.0
+                },
+                "dataset_max_len": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory."
                 }
             },
             "recipe_metadata_helpers": {
@@ -536,6 +582,8 @@
                             "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "response_length": "{{max_response_length}}",
                             "n": "{{rollout_n}}",
                             "temperature": "{{rollout_temperature}}",
                             "val_kwargs": {
@@ -550,7 +598,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "custom_reward_function": {
                         "name": "{{preset_reward_function}}",
@@ -594,6 +644,14 @@
                 },
                 "temperature": {
                     "default": 0
+                },
+                "max_prompt_length": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum."
+                },
+                "max_response_length": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum."
                 }
             },
             "recipe_metadata_helpers": {
@@ -649,7 +707,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -701,6 +760,10 @@
                 },
                 "lr_scheduler": {
                     "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve."
+                },
+                "dataset_max_len": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory."
                 }
             },
             "recipe_metadata_helpers": {
@@ -750,7 +813,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -796,6 +860,10 @@
                 },
                 "lr_scheduler": {
                     "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve."
+                },
+                "dataset_max_len": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory."
                 }
             },
             "recipe_metadata_helpers": {

@@ -38,7 +38,7 @@ training_config:
       prompt_length: 16384
       response_length: 16384
       log_prob_micro_batch_size_per_gpu: 16
-      max_num_batched_tokens: 32768
+      max_num_batched_tokens: 49152
       enable_chunked_prefill: true
       layered_summon: false
       merge_lora_for_inference: true

@@ -40,6 +40,8 @@
                             "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "response_length": "{{max_response_length}}",
                             "n": "{{rollout_n}}",
                             "temperature": "{{rollout_temperature}}",
                             "val_kwargs": {
@@ -56,7 +58,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "reward_model": {
                         "reward_kwargs": {
@@ -200,6 +204,19 @@
                     "display_name": "Batch size",
                     "hint": "Choose from the available batch size options",
                     "control_type": "dropdown"
+                },
+                "max_prompt_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 512,
+                    "default": 1024,
+                    "category": "hyperparameter",
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max Prompt Length",
+                    "control_type": "number_input",
+                    "step": 1,
+                    "max": 16384
                 },
                 "judge_model_id": {
                     "type": "string",
@@ -462,6 +479,20 @@
                     "visibility_tier": "primary",
                     "display_name": "KL divergence loss",
                     "control_type": "dropdown"
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 2048,
+                    "min": 100,
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 200000,
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -509,6 +540,8 @@
                             "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "response_length": "{{max_response_length}}",
                             "n": "{{rollout_n}}",
                             "temperature": "{{rollout_temperature}}",
                             "val_kwargs": {
@@ -525,7 +558,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "custom_reward_function": {
                         "name": "{{preset_reward_function}}",
@@ -705,6 +740,19 @@
                     "display_name": "Batch size",
                     "hint": "Choose from the available batch size options",
                     "control_type": "dropdown"
+                },
+                "max_prompt_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 512,
+                    "default": 1024,
+                    "category": "hyperparameter",
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max Prompt Length",
+                    "control_type": "number_input",
+                    "step": 1,
+                    "max": 16384
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -927,6 +975,20 @@
                     "visibility_tier": "primary",
                     "display_name": "KL divergence loss",
                     "control_type": "dropdown"
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 2048,
+                    "min": 100,
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 200000,
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -979,6 +1041,8 @@
                             "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "response_length": "{{max_response_length}}",
                             "n": "{{rollout_n}}",
                             "temperature": "{{rollout_temperature}}",
                             "val_kwargs": {
@@ -993,7 +1057,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "reward_model": {
                         "reward_kwargs": {
@@ -1137,6 +1203,19 @@
                     "display_name": "Batch size",
                     "hint": "Choose from the available batch size options",
                     "control_type": "dropdown"
+                },
+                "max_prompt_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 512,
+                    "default": 1024,
+                    "category": "hyperparameter",
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max Prompt Length",
+                    "control_type": "number_input",
+                    "step": 1,
+                    "max": 16384
                 },
                 "judge_model_id": {
                     "type": "string",
@@ -1363,6 +1442,20 @@
                     "visibility_tier": "primary",
                     "display_name": "KL divergence loss",
                     "control_type": "dropdown"
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 2048,
+                    "min": 100,
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 200000,
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -1412,7 +1505,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -1686,6 +1780,20 @@
                     "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
                     "visibility_tier": "tertiary",
                     "control_type": "dropdown"
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 4096,
+                    "min": 256,
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 131072,
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -1733,7 +1841,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -1971,6 +2080,20 @@
                     "description": "Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero.",
                     "visibility_tier": "tertiary",
                     "control_type": "dropdown"
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 4096,
+                    "min": 256,
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 131072,
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -2018,6 +2141,8 @@
                             "use_kl_loss": "{{use_kl_loss}}"
                         },
                         "rollout": {
+                            "prompt_length": "{{max_prompt_length}}",
+                            "response_length": "{{max_response_length}}",
                             "n": "{{rollout_n}}",
                             "temperature": "{{rollout_temperature}}",
                             "val_kwargs": {
@@ -2032,7 +2157,9 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_val_split_ratio": "{{train_val_split_ratio}}",
-                        "train_batch_size": "{{global_batch_size}}"
+                        "train_batch_size": "{{global_batch_size}}",
+                        "max_prompt_length": "{{max_prompt_length}}",
+                        "max_response_length": "{{max_response_length}}"
                     },
                     "custom_reward_function": {
                         "name": "{{preset_reward_function}}",
@@ -2213,6 +2340,19 @@
                     "display_name": "Batch size",
                     "hint": "Choose from the available batch size options",
                     "control_type": "dropdown"
+                },
+                "max_prompt_length": {
+                    "type": "integer",
+                    "required": true,
+                    "min": 512,
+                    "default": 1024,
+                    "category": "hyperparameter",
+                    "description": "Maximum number of tokens reserved for the prompt/input portion of each sequence. Cannot exceed the recipe's baked-in maximum.",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max Prompt Length",
+                    "control_type": "number_input",
+                    "step": 1,
+                    "max": 16384
                 },
                 "train_val_split_ratio": {
                     "type": "float",
@@ -2399,6 +2539,20 @@
                     "visibility_tier": "primary",
                     "display_name": "KL divergence loss",
                     "control_type": "dropdown"
+                },
+                "max_response_length": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 2048,
+                    "min": 100,
+                    "description": "Maximum number of tokens allowed for the generated response portion. Cannot exceed the recipe's baked-in maximum.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Maximum response length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 200000,
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -2454,7 +2608,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -2742,6 +2897,20 @@
                     "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve.",
                     "visibility_tier": "tertiary",
                     "control_type": "dropdown"
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 4096,
+                    "min": 256,
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 131072,
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {
@@ -2791,7 +2960,8 @@
                         "train_files": "{{data_path}}",
                         "val_files": "{{validation_data_path}}",
                         "train_batch_size": "{{global_batch_size}}",
-                        "train_val_split_ratio": "{{train_val_split_ratio}}"
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}"
                     },
                     "mlflow": {
                         "tracking_uri": "{{mlflow_tracking_uri}}",
@@ -3043,6 +3213,20 @@
                     "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve.",
                     "visibility_tier": "tertiary",
                     "control_type": "dropdown"
+                },
+                "dataset_max_len": {
+                    "type": "integer",
+                    "required": true,
+                    "default": 4096,
+                    "min": 256,
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory.",
+                    "category": "hyperparameter",
+                    "visibility_tier": "advanced",
+                    "display_name": "Max sequence length",
+                    "hint": "Must be a value between {min} and {max}",
+                    "max": 131072,
+                    "control_type": "number_input",
+                    "step": 1
                 }
             },
             "recipe_metadata_helpers": {

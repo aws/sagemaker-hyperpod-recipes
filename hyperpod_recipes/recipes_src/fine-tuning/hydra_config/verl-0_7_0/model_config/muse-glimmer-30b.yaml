@@ -1,0 +1,19 @@
+# @package recipes
+# Muse-Glimmer 30B model configuration for verl-0.7.0
+# Text-only fine-tuning; the vision encoder and multimodal projector are excluded from training.
+training_config:
+  model:
+    path: meta-models/Muse-Glimmer-30B
+    trust_remote_code: true
+    use_liger: false
+    use_fused_kernels: true
+    target_modules: .*q_proj.*|.*k_proj.*|.*v_proj.*|.*o_proj.*|.*gate_proj.*|.*up_proj.*|.*down_proj.*
+    # The vision encoder also names its projections q_proj/k_proj/v_proj, so these exclusions are
+    # required to keep it out of training. Its module names are vision_tower, vision_adapter and
+    # vision_projection.
+    exclude_modules: .*vision_tower.*|.*vision_adapter.*|.*vision_projection.*
+    override_config:
+      attn_implementation: flash_attention_2
+    tiled_mlp:
+      enabled: false
+      num_shards: 4

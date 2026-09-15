@@ -17,11 +17,11 @@ Unit tests for template variable quote removal based on parameter types.
 
 import yaml
 
-from utils.template_utils import remove_quotes_from_numeric_params
+from utils.template_utils import remove_quotes_from_scalar_params
 
 
 class TestTemplateQuoteRemoval:
-    """Test suite for removing quotes from numeric template variables."""
+    """Test suite for removing quotes from scalar (numeric/boolean) template variables."""
 
     def test_remove_quotes_from_integer_single_quotes(self):
         """Test removing single quotes from integer type parameters."""
@@ -36,7 +36,7 @@ class TestTemplateQuoteRemoval:
             "max_epochs": {"type": "integer", "default": 5},
         }
 
-        result = remove_quotes_from_numeric_params(content, param_definitions)
+        result = remove_quotes_from_scalar_params(content, param_definitions)
 
         assert "global_batch_size: {{global_batch_size}}" in result
         assert "max_epochs: {{max_epochs}}" in result
@@ -56,12 +56,49 @@ class TestTemplateQuoteRemoval:
             "lr_warmup_ratio": {"type": "float", "default": 0.1},
         }
 
-        result = remove_quotes_from_numeric_params(content, param_definitions)
+        result = remove_quotes_from_scalar_params(content, param_definitions)
 
         assert "learning_rate: {{learning_rate}}" in result
         assert "lr_warmup_ratio: {{lr_warmup_ratio}}" in result
         assert '"{{learning_rate}}"' not in result
         assert '"{{lr_warmup_ratio}}"' not in result
+
+    def test_remove_quotes_from_boolean_params(self):
+        """Test removing single and double quotes from boolean type parameters."""
+        content = """
+        training_config:
+          use_kl_loss: '{{use_kl_loss}}'
+          gradient_clipping: "{{gradient_clipping}}"
+        """
+
+        param_definitions = {
+            "use_kl_loss": {"type": "boolean", "default": True},
+            "gradient_clipping": {"type": "boolean", "default": False},
+        }
+
+        result = remove_quotes_from_scalar_params(content, param_definitions)
+
+        assert "use_kl_loss: {{use_kl_loss}}" in result
+        assert "gradient_clipping: {{gradient_clipping}}" in result
+        assert "'{{use_kl_loss}}'" not in result
+        assert '"{{gradient_clipping}}"' not in result
+
+    def test_validates_yaml_output_boolean_type(self):
+        """Test that after quote removal + substitution, boolean params are real YAML booleans."""
+        content = """
+        training_config:
+          use_kl_loss: '{{use_kl_loss}}'
+        """
+
+        param_definitions = {"use_kl_loss": {"type": "boolean", "default": True}}
+
+        result = remove_quotes_from_scalar_params(content, param_definitions)
+        substituted = result.replace("{{use_kl_loss}}", "true")
+
+        config = yaml.safe_load(substituted)
+
+        assert isinstance(config["training_config"]["use_kl_loss"], bool)
+        assert config["training_config"]["use_kl_loss"] is True
 
     def test_keep_quotes_for_string_parameters(self):
         """Test that string parameters keep their quotes."""
@@ -78,7 +115,7 @@ class TestTemplateQuoteRemoval:
             "name": {"type": "string", "default": "test-job"},
         }
 
-        result = remove_quotes_from_numeric_params(content, param_definitions)
+        result = remove_quotes_from_scalar_params(content, param_definitions)
 
         assert "'{{model_name_or_path}}'" in result
         assert "'{{data_path}}'" in result
@@ -105,7 +142,7 @@ class TestTemplateQuoteRemoval:
             "output_path": {"type": "string"},
         }
 
-        result = remove_quotes_from_numeric_params(content, param_definitions)
+        result = remove_quotes_from_scalar_params(content, param_definitions)
 
         assert "lora_alpha: {{lora_alpha}}" in result
         assert "learning_rate: {{learning_rate}}" in result
@@ -127,7 +164,7 @@ class TestTemplateQuoteRemoval:
             "max_epochs": {"type": "integer"},
         }
 
-        result = remove_quotes_from_numeric_params(content, param_definitions)
+        result = remove_quotes_from_scalar_params(content, param_definitions)
 
         assert "lora_alpha: {{lora_alpha}}" in result
 
@@ -140,7 +177,7 @@ class TestTemplateQuoteRemoval:
 
         param_definitions = {"unknown_param": {"default": "some_value"}}
 
-        result = remove_quotes_from_numeric_params(content, param_definitions)
+        result = remove_quotes_from_scalar_params(content, param_definitions)
 
         assert "'{{unknown_param}}'" in result
 
@@ -202,7 +239,7 @@ class TestTemplateQuoteRemoval:
             "param3": {"type": "integer"},
         }
 
-        result = remove_quotes_from_numeric_params(content, param_definitions)
+        result = remove_quotes_from_scalar_params(content, param_definitions)
 
         assert "param1: {{param1}}" in result
         assert "param2: {{param2}}" in result
@@ -220,7 +257,7 @@ class TestTemplateQuoteRemoval:
 
         param_definitions = {}
 
-        result = remove_quotes_from_numeric_params(content, param_definitions)
+        result = remove_quotes_from_scalar_params(content, param_definitions)
 
         assert result == content
 
@@ -231,7 +268,7 @@ class TestTemplateQuoteRemoval:
           some_param: '{{some_param}}'
         """
 
-        result = remove_quotes_from_numeric_params(content, None)
+        result = remove_quotes_from_scalar_params(content, None)
 
         assert result == content
 
@@ -250,7 +287,7 @@ class TestTemplateQuoteRemoval:
             "model_name": {"type": "string"},
         }
 
-        result = remove_quotes_from_numeric_params(content, param_definitions)
+        result = remove_quotes_from_scalar_params(content, param_definitions)
 
         assert "lora_alpha: {{lora_alpha}}  # LoRA scaling parameter" in result
         assert "learning_rate: {{learning_rate}}  # Initial learning rate" in result

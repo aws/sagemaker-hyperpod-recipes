@@ -29,7 +29,7 @@ from nemo_launcher.utils.job_utils import JobPaths
 from omegaconf import OmegaConf, open_dict
 from pydantic import ValidationError
 
-from utils.template_utils import remove_quotes_from_numeric_params
+from utils.template_utils import remove_quotes_from_scalar_params
 
 from ..accelerator_devices import get_num_accelerator_devices
 from ..efa import (
@@ -1300,8 +1300,8 @@ class SMTraining(Training):
         for path in sorted(render_dir.rglob("*.yaml"), key=lambda p: p.name):
             content = path.read_text()
 
-            # Remove quotes from numeric parameters in YAML
-            content = remove_quotes_from_numeric_params(content, override_spec)
+            # Remove quotes from scalar (numeric/boolean) parameters in YAML
+            content = remove_quotes_from_scalar_params(content, override_spec)
 
             # Replace following references in content
             # Replace following references in content. String replace is followed here instead of templatization because

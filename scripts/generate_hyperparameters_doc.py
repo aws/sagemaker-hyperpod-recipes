@@ -101,7 +101,15 @@ def _fmt_number(v) -> str:
     return str(v)
 
 
-def _format_range(spec: dict) -> str:
+# verl clamps these length params' max to each recipe's supported sequence
+# length at recipe-processing time (see VerlRecipeTemplateProcessor). The static
+# max in the base config is only an upper bound, so for verl we render the max as
+# the per-recipe ceiling rather than the misleading static number.
+_VERL_SEQUENCE_LENGTH_CLAMPED_PARAMS = frozenset({"max_prompt_length", "max_response_length", "dataset_max_len"})
+_VERL_SEQUENCE_LENGTH_CEILING = "recipe sequence length"
+
+
+def _format_range(spec: dict, *, clamp_max_to_sequence_length: bool = False) -> str:
     if "enum" in spec:
         values = [str(v) for v in spec["enum"]]
         if len(values) <= _MAX_ENUM_INLINE:
@@ -112,7 +120,9 @@ def _format_range(spec: dict) -> str:
     if "min" in spec:
         parts.append(_fmt_number(spec["min"]))
     if "max" in spec:
-        parts.append(_fmt_number(spec["max"]))
+        # For verl length params the effective max is the recipe's computed
+        # sequence-length ceiling, not the static base max.
+        parts.append(_VERL_SEQUENCE_LENGTH_CEILING if clamp_max_to_sequence_length else _fmt_number(spec["max"]))
     if len(parts) == 2:
         return f"{parts[0]}–{parts[1]}"
     if parts:
@@ -126,16 +136,20 @@ def _format_range(spec: dict) -> str:
 # =============================================================================
 
 
-def _make_param_table(params: Dict[str, Any]) -> List[str]:
+def _make_param_table(params: Dict[str, Any], *, is_verl: bool = False) -> List[str]:
     included = [(name, spec) for name, spec in params.items() if _should_include(spec)]
     if not included:
         return []
+
+    def _range(n: str, s: dict) -> str:
+        clamp = is_verl and n in _VERL_SEQUENCE_LENGTH_CLAMPED_PARAMS
+        return _format_range(s, clamp_max_to_sequence_length=clamp)
 
     cols = [
         ("Parameter", lambda n, s: f"`{n}`"),
         ("Type", lambda n, s: s.get("type") or "—"),
         ("Required", lambda n, s: "Yes" if s.get("required") else "No"),
-        ("Range / Values", lambda n, s: _format_range(s)),
+        ("Range / Values", _range),
         ("Description", lambda n, s: (s.get("description") or "—").replace("|", "\\|")),
     ]
 
@@ -188,14 +202,29 @@ def _generate_framework_section(fw_title: str, rel_path: str) -> List[str]:
     if not templates:
         return []
 
+    is_verl = rel_path.startswith("verl/")
+
     lines = [f"## {fw_title}", ""]
+
+    if is_verl:
+        # The length params' max is not the static base value for verl — the
+        # recipe processor clamps it to each recipe's supported sequence length.
+        lines.append(
+            "> **Note:** For verl recipes, `max_prompt_length`, "
+            "`max_response_length`, and `dataset_max_len` are capped at the "
+            "recipe's supported sequence length (derived from the recipe's "
+            "per-GPU token budget), not the static upper bound. The effective "
+            "maximum is per-recipe; the ranges below show it as "
+            f'"{_VERL_SEQUENCE_LENGTH_CEILING}".'
+        )
+        lines.append("")
 
     for template_key, template_data in templates.items():
         params = _resolve_override_parameters(template_data)
         display = _template_display_name(template_key, template_data)
         lines.append(f"### {display}")
         lines.append("")
-        table = _make_param_table(params)
+        table = _make_param_table(params, is_verl=is_verl)
         if table:
             lines.extend(table)
         else:

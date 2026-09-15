@@ -215,6 +215,8 @@
     "verl-grpo-rlaif-ministral-3-8b-instruct-fft": "huggingface-vlm-ministral-3-8b-instruct-2512-bf16",
     "verl-sft-ministral-3-3b-instruct-lora": "huggingface-vlm-ministral-3-3b-instruct-2512-bf16",
     "verl-sft-ministral-3-3b-instruct-fft": "huggingface-vlm-ministral-3-3b-instruct-2512-bf16",
+    "verl-sft-muse-glimmer-30b-lora": "huggingface-llm-meta-muse-glimmer-30b",
+    "verl-sft-muse-glimmer-30b-fft": "huggingface-llm-meta-muse-glimmer-30b",
     "verl-dpo-ministral-3-3b-instruct-lora": "huggingface-vlm-ministral-3-3b-instruct-2512-bf16",
     "verl-dpo-ministral-3-3b-instruct-fft": "huggingface-vlm-ministral-3-3b-instruct-2512-bf16",
     "verl-grpo-rlvr-ministral-3-3b-instruct-lora": "huggingface-vlm-ministral-3-3b-instruct-2512-bf16",
