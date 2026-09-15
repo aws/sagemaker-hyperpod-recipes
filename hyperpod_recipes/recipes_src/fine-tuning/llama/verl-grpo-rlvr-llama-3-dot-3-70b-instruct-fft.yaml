@@ -37,7 +37,7 @@ training_config:
         param_offload: false
     rollout:
       prompt_length: 3072
-      max_num_batched_tokens: 4096
+      max_num_batched_tokens: 8192
       log_prob_micro_batch_size_per_gpu: 16
       log_prob_max_token_len_per_gpu: 8192
       merge_lora_for_inference: false

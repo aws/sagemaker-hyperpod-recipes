@@ -27,6 +27,8 @@ from botocore.exceptions import BotoCoreError, ClientError
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf
 
+from utils.template_utils import remove_quotes_from_scalar_params
+
 from ..efa import (
     INSTANCE_TO_DEVICE_COUNT,
     efa_supported_instance,
@@ -126,6 +128,26 @@ def get_nova_metadata():
     return nova_metadata[recipe_name]
 
 
+def get_legacy_quoted_recipes():
+    """Nova recipes shipped to Studio with quoted scalar placeholders (frozen snapshot).
+
+    These predate scalar quote-removal and must keep their quotes for backward
+    compatibility. New nova recipes (absent from this list) get quotes stripped.
+    """
+    path = "./launcher/recipe_templatization/nova/nova_legacy_quoted_recipes.json"
+    with open(path, "r") as f:
+        return frozenset(json.load(f))
+
+
+def should_strip_scalar_quotes(recipe_name):
+    """Whether scalar (numeric/boolean) quotes should be stripped for a nova recipe.
+
+    Legacy recipes shipped with quoted placeholders keep their quotes for backward
+    compatibility; new recipes (absent from the frozen list) get scalar quotes stripped.
+    """
+    return recipe_name not in get_legacy_quoted_recipes()
+
+
 def _is_efa_supported(instance_type):
     if instance_type is None:
         return False
@@ -188,6 +210,82 @@ def get_device_count_for_instance(instance_type):
     return INSTANCE_TO_DEVICE_COUNT.get(instance_type, 8)
 
 
+def _normalize_single_instance_type(value):
+    """
+    Normalize a single instance type to the ml.-prefixed, lowercase form.
+    Returns None when empty/blank.
+    """
+    if value is None:
+        return None
+    value = str(value).strip().lower()
+    if not value:
+        return None
+    if not value.startswith("ml."):
+        value = f"ml.{value}"
+    return value
+
+
+def _normalize_instance_types(value):
+    """
+    Normalize an instance type value (a single string or a list of strings) to a
+    list of ml.-prefixed, lowercase instance types. Returns None when empty.
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        value = [value]
+    normalized = []
+    for inst_type in value:
+        normalized_type = _normalize_single_instance_type(inst_type)
+        if normalized_type:
+            normalized.append(normalized_type)
+    return normalized or None
+
+
+def get_cpu_instance_types(cfg):
+    """
+    Coarse CPU instance override from `cluster.cpu_instance_type` (a single string
+    or a list). Applies to every CPU sub-service that is not named explicitly in the
+    `override_sub_instance_type` map. Kept for backward compatibility with the
+    existing Ray submitter config.
+
+    Returns:
+        list[str] | None: normalized instance types, or None when unset.
+    """
+    value = None
+    if hasattr(cfg, "cluster") and cfg.cluster:
+        value = cfg.cluster.get("cpu_instance_type")
+    return _normalize_instance_types(value)
+
+
+def get_override_sub_instance_types(cfg):
+    """
+    Per-service instance type override map from `cluster.override_sub_instance_type`.
+
+    Keys are service names (e.g. training, vllm_generation, hub, prompter, rbs,
+    nats_server, redis); each value is a single instance type (a service targets
+    exactly one instance type). Values may be CPU or GPU instance types. Takes
+    precedence over the coarse `cpu_instance_type` and the global `instance_type`
+    for the named services.
+
+    Returns:
+        dict[str, str]: service name -> normalized instance type. Empty when unset.
+        e.g. {"hub": "ml.r6i.24xlarge", "training": "ml.p5.48xlarge"}.
+    """
+    override = None
+    if hasattr(cfg, "cluster") and cfg.cluster:
+        override = cfg.cluster.get("override_sub_instance_type")
+    if not override:
+        return {}
+
+    result = {}
+    for service_name, value in override.items():
+        normalized = _normalize_single_instance_type(value)
+        if normalized:
+            result[service_name] = normalized
+    return result
+
+
 def templatize_K8_container_images(content, recipe_name):
     # Init container for nova sft/dpo recipes
     init_container_image = get_init_container_uri()
@@ -225,6 +323,11 @@ class NovaK8SLauncher:
     Base class for Nova Kubernetes Launchers that provides common functionality for deploying Nova jobs on K8s clusters, handling AWS account integration, environment variables, and Helm chart generation.
     """
 
+    # Service names (override_sub_instance_type map keys) this launcher can target.
+    # Empty by default; launchers that support per-service instance types override it.
+    # See docs/INSTANCE_TYPE_OVERRIDES.md.
+    OVERRIDABLE_SERVICES = frozenset()
+
     def __init__(self, cfg):
         self.cfg = cfg
         self._job_name = cfg.recipes.run["name"]
@@ -235,7 +338,32 @@ class NovaK8SLauncher:
         self._launch_json = cfg["launch_json"]
         self.instance_type = get_instance_type(cfg)
         self.num_efa_devices = get_num_efa_devices(self.instance_type)
+        self.cpu_instance_types = get_cpu_instance_types(cfg)
+        self.override_sub_instance_types = get_override_sub_instance_types(cfg)
+        self._validate_override_service_keys()
         self.recipe_file_path = None
+
+    def _validate_override_service_keys(self):
+        """
+        Reject override_sub_instance_type keys this recipe type cannot target.
+
+        The shape of the values is validated centrally in config_validator; here we
+        validate the service keys against this launcher's OVERRIDABLE_SERVICES, since
+        the valid set is recipe/launcher specific.
+        """
+        unexpected = sorted(set(self.override_sub_instance_types) - set(self.OVERRIDABLE_SERVICES))
+        if not unexpected:
+            return
+        if self.OVERRIDABLE_SERVICES:
+            valid = ", ".join(sorted(self.OVERRIDABLE_SERVICES))
+            raise ValueError(
+                f"cluster.override_sub_instance_type has unsupported service key(s) {unexpected}. "
+                f"Valid keys for this recipe: {valid}."
+            )
+        raise ValueError(
+            f"cluster.override_sub_instance_type is not supported for this recipe type "
+            f"(got service key(s) {unexpected}). Use cluster.instance_type instead."
+        )
 
     @staticmethod
     def _get_aws_account_id():
@@ -264,6 +392,42 @@ class NovaK8SLauncher:
         env_vars["AWS_REGION"] = get_current_region()
 
         return env_vars
+
+    def _resolve_sub_instance_type(self, config_key, is_cpu_service):
+        """
+        Resolve the instance type(s) for a service.
+
+        Precedence: per-service override_sub_instance_type map > cpu_instance_type
+        (CPU services only) > global instance_type.
+
+        Returns a list of instance types (from an override / cpu_instance_type) or
+        the single global instance_type string.
+        """
+        if config_key in self.override_sub_instance_types:
+            return self.override_sub_instance_types[config_key]
+        if is_cpu_service and self.cpu_instance_types:
+            return self.cpu_instance_types
+        return self.instance_type
+
+    def _build_label_selector_for_instance(self, instance_type_value):
+        """
+        Build a label selector dict for a specific instance type.
+        Merges user-provided required labels with the mandatory instance type/group labels.
+
+        instance_type_value may be a single instance type string or a list of them
+        (e.g. when multiple CPU instance types are allowed for a service).
+        """
+        instance_types = instance_type_value if isinstance(instance_type_value, list) else [instance_type_value]
+        required_instances = {
+            "node.kubernetes.io/instance-type": instance_types,
+            "sagemaker.amazonaws.com/instance-group-type": ["Restricted"],
+        }
+        label_selector = self.cfg.cluster.get("label_selector") or {}
+        required_labels = label_selector.get("required") or {}
+        return {
+            **label_selector,
+            "required": {**required_labels, **required_instances},
+        }
 
     def _prepare_output_dir(self):
         if self._output_dir_k8s_folder.exists():
@@ -318,40 +482,15 @@ class NovaK8SLauncher:
 
     def _get_label_selectors(self):
         """
-        Constructs and returns a dictionary of label selectors required for Nova jobs.
-
-        This method ensures that the returned label selectors always include the required
-        instance types and instance group types necessary for Nova jobs to run on the
-        appropriate hardware. It merges any user-provided required label selectors from
-        the configuration with the hardcoded required labels.
-
-        Returns:
-            dict: A dictionary containing the merged label selectors, with the "required"
-            key including both user-specified and mandatory labels.
+        Constructs and returns a dictionary of label selectors using the default instance type.
+        For per-service label selectors, use _build_label_selector_for_instance directly.
         """
-
-        # Use placeholder for launch_json mode, actual instance type otherwise
         if self._launch_json:
             instance_type_value = "PLACEHOLDER_INSTANCE_TYPE"
         else:
             instance_type_value = self.instance_type
 
-        # Default instance types for required labels
-        # Nova jobs cannot be run on any other instance types apart from these
-        # This is a hard requirement for the Nova jobs to run
-        # on the required hardware.
-        required_instances = {
-            "node.kubernetes.io/instance-type": [instance_type_value],
-            "sagemaker.amazonaws.com/instance-group-type": ["Restricted"],
-        }
-
-        # Handle labelSelector merging safely
-        label_selector = self.cfg.cluster.get("label_selector") or {}
-        required_labels = label_selector.get("required") or {}
-        return {
-            **label_selector,
-            "required": {**required_labels, **required_instances},
-        }
+        return self._build_label_selector_for_instance(instance_type_value)
 
     def _create_launch_json(self, chart_path):
         """
@@ -383,6 +522,19 @@ class NovaK8SLauncher:
         ]
         subprocess.run(cmd, check=True)
         recipe_file_path = get_recipe_file_path()
+        recipe_name = get_recipe_name_from_path(recipe_file_path)
+
+        # Legacy nova recipes were shipped to Studio with quoted scalar placeholders and
+        # must keep them for backward compatibility; only strip quotes for new recipes.
+        strip_scalar_quotes = should_strip_scalar_quotes(recipe_name)
+
+        # Get override spec from template processor for quote removal
+        override_spec = {}
+        if hasattr(self, "_recipe_template_processor") and self._recipe_template_processor is not None:
+            additional_data = self._recipe_template_processor.get_additional_data(recipe_file_path)
+            if additional_data:
+                _, recipe_override_parameters, _ = additional_data
+                override_spec = recipe_override_parameters if recipe_override_parameters else {}
 
         # Walk rendered files and dump into JSON
         # A lot of string replacement is happening here because of the recipe templatization process.
@@ -391,6 +543,12 @@ class NovaK8SLauncher:
         launch_json = {}
         for path in sorted(render_dir.rglob("*.yaml"), key=lambda p: p.name):
             content = path.read_text()
+
+            # Remove quotes from scalar (numeric/boolean) parameters in YAML
+            # (skipped for legacy recipes that must keep quoted placeholders).
+            if strip_scalar_quotes:
+                content = remove_quotes_from_scalar_params(content, override_spec)
+
             # Now do string replacements for names, namespaces, etc.
             # Replace following references in content. String replace is followed here instead of templatization because
             # for these values the helm rendering process fails if we have templates
@@ -911,6 +1069,10 @@ class SMNovaK8SLauncherRFT(NovaK8SLauncher):
     Launcher for RFT (Reward Fine-Tuning) jobs on Kubernetes.
     """
 
+    # GPU services (training, vllm_generation) and CPU sub-services that can be
+    # targeted per-service via cluster.override_sub_instance_type.
+    OVERRIDABLE_SERVICES = frozenset({"training", "vllm_generation", "hub", "prompter", "rbs", "nats_server", "redis"})
+
     def __init__(self, cfg):
         super().__init__(cfg)
         self._template_dir = Path(__file__).parent / "k8s_templates" / "RFT"
@@ -1149,27 +1311,39 @@ class SMNovaK8SLauncherRFT(NovaK8SLauncher):
         OmegaConf.resolve(values_template)
         self._write_value_template(values_template)
 
-    def _set_efa_resources(self, values_template):
-        """Set EFA device resources for training and vllmGeneration services."""
-        efa_count = self.num_efa_devices
+    @staticmethod
+    def _efa_devices_for(instance_type):
+        """EFA device count for a resolved instance type (a string or list; a list
+        takes its first entry, since a service lands on a single instance group)."""
+        if isinstance(instance_type, list):
+            instance_type = instance_type[0] if instance_type else None
+        return get_num_efa_devices(instance_type)
 
-        # Set EFA resources for training service
+    def _set_efa_resources(self, values_template):
+        """Set EFA device resources for training and vllmGeneration services.
+        These are GPU services; their EFA count is derived from the instance type
+        actually resolved for each (which may be overridden via
+        override_sub_instance_type)."""
+
+        # Training service EFA
+        training_efa = self._efa_devices_for(self._resolve_sub_instance_type("training", is_cpu_service=False))
         if hasattr(values_template.trainingConfig, "training"):
             training_config = values_template.trainingConfig.training
             if hasattr(training_config, "resources"):
                 if hasattr(training_config.resources, "master"):
-                    training_config.resources.master.requests[EFA_RESOURCE_KEY] = efa_count
-                    training_config.resources.master.limits[EFA_RESOURCE_KEY] = efa_count
+                    training_config.resources.master.requests[EFA_RESOURCE_KEY] = training_efa
+                    training_config.resources.master.limits[EFA_RESOURCE_KEY] = training_efa
                 if hasattr(training_config.resources, "worker"):
-                    training_config.resources.worker.requests[EFA_RESOURCE_KEY] = efa_count
-                    training_config.resources.worker.limits[EFA_RESOURCE_KEY] = efa_count
+                    training_config.resources.worker.requests[EFA_RESOURCE_KEY] = training_efa
+                    training_config.resources.worker.limits[EFA_RESOURCE_KEY] = training_efa
 
         # Set EFA resources for vllmGeneration service
+        vllm_efa = self._efa_devices_for(self._resolve_sub_instance_type("vllm_generation", is_cpu_service=False))
         if hasattr(values_template.trainingConfig, "vllmGeneration"):
             vllm_config = values_template.trainingConfig.vllmGeneration
             if hasattr(vllm_config, "resources"):
-                vllm_config.resources.requests[EFA_RESOURCE_KEY] = efa_count
-                vllm_config.resources.limits[EFA_RESOURCE_KEY] = efa_count
+                vllm_config.resources.requests[EFA_RESOURCE_KEY] = vllm_efa
+                vllm_config.resources.limits[EFA_RESOURCE_KEY] = vllm_efa
 
     def _map_rft_replica_config(self, values_template):
         """Map replica counts and Redis configuration."""
@@ -1214,23 +1388,48 @@ class SMNovaK8SLauncherRFT(NovaK8SLauncher):
         values_template.image.redis = get_rft_redis_container_uri()
 
     def _map_resource_config(self, values_template):
-        """Map resource configuration
-        Set instance types and apply nodeAffinity to all services."""
+        """Map resource configuration.
+        Set per-service instance types and label selectors.
 
-        instance_type = self.instance_type or values_template.trainingConfig.defaultResources.instanceType
+        Each service resolves its instance type via the override_sub_instance_type
+        map (per-service), then cpu_instance_type (CPU services only), then the
+        global instance_type. Override values may be CPU or GPU instance types --
+        the GPU/CPU grouping only decides whether the coarse cpu_instance_type
+        fallback applies."""
 
-        # Set instance type and apply nodeAffinity to all services
-        services = ["training", "vllmGeneration", "hub", "prompter", "rbs", "natsServer"]
+        # (values.yaml field, override_sub_instance_type map key, is_cpu_service)
+        services = [
+            ("training", "training", False),
+            ("vllmGeneration", "vllm_generation", False),
+            ("hub", "hub", True),
+            ("prompter", "prompter", True),
+            ("rbs", "rbs", True),
+            ("natsServer", "nats_server", True),
+        ]
 
-        for service_name in services:
-            service = getattr(values_template.trainingConfig, service_name, None)
-            if service:
-                # Set instance type
-                service.instanceType = instance_type
+        default_instance_type = self.instance_type or values_template.trainingConfig.defaultResources.instanceType
 
-        # Apply to redis if enabled
+        def apply(service_field, config_key, is_cpu_service):
+            service = getattr(values_template.trainingConfig, service_field, None)
+            if not service:
+                return
+            resolved = self._resolve_sub_instance_type(config_key, is_cpu_service)
+            if resolved is None:
+                resolved = default_instance_type
+            # resolved may be a list (multiple allowed types); the scalar
+            # instanceType field takes the first, the label selector carries all.
+            service.instanceType = resolved[0] if isinstance(resolved, list) else resolved
+            if self._launch_json:
+                service.labelSelector = self._build_label_selector_for_instance("PLACEHOLDER_INSTANCE_TYPE")
+            else:
+                service.labelSelector = self._build_label_selector_for_instance(resolved)
+
+        for service_field, config_key, is_cpu_service in services:
+            apply(service_field, config_key, is_cpu_service)
+
+        # Apply to redis (a CPU service) if enabled
         if hasattr(values_template.trainingConfig, "redis") and values_template.trainingConfig.redis.enabled:
-            values_template.trainingConfig.redis.instanceType = instance_type
+            apply("redis", "redis", True)
 
     def _to_camel_case(self, snake_str):
         """Convert snake_case to camelCase."""

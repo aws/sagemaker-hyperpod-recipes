@@ -41,11 +41,10 @@ exclusion_patterns:
   - "fine-tuning/llama/llmft_llama3_2_3b_instruct_seq4k_gpu_sft_fft"
   - "fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-2-3b-instruct-fft"
   - "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-2-3b-instruct-fft"
-  # Qwen 3.5 35B-A3B, Qwen 3.5 122B-A10B and Qwen 3.6 35B-A3B MoE recipes are not
-  # published to JumpStart yet — hosting configs pending.
-  - "qwen-0_7_0/verl-(grpo-(rlaif|rlvr)|sft)-qwen-3-dot-(5-(35b-a3b|122b-a10b)|6-35b-a3b)"
-  # Qwen 3.8 27B recipes ship but are not published to JumpStart yet —
-  # hosting (inference-serving) configs pending.
+  # Qwen 3.5 35B-A3B and 122B-A10B recipes stay blocked — pending serverless validation
+  - "qwen-0_7_0/verl-(grpo-(rlaif|rlvr)|sft)-qwen-3-dot-5-(35b-a3b|122b-a10b)"
+  # Qwen 3.8 27B recipes ship but are not published to JumpStart yet -
+  # (inference-serving) configs pending.
   - "qwen-0_7_0/verl-(sft|dpo|grpo-rlvr|grpo-rlaif)-qwen-3-dot-8-27b"
   # Ministral-3-2512 (14B/8B/3B) recipes ship but are not published to JumpStart
   # yet — hosting (inference-serving) configs pending.
@@ -54,3 +53,6 @@ exclusion_patterns:
   # sequence lengths ship as recipes but are not published to JumpStart yet.
   # One entry per (model, instance, length), so a single pattern covers all 49.
   - "fine-tuning/(llama|gpt_oss)-0_7_0/verl-(sft|dpo)-.*-\\d+k-tt-(fft|lora)"
+  # Muse-Glimmer-30B recipes ship but are not published to JumpStart yet —
+  # hosting (inference-serving) and evaluation configs pending.
+  - "muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-"

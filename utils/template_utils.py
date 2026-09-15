@@ -3,11 +3,11 @@ Utility functions for template processing and manipulation.
 """
 
 
-def remove_quotes_from_numeric_params(template_content: str, override_spec: dict) -> str:
+def remove_quotes_from_scalar_params(template_content: str, override_spec: dict) -> str:
     """
-    Remove quotes from numeric template variables in Jinja template.
+    Remove quotes from scalar (numeric and boolean) template variables in Jinja template.
 
-    This ensures numeric parameters render as numbers (not strings) in YAML
+    This ensures scalar parameters render as YAML scalars (numbers/booleans, not strings)
     by removing quotes around template variables before substitution.
 
     Args:
@@ -16,7 +16,7 @@ def remove_quotes_from_numeric_params(template_content: str, override_spec: dict
                       including 'type' field indicating parameter type
 
     Returns:
-        Modified template content with quotes removed from numeric variables
+        Modified template content with quotes removed from scalar variables
     """
 
     # Handle None or empty override_spec gracefully
@@ -26,8 +26,8 @@ def remove_quotes_from_numeric_params(template_content: str, override_spec: dict
     for param_name, param_def in override_spec.items():
         param_type = param_def.get("type", "").lower()
 
-        # Only process numeric types (integer, float, number)
-        if param_type in ["integer", "float", "number"]:
+        # Only process scalar types (integer, float, number, boolean)
+        if param_type in ["integer", "float", "number", "boolean"]:
             # Template variable format: {{param_name}}
             template_var = f"{{{{{param_name}}}}}"
 

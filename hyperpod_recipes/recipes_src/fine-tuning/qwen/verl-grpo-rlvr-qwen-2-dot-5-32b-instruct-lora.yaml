@@ -36,6 +36,7 @@ training_config:
       log_prob_micro_batch_size_per_gpu: 16
       log_prob_max_token_len_per_gpu: 20480
     rollout:
+      max_num_batched_tokens: 20480
       prompt_length: 4000
       log_prob_micro_batch_size_per_gpu: 16
       log_prob_max_token_len_per_gpu: 20480

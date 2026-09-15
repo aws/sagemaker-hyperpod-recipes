@@ -155,6 +155,8 @@ def _display_family(family_dir: str) -> str:
     lower = family_dir.lower()
     if "gpt_oss" in lower:
         return "GPT-OSS"
+    if "muse_glimmer" in lower:
+        return "Muse-Glimmer"
     if lower == "deepseek":
         return "DeepSeek"
     if lower == "open-source":

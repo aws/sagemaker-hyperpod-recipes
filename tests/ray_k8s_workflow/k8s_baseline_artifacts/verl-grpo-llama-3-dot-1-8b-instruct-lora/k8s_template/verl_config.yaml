@@ -141,7 +141,7 @@ actor_rollout_ref:
     log_prob_micro_batch_size_per_gpu: 8
     log_prob_use_dynamic_bsz: true
     max_model_len: null
-    max_num_batched_tokens: 8192
+    max_num_batched_tokens: 24576
     max_num_seqs: 1024
     merge_lora_for_inference: false
     mode: sync
@@ -160,8 +160,8 @@ actor_rollout_ref:
       use_inference_chat_template: false
     'n': '{{rollout_n}}'
     name: vllm
-    prompt_length: 512
-    response_length: 1024
+    prompt_length: '{{max_prompt_length}}'
+    response_length: '{{max_response_length}}'
     temperature: '{{rollout_temperature}}'
     tensor_model_parallel_size: 2
     top_k: -1
@@ -277,8 +277,8 @@ data:
   filter_overlong_prompts: true
   filter_overlong_prompts_workers: 1
   image_key: images
-  max_prompt_length: 512
-  max_response_length: 1024
+  max_prompt_length: '{{max_prompt_length}}'
+  max_response_length: '{{max_response_length}}'
   prompt_key: prompt
   return_full_prompt: false
   return_multi_modal_inputs: true

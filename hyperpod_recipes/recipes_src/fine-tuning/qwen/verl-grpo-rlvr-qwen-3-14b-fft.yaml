@@ -35,6 +35,7 @@ training_config:
       fsdp_config:
         param_offload: false
     rollout:
+      max_num_batched_tokens: 12288
       log_prob_micro_batch_size_per_gpu: 16
       merge_lora_for_inference: false
   trainer:

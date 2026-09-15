@@ -30,6 +30,7 @@ training_config:
       optim:
         lr: 1.0e-05
     rollout:
+      max_num_batched_tokens: 24576
       enable_chunked_prefill: true
       layered_summon: false
       merge_lora_for_inference: false

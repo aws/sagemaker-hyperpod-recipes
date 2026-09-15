@@ -151,3 +151,50 @@ def test_validate_value_validator_invalid_config(config):
     validator = ValueValidator(config)
     with pytest.raises(ValueError):
         validator.validate()
+
+
+# --- Instance type override shape validation ---
+
+VALID_INSTANCE_OVERRIDE_CONFIGS = [
+    # cpu_instance_type as a string
+    {"cluster": {"cpu_instance_type": "r6i.24xlarge"}},
+    # cpu_instance_type as a list
+    {"cluster": {"cpu_instance_type": ["r6i.24xlarge", "r6i.12xlarge"]}},
+    # override map with single-string values per service
+    {"cluster": {"override_sub_instance_type": {"hub": "r6i.24xlarge", "rbs": "r6i.12xlarge"}}},
+    # both unset
+    {"cluster": {"instance_type": "p5.48xlarge"}},
+]
+
+INVALID_INSTANCE_OVERRIDE_CONFIGS = [
+    # cpu_instance_type wrong type
+    {"cluster": {"cpu_instance_type": 5}},
+    # cpu_instance_type empty string
+    {"cluster": {"cpu_instance_type": ""}},
+    # cpu_instance_type list with a non-string item
+    {"cluster": {"cpu_instance_type": ["r6i.24xlarge", 5]}},
+    # override_sub_instance_type is not a map
+    {"cluster": {"override_sub_instance_type": "r6i.24xlarge"}},
+    # override map value wrong type
+    {"cluster": {"override_sub_instance_type": {"hub": 5}}},
+    # override map value empty string
+    {"cluster": {"override_sub_instance_type": {"hub": ""}}},
+    # override map value must be a single string, not a list
+    {"cluster": {"override_sub_instance_type": {"hub": ["r6i.24xlarge", "r6i.12xlarge"]}}},
+]
+
+
+@pytest.mark.parametrize("cluster_config", VALID_INSTANCE_OVERRIDE_CONFIGS)
+def test_valid_instance_type_overrides(cluster_config):
+    config = OmegaConf.create({"base_results_dir": "/some/path", **cluster_config})
+    try:
+        ValueValidator(config).validate()
+    except Exception as e:
+        pytest.fail(f"Validator raised an exception with valid instance override config: {str(e)}")
+
+
+@pytest.mark.parametrize("cluster_config", INVALID_INSTANCE_OVERRIDE_CONFIGS)
+def test_invalid_instance_type_overrides(cluster_config):
+    config = OmegaConf.create({"base_results_dir": "/some/path", **cluster_config})
+    with pytest.raises(ValueError):
+        ValueValidator(config).validate()

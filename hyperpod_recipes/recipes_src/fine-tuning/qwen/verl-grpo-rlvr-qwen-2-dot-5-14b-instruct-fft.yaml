@@ -33,6 +33,7 @@ training_config:
     ref:
       log_prob_micro_batch_size_per_gpu: 16
     rollout:
+      max_num_batched_tokens: 12288
       log_prob_micro_batch_size_per_gpu: 16
       layered_summon: false
       merge_lora_for_inference: false

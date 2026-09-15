@@ -34,6 +34,7 @@ training_config:
       strategy: fsdp
       log_prob_micro_batch_size_per_gpu: 16
     rollout:
+      max_num_batched_tokens: 24576
       tensor_model_parallel_size: 2
       log_prob_micro_batch_size_per_gpu: 16
       enable_chunked_prefill: true
