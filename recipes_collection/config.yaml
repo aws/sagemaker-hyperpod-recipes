@@ -21,6 +21,21 @@ dry_run: false
 launch_json: false
 
 instance_type: p5.48xlarge
+
+# Per-service instance type overrides for mixed-instance jobs (e.g., RFT).
+# GPU services (training, vllm_generation) default to instance_type above.
+# CPU services (hub, nats_server, prompter, rbs, redis) can use cheaper CPU instances.
+# Example:
+#   instance_types:
+#     training: ml.p5.48xlarge
+#     vllm_generation: ml.p5.48xlarge
+#     hub: ml.r6i.24xlarge
+#     nats_server: ml.r6i.24xlarge
+#     prompter: ml.r6i.24xlarge
+#     rbs: ml.r6i.24xlarge
+#     redis: ml.r6i.24xlarge
+instance_types: null
+
 base_results_dir: null # Location to store the results, checkpoints and logs.
 
 container: null
