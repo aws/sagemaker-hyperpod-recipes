@@ -162,8 +162,8 @@ The following container images are available for different recipe types:
 - **For LLMFT recipes**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0`
 - **For VERL 0.5.0 recipes (EKS)**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks`
 - **For VERL 0.5.0 recipes (SageMaker Training Jobs)**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj`
-- **For VERL 0.7.0 recipes**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.3-smtj`
-- **For VERL 0.7.0 Gemma 4 recipes**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.3-smtj-tf58`
+- **For VERL 0.7.0 recipes**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.4-smtj`
+- **For VERL 0.7.0 Gemma 4 recipes**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.4-smtj-tf58`
 - **For VERL 0.7.0 Nemotron 3 Nano / 3 Super recipes**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012`
 - **For VERL 0.7.0 Nemotron 3.5 Lightning recipes**: `327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.2-smtj-megatron`
 

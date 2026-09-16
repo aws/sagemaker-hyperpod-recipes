@@ -95,9 +95,9 @@ CONTAINER_KEY_TO_REGIONAL = {
 # independently as each image ships, so they are not expected to share a tag.
 REGIONAL_KEY_TO_TAG = {
     "verl": "verl-v1.0.0",
-    "verl-0.7.0": "verl-v1.1.3",
+    "verl-0.7.0": "verl-v1.1.4",
     "verl-0.7.0-vllm012": "verl-v1.1.0",
-    "verl-0.7.0-tf58": "verl-v1.1.3",
+    "verl-0.7.0-tf58": "verl-v1.1.4",
     "verl-0.7.0-megatron": "verl-v1.1.2",
 }
 VALID_BUCKETS = {"1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K"}
