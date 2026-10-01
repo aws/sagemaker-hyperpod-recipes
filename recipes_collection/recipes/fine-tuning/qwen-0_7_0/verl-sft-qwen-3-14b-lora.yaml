@@ -37,7 +37,7 @@ training_config:
     train_batch_size: 32
     train_files: null
     train_val_split_ratio: 1.0
-    truncation: right
+    truncation: left
     use_dynamic_bsz: true
     val_files: null
   engine:
@@ -163,4 +163,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.1.2
+version: 2.1.3

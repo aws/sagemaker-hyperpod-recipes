@@ -1,0 +1,18 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-dpo-deepseek-r1-distilled-llama-8b-fft
+  - _self_
+
+display_name: "DeepSeek R1 Distill Llama 8B DPO Full Fine-Tuning (8k)"
+instance_types: ["ml.p4d.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    # SWEEP-DERIVED, NOT MATRIX-CONFIRMED. Token sweep a87585eca4e9 (2026-09-15), chain
+    # ml.p4d.24xlarge: last_safe_token 8192, 25.8 GB peak (64% of a 40 GB A100).
+    # No 40 GB instance has ever been matrix-tested in any deepseek FFT slot, so there is
+    # no matrix reference of any kind here — the probe (1 epoch, train_batch_size = 8) is
+    # the only evidence, against a matrix that runs 2 epochs with validation at
+    # train_batch_size = 32. Confirm with a matrix job before relying on it.
+    # DPO packs a chosen and a rejected sequence, hence budget = 2x length.
+    max_length: 8192
+    max_token_len_per_gpu: 16384

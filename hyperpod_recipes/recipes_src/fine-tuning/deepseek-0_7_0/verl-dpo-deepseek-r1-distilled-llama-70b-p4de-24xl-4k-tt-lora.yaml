@@ -1,0 +1,12 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-dpo-deepseek-r1-distilled-llama-70b-lora
+  - _self_
+
+display_name: "DeepSeek R1 Distill Llama 70B DPO LoRA Fine-Tuning (4k)"
+instance_types: ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    # k8s validation table value, deliberately below a passing matrix job at a higher length.
+    max_length: 4096
+    max_token_len_per_gpu: 8192

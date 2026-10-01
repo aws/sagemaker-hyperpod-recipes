@@ -1,6 +1,7 @@
 display_name: Qwen 3.6 35B A3B SFT Full Fine-Tuning
 instance_types:
 - ml.p5.48xlarge
+- ml.p4de.24xlarge
 run:
   model_type: verl
   name: verl-sft-qwen-3-dot-6-35b-a3b-fft
@@ -164,4 +165,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.1
+version: 2.0.2

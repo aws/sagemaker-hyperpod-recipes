@@ -1,0 +1,11 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-dpo-qwen-3-0-dot-6b-lora
+  - _self_
+
+display_name: "Qwen 3 0.6B DPO LoRA Fine-Tuning (12k)"
+instance_types: ["ml.p4d.24xlarge", "ml.p4de.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    max_length: 12288
+    max_token_len_per_gpu: 24576

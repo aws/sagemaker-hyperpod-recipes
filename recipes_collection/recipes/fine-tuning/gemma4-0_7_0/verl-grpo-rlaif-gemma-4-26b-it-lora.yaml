@@ -1,6 +1,7 @@
 display_name: Gemma 4 26B IT GRPO RLAIF Fine-Tuning with LoRA (Text)
 instance_types:
 - ml.p5.48xlarge
+- ml.p4de.24xlarge
 ray_cluster:
   head_node:
     cpu: '16'
@@ -504,6 +505,7 @@ training_config:
       class_path: null
     seed: null
     shuffle: true
+    split_seed: 42
     tokenizer: null
     tool_config_path: ${oc.select:recipes.training_config.actor_rollout_ref.rollout.multi_turn.tool_config_path,
       null}
@@ -688,4 +690,4 @@ training_config:
     validation_data_dir: null
   transfer_queue:
     enable: false
-version: 2.0.5
+version: 2.0.7

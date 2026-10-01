@@ -36,7 +36,7 @@ training_config:
     train_files: null
     train_max_samples: -1
     train_val_split_ratio: 1.0
-    truncation: right
+    truncation: left
     use_dynamic_bsz: true
     val_files: null
     val_max_samples: -1
@@ -163,4 +163,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.1.6
+version: 2.1.7

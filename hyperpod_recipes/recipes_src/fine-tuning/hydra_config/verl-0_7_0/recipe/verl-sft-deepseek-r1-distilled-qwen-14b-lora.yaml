@@ -1,0 +1,53 @@
+# @package recipes
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/sft/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/sft/peft/lora
+  - _self_
+
+version: 1.0.1
+
+run:
+  name: verl-sft-deepseek-r1-distilled-qwen-14b-lora
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  data:
+    # Global batch size. Must be >= total GPUs (nodes * 8) to avoid batch_size=0 error.
+    train_batch_size: 32
+    micro_batch_size_per_gpu: 4
+    truncation: left
+    ignore_input_ids_mismatch: true
+    use_dynamic_bsz: true
+
+  model:
+    path: deepseek-ai/DeepSeek-R1-Distill-Qwen-14B
+    trust_remote_code: false
+    use_liger: true
+    use_fused_kernels: false
+
+  engine:
+    strategy: fsdp2
+    model_dtype: bf16
+    forward_prefetch: true
+
+  optim:
+    lr: 2.0e-04
+    weight_decay: 0.001
+    betas: [0.9, 0.95]
+    lr_scheduler_type: cosine
+
+  trainer:
+    project_name: verl_sft_deepseek_r1_distill_qwen_14b
+    experiment_name: deepseek_r1_distill_qwen_14b_sft_fsdp_lora_tatqa
+    total_epochs: 1
+    max_ckpt_to_keep: 3
+    resume_mode: resume_path

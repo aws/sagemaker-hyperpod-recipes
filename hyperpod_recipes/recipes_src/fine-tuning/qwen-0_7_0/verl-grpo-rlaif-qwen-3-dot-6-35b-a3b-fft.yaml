@@ -3,9 +3,10 @@ defaults:
   - _self_
 
 display_name: Qwen 3.6 35B A3B GRPO RLAIF Fine-Tuning
-version: 2.0.1
+version: 2.0.2
 instance_types:
   - ml.p5.48xlarge
+  - ml.p4de.24xlarge
 run:
   model_type: verl
   name: verl-grpo-qwen-3-dot-6-35b-a3b-fft
@@ -93,6 +94,7 @@ training_config:
     max_response_length: 2048
     train_batch_size: 256
     train_val_split_ratio: 0.9
+    split_seed: 42
     return_raw_chat: true
 
   # Reward model overrides

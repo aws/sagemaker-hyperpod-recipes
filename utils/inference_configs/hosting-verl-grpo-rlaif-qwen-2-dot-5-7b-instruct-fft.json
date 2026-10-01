@@ -2,7 +2,7 @@
   {
     "InstanceType": "ml.g6.12xlarge",
     "Profile": "Default",
-    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi27.0.0-cu130",
     "Environment": {
       "OPTION_TENSOR_PARALLEL_DEGREE": "4",
       "OPTION_ROLLING_BATCH": "disable",
@@ -21,7 +21,7 @@
   },
   {
     "InstanceType": "ml.g5.12xlarge",
-    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi27.0.0-cu130",
     "Environment": {
       "OPTION_TENSOR_PARALLEL_DEGREE": "4",
       "OPTION_ROLLING_BATCH": "disable",
@@ -40,7 +40,7 @@
   },
   {
     "InstanceType": "ml.g6e.48xlarge",
-    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi27.0.0-cu130",
     "Environment": {
       "OPTION_TENSOR_PARALLEL_DEGREE": "4",
       "OPTION_ROLLING_BATCH": "disable",
@@ -59,7 +59,7 @@
   },
   {
     "InstanceType": "ml.p5.48xlarge",
-    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi27.0.0-cu130",
     "Environment": {
       "OPTION_TENSOR_PARALLEL_DEGREE": "4",
       "OPTION_ROLLING_BATCH": "disable",

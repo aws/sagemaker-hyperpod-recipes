@@ -1,0 +1,11 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-lora
+  - _self_
+
+display_name: "DeepSeek R1 Distill Qwen 1.5B SFT LoRA Fine-Tuning (12k)"
+instance_types: ["ml.g5.48xlarge", "ml.g6.48xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    max_length: 12800
+    max_token_len_per_gpu: 12800

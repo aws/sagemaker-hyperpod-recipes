@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Qwen 3.8 27B GRPO RLAIF Fine-Tuning with LoRA
-version: 2.0.1
+version: 2.0.2
 instance_types:
   - ml.p5.48xlarge
   - ml.p4de.24xlarge
@@ -120,6 +120,7 @@ training_config:
     max_prompt_length: 8192
     max_response_length: 8192
     train_val_split_ratio: 0.9  # add this alongside existing data fields
+    split_seed: 42
     apply_chat_template_kwargs:
       enable_thinking: true
       reasoning_effort: medium

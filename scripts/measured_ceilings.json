@@ -1,0 +1,157 @@
+{
+  "verl-dpo-deepseek-r1-distilled-llama-70b-lora": {
+    "ml.p5.48xlarge": 10240
+  },
+  "verl-dpo-deepseek-r1-distilled-llama-8b-lora": {
+    "ml.g6.12xlarge": 5120,
+    "ml.g6.48xlarge": 6144
+  },
+  "verl-dpo-deepseek-r1-distilled-qwen-1-dot-5b-lora": {
+    "ml.p4de.24xlarge": 25600
+  },
+  "verl-dpo-deepseek-r1-distilled-qwen-14b-lora": {
+    "ml.p5.48xlarge": 18432
+  },
+  "verl-dpo-deepseek-r1-distilled-qwen-32b-lora": {
+    "ml.p5.48xlarge": 15360
+  },
+  "verl-dpo-llama-3-dot-1-8b-instruct-lora": {
+    "ml.g6.12xlarge": 5120,
+    "ml.g6.48xlarge": 6144,
+    "ml.p5.48xlarge": 24576
+  },
+  "verl-dpo-llama-3-dot-2-1b-instruct-lora": {
+    "ml.g6.12xlarge": 8192,
+    "ml.g6.48xlarge": 8192
+  },
+  "verl-dpo-llama-3-dot-2-3b-instruct-lora": {
+    "ml.g6.12xlarge": 6144,
+    "ml.g6.48xlarge": 6144,
+    "ml.p5.48xlarge": 26624
+  },
+  "verl-dpo-llama-3-dot-3-70b-instruct-lora": {
+    "ml.p5.48xlarge": 10240
+  },
+  "verl-dpo-qwen-2-5-14b-instruct-fft": {
+    "ml.p5.48xlarge": 16384
+  },
+  "verl-dpo-qwen-2-5-14b-instruct-lora": {
+    "ml.p5.48xlarge": 18432
+  },
+  "verl-dpo-qwen-2-5-32b-instruct-fft": {
+    "ml.p4de.24xlarge": 8192
+  },
+  "verl-dpo-qwen-2-5-32b-instruct-lora": {
+    "ml.p5.48xlarge": 15360
+  },
+  "verl-dpo-qwen-2-5-72b-instruct-lora": {
+    "ml.p5.48xlarge": 8192
+  },
+  "verl-dpo-qwen-3-0-dot-6b-lora": {
+    "ml.g6.48xlarge": 7168,
+    "ml.p5.48xlarge": 12800
+  },
+  "verl-dpo-qwen-3-1-dot-7b-lora": {
+    "ml.g6.48xlarge": 6144,
+    "ml.p4de.24xlarge": 12800,
+    "ml.p5.48xlarge": 25600
+  },
+  "verl-dpo-qwen-3-14b-lora": {
+    "ml.g6.48xlarge": 4096
+  },
+  "verl-dpo-qwen-3-32b-fft": {
+    "ml.p5.48xlarge": 11264
+  },
+  "verl-dpo-qwen-3-4b-lora": {
+    "ml.p5.48xlarge": 11776
+  },
+  "verl-dpo-qwen-3-8b-lora": {
+    "ml.p4de.24xlarge": 10752,
+    "ml.p5.48xlarge": 21504
+  },
+  "verl-sft-deepseek-r1-distilled-llama-70b-lora": {
+    "ml.p4de.24xlarge": 16384
+  },
+  "verl-sft-deepseek-r1-distilled-llama-8b-lora": {
+    "ml.g6.12xlarge": 10240,
+    "ml.g6.48xlarge": 11264
+  },
+  "verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-lora": {
+    "ml.g5.48xlarge": 13312,
+    "ml.g6.12xlarge": 13312,
+    "ml.g6.48xlarge": 13312,
+    "ml.g6e.12xlarge": 13824
+  },
+  "verl-sft-deepseek-r1-distilled-qwen-7b-lora": {
+    "ml.g6.12xlarge": 10240,
+    "ml.g6.48xlarge": 10240
+  },
+  "verl-sft-llama-3-dot-1-8b-instruct-fft": {
+    "ml.g5.48xlarge": 10240
+  },
+  "verl-sft-llama-3-dot-1-8b-instruct-lora": {
+    "ml.g5.12xlarge": 10240,
+    "ml.g5.48xlarge": 11264,
+    "ml.p4de.24xlarge": 25600
+  },
+  "verl-sft-llama-3-dot-2-1b-instruct-fft": {
+    "ml.g5.12xlarge": 15360,
+    "ml.p4d.24xlarge": 17408,
+    "ml.p4de.24xlarge": 31744
+  },
+  "verl-sft-llama-3-dot-2-1b-instruct-lora": {
+    "ml.g5.48xlarge": 17408,
+    "ml.g6.12xlarge": 17408
+  },
+  "verl-sft-llama-3-dot-2-3b-instruct-fft": {
+    "ml.g5.12xlarge": 11264,
+    "ml.g5.48xlarge": 13312,
+    "ml.p4d.24xlarge": 13312,
+    "ml.p4de.24xlarge": 28672
+  },
+  "verl-sft-llama-3-dot-2-3b-instruct-lora": {
+    "ml.g5.48xlarge": 13312,
+    "ml.p4de.24xlarge": 54272
+  },
+  "verl-sft-qwen-2-5-14b-instruct-lora": {
+    "ml.p4de.24xlarge": 18432
+  },
+  "verl-sft-qwen-2-5-7b-instruct-fft": {
+    "ml.p5.48xlarge": 43008
+  },
+  "verl-sft-qwen-2-5-7b-instruct-lora": {
+    "ml.p5.48xlarge": 45056
+  },
+  "verl-sft-qwen-3-0-dot-6b-lora": {
+    "ml.g6.48xlarge": 7168,
+    "ml.p5.48xlarge": 52224
+  },
+  "verl-sft-qwen-3-1-dot-7b-fft": {
+    "ml.p5.48xlarge": 50176
+  },
+  "verl-sft-qwen-3-1-dot-7b-lora": {
+    "ml.p4de.24xlarge": 24576
+  },
+  "verl-sft-qwen-3-14b-fft": {
+    "ml.p5.48xlarge": 35840
+  },
+  "verl-sft-qwen-3-14b-lora": {
+    "ml.g6.48xlarge": 8192,
+    "ml.p4d.24xlarge": 8704
+  },
+  "verl-sft-qwen-3-32b-lora": {
+    "ml.p4de.24xlarge": 15360
+  },
+  "verl-sft-qwen-3-4b-fft": {
+    "ml.p5.48xlarge": 46080
+  },
+  "verl-sft-qwen-3-4b-lora": {
+    "ml.p5.48xlarge": 46080
+  },
+  "verl-sft-qwen-3-8b-fft": {
+    "ml.p5.48xlarge": 40960
+  },
+  "verl-sft-qwen-3-8b-lora": {
+    "ml.p5.48xlarge": 40960
+  }
+}

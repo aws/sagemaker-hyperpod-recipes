@@ -1,0 +1,22 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-deepseek-r1-distilled-qwen-32b-fft
+  - _self_
+
+display_name: "DeepSeek R1 Distill Qwen 32B SFT Full Fine-Tuning (16k)"
+instance_types: ["ml.p4de.24xlarge"]
+
+training_config:
+  data:
+    # SWEEP-DERIVED, NOT MATRIX-CONFIRMED. Token sweep 34fa895d0f61 (2026-09-15), chain
+    # ml.p4de.24xlarge: last_safe_token 18432, 55.5 GB peak (69% of an 80 GB A100).
+    # Deliberately rounded DOWN to 16384, not shipped at 18432: the generated datasets
+    # come in tiers (4096, 8192, 16384, 32768, 65536) and within a tier T the samples
+    # span [T/2, T], so 18432 would land in the 32768 tier and keep only
+    # (18432 - 16384) / 16384 = 12.5% of it. 16384 is the top of its own tier and keeps
+    # 100%, for 11% less context. The 16384 probe cell measured 51.8 GB (65%).
+    # The probe runs 1 epoch at train_batch_size = num_gpus x 1 = 8; the matrix runs
+    # 2 epochs with validation at train_batch_size = 32. This is 1.45x the only length p5
+    # has proven under matrix conditions in this slot (11264), so confirm with a matrix
+    # job before relying on it.
+    max_length: 16384
+    max_token_len_per_gpu: 16384

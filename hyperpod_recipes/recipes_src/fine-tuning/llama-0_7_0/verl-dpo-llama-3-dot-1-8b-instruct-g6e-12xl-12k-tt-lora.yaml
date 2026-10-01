@@ -4,8 +4,14 @@ defaults:
 
 display_name: "Llama 3.1 8B Instruct DPO LoRA Fine-Tuning (12k)"
 instance_types: ["ml.g6e.12xlarge"]
+# 4 GPUs per node, not the 8 the base recipe assumes:
+# every instance listed above is a 4-GPU type.
+trainer:
+  devices: 4
 
 training_config:
+  trainer:
+    n_gpus_per_node: 4
   data:
     max_length: 12288
     max_token_len_per_gpu: 24576

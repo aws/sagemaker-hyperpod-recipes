@@ -2,6 +2,7 @@ display_name: Ministral-3-3B-Instruct-2512-BF16 SFT LoRA Fine-Tuning
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge
+- ml.p4d.24xlarge
 run:
   model_type: verl
   name: verl-sft-ministral-3-3b-instruct-lora
@@ -28,7 +29,7 @@ training_config:
       name: null
       path: null
     ignore_input_ids_mismatch: false
-    max_length: 4096
+    max_length: 16384
     max_token_len_per_gpu: 16384
     messages_key: messages
     micro_batch_size_per_gpu: 50
@@ -36,7 +37,7 @@ training_config:
     train_batch_size: 64
     train_files: null
     train_val_split_ratio: 1.0
-    truncation: right
+    truncation: left
     use_dynamic_bsz: true
     val_files: null
   engine:
@@ -163,4 +164,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.1
+version: 2.0.2

@@ -11,7 +11,7 @@ defaults:
   - /hydra_config/verl-0_7_0/sft/checkpoint/default
   - _self_
 
-version: 2.0.3
+version: 2.0.4
 
 run:
   name: verl-dpo-llama-3-dot-2-1b-instruct-fft

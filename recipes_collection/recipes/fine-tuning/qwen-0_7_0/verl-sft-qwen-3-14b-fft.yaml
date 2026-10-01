@@ -30,14 +30,14 @@ training_config:
       path: null
     ignore_input_ids_mismatch: true
     max_length: 4096
-    max_token_len_per_gpu: 16384
+    max_token_len_per_gpu: 8192
     messages_key: messages
     micro_batch_size_per_gpu: 4
     pad_mode: no_padding
     train_batch_size: 32
     train_files: null
     train_val_split_ratio: 1.0
-    truncation: right
+    truncation: left
     use_dynamic_bsz: true
     val_files: null
   engine:
@@ -163,4 +163,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.1.2
+version: 2.1.3

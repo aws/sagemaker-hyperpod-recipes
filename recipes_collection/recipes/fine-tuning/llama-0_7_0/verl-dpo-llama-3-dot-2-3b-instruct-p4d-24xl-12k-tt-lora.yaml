@@ -1,6 +1,8 @@
 display_name: Llama 3.2 3B Instruct DPO LoRA Fine-Tuning (12k)
 instance_types:
 - ml.p4d.24xlarge
+- ml.p4de.24xlarge
+- ml.p5.48xlarge
 run:
   model_type: verl
   name: verl-dpo-llama-3-dot-2-3b-instruct-lora
@@ -177,4 +179,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.3
+version: 2.0.4

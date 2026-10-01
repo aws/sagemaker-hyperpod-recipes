@@ -2,7 +2,7 @@ defaults:
 - /hydra_config/verl-0_7_0/default
 - _self_
 display_name: Ministral-3-14B-Instruct-2512 GRPO RLAIF LoRA Fine-Tuning (Text)
-version: 2.0.1
+version: 2.0.2
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge
@@ -94,6 +94,7 @@ training_config:
     max_prompt_length: 2048
     max_response_length: 2048
     train_val_split_ratio: 0.9
+    split_seed: 42
     shuffle: false
     return_raw_chat: true
   mlflow:

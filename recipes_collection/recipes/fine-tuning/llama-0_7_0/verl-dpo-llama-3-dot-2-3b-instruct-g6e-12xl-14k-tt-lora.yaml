@@ -6,7 +6,7 @@ run:
   name: verl-dpo-llama-3-dot-2-3b-instruct-lora
   results_dir: ${base_results_dir}/${.name}
 trainer:
-  devices: 8
+  devices: 4
   num_nodes: 1
 training_config:
   checkpoint:
@@ -160,7 +160,7 @@ training_config:
     loss_type: sigmoid
     max_ckpt_to_keep: 3
     merge_lora_on_final_save: true
-    n_gpus_per_node: 8
+    n_gpus_per_node: 4
     nnodes: 1
     profile_interval:
     - -1
@@ -177,4 +177,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.3
+version: 2.0.4

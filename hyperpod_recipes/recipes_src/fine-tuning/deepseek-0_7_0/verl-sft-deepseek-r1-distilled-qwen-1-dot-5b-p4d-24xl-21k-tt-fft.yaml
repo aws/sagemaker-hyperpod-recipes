@@ -1,0 +1,17 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-fft
+  - _self_
+
+display_name: "DeepSeek R1 Distill Qwen 1.5B SFT Full Fine-Tuning (21k)"
+instance_types: ["ml.p4d.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    # SWEEP-DERIVED, NOT MATRIX-CONFIRMED. Token sweep 22ba3bf206f9 (2026-09-15), chain
+    # ml.p4d.24xlarge: last_safe_token 21504, 27.5 GB peak (69% of a 40 GB A100).
+    # No 40 GB instance has ever been matrix-tested in any deepseek FFT slot, so there is
+    # no matrix reference of any kind here — the probe (1 epoch, train_batch_size = 8) is
+    # the only evidence, against a matrix that runs 2 epochs with validation at
+    # train_batch_size = 32. Confirm with a matrix job before relying on it.
+    max_length: 21504
+    max_token_len_per_gpu: 21504

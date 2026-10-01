@@ -527,6 +527,10 @@ def update_exported_json(exported_json_path, new_recipe_entries, model_id, versi
 
 def export_hub_content(hub_name, model_id, region, output, output_dir, endpoint):
     cmd = [
+        # sys.executable, not "python3": this script is itself launched from a venv (the
+        # e2e poller uses sys.executable), but a bare "python3" resolves against PATH and
+        # picks up the system interpreter, which has no boto3. That surfaces as
+        # `update_private_hub exited 1` with the traceback coming from the CHILD script.
         sys.executable,
         "-m",
         "scripts.model_hub.export_hub_content",
@@ -581,8 +585,32 @@ def export_hub_content(hub_name, model_id, region, output, output_dir, endpoint)
         return None
 
 
-def import_hub_content(exported_json_path, private_hub_name, region, endpoint):
+def _bump_export_version(exported_json_path):
+    """Raise the export's HubContentVersion by one and rewrite it. Returns the new value."""
+    with open(exported_json_path) as f:
+        doc = json.load(f)
+    doc["HubContentVersion"] = bump_version(str(doc.get("HubContentVersion", "1.0.0")))
+    with open(exported_json_path, "w") as f:
+        json.dump(doc, f, indent=2)
+    return doc["HubContentVersion"]
+
+
+def import_hub_content(exported_json_path, private_hub_name, region, endpoint, max_conflict_retries=6):
+    """Import the export, bumping the version and retrying on a version conflict.
+
+    The version is derived from a fresh export of the private hub, but that export can
+    still report a version the hub has already moved past -- observed as
+    `ResourceInUse: Hub content with version 100000042 already exists` immediately after a
+    successful import of 100000041. Whether that is eventual consistency on the describe or
+    a version the export cannot see, the fix is the same and does not depend on knowing:
+    treat a conflict as "someone got there first", bump, and try again. Bounded so a
+    genuinely stuck hub fails loudly instead of looping.
+    """
     cmd = [
+        # sys.executable, not "python3": this script is itself launched from a venv (the
+        # e2e poller uses sys.executable), but a bare "python3" resolves against PATH and
+        # picks up the system interpreter, which has no boto3. That surfaces as
+        # `update_private_hub exited 1` with the traceback coming from the CHILD script.
         sys.executable,
         "-m",
         "scripts.model_hub.import_hub_content",
@@ -600,12 +628,28 @@ def import_hub_content(exported_json_path, private_hub_name, region, endpoint):
     print(f"Target hub: {private_hub_name}")
     print(f"Command: {' '.join(cmd)}")
 
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        print(f"Successfully imported hub content to {private_hub_name}")
-        print(f"Output: {result.stdout}")
-        return True
-    except subprocess.CalledProcessError as e:
+    for attempt in range(max_conflict_retries + 1):
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+            print(f"Successfully imported hub content to {private_hub_name}")
+            print(f"Output: {result.stdout}")
+            return True
+        except subprocess.CalledProcessError as e:
+            blob = f"{e.stdout or ''}{e.stderr or ''}"
+            conflict = "already exists" in blob or "ResourceInUse" in blob
+            if conflict and attempt < max_conflict_retries:
+                nv = _bump_export_version(exported_json_path)
+                print(f"Version conflict on import (attempt {attempt + 1}); " f"retrying as HubContentVersion={nv}")
+                continue
+            # Bind the failure outside the except block: Python unbinds `e` when the block
+            # ends, so re-raising it after the loop would be a NameError.
+            failure = e
+            break
+    else:
+        failure = None
+
+    if failure is not None:
+        e = failure
         print(f"\n{'='*60}")
         print(f"ERROR: Failed to import hub content for {exported_json_path}")
         print(f"{'='*60}")
@@ -617,7 +661,7 @@ def import_hub_content(exported_json_path, private_hub_name, region, endpoint):
             print(f"\n--- STDERR ---")
             print(e.stderr)
         print(f"{'='*60}\n")
-        raise  # Re-raise to stop execution or remove this line to continue with other imports
+        raise e  # explicit: a bare `raise` here has no active exception to re-raise
 
 
 def get_version_from_export(exported_json_path):

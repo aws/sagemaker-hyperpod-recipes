@@ -10,7 +10,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 2.5 72B SFT Full Fine-Tuning"
-version: 2.1.2
+version: 2.1.3
 instance_types: ["ml.p5.48xlarge"]
 
 run:
@@ -28,7 +28,7 @@ training_config:
     # Unused when use_dynamic_bsz=true (default). Dynamic batching uses max_token_len_per_gpu instead.
     micro_batch_size_per_gpu: null
     max_length: 4096
-    truncation: right
+    truncation: left
 
   engine:
     strategy: fsdp2
@@ -36,7 +36,7 @@ training_config:
     forward_prefetch: true
 
   model:
-    path: Qwen/Qwen2.5-72B
+    path: Qwen/Qwen2.5-72B-Instruct
     use_liger: true
   optim:
     lr: 1.0e-05
