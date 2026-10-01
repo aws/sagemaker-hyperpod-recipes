@@ -34,8 +34,9 @@ training_config:
     max_token_len_per_gpu: 16384
     truncation: left
     apply_chat_template_kwargs:
-      enable_thinking: false
-
+      # This model's chat template reads reasoning_strength, not enable_thinking.
+      # Valid: low | medium | high | xhigh; unset or falsy falls back to high.
+      reasoning_strength: high
   engine:
     strategy: fsdp2
 

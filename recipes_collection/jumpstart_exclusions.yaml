@@ -51,3 +51,13 @@ exclusion_patterns:
   # Muse-Glimmer-30B recipes ship but are not published to JumpStart yet —
   # hosting (inference-serving) and evaluation configs pending.
   - "muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-"
+  # Muse-Glimmer-30B DPO recipes ship but are not published to JumpStart yet — hosting
+  # (inference-serving) configs pending. muse_glimmer is not a native transformers
+  # architecture, so a serving stack has to carry the same vendored support the
+  # training container does before a hosting config can be measured.
+  - "muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b"
+  # Muse-Glimmer-30B GRPO (RLVR + RLAIF) recipes ship but are not published to JumpStart yet —
+  # hosting (inference-serving) configs pending. muse_glimmer is not a native transformers or
+  # vLLM architecture, so a serving stack has to carry the same vendored support the training
+  # container does before a hosting config can be measured.
+  - "muse_glimmer-0_7_0/verl-grpo-(rlvr|rlaif)-muse-glimmer-30b"

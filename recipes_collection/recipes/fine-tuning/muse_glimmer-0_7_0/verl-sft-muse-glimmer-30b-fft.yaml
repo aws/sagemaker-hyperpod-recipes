@@ -25,7 +25,7 @@ training_config:
     save_only_adapter_if_lora: true
   data:
     apply_chat_template_kwargs:
-      enable_thinking: false
+      reasoning_strength: high
     custom_cls:
       name: null
       path: null

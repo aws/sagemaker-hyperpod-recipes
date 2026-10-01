@@ -1,10 +1,9 @@
-display_name: Muse-Glimmer 30B SFT LoRA Fine-Tuning (Text)
+display_name: Muse-Glimmer 30B DPO LoRA Fine-Tuning (Text)
 instance_types:
 - ml.p5.48xlarge
-- ml.p4de.24xlarge
 run:
   model_type: verl
-  name: verl-sft-muse-glimmer-30b-lora
+  name: verl-dpo-muse-glimmer-30b-lora
   results_dir: ${base_results_dir}/${.name}
 trainer:
   devices: 8
@@ -24,23 +23,33 @@ training_config:
     - hf_model
     save_only_adapter_if_lora: true
   data:
+    _target_: verl.utils.dataset.dpo_dataset.DPODataConfig
     apply_chat_template_kwargs:
       reasoning_strength: high
+    chosen_key: chosen
     custom_cls:
       name: null
       path: null
-    ignore_input_ids_mismatch: true
-    max_length: 32768
+    dataloader_num_workers: 8
+    max_length: 16384
     max_token_len_per_gpu: 32768
-    messages_key: messages
     micro_batch_size_per_gpu: 1
     pad_mode: no_padding
+    prompt_key: prompt
+    rejected_key: rejected
+    remove_invalid_samples: true
+    seed: 42
+    shuffle: true
+    split_seed: 42
     train_batch_size: 128
     train_files: null
-    train_val_split_ratio: 1.0
+    train_max_samples: -1
+    train_val_split_ratio: 0.9
     truncation: left
     use_dynamic_bsz: true
+    use_shm: false
     val_files: null
+    val_max_samples: -1
   engine:
     _target_: verl.workers.config.FSDPEngineConfig
     dtype: bfloat16
@@ -76,7 +85,8 @@ training_config:
       impl_backend: torch
     hf_config_path: null
     lora_adapter_path: null
-    lora_alpha: 64
+    lora_alpha: 16
+    lora_dropout: 0.05
     lora_rank: 32
     override_config:
       attn_implementation: flash_attention_2
@@ -99,8 +109,8 @@ training_config:
     clip_grad: 1.0
     lr: 5.0e-05
     lr_scheduler_type: constant
-    lr_warmup_steps: 10
-    lr_warmup_steps_ratio: 0.0
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.1
     min_lr_ratio: 0.0
     num_cycles: 0.5
     optimizer: AdamW
@@ -140,29 +150,34 @@ training_config:
         stack_depth: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.stack_depth,32}
         trace_alloc_max_entries: ${oc.select:recipes.training_config.global_profiler.global_tool_config.torch_memory.trace_alloc_max_entries,100000}
   trainer:
+    beta: 0.1
     default_hdfs_dir: null
     default_local_dir: /opt/ml/model
     device: cuda
-    experiment_name: muse-glimmer-30b-sft-lora
+    experiment_name: muse-glimmer-30b-dpo-lora
+    label_smoothing: 0.0
     logger:
     - console
     - mlflow
     - tensorboard
-    max_ckpt_to_keep: null
+    loss_type: sigmoid
+    max_ckpt_to_keep: 3
     merge_lora_on_final_save: true
     n_gpus_per_node: 8
     nnodes: 1
     profile_interval:
     - -1
     - -1
-    project_name: muse-glimmer-sft
+    project_name: muse-glimmer-dpo
+    reference_free: false
     resume_from_path: null
     resume_mode: auto
     save_freq: after_each_epoch
     test_freq: 5
     total_epochs: 1
     total_training_steps: null
+    training_mode: auto
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.2
+version: 2.0.6
