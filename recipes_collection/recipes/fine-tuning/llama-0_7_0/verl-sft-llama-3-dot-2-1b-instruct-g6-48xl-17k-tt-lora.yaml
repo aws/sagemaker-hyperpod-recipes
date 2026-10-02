@@ -1,9 +1,10 @@
 display_name: Llama 3.2 1B Instruct SFT LoRA Fine-Tuning (17k)
 instance_types:
-- ml.g6.48xlarge
 - ml.g5.48xlarge
-- ml.g6.12xlarge
-- ml.g5.12xlarge
+- ml.g6.48xlarge
+- ml.p4d.24xlarge
+- ml.p4de.24xlarge
+- ml.p5.48xlarge
 run:
   model_type: verl
   name: verl-sft-llama-3-dot-2-1b-instruct-lora
@@ -38,7 +39,7 @@ training_config:
     train_batch_size: 64
     train_files: null
     train_val_split_ratio: 1.0
-    truncation: right
+    truncation: left
     use_dynamic_bsz: true
     val_files: null
   engine:
@@ -164,4 +165,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 1.0.0
+version: 1.0.1

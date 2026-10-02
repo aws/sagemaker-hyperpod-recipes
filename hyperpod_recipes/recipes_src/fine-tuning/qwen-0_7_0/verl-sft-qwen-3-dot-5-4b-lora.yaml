@@ -12,7 +12,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 3.5 4B SFT LoRA Fine-Tuning"
-version: 2.1.5
+version: 2.1.6
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge", "ml.p4d.24xlarge"]
 
 run:
@@ -27,7 +27,7 @@ training_config:
     micro_batch_size_per_gpu: 8
     max_length: 4096
     max_token_len_per_gpu: 16384
-    truncation: right
+    truncation: left
     train_max_samples: -1
     val_max_samples: -1
 

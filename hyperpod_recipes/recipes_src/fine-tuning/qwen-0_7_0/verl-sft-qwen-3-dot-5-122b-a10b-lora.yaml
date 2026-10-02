@@ -12,7 +12,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 3.5 122B A10B SFT LoRA Fine-Tuning"
-version: 1.0.0
+version: 1.0.1
 instance_types: ["ml.p5.48xlarge"]
 
 run:

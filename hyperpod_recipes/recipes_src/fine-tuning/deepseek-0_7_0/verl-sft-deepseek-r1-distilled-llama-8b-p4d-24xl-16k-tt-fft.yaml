@@ -1,0 +1,21 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-deepseek-r1-distilled-llama-8b-fft
+  - _self_
+
+display_name: "DeepSeek R1 Distill Llama 8B SFT Full Fine-Tuning (16k)"
+instance_types: ["ml.p4d.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    # SWEEP-DERIVED, NOT MATRIX-CONFIRMED. Token sweep a3cc8ca260bf (2026-09-15), chain
+    # ml.p4d.24xlarge: last_safe_token 17408, 26.8 GB peak (67% of a 40 GB A100).
+    # Deliberately rounded DOWN to 16384, not shipped at 17408: the generated datasets
+    # come in tiers (4096, 8192, 16384, 32768, 65536) and within a tier T the samples
+    # span [T/2, T], so 17408 would land in the 32768 tier and keep only
+    # (17408 - 16384) / 16384 = 6.2% of it. 16384 is the top of its own tier and keeps
+    # 100%, for 6% less context. The 16384 probe cell measured 25.5 GB (64%).
+    # No 40 GB instance has ever been matrix-tested in any deepseek FFT slot, so there is
+    # no matrix reference of any kind here — the probe (1 epoch, train_batch_size = 8) is
+    # the only evidence. Confirm with a matrix job before relying on it.
+    max_length: 16384
+    max_token_len_per_gpu: 16384

@@ -10,7 +10,7 @@ defaults:
   - /hydra_config/verl-0_7_0/sft/checkpoint/default
   - _self_
 
-version: 1.0.0
+version: 1.0.1
 
 run:
   name: verl-sft-llama-3-dot-2-3b-instruct-fft
@@ -22,7 +22,7 @@ training_config:
   data:
     train_batch_size: 64
     micro_batch_size_per_gpu: 8
-    truncation: right
+    truncation: left
     ignore_input_ids_mismatch: true
     use_dynamic_bsz: true
 

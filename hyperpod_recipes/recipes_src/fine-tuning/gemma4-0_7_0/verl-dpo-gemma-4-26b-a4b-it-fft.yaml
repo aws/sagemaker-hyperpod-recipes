@@ -12,8 +12,8 @@ defaults:
   - _self_
 
 display_name: "Gemma 4 26B IT DPO Full Fine-Tuning"
-version: 2.0.5
-instance_types: ["ml.p5.48xlarge"]
+version: 2.0.7
+instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
 
 run:
   name: verl-dpo-gemma-4-26b-a4b-it-fft

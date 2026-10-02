@@ -1,0 +1,16 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-dpo-deepseek-r1-distilled-llama-70b-fft
+  - _self_
+
+display_name: "DeepSeek R1 Distill Llama 70B DPO Full Fine-Tuning (4k)"
+instance_types: ["ml.p5.48xlarge"]
+
+training_config:
+  data:
+    # Longest configuration a completed k8s run measured for this slot.
+    max_length: 4096
+    max_token_len_per_gpu: 8192
+
+  trainer:
+    # Must equal trainer.num_nodes: this is the world size declared to verl in verl_config.yaml.
+    nnodes: 4

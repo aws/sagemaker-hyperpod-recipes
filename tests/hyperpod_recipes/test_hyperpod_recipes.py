@@ -12,7 +12,11 @@ class TestHyperpodRecipes(unittest.TestCase):
 
         # Assertions
         self.assertGreaterEqual(len(recipes), 100)
-        self.assertLessEqual(len(recipes), 450)
+        # A sanity net against runaway generation, not a pin, so it keeps room
+        # to grow as the per-instance verl ladders expand. 607 with all four family
+        # ladders stacked; raised to 750 for ~20% headroom. Only the tip of the PR
+        # chain sees the combined total -- gpt_oss alone is 416.
+        self.assertLessEqual(len(recipes), 750)
         self.assertTrue(all(isinstance(r, Recipe) for r in recipes))
         self.assertTrue(
             "training/nova/nova_1_0/nova_micro/CPT/nova_micro_1_0_p5x8_gpu_pretrain"
@@ -21,6 +25,10 @@ class TestHyperpodRecipes(unittest.TestCase):
 
     @patch("os.path.exists")
     def test_list_recipes_raises_if_no_directory(self, mock_exists):
+        # list_recipes is lru_cached, so a warm cache left by another test on the same
+        # xdist worker would short-circuit the patched os.path.exists and no error would
+        # be raised. Clearing it first makes the assertion independent of test order.
+        list_recipes.cache_clear()
         mock_exists.return_value = False
         with self.assertRaises(FileNotFoundError):
             list_recipes()

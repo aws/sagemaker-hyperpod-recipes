@@ -1,0 +1,17 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-llama-3-dot-2-3b-instruct-fft
+  - _self_
+
+display_name: "Llama 3.2 3B Instruct SFT Full Fine-Tuning (14k)"
+instance_types: ["ml.g6e.12xlarge"]
+# 4 GPUs per node, not the 8 the base recipe assumes:
+# every instance listed above is a 4-GPU type.
+trainer:
+  devices: 4
+
+training_config:
+  trainer:
+    n_gpus_per_node: 4
+  data:
+    max_length: 14336
+    max_token_len_per_gpu: 14336

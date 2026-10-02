@@ -1,6 +1,8 @@
 display_name: GPT-OSS 20B DPO Full Fine-Tuning (12k)
 instance_types:
 - ml.p5.48xlarge
+- ml.p5e.48xlarge
+- ml.p5en.48xlarge
 run:
   model_type: verl
   name: verl-dpo-gpt-oss-20b-fft
@@ -176,4 +178,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.3
+version: 2.0.4

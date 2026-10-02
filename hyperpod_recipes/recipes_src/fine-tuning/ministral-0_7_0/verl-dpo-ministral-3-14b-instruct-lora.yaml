@@ -12,7 +12,7 @@ defaults:
 - /hydra_config/verl-0_7_0/model_config/ministral-3-14b-instruct
 - _self_
 display_name: Ministral-3-14B-Instruct-2512 DPO LoRA Fine-Tuning (Text)
-version: 2.0.1
+version: 2.0.2
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge
@@ -24,8 +24,8 @@ training_config:
   data:
     train_batch_size: 32
     micro_batch_size_per_gpu: 4
-    max_length: 4096
-    max_token_len_per_gpu: 8192
+    max_length: 8192
+    max_token_len_per_gpu: 16384
     truncation: right
     remove_invalid_samples: true
   engine:

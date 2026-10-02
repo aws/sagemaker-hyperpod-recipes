@@ -36,7 +36,10 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
+
+import yaml
 
 # Reuse shared helpers from eval coverage checker
 from check_eval_coverage import (
@@ -46,6 +49,27 @@ from check_eval_coverage import (
     find_recipes,
     load_model_id_map,
 )
+
+# JumpStart exclusion patterns: recipes excluded from JumpStart publishing are
+# not hosted, so they do not require a hosting config. Loaded from the same
+# file the JumpStart Lambda uses (recipes_collection/jumpstart_exclusions.yaml).
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_EXCLUSIONS_PATH = os.path.join(_REPO_ROOT, "recipes_collection", "jumpstart_exclusions.yaml")
+
+
+def load_exclusion_patterns() -> list:
+    """Compile the JumpStart exclusion regexes (empty list if the file is absent)."""
+    if not os.path.exists(_EXCLUSIONS_PATH):
+        return []
+    with open(_EXCLUSIONS_PATH) as f:
+        data = yaml.safe_load(f) or {}
+    return [re.compile(p) for p in (data.get("exclusion_patterns") or [])]
+
+
+def is_excluded(recipe_id: str, patterns: list) -> bool:
+    """True if recipe_id matches any exclusion pattern (re.search)."""
+    return any(p.search(recipe_id) for p in patterns)
+
 
 logger = logging.getLogger(__name__)
 
@@ -120,12 +144,20 @@ def check_inference_coverage_for_recipes(
     """
     model_id_map = load_model_id_map(model_id_map_path)
     hosting_stems = load_hosting_config_stems(inference_configs_dir)
+    exclusion_patterns = load_exclusion_patterns()
 
     missing = []
     for recipe_path in recipe_paths:
         run_name = extract_run_name(recipe_path)
         if run_name is None:
             # No run.name field — skip (may be a config/cluster file)
+            continue
+
+        # Recipes excluded from JumpStart publishing are not hosted, so they
+        # don't require a hosting config (mirrors check_jumpstart_recipes).
+        recipe_id = recipe_path.split("recipes_collection/recipes/", 1)[-1]
+        recipe_id = recipe_id[: -len(".yaml")] if recipe_id.endswith(".yaml") else recipe_id
+        if is_excluded(recipe_id, exclusion_patterns):
             continue
 
         js_model_id = model_id_map.get(run_name)

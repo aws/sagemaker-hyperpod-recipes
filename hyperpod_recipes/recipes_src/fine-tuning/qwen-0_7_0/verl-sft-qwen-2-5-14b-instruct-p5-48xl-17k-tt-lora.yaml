@@ -1,0 +1,11 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-qwen-2-5-14b-instruct-lora
+  - _self_
+
+display_name: "Qwen 2.5 14B SFT LoRA Fine-Tuning (17k)"
+instance_types: ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    max_length: 17920
+    max_token_len_per_gpu: 17920

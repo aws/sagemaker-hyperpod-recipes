@@ -1,0 +1,14 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-dpo-deepseek-r1-distilled-qwen-7b-fft
+  - _self_
+
+display_name: "DeepSeek R1 Distill Qwen 7B DPO Full Fine-Tuning (10k)"
+# ml.p4de.24xlarge is unioned upward from the new 16k rung (rule 1 in
+# scripts/enforce_recipe_instance_conventions.py): its sweep-derived ceiling of 16384
+# clears 10752, so it can trivially run this rung too.
+instance_types: ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    max_length: 10752
+    max_token_len_per_gpu: 21504

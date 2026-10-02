@@ -1,0 +1,53 @@
+# @package recipes
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/dpo/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/dpo/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - _self_
+
+version: 1.0.1
+
+run:
+  name: verl-dpo-deepseek-r1-distilled-llama-70b-fft
+
+trainer:
+  # 70B full fine-tuning does not fit one node: bf16 weights alone are ~140GB, and
+  # optimizer state plus activations exceed a single node's 640GB. DPO also holds two
+  # sequences per record (prompt+chosen and prompt+rejected), so the per-GPU token
+  # budget is 2x max_length. This is the shape the token sweep measured this slot at.
+  num_nodes: 4
+
+training_config:
+  data:
+    # Must be >= total GPUs (nodes * 8 = 32) to avoid batch_size=0 error.
+    train_batch_size: 32
+    micro_batch_size_per_gpu: 1
+    truncation: left
+
+  model:
+    path: deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+
+  engine:
+    use_torch_compile: true
+    model_dtype: bfloat16
+    strategy: fsdp2
+
+  optim:
+    lr: 1.0e-5
+    weight_decay: 0.0
+    lr_warmup_steps_ratio: 0.1
+    min_lr_ratio: 0.1
+    lr_scheduler_type: cosine
+
+  trainer:
+    beta: 0.01
+    loss_type: sigmoid
+    total_epochs: 3
+    save_freq: after_each_epoch
+    test_freq: 5

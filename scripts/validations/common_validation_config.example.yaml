@@ -497,9 +497,9 @@ container_info:
     k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
     smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
   verl_0_7_0:
-    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.4-smtj"
-    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.4-smtj"
-    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.4-smtj"
+    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj"
+    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj"
+    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj"
   verl_0_7_0_vllm012:
     slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
     k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
@@ -509,9 +509,9 @@ container_info:
     k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.2-smtj-megatron"
     smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.2-smtj-megatron"
   verl_0_7_0_tf58:
-    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.4-smtj-tf58"
-    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.4-smtj-tf58"
-    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.4-smtj-tf58"
+    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj-tf58"
+    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj-tf58"
+    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj-tf58"
 
 git:
   use_default: false
@@ -887,6 +887,7 @@ recipe_structure_config:
 
       smjobs:  # SM Jobs-specific commands (S3 mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "cluster.sm_jobs_config.pysdk_launch_executor=model_trainer"
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
         - "++cluster.sm_jobs_config.inputs.file_system=null"
         - "cluster.sm_jobs_config.output_path={s3_output_path}"
@@ -897,6 +898,7 @@ recipe_structure_config:
 
       smjobs_fsx:  # SM Jobs FSx-specific commands (FSx mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "cluster.sm_jobs_config.pysdk_launch_executor=model_trainer"
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
         - "++cluster.sm_jobs_config.inputs.s3=null"
         - "cluster.sm_jobs_config.output_path={s3_output_path}"
@@ -958,6 +960,7 @@ recipe_structure_config:
 
       smjobs:  # SM Jobs-specific commands (S3 mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "cluster.sm_jobs_config.pysdk_launch_executor=model_trainer"
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
         - "++cluster.sm_jobs_config.inputs.file_system=null"
         - "cluster.sm_jobs_config.output_path={s3_output_path}"
@@ -972,6 +975,7 @@ recipe_structure_config:
 
       smjobs_fsx:  # SM Jobs FSx-specific commands (FSx mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "cluster.sm_jobs_config.pysdk_launch_executor=model_trainer"
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
         - "++cluster.sm_jobs_config.inputs.s3=null"
         - "cluster.sm_jobs_config.output_path={s3_output_path}"
@@ -1030,6 +1034,7 @@ recipe_structure_config:
 
       smjobs:  # SM Jobs-specific commands (S3 mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "cluster.sm_jobs_config.pysdk_launch_executor=model_trainer"
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
         - "++cluster.sm_jobs_config.inputs.file_system=null"
         - "cluster.sm_jobs_config.output_path={s3_output_path}"
@@ -1040,6 +1045,7 @@ recipe_structure_config:
 
       smjobs_fsx:  # SM Jobs FSx-specific commands (FSx mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "cluster.sm_jobs_config.pysdk_launch_executor=model_trainer"
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
         - "++cluster.sm_jobs_config.inputs.s3=null"
         - "cluster.sm_jobs_config.output_path={s3_output_path}"
@@ -1113,6 +1119,7 @@ recipe_structure_config:
 
       smjobs:  # SM Jobs-specific commands (S3 mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "cluster.sm_jobs_config.pysdk_launch_executor=model_trainer"
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
         - "++cluster.sm_jobs_config.inputs.file_system=null"
         - "cluster.sm_jobs_config.output_path={s3_output_path}"
@@ -1123,6 +1130,7 @@ recipe_structure_config:
 
       smjobs_fsx:  # SM Jobs FSx-specific commands (FSx mode)
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.image_uri={container_path}"
+        - "cluster.sm_jobs_config.pysdk_launch_executor=model_trainer"
         - "+cluster.sm_jobs_config.additional_estimator_kwargs.use_training_recipe=true"
         - "++cluster.sm_jobs_config.inputs.s3=null"
         - "cluster.sm_jobs_config.output_path={s3_output_path}"

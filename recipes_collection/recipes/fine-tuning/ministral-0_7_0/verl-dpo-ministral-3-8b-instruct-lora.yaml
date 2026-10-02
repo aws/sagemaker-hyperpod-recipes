@@ -31,8 +31,8 @@ training_config:
       name: null
       path: null
     dataloader_num_workers: 8
-    max_length: 4096
-    max_token_len_per_gpu: 8192
+    max_length: 8192
+    max_token_len_per_gpu: 16384
     micro_batch_size_per_gpu: 4
     pad_mode: no_padding
     prompt_key: prompt
@@ -179,4 +179,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.1
+version: 2.0.2

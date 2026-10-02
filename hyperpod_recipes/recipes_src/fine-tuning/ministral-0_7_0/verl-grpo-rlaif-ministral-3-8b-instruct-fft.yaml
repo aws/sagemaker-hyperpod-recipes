@@ -2,7 +2,7 @@ defaults:
   - /hydra_config/verl-0_7_0/default
   - _self_
 display_name: Ministral-3-8B-Instruct-2512-BF16 GRPO RLAIF FFT Fine-Tuning (Text)
-version: 2.0.1
+version: 2.0.2
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge
@@ -113,6 +113,7 @@ training_config:
     filter_overlong_prompts: true
     trust_remote_code: false
     train_val_split_ratio: 0.9
+    split_seed: 42
   reward_model:
     strategy: fsdp2
     reward_manager: batch

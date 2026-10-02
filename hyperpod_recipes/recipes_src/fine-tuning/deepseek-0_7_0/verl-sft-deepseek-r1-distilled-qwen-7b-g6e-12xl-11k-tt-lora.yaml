@@ -1,0 +1,17 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-deepseek-r1-distilled-qwen-7b-lora
+  - _self_
+
+display_name: "DeepSeek R1 Distill Qwen 7B SFT LoRA Fine-Tuning (11k)"
+instance_types: ["ml.g6e.12xlarge"]
+# 4 GPUs per node, not the 8 the base recipe assumes:
+# every instance listed above is a 4-GPU type.
+trainer:
+  devices: 4
+
+training_config:
+  trainer:
+    n_gpus_per_node: 4
+  data:
+    max_length: 11776
+    max_token_len_per_gpu: 11776

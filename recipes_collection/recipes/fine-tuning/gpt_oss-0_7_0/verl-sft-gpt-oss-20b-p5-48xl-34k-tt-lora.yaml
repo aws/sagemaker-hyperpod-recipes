@@ -1,6 +1,8 @@
 display_name: GPT-OSS 20B SFT LoRA Fine-Tuning (34k)
 instance_types:
 - ml.p5.48xlarge
+- ml.p5e.48xlarge
+- ml.p5en.48xlarge
 run:
   model_type: verl
   name: verl-sft-gpt-oss-20b-lora
@@ -36,7 +38,7 @@ training_config:
     train_files: null
     train_max_samples: -1
     train_val_split_ratio: 1.0
-    truncation: right
+    truncation: left
     use_dynamic_bsz: true
     val_files: null
     val_max_samples: -1
@@ -167,4 +169,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.1
+version: 2.0.2

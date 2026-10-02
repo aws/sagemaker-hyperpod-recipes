@@ -1,0 +1,12 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-qwen-2-5-72b-instruct-lora
+  - _self_
+
+display_name: "Qwen 2.5 72B SFT LoRA Fine-Tuning (4k)"
+instance_types: ["ml.p5.48xlarge"]
+
+training_config:
+  data:
+    # Length the k8s evidence covers for this slot, via its FFT sibling.
+    max_length: 4096
+    max_token_len_per_gpu: 4096

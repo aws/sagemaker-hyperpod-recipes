@@ -11,7 +11,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 3.5 27B SFT Full Fine-Tuning"
-version: 2.1.6
+version: 2.1.7
 instance_types: ["ml.p5.48xlarge"]
 
 run:
@@ -26,7 +26,7 @@ training_config:
     micro_batch_size_per_gpu: 2
     max_length: 4096
     max_token_len_per_gpu: 16384
-    truncation: right
+    truncation: left
     train_max_samples: -1
     val_max_samples: -1
 

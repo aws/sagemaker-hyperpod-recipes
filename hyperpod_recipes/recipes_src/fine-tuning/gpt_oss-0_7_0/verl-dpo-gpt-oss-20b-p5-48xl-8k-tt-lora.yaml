@@ -1,0 +1,12 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-dpo-gpt-oss-20b-lora
+  - _self_
+
+display_name: "GPT-OSS 20B DPO LoRA Fine-Tuning (8k)"
+instance_types: ["ml.p5.48xlarge", "ml.p5e.48xlarge", "ml.p5en.48xlarge"]
+
+training_config:
+  data:
+    # 8192 lands on a real dataset tier; 8704 falls to the 16384 tier at 6.2% keep, emptying the loss span.
+    max_length: 8192
+    max_token_len_per_gpu: 16384

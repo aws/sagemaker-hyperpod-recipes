@@ -1,0 +1,11 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-dpo-qwen-3-4b-fft
+  - _self_
+
+display_name: "Qwen 3 4B DPO Full Fine-Tuning (5k)"
+instance_types: ["ml.g6.48xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    max_length: 5120
+    max_token_len_per_gpu: 10240

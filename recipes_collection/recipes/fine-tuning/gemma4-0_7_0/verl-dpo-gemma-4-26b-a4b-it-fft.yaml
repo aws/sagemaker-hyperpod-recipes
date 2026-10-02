@@ -1,6 +1,7 @@
 display_name: Gemma 4 26B IT DPO Full Fine-Tuning
 instance_types:
 - ml.p5.48xlarge
+- ml.p4de.24xlarge
 run:
   model_type: verl
   name: verl-dpo-gemma-4-26b-a4b-it-fft
@@ -177,4 +178,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.5
+version: 2.0.7

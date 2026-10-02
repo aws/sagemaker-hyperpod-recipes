@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Qwen 3.5 122B A10B GRPO RLAIF Fine-Tuning with LoRA
-version: 1.0.0
+version: 1.0.1
 instance_types:
   - ml.p5.48xlarge
 run:
@@ -97,6 +97,7 @@ training_config:
     max_response_length: 2048
     train_batch_size: 256
     train_val_split_ratio: 0.9
+    split_seed: 42
     return_raw_chat: true
 
   # Reward model overrides

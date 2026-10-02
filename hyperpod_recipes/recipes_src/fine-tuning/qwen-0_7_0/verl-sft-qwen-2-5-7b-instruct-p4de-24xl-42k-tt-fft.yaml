@@ -1,0 +1,11 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-qwen-2-5-7b-instruct-fft
+  - _self_
+
+display_name: "Qwen 2.5 7B SFT Full Fine-Tuning (42k)"
+instance_types: ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    max_length: 43008
+    max_token_len_per_gpu: 43008

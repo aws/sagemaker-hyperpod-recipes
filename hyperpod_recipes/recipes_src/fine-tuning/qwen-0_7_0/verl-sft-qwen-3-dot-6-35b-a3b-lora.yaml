@@ -12,8 +12,10 @@ defaults:
   - _self_
 
 display_name: "Qwen 3.6 35B A3B SFT LoRA Fine-Tuning"
-version: 2.0.1
-instance_types: ["ml.p5.48xlarge"]
+version: 2.0.2
+instance_types:
+  - ml.p5.48xlarge
+  - ml.p4de.24xlarge
 
 run:
   name: verl-sft-qwen-3-dot-6-35b-a3b-lora

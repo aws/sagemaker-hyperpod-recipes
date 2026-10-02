@@ -511,6 +511,7 @@ training_config:
       class_path: null
     seed: null
     shuffle: false
+    split_seed: 42
     tokenizer: null
     tool_config_path: ${oc.select:recipes.training_config.actor_rollout_ref.rollout.multi_turn.tool_config_path,
       null}
@@ -680,4 +681,4 @@ training_config:
     validation_data_dir: null
   transfer_queue:
     enable: false
-version: 2.1.6
+version: 2.1.7

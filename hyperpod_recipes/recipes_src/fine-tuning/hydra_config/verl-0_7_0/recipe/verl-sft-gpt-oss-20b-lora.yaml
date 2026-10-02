@@ -11,7 +11,7 @@ defaults:
   - /hydra_config/verl-0_7_0/sft/peft/lora
   - _self_
 
-version: 2.0.1
+version: 2.0.2
 
 run:
   name: verl-sft-gpt-oss-20b-lora
@@ -24,7 +24,7 @@ training_config:
     ignore_input_ids_mismatch: true
     train_batch_size: 128
     micro_batch_size_per_gpu: 4
-    truncation: right
+    truncation: left
     train_max_samples: -1
     val_max_samples: -1
 

@@ -11,10 +11,11 @@ defaults:
 - /hydra_config/verl-0_7_0/model_config/ministral-3-3b-instruct
 - _self_
 display_name: Ministral-3-3B-Instruct-2512-BF16 DPO FFT Fine-Tuning
-version: 2.0.1
+version: 2.0.2
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge
+- ml.p4d.24xlarge
 run:
   name: verl-dpo-ministral-3-3b-instruct-fft
 trainer:
@@ -23,7 +24,7 @@ training_config:
   data:
     train_batch_size: 32
     micro_batch_size_per_gpu: 4
-    max_length: 4096
+    max_length: 8192
     max_token_len_per_gpu: 16384
     truncation: right
   engine:
