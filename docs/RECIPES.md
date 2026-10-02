@@ -692,12 +692,18 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 
 ### Muse-Glimmer Models
 
-#### Meta Muse Glimmer 30B
+#### Muse Glimmer 30B
 
 | Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
 |-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| Muse-Glimmer 30B DPO Full Fine-Tuning (Text) | verl | - | FFT | - | 1 | p5.48xlarge | [verl-dpo-muse-glimmer-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b-fft.yaml) | [run_verl_dpo_muse_glimmer_30b_fft.sh](../launcher_scripts/muse_glimmer-0_7_0/run_verl_dpo_muse_glimmer_30b_fft.sh) |
 | Muse-Glimmer 30B SFT Full Fine-Tuning (Text) | verl | - | FFT | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-sft-muse-glimmer-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-fft.yaml) | [run_verl_sft_muse_glimmer_30b_fft.sh](../launcher_scripts/muse_glimmer-0_7_0/run_verl_sft_muse_glimmer_30b_fft.sh) |
+| Muse-Glimmer 30B DPO LoRA Fine-Tuning (Text) | verl | - | LoRA | - | 1 | p5.48xlarge | [verl-dpo-muse-glimmer-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b-lora.yaml) | [run_verl_dpo_muse_glimmer_30b_lora.sh](../launcher_scripts/muse_glimmer-0_7_0/run_verl_dpo_muse_glimmer_30b_lora.sh) |
 | Muse-Glimmer 30B SFT LoRA Fine-Tuning (Text) | verl | - | LoRA | - | 1 | p5.48xlarge, p4de.24xlarge | [verl-sft-muse-glimmer-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-lora.yaml) | [run_verl_sft_muse_glimmer_30b_lora.sh](../launcher_scripts/muse_glimmer-0_7_0/run_verl_sft_muse_glimmer_30b_lora.sh) |
+| Muse-Glimmer 30B GRPO RLVR Full Fine-Tuning (Text) | verl | GRPO | FFT | 16,384 | 1 | p5.48xlarge | [verl-grpo-rlvr-muse-glimmer-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlvr-muse-glimmer-30b-fft.yaml) | [run_verl_grpo_rlvr_muse_glimmer_30b_fft.sh](../launcher_scripts/muse_glimmer-0_7_0/run_verl_grpo_rlvr_muse_glimmer_30b_fft.sh) |
+| Muse-Glimmer 30B GRPO RLVR Fine-Tuning with LoRA (Text) | verl | GRPO | LoRA | 16,384 | 1 | p5.48xlarge | [verl-grpo-rlvr-muse-glimmer-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlvr-muse-glimmer-30b-lora.yaml) | [run_verl_grpo_rlvr_muse_glimmer_30b_lora.sh](../launcher_scripts/muse_glimmer-0_7_0/run_verl_grpo_rlvr_muse_glimmer_30b_lora.sh) |
+| Muse-Glimmer 30B GRPO RLAIF Full Fine-Tuning (Text) | verl | GRPO + RLAIF | FFT | 16,384 | 1 | p5.48xlarge | [verl-grpo-rlaif-muse-glimmer-30b-fft.yaml](../recipes_collection/recipes/fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlaif-muse-glimmer-30b-fft.yaml) | [run_verl_grpo_rlaif_muse_glimmer_30b_fft.sh](../launcher_scripts/muse_glimmer-0_7_0/run_verl_grpo_rlaif_muse_glimmer_30b_fft.sh) |
+| Muse-Glimmer 30B GRPO RLAIF Fine-Tuning with LoRA (Text) | verl | GRPO + RLAIF | LoRA | 16,384 | 1 | p5.48xlarge | [verl-grpo-rlaif-muse-glimmer-30b-lora.yaml](../recipes_collection/recipes/fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlaif-muse-glimmer-30b-lora.yaml) | [run_verl_grpo_rlaif_muse_glimmer_30b_lora.sh](../launcher_scripts/muse_glimmer-0_7_0/run_verl_grpo_rlaif_muse_glimmer_30b_lora.sh) |
 
 ### Nemotron Models
 

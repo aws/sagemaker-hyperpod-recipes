@@ -1,0 +1,59 @@
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/dpo/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/dpo/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  # No sft/peft/lora default: omitting it leaves lora_rank at 0, making this a full fine-tune.
+  - /hydra_config/verl-0_7_0/model_config/muse-glimmer-30b
+  - _self_
+
+display_name: "Muse-Glimmer 30B DPO Full Fine-Tuning (Text)"
+version: 2.0.6
+instance_types: ["ml.p5.48xlarge"]
+
+run:
+  name: verl-dpo-muse-glimmer-30b-fft
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  data:
+    train_batch_size: 64
+    # The DPO path splits train/val (ratio 0.9 by default) and verl seeds that split
+    # with data.split_seed. dpo_trainer.yaml leaves it unset, which makes
+    # torch.Generator().manual_seed(None) raise, so pin it here.
+    split_seed: 42
+    micro_batch_size_per_gpu: 1
+    # max_length is per side: each sample packs chosen and rejected into one sequence, so
+    # max_token_len_per_gpu must stay at or above 2 * max_length.
+    max_length: 8192
+    max_token_len_per_gpu: 16384
+    truncation: left
+    remove_invalid_samples: true
+    apply_chat_template_kwargs:
+      reasoning_strength: high
+  engine:
+    strategy: fsdp2
+    # Must stay 1: sequence parallelism is not supported for DPO with a reference model on FSDP.
+    ulysses_sequence_parallel_size: 1
+
+  optim:
+    lr: 1.0e-06
+    # Inert while lr_scheduler_type is constant; applies only if you switch to a cosine schedule.
+    min_lr_ratio: 0.1
+    lr_scheduler_type: constant
+    lr_warmup_steps_ratio: 0.1
+    weight_decay: 0.01
+
+  trainer:
+    project_name: muse-glimmer-dpo
+    experiment_name: muse-glimmer-30b-dpo-fft
+    beta: 0.1
+    total_epochs: 2
+    test_freq: 5

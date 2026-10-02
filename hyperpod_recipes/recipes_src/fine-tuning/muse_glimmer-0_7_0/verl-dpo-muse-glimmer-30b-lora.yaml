@@ -1,0 +1,62 @@
+defaults:
+  - /hydra_config/verl-0_7_0/sft/default
+  - /hydra_config/verl-0_7_0/dpo/data/default
+  - /hydra_config/verl-0_7_0/model/hf_model
+  - /hydra_config/verl-0_7_0/engine/fsdp
+  - /hydra_config/verl-0_7_0/optim/fsdp
+  - /hydra_config/verl-0_7_0/sft/trainer/default
+  - /hydra_config/verl-0_7_0/dpo/trainer/default
+  - /hydra_config/verl-0_7_0/profiler/profiler
+  - /hydra_config/verl-0_7_0/sft/checkpoint/default
+  - /hydra_config/verl-0_7_0/sft/peft/lora
+  - /hydra_config/verl-0_7_0/model_config/muse-glimmer-30b
+  - _self_
+
+display_name: "Muse-Glimmer 30B DPO LoRA Fine-Tuning (Text)"
+version: 2.0.6
+instance_types: ["ml.p5.48xlarge"]
+
+run:
+  name: verl-dpo-muse-glimmer-30b-lora
+
+trainer:
+  num_nodes: 1
+
+training_config:
+  data:
+    train_batch_size: 128
+    # The DPO path splits train/val (ratio 0.9 by default) and verl seeds that split
+    # with data.split_seed. dpo_trainer.yaml leaves it unset, which makes
+    # torch.Generator().manual_seed(None) raise, so pin it here.
+    split_seed: 42
+    micro_batch_size_per_gpu: 1
+    # max_length is per side. Each sample packs chosen and rejected into one sequence, so
+    # max_token_len_per_gpu has to stay at or above 2 * max_length.
+    max_length: 16384
+    max_token_len_per_gpu: 32768
+    # Use left truncation. With right truncation, pairs whose response sits at the end lose the
+    # response entirely and every remaining token is masked out of the loss.
+    truncation: left
+    remove_invalid_samples: true
+    apply_chat_template_kwargs:
+      reasoning_strength: high
+  model:
+    lora_dropout: 0.05
+    lora_alpha: 16
+
+  engine:
+    strategy: fsdp2
+    # Sequence parallelism is not supported for DPO with a reference model on FSDP; the trainer
+    # refuses to start with a value above 1. Control memory with max_token_len_per_gpu instead.
+    ulysses_sequence_parallel_size: 1
+
+  optim:
+    lr: 5.0e-05
+    lr_warmup_steps_ratio: 0.1
+
+  trainer:
+    project_name: muse-glimmer-dpo
+    experiment_name: muse-glimmer-30b-dpo-lora
+    beta: 0.1
+    total_epochs: 1
+    test_freq: 5

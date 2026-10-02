@@ -166,6 +166,12 @@
         "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-1-8b-instruct-fft",
         "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-2-1b-instruct-fft",
         "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-2-3b-instruct-fft",
+        "fine-tuning/muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b-fft",
+        "fine-tuning/muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b-lora",
+        "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlaif-muse-glimmer-30b-fft",
+        "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlaif-muse-glimmer-30b-lora",
+        "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlvr-muse-glimmer-30b-fft",
+        "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlvr-muse-glimmer-30b-lora",
         "fine-tuning/muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-fft",
         "fine-tuning/muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-lora",
         "fine-tuning/qwen-0_7_0/verl-dpo-qwen-2-5-14b-instruct-g6-12xl-1k-tt-lora",
@@ -286,6 +292,12 @@
     ],
     "matches_by_pattern": {
         "muse": [
+            "fine-tuning/muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b-fft",
+            "fine-tuning/muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b-lora",
+            "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlaif-muse-glimmer-30b-fft",
+            "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlaif-muse-glimmer-30b-lora",
+            "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlvr-muse-glimmer-30b-fft",
+            "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlvr-muse-glimmer-30b-lora",
             "fine-tuning/muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-fft",
             "fine-tuning/muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-lora"
         ],
@@ -676,6 +688,16 @@
         "muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-": [
             "fine-tuning/muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-fft",
             "fine-tuning/muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-lora"
+        ],
+        "muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b": [
+            "fine-tuning/muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b-fft",
+            "fine-tuning/muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b-lora"
+        ],
+        "muse_glimmer-0_7_0/verl-grpo-(rlvr|rlaif)-muse-glimmer-30b": [
+            "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlaif-muse-glimmer-30b-fft",
+            "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlaif-muse-glimmer-30b-lora",
+            "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlvr-muse-glimmer-30b-fft",
+            "fine-tuning/muse_glimmer-0_7_0/verl-grpo-rlvr-muse-glimmer-30b-lora"
         ]
     }
 }
