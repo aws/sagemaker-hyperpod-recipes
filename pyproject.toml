@@ -37,9 +37,6 @@ dependencies = [
     "PyYAML>=6.0",
     "pydantic>=2.0.0",
     "sagemaker>=2.0.0",
-    "pytest-xdist",
-    "pytest-cov",
-    "pytest-subtests",
     "pathspec",
 ]
 
