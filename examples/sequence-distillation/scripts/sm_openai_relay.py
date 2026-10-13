@@ -13,7 +13,11 @@ specific *inference component* (base vs a LoRA adapter) is only honored via Invo
 
     url = start_relay("base", "my-endpoint", 8101, region="us-west-2", inference_component="base-ic")
 """
-import http.server, json, threading, time
+import http.server
+import json
+import threading
+import time
+
 import boto3
 from botocore.config import Config
 
@@ -24,12 +28,16 @@ def _call_sagemaker(region, endpoint, body, inference_component=None):
     """Forward a Chat Completions request to a SageMaker endpoint via InvokeEndpoint, routing to a specific
     inference component when given. Returns (status_code, response_bytes). The LMI container answers on
     /invocations with an OpenAI-shaped chat.completion body, so we pass it straight back to the caller."""
-    rt = boto3.client("sagemaker-runtime", region_name=region,
-                      config=Config(read_timeout=900, retries={"max_attempts": 6, "mode": "adaptive"}))
-    kwargs = dict(EndpointName=endpoint, ContentType="application/json", Accept="application/json",
-                  Body=json.dumps(body))
+    rt = boto3.client(
+        "sagemaker-runtime",
+        region_name=region,
+        config=Config(read_timeout=900, retries={"max_attempts": 6, "mode": "adaptive"}),
+    )
+    kwargs = dict(
+        EndpointName=endpoint, ContentType="application/json", Accept="application/json", Body=json.dumps(body)
+    )
     if inference_component:
-        kwargs["InferenceComponentName"] = inference_component   # boto3 -> X-Amzn-SageMaker-Inference-Component
+        kwargs["InferenceComponentName"] = inference_component  # boto3 -> X-Amzn-SageMaker-Inference-Component
     try:
         r = rt.invoke_endpoint(**kwargs)
         return 200, r["Body"].read()
@@ -37,15 +45,19 @@ def _call_sagemaker(region, endpoint, body, inference_component=None):
         return 500, json.dumps({"error": {"message": str(e)[:2000], "type": "relay_invoke_error"}}).encode()
 
 
-
 def _call_bedrock(region, model_id, body):
     """Chat Completions -> Bedrock Converse -> Chat Completions. A fresh client per call picks up refreshed
     credentials during long runs."""
-    br = boto3.Session().client("bedrock-runtime", region_name=region,
-                                config=Config(read_timeout=900, retries={"max_attempts": 8, "mode": "adaptive"}))
+    br = boto3.Session().client(
+        "bedrock-runtime",
+        region_name=region,
+        config=Config(read_timeout=900, retries={"max_attempts": 8, "mode": "adaptive"}),
+    )
     msgs = body["messages"]
     system = [{"text": m["content"]} for m in msgs if m["role"] == "system"]
-    conv = [{"role": m["role"], "content": [{"text": m["content"]}]} for m in msgs if m["role"] in ("user", "assistant")]
+    conv = [
+        {"role": m["role"], "content": [{"text": m["content"]}]} for m in msgs if m["role"] in ("user", "assistant")
+    ]
 
     def _converse(include_temperature):
         cfg = {"maxTokens": int(body.get("max_tokens", 4096))}
@@ -65,9 +77,19 @@ def _call_bedrock(region, model_id, body):
             else:
                 raise
         text = "".join(b.get("text", "") for b in r["output"]["message"]["content"])
-        out = {"id": "bedrock", "object": "chat.completion", "created": int(time.time()), "model": model_id,
-               "choices": [{"index": 0, "finish_reason": "length" if r["stopReason"] == "max_tokens" else "stop",
-                            "message": {"role": "assistant", "content": text}}]}
+        out = {
+            "id": "bedrock",
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": model_id,
+            "choices": [
+                {
+                    "index": 0,
+                    "finish_reason": "length" if r["stopReason"] == "max_tokens" else "stop",
+                    "message": {"role": "assistant", "content": text},
+                }
+            ],
+        }
         return 200, json.dumps(out).encode()
     except Exception as e:
         return 500, json.dumps({"error": str(e)[:2000]}).encode()
@@ -112,8 +134,17 @@ def start_relay(name, target, port, region, force=None, transport="sagemaker", i
     (sent as the OpenAI "model" field); None routes to the single model behind the endpoint.
     Starting a relay under an existing name replaces it. Returns the base_url for an OpenAI client."""
     stop_relay(name)
-    handler = type(f"Relay_{name}", (_Relay,), {"region": region, "target": target, "force": force,
-                                                "transport": transport, "inference_component": inference_component})
+    handler = type(
+        f"Relay_{name}",
+        (_Relay,),
+        {
+            "region": region,
+            "target": target,
+            "force": force,
+            "transport": transport,
+            "inference_component": inference_component,
+        },
+    )
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     RELAYS[name] = srv

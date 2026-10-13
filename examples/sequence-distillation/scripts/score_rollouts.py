@@ -14,7 +14,11 @@ Trajectories whose query is not in --problems are skipped, so one rollout file c
 Output: {"n": problems scored, "asr": share of successes, "exact_id": exact gold-product share, "recommend": share that
 ended with a recommendation at all}.
 """
-import argparse, contextlib, io, json, sys
+import argparse
+import contextlib
+import io
+import json
+import sys
 from collections import defaultdict
 
 ap = argparse.ArgumentParser()
@@ -25,11 +29,14 @@ args = ap.parse_args()
 
 sys.path.insert(0, "src/agent")
 with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-    import run_evaluate as RE          # loads the catalog index and the title-similarity embedding model
+    import run_evaluate as RE  # loads the catalog index and the title-similarity embedding model
 
-def solved(task, s):                    # identical to run_evaluate.evaluate()'s "success rate"
-    return s["rule"] >= 1 and (task == "product" or (task == "shop" and s["shop"] >= 1)
-                               or (task == "voucher" and s["budget"] >= 1))
+
+def solved(task, s):  # identical to run_evaluate.evaluate()'s "success rate"
+    return s["rule"] >= 1 and (
+        task == "product" or (task == "shop" and s["shop"] >= 1) or (task == "voucher" and s["budget"] >= 1)
+    )
+
 
 cfg = {"task": args.task, "synthesize_file": args.problems}
 rewards, vouchers = RE.load_synthesize_rewards(cfg), RE.load_synthesize_vouchers(cfg)
@@ -37,16 +44,26 @@ res = {}
 for line in open(args.rollouts):
     if not line.strip():
         continue
-    traj = json.loads(line); q = traj[0]["extra_info"]["query"]
+    traj = json.loads(line)
+    q = traj[0]["extra_info"]["query"]
     if q not in rewards:
         continue
     s = defaultdict(float)
     with contextlib.redirect_stdout(io.StringIO()):
-        {"product": lambda: RE.eval_product(s, traj, rewards[q]),
-         "shop": lambda: RE.eval_shop(s, traj, rewards[q]),
-         "voucher": lambda: RE.eval_voucher(s, traj, rewards[q], vouchers.get(q))}[args.task]()
+        {
+            "product": lambda: RE.eval_product(s, traj, rewards[q]),
+            "shop": lambda: RE.eval_shop(s, traj, rewards[q]),
+            "voucher": lambda: RE.eval_voucher(s, traj, rewards[q], vouchers.get(q)),
+        }[args.task]()
     res[q] = {"solved": solved(args.task, s), "exact_id": s["gt"] >= 1, "recommended": s["product"] > 0}
 n = max(len(res), 1)
-print(json.dumps({"n": len(res), "asr": round(sum(r["solved"] for r in res.values()) / n, 3),
-                  "exact_id": round(sum(r["exact_id"] for r in res.values()) / n, 3),
-                  "recommend": round(sum(r["recommended"] for r in res.values()) / n, 3)}))
+print(
+    json.dumps(
+        {
+            "n": len(res),
+            "asr": round(sum(r["solved"] for r in res.values()) / n, 3),
+            "exact_id": round(sum(r["exact_id"] for r in res.values()) / n, 3),
+            "recommend": round(sum(r["recommended"] for r in res.values()) / n, 3),
+        }
+    )
+)

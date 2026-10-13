@@ -20,8 +20,7 @@ from collections import Counter
 
 REPO = "oro-ai/sn15-shoppingbench-sft-15k"
 # The benchmark's held-out product-test split -- what ASR is scored on.
-SB_TEST = ("https://raw.githubusercontent.com/yjwjy/ShoppingBench/main/"
-           "data/synthesize_product_test.jsonl")
+SB_TEST = "https://raw.githubusercontent.com/yjwjy/ShoppingBench/main/" "data/synthesize_product_test.jsonl"
 
 
 def typename(v):
@@ -44,6 +43,7 @@ def resolve(path, split):
     if path:
         return path
     from huggingface_hub import hf_hub_download, list_repo_files
+
     jsonls = [f for f in list_repo_files(REPO, repo_type="dataset") if f.endswith(".jsonl")]
     jsonls = [f for f in jsonls if "metadata" not in f.lower()]
     # The set ships a train file and an eval file; pick by whether "eval" is in the name.
@@ -89,8 +89,7 @@ def show_columns(path, scan):
     print("-" * 100)
     for k, c in cols.most_common():
         t = "|".join(t for t, _ in types[k].most_common(3))
-        print("%-22s %-11s %-14s %s"
-              % (k, "%d/%d" % (c, n), t, preview(first.get(k), 48)))
+        print("%-22s %-11s %-14s %s" % (k, "%d/%d" % (c, n), t, preview(first.get(k), 48)))
 
     if "messages" in cols:
         roles, mkeys = Counter(), Counter()
@@ -118,8 +117,7 @@ def show_rows(path, limit, width):
                     if m.get("tool_calls"):
                         names = [tc.get("function", tc).get("name") for tc in m["tool_calls"]]
                         extra = "  tool_calls=%s" % names
-                    print("    [%02d] %-10s %s%s"
-                          % (j, m.get("role"), preview(m.get("content") or "", width), extra))
+                    print("    [%02d] %-10s %s%s" % (j, m.get("role"), preview(m.get("content") or "", width), extra))
             elif k == "tools" and isinstance(v, list):
                 print("  tools: %s" % [t.get("function", t).get("name") for t in v])
             else:
@@ -140,8 +138,10 @@ def show_task_structure(path):
     print("\n" + "=" * 100)
     print("TASK STRUCTURE")
     print("=" * 100)
-    print("%d trajectories -> %d unique queries (%.1f trajectories per query)"
-          % (n, len(per_query), n / max(len(per_query), 1)))
+    print(
+        "%d trajectories -> %d unique queries (%.1f trajectories per query)"
+        % (n, len(per_query), n / max(len(per_query), 1))
+    )
     dup = sum(1 for c in per_query.values() if c > 1)
     print("%d/%d queries appear more than once" % (dup, len(per_query)))
     print("Split train/val BY QUERY, not by row -- a row-level shuffle puts near-duplicate")
@@ -160,8 +160,10 @@ def show_contamination(train_queries):
     print("\n" + "=" * 100)
     print("BENCHMARK CONTAMINATION  (vs synthesize_product_test.jsonl)")
     print("=" * 100)
-    print("%d benchmark queries; %d appear VERBATIM in this file (%.1f%%)"
-          % (len(eq), len(overlap), 100 * len(overlap) / len(eq)))
+    print(
+        "%d benchmark queries; %d appear VERBATIM in this file (%.1f%%)"
+        % (len(eq), len(overlap), 100 * len(overlap) / len(eq))
+    )
     print("clean (usable for an honest ASR): %d cases" % (len(eq) - len(overlap)))
     if overlap:
         print("\nTrain on this file unfiltered and ASR measures recall, not skill.")
@@ -172,13 +174,17 @@ def show_contamination(train_queries):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("path", nargs="?", help="local .jsonl; omit to download from the Hub")
-    ap.add_argument("--split", choices=["train", "eval"], default="train",
-                    help="which Hub split to fetch when `path` is omitted")
+    ap.add_argument(
+        "--split", choices=["train", "eval"], default="train", help="which Hub split to fetch when `path` is omitted"
+    )
     ap.add_argument("--rows", type=int, default=10, help="how many rows to print")
     ap.add_argument("--scan", type=int, default=2000, help="rows to scan for the schema")
     ap.add_argument("--width", type=int, default=110, help="truncate previews to N chars")
-    ap.add_argument("--contamination", action="store_true",
-                    help="also check overlap against the benchmark's held-out split (needs network)")
+    ap.add_argument(
+        "--contamination",
+        action="store_true",
+        help="also check overlap against the benchmark's held-out split (needs network)",
+    )
     args = ap.parse_args()
 
     path = resolve(args.path, args.split)

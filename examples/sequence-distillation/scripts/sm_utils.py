@@ -9,8 +9,7 @@ def run(*args, **kw):
     kw   : forwarded to subprocess.Popen (e.g. env=, cwd=).
     Raises RuntimeError with the exit code and command if the process exits non-zero.
     """
-    p = subprocess.Popen([str(a) for a in args], stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT, text=True, **kw)
+    p = subprocess.Popen([str(a) for a in args], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, **kw)
     for line in p.stdout:
         print(line, end="")
     if p.wait():

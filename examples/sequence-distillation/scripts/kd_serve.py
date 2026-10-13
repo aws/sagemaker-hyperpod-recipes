@@ -41,6 +41,7 @@ def build_instance_pools(instance_types):
     no default list — the preference list is CONFIG and lives in the notebook.
     """
     from sagemaker.core.shapes import InstancePool
+
     return [InstancePool(instance_type=t, priority=i + 1) for i, t in enumerate(instance_types)]
 
 
@@ -55,22 +56,33 @@ def resolve_adapter_uri(model_package_arn, region):
     """
     import boto3
     from sagemaker.core.resources import ModelPackage
+
     c = ModelPackage.get(model_package_name=model_package_arn, region=region).inference_specification.containers[0]
     root = c.model_data_source.s3_data_source.s3_uri.rstrip("/") + "/"
     bkt, key = root[5:].split("/", 1)
     s3 = boto3.client("s3", region_name=region)
-    keys = [o["Key"][len(key):] for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=bkt, Prefix=key)
-            for o in pg.get("Contents", [])]
-    steps = sorted({k.split("/")[0] for k in keys if k.startswith("global_step_")},
-                   key=lambda d: int(d.split("_")[-1]))
+    keys = [
+        o["Key"][len(key) :]
+        for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=bkt, Prefix=key)
+        for o in pg.get("Contents", [])
+    ]
+    steps = sorted({k.split("/")[0] for k in keys if k.startswith("global_step_")}, key=lambda d: int(d.split("_")[-1]))
     for sub in ["checkpoints/hf/"] + [f"{d}/lora_adapter/" for d in reversed(steps)]:
         if f"{sub}adapter_config.json" in keys and f"{sub}adapter_model.safetensors" in keys:
             return root + sub
     raise RuntimeError(f"no LoRA adapter (adapter_config.json + adapter_model.safetensors) found under {root}")
 
 
-def _variant(*, variant_name, instance_types, instance_type, training_plan_arn,
-             provision_timeout_s, startup_timeout_s, download_timeout_s):
+def _variant(
+    *,
+    variant_name,
+    instance_types,
+    instance_type,
+    training_plan_arn,
+    provision_timeout_s,
+    startup_timeout_s,
+    download_timeout_s,
+):
     """Build the ProductionVariant for an IC-based endpoint (no model on the variant — the
     inference components bring the models). A one-entry preference list has no fallback, so it
     collapses to a plain instance type; a multi-entry list uses capacity-aware instance_pools
@@ -82,11 +94,18 @@ def _variant(*, variant_name, instance_types, instance_type, training_plan_arn,
     type, so instance_pools (the on-demand multi-type fallback) is incompatible: the caller must
     pass exactly one instance type, which must match the plan's type — enforced in deploy_base_endpoint.
     """
-    from sagemaker.core.shapes import ProductionVariant, ProductionVariantCapacityReservationConfig
-    kw = dict(variant_name=variant_name, initial_instance_count=1,
-              variant_instance_provision_timeout_in_seconds=provision_timeout_s,
-              container_startup_health_check_timeout_in_seconds=startup_timeout_s,
-              model_data_download_timeout_in_seconds=download_timeout_s)
+    from sagemaker.core.shapes import (
+        ProductionVariant,
+        ProductionVariantCapacityReservationConfig,
+    )
+
+    kw = dict(
+        variant_name=variant_name,
+        initial_instance_count=1,
+        variant_instance_provision_timeout_in_seconds=provision_timeout_s,
+        container_startup_health_check_timeout_in_seconds=startup_timeout_s,
+        model_data_download_timeout_in_seconds=download_timeout_s,
+    )
     if instance_types and len(instance_types) == 1:
         kw["instance_type"] = instance_types[0]
     elif instance_types:
@@ -95,17 +114,31 @@ def _variant(*, variant_name, instance_types, instance_type, training_plan_arn,
         kw["instance_type"] = instance_type
     if training_plan_arn:
         kw["capacity_reservation_config"] = ProductionVariantCapacityReservationConfig(
-            ml_reservation_arn=training_plan_arn,
-            capacity_reservation_preference="capacity-reservations-only")
+            ml_reservation_arn=training_plan_arn, capacity_reservation_preference="capacity-reservations-only"
+        )
     return ProductionVariant(**kw)
 
 
-def deploy_base_endpoint(*, endpoint_name, role, region, image_uri,
-                         base_model_id="Qwen/Qwen3.5-4B",
-                         instance_types=None, instance_type=None, training_plan_arn=None,
-                         max_lora_rank=64, max_loras=4, num_gpus=1, max_model_len=None,
-                         provision_timeout_s=900, startup_timeout_s=1800, download_timeout_s=1800,
-                         min_memory_mb=8192, wait=True):
+def deploy_base_endpoint(
+    *,
+    endpoint_name,
+    role,
+    region,
+    image_uri,
+    base_model_id="Qwen/Qwen3.5-4B",
+    instance_types=None,
+    instance_type=None,
+    training_plan_arn=None,
+    max_lora_rank=64,
+    max_loras=4,
+    num_gpus=1,
+    max_model_len=None,
+    provision_timeout_s=900,
+    startup_timeout_s=1800,
+    download_timeout_s=1800,
+    min_memory_mb=8192,
+    wait=True,
+):
     """Create a pooled endpoint hosting ONE base inference component (base model + LoRA enabled).
 
     Students are then attached as adapter ICs with `attach_adapter`. Returns
@@ -128,20 +161,31 @@ def deploy_base_endpoint(*, endpoint_name, role, region, image_uri,
     >= the adapters' rank — our student trains at lora-r=64), OPTION_MAX_LORAS (adapters mixable
     per batch). OPTION_MAX_MODEL_LEN is set when max_model_len is given.
     """
-    from sagemaker.core.resources import Model, EndpointConfig, Endpoint, InferenceComponent
+    from sagemaker.core.resources import (
+        Endpoint,
+        EndpointConfig,
+        InferenceComponent,
+        Model,
+    )
     from sagemaker.core.shapes import (
-        ContainerDefinition, InferenceComponentSpecification,
-        InferenceComponentComputeResourceRequirements, InferenceComponentRuntimeConfig,
+        ContainerDefinition,
+        InferenceComponentComputeResourceRequirements,
+        InferenceComponentRuntimeConfig,
+        InferenceComponentSpecification,
         InferenceComponentStartupParameters,
     )
+
     if not instance_types and not instance_type:
-        raise ValueError("deploy_base_endpoint needs instance_types=[type, ...] (ordered preference "
-                         "list) or instance_type=... (capacity config lives in the notebook).")
+        raise ValueError(
+            "deploy_base_endpoint needs instance_types=[type, ...] (ordered preference "
+            "list) or instance_type=... (capacity config lives in the notebook)."
+        )
     if training_plan_arn and instance_types and len(instance_types) > 1:
         raise ValueError(
             "A Flexible Training Plan reservation covers a single instance type, so instance_pools "
             f"(a multi-type fallback) can't be used with training_plan_arn. Got {len(instance_types)} "
-            "types: pass exactly one (instance_types=[the_plan's_type]) matching the plan.")
+            "types: pass exactly one (instance_types=[the_plan's_type]) matching the plan."
+        )
 
     endpoint_name = sanitize_name(endpoint_name)
     cfg_name = sanitize_name(endpoint_name + "-cfg")
@@ -160,18 +204,30 @@ def deploy_base_endpoint(*, endpoint_name, role, region, image_uri,
         env["OPTION_MAX_MODEL_LEN"] = str(max_model_len)
 
     # Base model: LMI/vLLM serving the base with LoRA enabled.
-    Model.create(model_name=model_name, execution_role_arn=role, region=region,
-                 primary_container=ContainerDefinition(image=image_uri, environment=env))
+    Model.create(
+        model_name=model_name,
+        execution_role_arn=role,
+        region=region,
+        primary_container=ContainerDefinition(image=image_uri, environment=env),
+    )
 
     # IC-based endpoint: the production variant carries NO model (each IC brings its own); the
     # endpoint config carries the execution role so SageMaker can fetch component artifacts.
     EndpointConfig.create(
-        endpoint_config_name=cfg_name, execution_role_arn=role, region=region,
-        production_variants=[_variant(
-            variant_name=endpoint_name, instance_types=instance_types, instance_type=instance_type,
-            training_plan_arn=training_plan_arn,
-            provision_timeout_s=provision_timeout_s, startup_timeout_s=startup_timeout_s,
-            download_timeout_s=download_timeout_s)],
+        endpoint_config_name=cfg_name,
+        execution_role_arn=role,
+        region=region,
+        production_variants=[
+            _variant(
+                variant_name=endpoint_name,
+                instance_types=instance_types,
+                instance_type=instance_type,
+                training_plan_arn=training_plan_arn,
+                provision_timeout_s=provision_timeout_s,
+                startup_timeout_s=startup_timeout_s,
+                download_timeout_s=download_timeout_s,
+            )
+        ],
     )
     endpoint = Endpoint.create(endpoint_name=endpoint_name, endpoint_config_name=cfg_name, region=region)
 
@@ -181,23 +237,27 @@ def deploy_base_endpoint(*, endpoint_name, role, region, image_uri,
     try:
         endpoint.wait_for_status("InService")
         InferenceComponent.create(
-            inference_component_name=base_ic, endpoint_name=endpoint_name, variant_name=endpoint_name,
+            inference_component_name=base_ic,
+            endpoint_name=endpoint_name,
+            variant_name=endpoint_name,
             region=region,
             specification=InferenceComponentSpecification(
                 model_name=model_name,
                 compute_resource_requirements=InferenceComponentComputeResourceRequirements(
-                    number_of_accelerator_devices_required=num_gpus, min_memory_required_in_mb=min_memory_mb),
+                    number_of_accelerator_devices_required=num_gpus, min_memory_required_in_mb=min_memory_mb
+                ),
                 startup_parameters=InferenceComponentStartupParameters(
                     model_data_download_timeout_in_seconds=download_timeout_s,
-                    container_startup_health_check_timeout_in_seconds=startup_timeout_s),
+                    container_startup_health_check_timeout_in_seconds=startup_timeout_s,
+                ),
             ),
             runtime_config=InferenceComponentRuntimeConfig(copy_count=1),
         )
         if wait:
             InferenceComponent.get(inference_component_name=base_ic, region=region).wait_for_status("InService")
     except Exception:
-        teardown_endpoint(endpoint_name, region=region)       # best-effort: ICs -> endpoint -> config
-        for cls, kw in ((Model, "model_name"),):              # teardown_endpoint doesn't know the base Model name
+        teardown_endpoint(endpoint_name, region=region)  # best-effort: ICs -> endpoint -> config
+        for cls, kw in ((Model, "model_name"),):  # teardown_endpoint doesn't know the base Model name
             try:
                 cls.get(**{kw: model_name, "region": region}).delete()
             except Exception:
@@ -210,6 +270,7 @@ def ic_status(name, region=None):
     """Status of an inference component (e.g. "InService"), or None if it does not exist (e.g. torn down).
     Generic — works for a base IC or an adapter IC."""
     from sagemaker.core.resources import InferenceComponent
+
     _reg = {"region": region} if region else {}
     try:
         return InferenceComponent.get(inference_component_name=name, **_reg).inference_component_status
@@ -219,8 +280,9 @@ def ic_status(name, region=None):
         raise
 
 
-def attach_adapter(*, endpoint_name, base_ic_name, adapter_component_name, adapter_s3_uri,
-                   region=None, wait=True, replace=False):
+def attach_adapter(
+    *, endpoint_name, base_ic_name, adapter_component_name, adapter_s3_uri, region=None, wait=True, replace=False
+):
     """Attach one LoRA student as an adapter inference component on the shared base IC.
 
     The adapter IC references the base IC by name and points at the adapter artifacts in S3 (a
@@ -236,8 +298,11 @@ def attach_adapter(*, endpoint_name, base_ic_name, adapter_component_name, adapt
     replace=True to force delete+recreate even when the artifact matches.
     """
     from sagemaker.core.resources import InferenceComponent
-    from sagemaker.core.shapes import (InferenceComponentSpecification,
-                                        InferenceComponentContainerSpecification)
+    from sagemaker.core.shapes import (
+        InferenceComponentContainerSpecification,
+        InferenceComponentSpecification,
+    )
+
     name = sanitize_name(adapter_component_name)
     _reg = {"region": region} if region else {}
 
@@ -254,15 +319,19 @@ def attach_adapter(*, endpoint_name, base_ic_name, adapter_component_name, adapt
             cur = None
         if not replace and cur == adapter_s3_uri:
             if wait:
-                existing.wait_for_status("InService")   # safe re-run path: reuse the attached adapter
+                existing.wait_for_status("InService")  # safe re-run path: reuse the attached adapter
             return name
-        existing.delete(); existing.wait_for_delete()    # artifact changed/replace -> recreate
+        existing.delete()
+        existing.wait_for_delete()  # artifact changed/replace -> recreate
 
     InferenceComponent.create(
-        inference_component_name=name, endpoint_name=sanitize_name(endpoint_name), **_reg,
+        inference_component_name=name,
+        endpoint_name=sanitize_name(endpoint_name),
+        **_reg,
         specification=InferenceComponentSpecification(
             base_inference_component_name=base_ic_name,
-            container=InferenceComponentContainerSpecification(artifact_url=adapter_s3_uri)),
+            container=InferenceComponentContainerSpecification(artifact_url=adapter_s3_uri),
+        ),
     )
     if wait:
         InferenceComponent.get(inference_component_name=name, **_reg).wait_for_status("InService")
@@ -278,20 +347,21 @@ def teardown_endpoint(endpoint_name, *, region=None, delete_config=True):
     """
     import boto3
     from sagemaker.core.resources import Endpoint, EndpointConfig, InferenceComponent
+
     endpoint_name = sanitize_name(endpoint_name)
     smc = boto3.client("sagemaker", region_name=region) if region else boto3.client("sagemaker")
     _reg = {"region": region} if region else {}
 
     try:
-        ics = smc.list_inference_components(
-            EndpointNameEquals=endpoint_name, MaxResults=100).get("InferenceComponents", [])
+        ics = smc.list_inference_components(EndpointNameEquals=endpoint_name, MaxResults=100).get(
+            "InferenceComponents", []
+        )
     except Exception:
         ics = []
 
     def _is_adapter(name):
         try:
-            spec = smc.describe_inference_component(
-                InferenceComponentName=name).get("Specification", {}) or {}
+            spec = smc.describe_inference_component(InferenceComponentName=name).get("Specification", {}) or {}
             return bool(spec.get("BaseInferenceComponentName"))
         except Exception:
             return False
@@ -302,7 +372,8 @@ def teardown_endpoint(endpoint_name, *, region=None, delete_config=True):
     for name in children + parents:
         try:
             ic = InferenceComponent.get(inference_component_name=name, **_reg)
-            ic.delete(); ic.wait_for_delete()
+            ic.delete()
+            ic.wait_for_delete()
             print("  deleted component:", name, "(adapter)" if name in children else "(base)")
         except Exception as e:
             print("  skip component", name, "->", type(e).__name__)
@@ -314,7 +385,9 @@ def teardown_endpoint(endpoint_name, *, region=None, delete_config=True):
         except Exception:
             pass
     try:
-        ep = Endpoint.get(endpoint_name=endpoint_name, **_reg); ep.delete(); ep.wait_for_delete()
+        ep = Endpoint.get(endpoint_name=endpoint_name, **_reg)
+        ep.delete()
+        ep.wait_for_delete()
         print("deleted endpoint:", endpoint_name)
     except Exception as e:
         print("skip endpoint", endpoint_name, "->", type(e).__name__)

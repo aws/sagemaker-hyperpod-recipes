@@ -6,8 +6,13 @@ ShoppingBench (https://github.com/yjwjy/ShoppingBench) pieces used here, all unm
   src/agent/run_evaluate.py     the scoring functions (applied by score_rollouts.py in this folder)
 Everything runs in the harness venv (sbenv) created by setup_shopbench.sh.
 """
-import json, os, signal, subprocess, time
+import json
+import os
+import signal
+import subprocess
+import time
 from pathlib import Path
+
 import requests
 
 SCRIPTS = Path(__file__).resolve().parent
@@ -43,9 +48,10 @@ class Harness:
         """work: the folder setup_shopbench.sh populated (ShoppingBench/, sbenv/, jdk/)."""
         self.work = Path(work).expanduser().resolve()
         self.sb, self.py = self.work / "ShoppingBench", self.work / "sbenv" / "bin" / "python"
-        self.logs = self.work / "logs"; self.logs.mkdir(parents=True, exist_ok=True)
+        self.logs = self.work / "logs"
+        self.logs.mkdir(parents=True, exist_ok=True)
         jdk = self.work / "jdk"
-        java_home = jdk / "Contents" / "Home" if (jdk / "Contents" / "Home").exists() else jdk   # macOS vs Linux
+        java_home = jdk / "Contents" / "Home" if (jdk / "Contents" / "Home").exists() else jdk  # macOS vs Linux
         self.env = {**os.environ, "JAVA_HOME": str(java_home), "PATH": f"{java_home}/bin:" + os.environ["PATH"]}
         # pyserini 1.0.0 builds an OpenAI client at import time, and current openai releases raise without a key.
         # The harness passes its own key on every model call, so a placeholder is harmless.
@@ -65,6 +71,7 @@ class Harness:
         if self._cleanup_registered:
             return
         import atexit
+
         atexit.register(self.stop_all)
         try:
             prev = signal.getsignal(signal.SIGTERM)
@@ -72,22 +79,28 @@ class Harness:
             def _on_sigterm(signum, frame):
                 self.stop_all()
                 if callable(prev) and prev not in (signal.SIG_DFL, signal.SIG_IGN):
-                    prev(signum, frame)      # chain to any previously-installed handler
+                    prev(signum, frame)  # chain to any previously-installed handler
                 else:
                     signal.signal(signal.SIGTERM, signal.SIG_DFL)
-                    os.kill(os.getpid(), signal.SIGTERM)   # re-raise default behavior (terminate)
+                    os.kill(os.getpid(), signal.SIGTERM)  # re-raise default behavior (terminate)
 
             signal.signal(signal.SIGTERM, _on_sigterm)
         except (ValueError, OSError):
-            pass   # signal only settable in the main thread; atexit still covers clean shutdown
+            pass  # signal only settable in the main thread; atexit still covers clean shutdown
         self._cleanup_registered = True
 
     # ---------- background processes ----------
     def start(self, name, args, env=None):
         self.stop(name)
         log = open(self.logs / f"{name}.log", "w")
-        self.procs[name] = subprocess.Popen(args, cwd=self.sb, stdout=log, stderr=subprocess.STDOUT,
-                                            env={**self.env, **(env or {})}, start_new_session=True)
+        self.procs[name] = subprocess.Popen(
+            args,
+            cwd=self.sb,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            env={**self.env, **(env or {})},
+            start_new_session=True,
+        )
         return self.procs[name]
 
     def running(self, name):
@@ -119,6 +132,7 @@ class Harness:
     def _port_bound(port=5631):
         """True if something is bound to the local port (a server is holding it)."""
         import socket
+
         s = socket.socket()
         s.settimeout(2)
         try:
@@ -135,8 +149,7 @@ class Harness:
         self.procs). Without this, start_search would collide with 'Address already in use'. Dependency-free:
         finds the process by its command signature with pgrep (lsof/ss/psutil aren't available in sbenv)."""
         try:
-            out = subprocess.run(["pgrep", "-f", "src/search_engine/server.py"],
-                                 capture_output=True, text=True).stdout
+            out = subprocess.run(["pgrep", "-f", "src/search_engine/server.py"], capture_output=True, text=True).stdout
         except Exception:
             return
         pids = [int(x) for x in out.split() if x.strip().isdigit() and int(x) != os.getpid()]
@@ -147,14 +160,14 @@ class Harness:
                     os.kill(pid, sig)
                 except ProcessLookupError:
                     break
-                for _ in range(10):            # up to ~5s per signal for it to exit
+                for _ in range(10):  # up to ~5s per signal for it to exit
                     try:
                         os.kill(pid, 0)
                         time.sleep(0.5)
                     except ProcessLookupError:
                         break
                 else:
-                    continue                   # still alive -> escalate to SIGKILL
+                    continue  # still alive -> escalate to SIGKILL
                 break
 
     def _search_argv(self, workers):
@@ -175,16 +188,28 @@ class Harness:
         query isn't worker-killed mid-request. Falls back to the stock single-process server if gunicorn is absent.
         """
         import shutil
-        gunicorn = (self.work / "sbenv" / "bin" / "gunicorn")
+
+        gunicorn = self.work / "sbenv" / "bin" / "gunicorn"
         gunicorn = str(gunicorn) if gunicorn.exists() else shutil.which("gunicorn")
         if gunicorn:
             # cwd stays self.sb (set by start()), so LuceneSearcher("indexes") resolves; PYTHONPATH lets
             # "server:app" import from src/search_engine without changing cwd.
-            return [gunicorn, "--workers", str(workers), "--bind", "127.0.0.1:5631",
-                    "--timeout", "300", "--graceful-timeout", "30", "server:app"], \
-                   {"PYTHONPATH": str(self.sb / "src" / "search_engine")}
-        print("start_search: gunicorn not found in sbenv; falling back to single-process server "
-              "(install with: sbenv/bin/pip install gunicorn — then re-run for parallel workers).")
+            return [
+                gunicorn,
+                "--workers",
+                str(workers),
+                "--bind",
+                "127.0.0.1:5631",
+                "--timeout",
+                "300",
+                "--graceful-timeout",
+                "30",
+                "server:app",
+            ], {"PYTHONPATH": str(self.sb / "src" / "search_engine")}
+        print(
+            "start_search: gunicorn not found in sbenv; falling back to single-process server "
+            "(install with: sbenv/bin/pip install gunicorn — then re-run for parallel workers)."
+        )
         return [str(self.py), "src/search_engine/server.py"], {"HOST": "127.0.0.1", "PORT": "5631"}
 
     def start_search(self, workers=12):
@@ -207,9 +232,9 @@ class Harness:
         collide with 'Address already in use'. If rollouts log many 'Read timed out' errors the server is
         overloaded or stuck — re-run this cell (optionally with more workers) to restart it."""
         if self.search_ok():
-            return                             # a healthy server is already up; reuse it
+            return  # a healthy server is already up; reuse it
         if self._port_bound():
-            self._reclaim_search_port()        # stale/wedged server holding the port -> reclaim it
+            self._reclaim_search_port()  # stale/wedged server holding the port -> reclaim it
         argv, env = self._search_argv(workers)
         self.start("search", argv, env=env)
         for _ in range(360):
@@ -221,8 +246,9 @@ class Harness:
         raise TimeoutError("search server did not come up")
 
     # ---------- rollouts ----------
-    def write_rollout_cfg(self, out_dir, tag, task, problems, base_url, enable_thinking, threads=4,
-                          temperature=0, max_tokens=4096):
+    def write_rollout_cfg(
+        self, out_dir, tag, task, problems, base_url, enable_thinking, threads=4, temperature=0, max_tokens=4096
+    ):
         """run_rollout.py's config. Notes:
         - model "" : the endpoint is chosen by URL; vLLM accepts an empty model name.
         - thinking goes in chat_template_kwargs; a top-level {"enable_thinking": ...} (as in the upstream example
@@ -234,10 +260,22 @@ class Harness:
           leaves headroom for prompts up to 36864 tokens; a tool-call reply (thinking off) is far shorter."""
         out_dir = Path(out_dir)
         rollout = out_dir.resolve() / f"rollout_{tag}_{task}.jsonl"
-        cfg = {"task": task, "system_prompt_file": "src/agent/prompt/rollout.md", "synthesize_file": str(Path(problems).resolve()),
-               "rollout_file": str(rollout), "threads": threads, "base_url": base_url, "api_key": "unused",
-               "model_config": {"model": "", "temperature": temperature, "max_tokens": max_tokens, "stream": False,
-                                "extra_body": {"chat_template_kwargs": {"enable_thinking": enable_thinking}}}}
+        cfg = {
+            "task": task,
+            "system_prompt_file": "src/agent/prompt/rollout.md",
+            "synthesize_file": str(Path(problems).resolve()),
+            "rollout_file": str(rollout),
+            "threads": threads,
+            "base_url": base_url,
+            "api_key": "unused",
+            "model_config": {
+                "model": "",
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "stream": False,
+                "extra_body": {"chat_template_kwargs": {"enable_thinking": enable_thinking}},
+            },
+        }
         path = out_dir / f"cfg_{tag}_{task}.json"
         path.write_text(json.dumps(cfg, indent=2))
         return path, rollout
@@ -273,8 +311,10 @@ class Harness:
             total_done = total_n = 0
             lines = []
             for name, (_, _, n) in jobs.items():
-                d = done_count(name); cur[name] = d
-                total_done += d; total_n += n
+                d = done_count(name)
+                cur[name] = d
+                total_done += d
+                total_n += n
                 frac = d / n if n else 1.0
                 filled = int(round(frac * 20))
                 bar = "█" * filled + "·" * (20 - filled)
@@ -284,10 +324,12 @@ class Harness:
                 rate = f"+{delta}" if delta else "  ·"
                 lines.append(f"  {name:<{width}}  [{bar}] {d:>4}/{n:<4} {frac*100:5.1f}%  {rate:>4}/poll  {status}")
             agg = total_done / total_n if total_n else 1.0
-            header = (f"[{time.strftime('%H:%M:%S')}] rollouts {total_done}/{total_n} "
-                      f"({agg*100:.1f}%) — {sum(self.running(f'rollout_{nm}') for nm in jobs)}/{len(jobs)} jobs running")
+            header = (
+                f"[{time.strftime('%H:%M:%S')}] rollouts {total_done}/{total_n} "
+                f"({agg*100:.1f}%) — {sum(self.running(f'rollout_{nm}') for nm in jobs)}/{len(jobs)} jobs running"
+            )
             if clear_output:
-                clear_output(wait=True)                # overwrite the previous table (no history)
+                clear_output(wait=True)  # overwrite the previous table (no history)
             print(header + "\n" + "\n".join(lines), flush=True)
             return cur
 
@@ -299,13 +341,27 @@ class Harness:
         finally:
             for name in jobs:
                 self.stop(f"rollout_{name}")
-        report(prev)                                   # final table once all jobs have exited
+        report(prev)  # final table once all jobs have exited
 
     # ---------- scoring ----------
     def score(self, task, rollout, problems):
         """ShoppingBench's own rules via score_rollouts.py -> {"n", "asr", "exact_id", "recommend"}."""
-        r = subprocess.run([str(self.py), str(SCRIPTS / "score_rollouts.py"), "--task", task, "--rollouts", str(Path(rollout).resolve()),
-                            "--problems", str(Path(problems).resolve())], cwd=self.sb, env=self.env, capture_output=True, text=True)
+        r = subprocess.run(
+            [
+                str(self.py),
+                str(SCRIPTS / "score_rollouts.py"),
+                "--task",
+                task,
+                "--rollouts",
+                str(Path(rollout).resolve()),
+                "--problems",
+                str(Path(problems).resolve()),
+            ],
+            cwd=self.sb,
+            env=self.env,
+            capture_output=True,
+            text=True,
+        )
         if r.returncode:
             raise RuntimeError(r.stderr[-3000:])
         return json.loads(r.stdout.strip().splitlines()[-1])
@@ -322,8 +378,11 @@ class Harness:
         lines = [json.dumps(t, ensure_ascii=False, separators=(",", ":")) for t in trajs]
         n = max(len(lines), 1)
         steps = [s for t in trajs for s in t]
-        return {"empty_content": round(sum('"reasoning_content":"","content":""' in l for l in lines) / n, 3),
-                "null_tool_results": round(sum('"results":null' in l for l in lines) / n, 3),
-                "no_terminate": round(sum('"name":"terminate"' not in l for l in lines) / n, 3),
-                "steps_with_reasoning": round(sum(has_reasoning(s["completion"].get("content") or "") for s in steps)
-                                              / max(len(steps), 1), 3)}
+        return {
+            "empty_content": round(sum('"reasoning_content":"","content":""' in l for l in lines) / n, 3),
+            "null_tool_results": round(sum('"results":null' in l for l in lines) / n, 3),
+            "no_terminate": round(sum('"name":"terminate"' not in l for l in lines) / n, 3),
+            "steps_with_reasoning": round(
+                sum(has_reasoning(s["completion"].get("content") or "") for s in steps) / max(len(steps), 1), 3
+            ),
+        }

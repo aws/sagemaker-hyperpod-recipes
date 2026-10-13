@@ -11,8 +11,9 @@ from pathlib import Path
 
 
 # ---------------------------------------------------------------- datasets
-def build_eval_datasets(*, val_file, eval_tasks, sb_data, tokenizer_id, max_query_tokens,
-                        n_examples, s3_prefix, bucket, region, seed=42):
+def build_eval_datasets(
+    *, val_file, eval_tasks, sb_data, tokenizer_id, max_query_tokens, n_examples, s3_prefix, bucket, region, seed=42
+):
     """Turn the local held-out val file into one Custom Scorer dataset per task and upload to S3.
 
     Recovers each row's task (product/shop/voucher) by matching its <user>…</user> query against
@@ -22,8 +23,9 @@ def build_eval_datasets(*, val_file, eval_tasks, sb_data, tokenizer_id, max_quer
     Returns (datasets, counts): {task: s3_uri} and {task: row_count}. Prints a per-task summary.
     """
     import random
-    import boto3
     from collections import Counter
+
+    import boto3
     from transformers import AutoTokenizer
 
     sb_data = Path(sb_data)
@@ -41,7 +43,8 @@ def build_eval_datasets(*, val_file, eval_tasks, sb_data, tokenizer_id, max_quer
         return q2task.get(m.group(1).strip()) if m else None
 
     rows = [json.loads(l) for l in open(val_file) if l.strip()]
-    random.seed(seed); random.shuffle(rows)
+    random.seed(seed)
+    random.shuffle(rows)
     if n_examples is not None:
         rows = rows[:n_examples]
 
@@ -60,19 +63,23 @@ def build_eval_datasets(*, val_file, eval_tasks, sb_data, tokenizer_id, max_quer
 
     # length filter
     tok = AutoTokenizer.from_pretrained(tokenizer_id, trust_remote_code=True)
+
     def prompt_text(er):
         return (er["system"] + "\n\n" + er["query"]) if "system" in er else er["query"]
+
     n_before, kept, chunk = len(eval_rows), [], 500
     for i in range(0, len(eval_rows), chunk):
-        batch = eval_rows[i:i + chunk]
+        batch = eval_rows[i : i + chunk]
         lens = [len(ids) for ids in tok([prompt_text(er) for er in batch])["input_ids"]]
-        for er, tk, n in zip(batch, tasks[i:i + chunk], lens):
+        for er, tk, n in zip(batch, tasks[i : i + chunk], lens):
             if n < max_query_tokens:
                 kept.append((er, tk))
     eval_rows = [er for er, _ in kept]
     tasks = [tk for _, tk in kept]
-    print(f"length filter: kept {len(eval_rows)} / {n_before} rows "
-          f"(dropped {n_before - len(eval_rows)} with >= {max_query_tokens} tokens)")
+    print(
+        f"length filter: kept {len(eval_rows)} / {n_before} rows "
+        f"(dropped {n_before - len(eval_rows)} with >= {max_query_tokens} tokens)"
+    )
 
     dist = Counter(tasks)
     print("task label distribution (after filter):", dict(dist))
@@ -80,12 +87,14 @@ def build_eval_datasets(*, val_file, eval_tasks, sb_data, tokenizer_id, max_quer
         print(f"  note: {dist['unknown']} rows could not be task-labeled and are excluded from per-task evals.")
 
     s3 = boto3.client("s3", region_name=region)
-    out_dir = Path("eval_inputs"); out_dir.mkdir(exist_ok=True)   # local scratch for the per-task datasets
+    out_dir = Path("eval_inputs")
+    out_dir.mkdir(exist_ok=True)  # local scratch for the per-task datasets
     datasets, counts = {}, {}
     for t in eval_tasks:
         grp = [er for er, tk in zip(eval_rows, tasks) if tk == t]
         if not grp:
-            print(f"  (skip '{t}': 0 rows)"); continue
+            print(f"  (skip '{t}': 0 rows)")
+            continue
         local = out_dir / f"litmus_eval_{t}.jsonl"
         with open(local, "w") as f:
             for r in grp:
@@ -100,7 +109,7 @@ def build_eval_datasets(*, val_file, eval_tasks, sb_data, tokenizer_id, max_quer
 
 # ---------------------------------------------------------------- job scheduling
 _QUIET_LOGGERS = ("sagemaker.train", "sagemaker.core", "sagemaker")
-_EVAL_QUOTA_CODE = "L-619D690E"   # "Maximum number of concurrent model evaluation serverless jobs per Region"
+_EVAL_QUOTA_CODE = "L-619D690E"  # "Maximum number of concurrent model evaluation serverless jobs per Region"
 
 
 @contextmanager
@@ -124,6 +133,7 @@ def _eval_job_quota(region):
     then a name scan, with backoff on throttling)."""
     import boto3
     from botocore.exceptions import ClientError
+
     try:
         sq = boto3.client("service-quotas", region_name=region)
     except Exception:
@@ -133,7 +143,8 @@ def _eval_job_quota(region):
             return int(sq.get_service_quota(ServiceCode="sagemaker", QuotaCode=_EVAL_QUOTA_CODE)["Quota"]["Value"])
         except ClientError as e:
             if e.response.get("Error", {}).get("Code", "") in ("TooManyRequestsException", "ThrottlingException"):
-                time.sleep(2 ** attempt * 3); continue
+                time.sleep(2**attempt * 3)
+                continue
             break
         except Exception:
             break
@@ -147,8 +158,9 @@ def _eval_job_quota(region):
     return None
 
 
-def run_eval_jobs(*, datasets, model_pkg_arn, evaluator_arn, s3_output, region,
-                  mlflow_experiment, evaluate_base=True, quiet=True):
+def run_eval_jobs(
+    *, datasets, model_pkg_arn, evaluator_arn, s3_output, region, mlflow_experiment, evaluate_base=True, quiet=True
+):
     """Run one Custom Scorer job per task, scheduling to stay under the concurrent-eval-job quota.
 
     Each task launches up to 2 serverless jobs (student + base). Reads the quota (falls back to 1 task in
@@ -157,17 +169,19 @@ def run_eval_jobs(*, datasets, model_pkg_arn, evaluator_arn, s3_output, region,
     Returns (executions, results): {task: Execution} and {task: final_status_string}. Prints progress; a
     trailing warning lists any failed tasks.
     """
-    import boto3
-    from sagemaker.train.evaluate import CustomScorerEvaluator
     from sagemaker.core import Attribution, set_attribution
+    from sagemaker.train.evaluate import CustomScorerEvaluator
+
     set_attribution(Attribution.SAGEMAKER_AGENT_PLUGIN)
 
     jobs_per_task = 2 if evaluate_base else 1
     quota = _eval_job_quota(region)
     if quota is None:
         max_in_flight = 1
-        print(f"eval-job quota: UNKNOWN (lookup failed/throttled) -> fallback: 1 task "
-              f"({jobs_per_task} jobs) at a time, {len(datasets)} sequential group(s)\n")
+        print(
+            f"eval-job quota: UNKNOWN (lookup failed/throttled) -> fallback: 1 task "
+            f"({jobs_per_task} jobs) at a time, {len(datasets)} sequential group(s)\n"
+        )
     else:
         max_in_flight = max(1, quota // jobs_per_task)
         print(f"eval-job quota = {quota}; {jobs_per_task} jobs/task -> scheduling <= {max_in_flight} task(s)\n")
@@ -176,9 +190,14 @@ def run_eval_jobs(*, datasets, model_pkg_arn, evaluator_arn, s3_output, region,
 
     def submit(name):
         job = CustomScorerEvaluator(
-            model=model_pkg_arn, evaluator=evaluator_arn, dataset=datasets[name],
-            s3_output_path=f"{s3_output}{name}/", evaluate_base_model=evaluate_base,
-            region=region, mlflow_experiment_name=mlflow_experiment)
+            model=model_pkg_arn,
+            evaluator=evaluator_arn,
+            dataset=datasets[name],
+            s3_output_path=f"{s3_output}{name}/",
+            evaluate_base_model=evaluate_base,
+            region=region,
+            mlflow_experiment_name=mlflow_experiment,
+        )
         with _quiet_sdk_logs(quiet):
             ex = job.evaluate()
         print(f"started '{name}': {ex.name}  ({ex.status.overall_status})")
@@ -197,14 +216,15 @@ def run_eval_jobs(*, datasets, model_pkg_arn, evaluator_arn, s3_output, region,
         while pending and len(running) < max_in_flight:
             name = pending.pop(0)
             running[name] = executions[name] = submit(name)
-            time.sleep(5)   # small stagger so step submissions don't race the quota check
+            time.sleep(5)  # small stagger so step submissions don't race the quota check
         done = []
         for name, ex in running.items():
-            status = live_status(ex)                       # one refresh per execution per poll
+            status = live_status(ex)  # one refresh per execution per poll
             if "fail" in status or status in terminal:
                 done.append((name, status))
         for name, status in done:
-            results[name] = status; running.pop(name)
+            results[name] = status
+            running.pop(name)
             print(f"'{name}' -> {status}")
         if pending or running:
             time.sleep(30)
@@ -226,9 +246,12 @@ def read_task_metrics(*, datasets, s3_output, counts, region, evaluate_base=True
     def _read(output_prefix, step_substring):
         s3 = boto3.client("s3", region_name=region)
         bkt, prefix = output_prefix.replace("s3://", "").split("/", 1)
-        keys = [o["Key"] for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=bkt, Prefix=prefix)
-                for o in pg.get("Contents", [])
-                if step_substring in o["Key"] and "/eval_results/results_" in o["Key"] and o["Key"].endswith(".json")]
+        keys = [
+            o["Key"]
+            for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=bkt, Prefix=prefix)
+            for o in pg.get("Contents", [])
+            if step_substring in o["Key"] and "/eval_results/results_" in o["Key"] and o["Key"].endswith(".json")
+        ]
         if not keys:
             return {}
         doc = json.loads(s3.get_object(Bucket=bkt, Key=sorted(keys)[-1])["Body"].read())
@@ -241,8 +264,8 @@ def read_task_metrics(*, datasets, s3_output, counts, region, evaluate_base=True
         out = f"{s3_output}{t}/"
         per_task[t] = {
             "student": _read(out, "EvaluateCustomModel"),
-            "base":    _read(out, "EvaluateBaseModel") if evaluate_base else {},
-            "n":       counts[t],
+            "base": _read(out, "EvaluateBaseModel") if evaluate_base else {},
+            "n": counts[t],
         }
     return per_task
 
@@ -268,7 +291,8 @@ def print_results_tables(per_task, eval_tasks, metrics):
     aggregates = {}
     for metric, title in metrics:
         print(("\n" if metric != metrics[0][0] else "") + title)
-        print(hdr); print("-" * len(hdr))
+        print(hdr)
+        print("-" * len(hdr))
         for t in eval_tasks:
             if t not in per_task:
                 continue
@@ -295,7 +319,10 @@ def mlflow_experiment_link(experiment_name, session, resource_arn=None):
     arn = resource_arn
     if not arn:
         try:
-            from sagemaker.train.common_utils.finetune_utils import _resolve_mlflow_resource_arn
+            from sagemaker.train.common_utils.finetune_utils import (
+                _resolve_mlflow_resource_arn,
+            )
+
             # Use the notebook's region-bound session, NOT a bare sagemaker.Session(): the resolver lists MLflow
             # apps via this session's SageMaker client, so a default session can resolve the WRONG app.
             # dry_run=True keeps it read-only (never creates an app).
@@ -310,11 +337,20 @@ def mlflow_experiment_link(experiment_name, session, resource_arn=None):
     print(f"resource ARN    : {arn}")
     try:
         from sagemaker.train.common_utils.job_wait import _get_mlflow_presigned_url
+
         url = _get_mlflow_presigned_url(arn, experiment_name=experiment_name)
         if url:
-            from IPython.display import display, Markdown   # compact clickable link, not the huge raw URL
-            display(Markdown(f"**MLflow:** [▶ Open experiment '{experiment_name}']({url}) "
-                             f"&nbsp;·&nbsp; _presigned link, short-lived — re-run this cell for a fresh one_"))
+            from IPython.display import (  # compact clickable link, not the huge raw URL
+                Markdown,
+                display,
+            )
+
+            display(
+                Markdown(
+                    f"**MLflow:** [▶ Open experiment '{experiment_name}']({url}) "
+                    f"&nbsp;·&nbsp; _presigned link, short-lived — re-run this cell for a fresh one_"
+                )
+            )
         else:
             print("open experiment : <could not mint presigned URL; open MLflow from the Studio left nav>")
     except Exception as e:

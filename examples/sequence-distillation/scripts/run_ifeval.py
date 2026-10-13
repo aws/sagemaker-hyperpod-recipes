@@ -6,7 +6,9 @@ IFEval grades the whole response string, so the model must answer without a reas
 relay that forces {"chat_template_kwargs": {"enable_thinking": false}}. The check counts predictions that still contain
 "</think>"; any leak makes the score invalid. Prints {"prompt_strict", "inst_strict", "reasoning_leaks"}.
 """
-import argparse, json, subprocess
+import argparse
+import json
+import subprocess
 from pathlib import Path
 
 ap = argparse.ArgumentParser()
@@ -18,11 +20,32 @@ ap.add_argument("--max-tokens", type=int, default=1280)
 args = ap.parse_args()
 
 out = Path(args.out)
-subprocess.run([args.lm_eval, "--model", "local-chat-completions",
-                "--model_args", f"base_url={args.base_url}/chat/completions,model=eval,num_concurrent={args.concurrency}",
-                "--apply_chat_template", "--tasks", "ifeval", "--gen_kwargs", f"max_tokens={args.max_tokens}",
-                "--output_path", str(out), "--log_samples"], check=True)
+subprocess.run(
+    [
+        args.lm_eval,
+        "--model",
+        "local-chat-completions",
+        "--model_args",
+        f"base_url={args.base_url}/chat/completions,model=eval,num_concurrent={args.concurrency}",
+        "--apply_chat_template",
+        "--tasks",
+        "ifeval",
+        "--gen_kwargs",
+        f"max_tokens={args.max_tokens}",
+        "--output_path",
+        str(out),
+        "--log_samples",
+    ],
+    check=True,
+)
 leaks = sum(open(s).read().count("</think>") for s in out.rglob("samples_ifeval*.jsonl"))
 res = json.load(open(sorted(out.rglob("results*.json"))[-1]))["results"]["ifeval"]
-print(json.dumps({"prompt_strict": round(res["prompt_level_strict_acc,none"], 3),
-                  "inst_strict": round(res["inst_level_strict_acc,none"], 3), "reasoning_leaks": leaks}))
+print(
+    json.dumps(
+        {
+            "prompt_strict": round(res["prompt_level_strict_acc,none"], 3),
+            "inst_strict": round(res["inst_level_strict_acc,none"], 3),
+            "reasoning_leaks": leaks,
+        }
+    )
+)
