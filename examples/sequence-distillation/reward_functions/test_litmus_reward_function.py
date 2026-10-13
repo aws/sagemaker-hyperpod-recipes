@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import litmus_reward_function as rf
 
-REF = '<tool_call>[{"name": "find_product", "parameters": {"q": "jeans"}}]</tool_call>'   # ground truth
+REF = '<tool_call>[{"name": "find_product", "parameters": {"q": "jeans"}}]</tool_call>'  # ground truth
 
 
 def score(pred, ref=REF):
