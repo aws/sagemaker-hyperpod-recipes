@@ -1,0 +1,13 @@
+# local artifacts created by the notebooks
+ShoppingBench/
+shopbench-eval/
+data/
+seqkd_*.jsonl
+llmaj_*.jsonl
+synthesize_*_test_clean.jsonl
+scripts/__pycache__/
+reward_functions/__pycache__/
+eval_inputs/
+.quota_codes_endpoint_usage_*.json
+.ipynb_checkpoints/
+.pytest_cache/
