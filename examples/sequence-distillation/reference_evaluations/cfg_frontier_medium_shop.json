@@ -1,0 +1,20 @@
+{
+  "task": "shop",
+  "system_prompt_file": "src/agent/prompt/rollout.md",
+  "synthesize_file": "/home/sagemaker-user/shopbench-eval/ShoppingBench/data/synthesize_shop_test_clean.jsonl",
+  "rollout_file": "/home/sagemaker-user/shopbench-eval/out/rollout_frontier_medium_shop.jsonl",
+  "threads": 4,
+  "base_url": "http://127.0.0.1:8197/v1",
+  "api_key": "unused",
+  "model_config": {
+    "model": "",
+    "temperature": 0,
+    "max_tokens": 4096,
+    "stream": false,
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": false
+      }
+    }
+  }
+}
