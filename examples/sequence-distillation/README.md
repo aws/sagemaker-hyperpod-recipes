@@ -97,34 +97,6 @@ it can't route to a specific inference component.
 | `reward_functions/litmus_reward_function.py` | The Custom Scorer reward function shipped to the managed eval job (graded tool-call match: `toolset_match` gate, `format_match`, `kind_match`) |
 | `reward_functions/test_litmus_reward_function.py` | Unit test, run before shipping the reward function to the evaluator |
 
-## Notes on the model
-
-Qwen3.5-4B is a **linear-attention / conv1d hybrid**, and that is the main reason to train it on the
-managed serverless recipe rather than a training script of your own. The linear-attn path needs
-`flash-linear-attention`, which requires `triton>=3.7.1` — and that collides with the `triton` pin a
-stock PyTorch image carries, so a plain `pip install` either dead-ends on `ResolutionImpossible` or
-bumps `torch` to a version that breaks `transformers`. The hybrid also wants `sdpa` attention, because
-`flash_attention_2` hits CUDA illegal-memory-access on SageMaker's managed driver. The serverless recipe
-handles both; you never see them.
-
-Inference is simpler: the LMI image `djl-inference:0.36.0-lmi25.0.0-cu130` bundles **vLLM 0.20.1**,
-which has native kernels for this hybrid, so **no custom inference image is needed**. Note that
-`ModelServer.VLLM` (HF vLLM 0.29.0) is *not* a working alternative for this architecture — it
-crash-loops on `Failed to promote local KV cache specs`.
-
-## Operational notes
-
-- **Edit the notebooks with Jupyter tooling**, not a text editor — direct `.ipynb` writes can corrupt them.
-- **Search server is the throughput bottleneck.** It holds a ~3 GB Lucene index. Under high rollout concurrency it
-  can saturate (connection limit, request timeouts, stalled rollouts) — restart the search cell and lower
-  `ROLLOUT_THREADS` if you see repeated `find_product` read timeouts. Rollouts are resume-safe (finished problems are
-  skipped on re-run).
-- **Detached subprocesses survive kernel shutdown.** The search server and rollout workers are started in new
-  sessions, so closing a kernel does not reclaim their memory — stop them explicitly (`harness.stop_all()` / the
-  cleanup cell) or kill the orphans.
-- **Validation loss** is not logged to MLflow by design for the single-dataset + `train_val_split_ratio` serverless
-  configuration; assess overtraining from the training-loss curve.
-
 ## License
 
 See the repository root `LICENSE`.
