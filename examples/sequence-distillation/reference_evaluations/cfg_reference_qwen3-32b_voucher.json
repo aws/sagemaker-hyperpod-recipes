@@ -1,0 +1,20 @@
+{
+  "task": "voucher",
+  "system_prompt_file": "src/agent/prompt/rollout.md",
+  "synthesize_file": "/home/sagemaker-user/shopbench-eval/ShoppingBench/data/synthesize_voucher_test_clean.jsonl",
+  "rollout_file": "/home/sagemaker-user/shopbench-eval/out/rollout_reference_qwen3-32b_voucher.jsonl",
+  "threads": 12,
+  "base_url": "http://127.0.0.1:8196/v1",
+  "api_key": "unused",
+  "model_config": {
+    "model": "",
+    "temperature": 0.6,
+    "max_tokens": 8192,
+    "stream": false,
+    "extra_body": {
+      "chat_template_kwargs": {
+        "enable_thinking": true
+      }
+    }
+  }
+}
