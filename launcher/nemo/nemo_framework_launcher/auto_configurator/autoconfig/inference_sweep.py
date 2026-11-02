@@ -17,6 +17,7 @@ import itertools
 import json
 import os
 import random
+import shlex
 import subprocess
 
 from autoconfig import utils
@@ -116,7 +117,7 @@ def configure_fastertransformer(base_cfg, cfg, tp, pp, bs, destination):
         f"--destination {destination}",
     ]
     print(f"Generated config for FasterTransformer to: {destination} ")
-    result = os.system(" ".join(command))
+    result = subprocess.run(shlex.split(" ".join(command))).returncode
     if result != 0:
         raise Exception("generate_gpt_config.py failed")
 
@@ -130,7 +131,7 @@ def generate_start_ids(base_cfg, cfg, bs, destination):
         f"--destination {destination}",
     ]
     print(f"Generated start_ids for FasterTransformer to: {destination}")
-    result = os.system(" ".join(command))
+    result = subprocess.run(shlex.split(" ".join(command))).returncode
     if result != 0:
         raise Exception("generate_start_ids.py failed")
 
