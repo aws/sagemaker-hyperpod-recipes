@@ -7,7 +7,12 @@
         "",
         "Key Features:",
         "1. TEMPLATE MATCHING: Supports verl_grpo and verl_ppo algorithm types",
-        "2. RL-SPECIFIC PARAMETERS: Includes reward model, critic, and actor configurations"
+        "2. RL-SPECIFIC PARAMETERS: Includes reward model, critic, and actor configurations",
+        "3. SFT/DPO TEMPLATES: sft, sft_fft, dpo and dpo_fft also expose the llmft override names",
+        "   (logging_steps, generation_cfg, gradient_clipping, seed, ...), so a job spec written for an",
+        "   llmft recipe is accepted. Placeholders a recipe does not carry are pruned from its overrides.",
+        "   The Nemotron recipes run in a separate container that does not support those keys yet, so they",
+        "   use the *_nemotron copies (sft_nemotron, sft_fft_nemotron, dpo_nemotron, dpo_fft_nemotron)."
     ],
     "templates": {
         "grpo_rlaif": {
@@ -386,6 +391,110 @@
                     "trainer": {
                         "total_epochs": "{{max_epochs}}",
                         "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}",
+                        "logging_steps": "{{logging_steps}}"
+                    },
+                    "model": {
+                        "path": "{{model_name_or_path}}",
+                        "lora_rank": "{{lora_rank}}",
+                        "lora_alpha": "{{lora_alpha}}",
+                        "generation_cfg": {
+                            "temperature": "{{temperature}}",
+                            "max_new_tokens": "{{max_response_length}}"
+                        },
+                        "lora_dropout": "{{lora_dropout}}"
+                    },
+                    "optim": {
+                        "lr": "{{learning_rate}}",
+                        "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "lr_warmup_steps": "{{warmup_steps}}",
+                        "min_lr_ratio": "{{min_lr}}",
+                        "lr_scheduler_type": "{{lr_scheduler}}",
+                        "lr_decay_style": "{{lr_scheduler}}",
+                        "min_lr": "{{min_lr}}",
+                        "clip_grad": "{{gradient_clipping_threshold}}",
+                        "gradient_clipping": "{{gradient_clipping}}"
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}",
+                        "train_dataset_name": "{{training_data_name}}",
+                        "val_dataset_name": "{{validation_data_name}}",
+                        "seed": "{{seed}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "override_parameters": {
+                "learning_rate": {
+                    "min": 1e-07
+                },
+                "global_batch_size": {
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ]
+                },
+                "namespace": {
+                    "default": "default"
+                },
+                "weight_decay": {
+                    "default": 0.001
+                },
+                "lora_alpha": {
+                    "default": 64
+                },
+                "warmup_steps": {
+                    "min": -1,
+                    "description": "Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0."
+                },
+                "min_lr": {
+                    "default": 0.0,
+                    "min": 0.0,
+                    "description": "Lowest learning rate the cosine schedule decays to, as a fraction of the peak learning rate. For example, 0.1 ends training at 10% of the peak and 0 decays it to zero. Has no effect when lr_scheduler is constant."
+                },
+                "dataset_max_len": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "sft_algorithms": {
+                    "sft": "SFT"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "sft_nemotron": {
+            "display_name": "SFT (LoRA, Nemotron)",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
                         "resume_from_path": "{{resume_from_path}}"
                     },
                     "model": {
@@ -440,7 +549,8 @@
                     "default": 64
                 },
                 "warmup_steps": {
-                    "min": -1
+                    "min": -1,
+                    "description": "Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0."
                 },
                 "min_lr": {
                     "default": 0.0,
@@ -468,6 +578,104 @@
         },
         "sft_fft": {
             "display_name": "SFT (FFT)",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}",
+                        "logging_steps": "{{logging_steps}}"
+                    },
+                    "model": {
+                        "path": "{{model_name_or_path}}",
+                        "generation_cfg": {
+                            "temperature": "{{temperature}}",
+                            "max_new_tokens": "{{max_response_length}}"
+                        }
+                    },
+                    "optim": {
+                        "lr": "{{learning_rate}}",
+                        "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "lr_warmup_steps": "{{warmup_steps}}",
+                        "min_lr_ratio": "{{min_lr}}",
+                        "lr_scheduler_type": "{{lr_scheduler}}",
+                        "lr_decay_style": "{{lr_scheduler}}",
+                        "min_lr": "{{min_lr}}",
+                        "clip_grad": "{{gradient_clipping_threshold}}",
+                        "gradient_clipping": "{{gradient_clipping}}"
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}",
+                        "train_dataset_name": "{{training_data_name}}",
+                        "val_dataset_name": "{{validation_data_name}}",
+                        "seed": "{{seed}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "override_parameters": {
+                "learning_rate": {
+                    "min": 1e-07
+                },
+                "global_batch_size": {
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ]
+                },
+                "namespace": {
+                    "default": "default"
+                },
+                "weight_decay": {
+                    "default": 0.001
+                },
+                "warmup_steps": {
+                    "min": -1,
+                    "description": "Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0."
+                },
+                "min_lr": {
+                    "default": 0.0,
+                    "min": 0.0,
+                    "description": "Lowest learning rate the cosine schedule decays to, as a fraction of the peak learning rate. For example, 0.1 ends training at 10% of the peak and 0 decays it to zero. Has no effect when lr_scheduler is constant."
+                },
+                "dataset_max_len": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "sft_algorithms": {
+                    "sft": "SFT"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "sft_fft_nemotron": {
+            "display_name": "SFT (FFT, Nemotron)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -526,7 +734,8 @@
                     "default": 0.001
                 },
                 "warmup_steps": {
-                    "min": -1
+                    "min": -1,
+                    "description": "Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0."
                 },
                 "min_lr": {
                     "default": 0.0,
@@ -686,6 +895,126 @@
                         "total_epochs": "{{max_epochs}}",
                         "default_local_dir": "{{output_path}}",
                         "resume_from_path": "{{resume_from_path}}",
+                        "beta": "{{adam_beta}}",
+                        "logging_steps": "{{logging_steps}}"
+                    },
+                    "model": {
+                        "path": "{{model_name_or_path}}",
+                        "lora_rank": "{{lora_rank}}",
+                        "lora_alpha": "{{lora_alpha}}",
+                        "generation_cfg": {
+                            "temperature": "{{temperature}}",
+                            "max_new_tokens": "{{max_response_length}}"
+                        },
+                        "lora_dropout": "{{lora_dropout}}"
+                    },
+                    "optim": {
+                        "lr": "{{learning_rate}}",
+                        "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "lr_warmup_steps": "{{warmup_steps}}",
+                        "min_lr_ratio": "{{min_lr}}",
+                        "min_lr": "{{min_lr}}",
+                        "lr_scheduler_type": "{{lr_scheduler}}",
+                        "lr_decay_style": "{{lr_scheduler}}",
+                        "clip_grad": "{{gradient_clipping_threshold}}",
+                        "gradient_clipping": "{{gradient_clipping}}"
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}",
+                        "train_dataset_name": "{{training_data_name}}",
+                        "val_dataset_name": "{{validation_data_name}}",
+                        "seed": "{{seed}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "override_parameters": {
+                "learning_rate": {
+                    "min": 1e-07,
+                    "default": 0.0001,
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step."
+                },
+                "global_batch_size": {
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                },
+                "namespace": {
+                    "default": "default"
+                },
+                "adam_beta": {
+                    "max": 1.0,
+                    "default": 0.01,
+                    "description": "KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation."
+                },
+                "lr_warmup_steps_ratio": {
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                },
+                "lora_rank": {
+                    "description": "Rank of the low-rank decomposition in LoRA adapters. Higher rank increases expressiveness but uses more memory and compute."
+                },
+                "lora_alpha": {
+                    "default": 64
+                },
+                "warmup_steps": {
+                    "min": -1,
+                    "description": "Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0."
+                },
+                "min_lr": {
+                    "min": 0.0,
+                    "default": 0.1,
+                    "description": "Lowest learning rate the cosine schedule decays to, as a fraction of the peak learning rate. For example, 0.1 ends training at 10% of the peak and 0 decays it to zero. Has no effect when lr_scheduler is constant."
+                },
+                "lr_scheduler": {
+                    "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve."
+                },
+                "dataset_max_len": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {
+                    "lora": "LoRA"
+                },
+                "sft_algorithms": {
+                    "dpo": "DPO"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4d.24xlarge",
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "dpo_nemotron": {
+            "display_name": "DPO (LoRA, Nemotron)",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}",
                         "beta": "{{adam_beta}}"
                     },
                     "model": {
@@ -751,7 +1080,8 @@
                     "default": 64
                 },
                 "warmup_steps": {
-                    "min": -1
+                    "min": -1,
+                    "description": "Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0."
                 },
                 "min_lr": {
                     "min": 0.0,
@@ -784,6 +1114,115 @@
         },
         "dpo_fft": {
             "display_name": "DPO (FFT)",
+            "recipe_template": {
+                "run": {
+                    "name": "{{name}}",
+                    "results_dir": "{{results_directory}}"
+                },
+                "training_config": {
+                    "trainer": {
+                        "total_epochs": "{{max_epochs}}",
+                        "default_local_dir": "{{output_path}}",
+                        "resume_from_path": "{{resume_from_path}}",
+                        "beta": "{{adam_beta}}",
+                        "logging_steps": "{{logging_steps}}"
+                    },
+                    "model": {
+                        "path": "{{model_name_or_path}}",
+                        "generation_cfg": {
+                            "temperature": "{{temperature}}",
+                            "max_new_tokens": "{{max_response_length}}"
+                        }
+                    },
+                    "optim": {
+                        "lr": "{{learning_rate}}",
+                        "lr_warmup_steps_ratio": "{{lr_warmup_steps_ratio}}",
+                        "weight_decay": "{{weight_decay}}",
+                        "lr_warmup_steps": "{{warmup_steps}}",
+                        "min_lr_ratio": "{{min_lr}}",
+                        "min_lr": "{{min_lr}}",
+                        "lr_scheduler_type": "{{lr_scheduler}}",
+                        "lr_decay_style": "{{lr_scheduler}}",
+                        "clip_grad": "{{gradient_clipping_threshold}}",
+                        "gradient_clipping": "{{gradient_clipping}}"
+                    },
+                    "data": {
+                        "train_files": "{{data_path}}",
+                        "val_files": "{{validation_data_path}}",
+                        "train_batch_size": "{{global_batch_size}}",
+                        "train_val_split_ratio": "{{train_val_split_ratio}}",
+                        "max_length": "{{dataset_max_len}}",
+                        "train_dataset_name": "{{training_data_name}}",
+                        "val_dataset_name": "{{validation_data_name}}",
+                        "seed": "{{seed}}"
+                    },
+                    "mlflow": {
+                        "tracking_uri": "{{mlflow_tracking_uri}}",
+                        "run_id": "{{mlflow_run_id}}"
+                    }
+                }
+            },
+            "override_parameters": {
+                "learning_rate": {
+                    "min": 1e-07,
+                    "default": 5e-05,
+                    "description": "Step size for weight updates during optimization. Controls how much model weights change per gradient step."
+                },
+                "global_batch_size": {
+                    "enum": [
+                        32,
+                        64,
+                        128,
+                        256,
+                        512,
+                        1024
+                    ],
+                    "description": "Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory."
+                },
+                "namespace": {
+                    "default": "default"
+                },
+                "adam_beta": {
+                    "max": 1.0,
+                    "default": 0.01,
+                    "description": "KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation."
+                },
+                "lr_warmup_steps_ratio": {
+                    "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
+                },
+                "warmup_steps": {
+                    "min": -1,
+                    "description": "Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0."
+                },
+                "min_lr": {
+                    "min": 0.0,
+                    "default": 0.1,
+                    "description": "Lowest learning rate the cosine schedule decays to, as a fraction of the peak learning rate. For example, 0.1 ends training at 10% of the peak and 0 decays it to zero. Has no effect when lr_scheduler is constant."
+                },
+                "lr_scheduler": {
+                    "description": "Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve."
+                },
+                "dataset_max_len": {
+                    "visibility_tier": "advanced",
+                    "description": "Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory."
+                }
+            },
+            "recipe_metadata_helpers": {
+                "peft_techniques": {},
+                "sft_algorithms": {
+                    "dpo": "DPO"
+                },
+                "hardware_types": {
+                    "gpu": [
+                        "ml.p4d.24xlarge",
+                        "ml.p4de.24xlarge",
+                        "ml.p5.48xlarge"
+                    ]
+                }
+            }
+        },
+        "dpo_fft_nemotron": {
+            "display_name": "DPO (FFT, Nemotron)",
             "recipe_template": {
                 "run": {
                     "name": "{{name}}",
@@ -851,7 +1290,8 @@
                     "description": "Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates."
                 },
                 "warmup_steps": {
-                    "min": -1
+                    "min": -1,
+                    "description": "Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0."
                 },
                 "min_lr": {
                     "min": 0.0,

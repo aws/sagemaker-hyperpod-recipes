@@ -354,7 +354,7 @@ training_config:
       ranks: []
     reward_kwargs:
       kwargs:
-        aws_region_name: us-west-2
+        aws_region_name: null
         llmj_prompt_template_path: /opt/ml/code/verl/summarize.jinja
         max_workers: 100
         model_id: bedrock/openai.gpt-oss-120b-1:0
@@ -437,4 +437,4 @@ training_config:
       cuda-memory-usage: 'true'
       kill: none
       trace: cuda,nvtx,cublas,ucx
-version: 1.1.5
+version: 1.1.7

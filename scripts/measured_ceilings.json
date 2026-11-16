@@ -7,6 +7,7 @@
     "ml.g6.48xlarge": 6144
   },
   "verl-dpo-deepseek-r1-distilled-qwen-1-dot-5b-lora": {
+    "ml.g5.48xlarge": 6250,
     "ml.p4de.24xlarge": 25600
   },
   "verl-dpo-deepseek-r1-distilled-qwen-14b-lora": {
@@ -76,11 +77,17 @@
     "ml.g6.12xlarge": 10240,
     "ml.g6.48xlarge": 11264
   },
+  "verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-fft": {
+    "ml.g5.48xlarge": 11264
+  },
   "verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-lora": {
     "ml.g5.48xlarge": 13312,
     "ml.g6.12xlarge": 13312,
     "ml.g6.48xlarge": 13312,
     "ml.g6e.12xlarge": 13824
+  },
+  "verl-sft-deepseek-r1-distilled-qwen-14b-lora": {
+    "ml.g6.48xlarge": 4096
   },
   "verl-sft-deepseek-r1-distilled-qwen-7b-lora": {
     "ml.g6.12xlarge": 10240,
@@ -139,8 +146,11 @@
     "ml.g6.48xlarge": 8192,
     "ml.p4d.24xlarge": 8704
   },
+  "verl-sft-qwen-3-32b-fft": {
+    "ml.p4de.24xlarge": 20000
+  },
   "verl-sft-qwen-3-32b-lora": {
-    "ml.p4de.24xlarge": 15360
+    "ml.p4de.24xlarge": 32768
   },
   "verl-sft-qwen-3-4b-fft": {
     "ml.p5.48xlarge": 46080

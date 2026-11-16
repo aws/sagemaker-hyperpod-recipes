@@ -1,7 +1,79 @@
 [
   {
-    "InstanceType": "ml.g6.12xlarge",
+    "InstanceType": "ml.g7.4xlarge",
     "Profile": "Default",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+    "Environment": {
+      "OPTION_ENABLE_LORA": "true",
+      "OPTION_MAX_LORAS": "4",
+      "OPTION_MAX_CPU_LORAS": "32",
+      "OPTION_MAX_LORA_RANK": "128",
+      "OPTION_TENSOR_PARALLEL_DEGREE": "1",
+      "OPTION_ROLLING_BATCH": "disable",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "4",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "64",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1",
+      "OPTION_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "OPTION_TOOL_CALL_PARSER": "hermes"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 32768,
+      "NumberOfCpuCoresRequired": 8,
+      "NumberOfAcceleratorDevicesRequired": 1
+    }
+  },
+  {
+    "InstanceType": "ml.g7.8xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+    "Environment": {
+      "OPTION_ENABLE_LORA": "true",
+      "OPTION_MAX_LORAS": "4",
+      "OPTION_MAX_CPU_LORAS": "32",
+      "OPTION_MAX_LORA_RANK": "128",
+      "OPTION_TENSOR_PARALLEL_DEGREE": "1",
+      "OPTION_ROLLING_BATCH": "disable",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "4",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "64",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1",
+      "OPTION_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "OPTION_TOOL_CALL_PARSER": "hermes"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 57344,
+      "NumberOfCpuCoresRequired": 14,
+      "NumberOfAcceleratorDevicesRequired": 1
+    }
+  },
+  {
+    "InstanceType": "ml.g7.12xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
+    "Environment": {
+      "OPTION_ENABLE_LORA": "true",
+      "OPTION_MAX_LORAS": "4",
+      "OPTION_MAX_CPU_LORAS": "32",
+      "OPTION_MAX_LORA_RANK": "128",
+      "OPTION_TENSOR_PARALLEL_DEGREE": "2",
+      "OPTION_ROLLING_BATCH": "disable",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "4",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "64",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1",
+      "OPTION_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "OPTION_TOOL_CALL_PARSER": "hermes"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 90112,
+      "NumberOfCpuCoresRequired": 22,
+      "NumberOfAcceleratorDevicesRequired": 2
+    }
+  },
+  {
+    "InstanceType": "ml.g6.12xlarge",
     "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.34.0-lmi16.0.0-cu128",
     "Environment": {
       "OPTION_ENABLE_LORA": "true",

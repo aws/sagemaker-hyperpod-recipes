@@ -90,16 +90,23 @@ CONTAINER_KEY_TO_REGIONAL = {
     "verl_0_7_0_vllm012": "verl-0.7.0-vllm012",
     "verl_0_7_0_tf58": "verl-0.7.0-tf58",
     "verl_0_7_0_megatron": "verl-0.7.0-megatron",
+    "verl_0_9_0": "verl-0.9.0",
 }
 # Expected image tag per verl version. 0.5 -> v1.0.0; the 0.7 variants are bumped
 # independently as each image ships, so they are not expected to share a tag.
 REGIONAL_KEY_TO_TAG = {
     "verl": "verl-v1.0.0",
-    "verl-0.7.0": "verl-v1.1.6",
-    "verl-0.7.0-vllm012": "verl-v1.1.0",
-    "verl-0.7.0-tf58": "verl-v1.1.6",
-    "verl-0.7.0-megatron": "verl-v1.1.2",
+    "verl-0.7.0": "verl-v1.1.9",
+    "verl-0.7.0-vllm012": "verl-v1.1.9",
+    "verl-0.7.0-tf58": "verl-v1.1.9",
+    "verl-0.7.0-megatron": "verl-v1.1.9",
+    "verl-0.9.0": "verl-v1.0.0",
 }
+# Generations with no prod image yet. Their recipes are JumpStart-excluded
+# (recipes_collection/jumpstart_exclusions.yaml), so the prod-region check below is
+# replaced by the same tag check over their pre-prod stages. Remove an entry when the
+# generation ships a prod image.
+UNRELEASED_REGIONAL_KEYS = {"verl-0.9.0"}
 VALID_BUCKETS = {"1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K"}
 
 
@@ -353,9 +360,10 @@ def test_image_resolves_version_consistent(rel):
     assert regional_key in matrix, f"{rel}: {regional_key!r} missing from verl_regional_parameters.json"
 
     expected_tag = REGIONAL_KEY_TO_TAG[regional_key]
+    stage = "beta" if regional_key in UNRELEASED_REGIONAL_KEYS else "prod"
     checked_any = False
     for platform in ("k8s", "sm_jobs"):
-        prod = _get(matrix[regional_key], platform, "container_image", "prod")
+        prod = _get(matrix[regional_key], platform, "container_image", stage)
         if not prod:
             continue
         checked_any = True
@@ -390,30 +398,45 @@ def _published(rel: str):
     return override_params, metadata
 
 
+def _pow2_cap(rel: str, tc: dict) -> int | None:
+    """The length a power-of-2-capped Llama/DeepSeek recipe publishes in place of its budget, else None.
+
+    These recipes replace llmft on JumpStart with one power-of-2 length: the largest power
+    of 2 <= data.max_length (VerlRecipeTemplateProcessor._pow2_length_cap).
+    """
+    if not VerlRecipeTemplateProcessor._uses_pow2_length_cap(Path(rel).name):
+        return None
+    return 1 << (int(tc["data"]["max_length"]).bit_length() - 1)
+
+
 @pytest.mark.parametrize("rel", RELS)
 def test_override_max_equals_budget(rel):
     """Every verl recipe publishes each length override param's `max` == its budget
     (max_token_len_per_gpu * ulysses_sp) -- the ceiling the UI enforces prompt+response (RL) /
-    dataset_max_len (SFT/DPO) against."""
+    dataset_max_len (SFT/DPO) against. The power-of-2-capped Llama/DeepSeek recipes publish
+    their power-of-2 length instead (_pow2_cap)."""
     tc = _render(rel)["training_config"]
     budget = _budget(tc)
     if budget is None:
         pytest.skip("no token budget in this recipe")
+    pow2_cap = _pow2_cap(rel, tc)
+    ceiling = pow2_cap if pow2_cap is not None else budget
+    source = "power-of-2 length" if pow2_cap is not None else "budget (max_token_len_per_gpu * ulysses_sp)"
     override_params, _ = _published(rel)
     present = [p for p in _LENGTH_PARAMS if p in override_params]
     assert present, f"{rel}: exposes a budget but publishes no length override param"
     for p in present:
-        assert override_params[p]["max"] == budget, (
-            f"{rel}: {p} published max {override_params[p]['max']} != budget {budget} "
-            f"(max_token_len_per_gpu * ulysses_sp)"
-        )
+        assert (
+            override_params[p]["max"] == ceiling
+        ), f"{rel}: {p} published max {override_params[p]['max']} != {source} {ceiling}"
 
 
 @pytest.mark.parametrize("rel", RELS)
 def test_sequence_length_uses_budget_calculation(rel):
     """The SequenceLength metadata is derived from the budget: the processor's
     _extract_context_length equals max_token_len_per_gpu * ulysses_sp, and the published label
-    is that budget bucketed by format_sequence_length."""
+    is that budget bucketed by format_sequence_length. The power-of-2-capped Llama/DeepSeek
+    recipes take their label from their power-of-2 length instead (_pow2_cap)."""
     full = _render(rel)
     tc = full["training_config"]
     budget = _budget(tc)
@@ -424,10 +447,12 @@ def test_sequence_length_uses_budget_calculation(rel):
         _LENGTH_PROC._extract_context_length(full) == budget
     ), f"{rel}: _extract_context_length != max_token_len_per_gpu * ulysses_sp ({budget})"
     _, metadata = _published(rel)
-    expected_label = _LENGTH_PROC.format_sequence_length(budget)
+    pow2_cap = _pow2_cap(rel, tc)
+    label_source = pow2_cap if pow2_cap is not None else budget
+    expected_label = _LENGTH_PROC.format_sequence_length(label_source)
     assert metadata["SequenceLength"] == expected_label, (
         f"{rel}: SequenceLength {metadata['SequenceLength']!r} != "
-        f"format_sequence_length(budget) {expected_label!r} (budget {budget})"
+        f"format_sequence_length({label_source}) {expected_label!r} (budget {budget})"
     )
 
 
@@ -470,3 +495,22 @@ def test_sp_for_gate_credits_the_right_section():
     # actor sp absent -> defaults to 1 (so actor_rollout_ref.* gates all fall back to 1)
     tc_no_sp = {"actor_rollout_ref": {"actor": {}}}
     assert _sp_for_gate(tc_no_sp, ("actor_rollout_ref", "rollout", "log_prob_max_token_len_per_gpu")) == 1
+
+
+# verl 0.9 recipes are JumpStart-excluded, so discover_recipes() (RELS) never yields them.
+# Collect them from disk instead and check the processor routes them to the 0.9 regional key.
+VERL_09_RELS = sorted(
+    str(p.relative_to(RECIPES_ROOT).with_suffix("")) for p in RECIPES_ROOT.glob("fine-tuning/*-0_9_0/verl-*.yaml")
+)
+
+
+def test_verl_09_recipes_found():
+    assert VERL_09_RELS, "no verl 0.9 recipes found under recipes_collection/recipes/fine-tuning/*-0_9_0/"
+
+
+@pytest.mark.parametrize("rel", VERL_09_RELS)
+def test_verl_09_recipe_uses_verl_09_regional_key(rel):
+    """0.9 recipes also carry profiler/global_profiler, so the path check must win over the 0.7 shape check."""
+    _LENGTH_PROC.process_recipe(recipe_file_path=rel)
+    _LENGTH_PROC.get_recipe_metadata(rel)
+    assert _LENGTH_PROC._verl_regional_key == "verl-0.9.0"

@@ -28,7 +28,8 @@ kinds of claim:
   * scripts/measured_ceilings.json — a real sweep whose rung file no longer exists,
     recorded per (slot, instance, ceiling). See load_manifest().
   * INHERITED_INSTANCES — a hardware-dominance claim with no length dimension, used for
-    an instance the LLMFT predecessor advertised. See that constant.
+    an instance the LLMFT predecessor advertised. See that constant. The same claim for a
+    single rung lives in INHERITED_INSTANCES_BY_RUNG.
 
 Only the authored overlays under hyperpod_recipes/recipes_src/ are edited. Regenerate
 recipes_collection/recipes/ afterwards with scripts/generate_resolved_recipes.py.
@@ -58,20 +59,22 @@ RESOLVED = REPO_ROOT / "recipes_collection" / "recipes" / "fine-tuning"
 AUTHORED = REPO_ROOT / "hyperpod_recipes" / "recipes_src" / "fine-tuning"
 MANIFEST_PATH = Path(__file__).resolve().parent / "measured_ceilings.json"
 
-# GPUs per instance from the size suffix. Every instance these recipes use is covered;
-# an unknown suffix is reported rather than guessed, because guessing here is exactly
+# GPUs per instance, keyed by the EXACT size token. Every instance these recipes use is
+# covered; an unknown size is reported rather than guessed, because guessing here is exactly
 # the mistake rule 2 exists to fix.
-GPUS_BY_SIZE = {"48xlarge": 8, "24xlarge": 8, "12xlarge": 4}
+#
+# Exact lookup, not endswith: "12xlarge" ends with "2xlarge", so suffix matching makes the
+# 4-GPU and 1-GPU entries order-dependent, and a reordering would silently call a g5.12xlarge
+# a 1-GPU instance. The 2/4/8/16xlarge sizes are 1 GPU for every family SEG_RE accepts
+# (g5/g6/g6e); p4d/p4de/p5* exist only at 24xlarge and 48xlarge.
+GPUS_BY_SIZE = {"48xlarge": 8, "24xlarge": 8, "12xlarge": 4, "16xlarge": 1, "8xlarge": 1, "4xlarge": 1, "2xlarge": 1}
 LADDER_RE = re.compile(r"verl-(sft|dpo).*-tt-")
 # The instance the rung was measured on, from its filename: `-g6e-12xl-` -> g6e.12xlarge.
 SEG_RE = re.compile(r"-(g5|g6|g6e|p4d|p4de|p5|p5e|p5en)-(\d+)xl-")
 
 
 def gpus_for(instance):
-    for suffix, n in GPUS_BY_SIZE.items():
-        if instance.endswith(suffix):
-            return n
-    return None
+    return GPUS_BY_SIZE.get(instance.rsplit(".", 1)[-1])
 
 
 def named_instance(stem):
@@ -179,15 +182,65 @@ INHERITED_INSTANCES = {
     "gpt_oss-0_7_0": ("ml.p5e.48xlarge", "ml.p5en.48xlarge"),
 }
 
+# The same kind of claim for one rung, for when the dominance argument holds at that rung's
+# length but not across its whole slot. Keyed on the rung's file stem. target_state()
+# reports a key that matches no rung, so renaming the rung cannot silently drop the
+# instance.
+INHERITED_INSTANCES_BY_RUNG = {
+    # The llmft recipe this rung replaces on JumpStart (llama/llmft_llama3_2_1b_instruct_
+    # seq4k_gpu_dpo) lists p5, but this slot was never swept on p5. ml.p4d.24xlarge (A100,
+    # 40 GB per GPU) reached max_length 14336 in this slot, so p5 (H100, 80 GB per GPU)
+    # cannot run out of memory at this rung's 8192. The argument stops at p4d's ceiling,
+    # which is why it is not keyed on the slot: only p4de reached the 29696 rung, its GPUs
+    # have the same 80 GB as p5's, and p4de and p5 measured differently in 20 of 46 slots.
+    "verl-dpo-llama-3-dot-2-1b-instruct-g5-48xl-8k-tt-lora": ("ml.p5.48xlarge",),
+    # GLM-5.3-Flash 64k FFT was measured on 4 x ml.p5en.48xlarge. ml.p5e.48xlarge has the same
+    # H200 GPUs (141 GB) and the same 2 TiB host memory, but no p5e run of this recipe reached
+    # 65,536 tokens, so p5e is inherited here for this rung only and does not carry down to the
+    # shorter rungs in the slot.
+    "verl-sft-glm-5-dot-3-flash-p5en-48xl-64k-tt-fft": ("ml.p5e.48xlarge",),
+    # DeepSeek R1 distill Qwen SFT rungs that list ml.p4d.24xlarge but not ml.p4de.24xlarge,
+    # which every llmft SFT recipe they replace (deepseek/llmft_deepseek_r1_distilled_qwen_*)
+    # lists. p4de has the same eight A100 GPUs, host memory and network as p4d, with 80 GB per
+    # GPU instead of 40 GB, so it cannot run out of memory where p4d does not. Each rung lists
+    # p4d on a p4d ceiling at least as long as its own max_length. This is not the p4de-vs-p5
+    # comparison the manifest note warns about: there the GPUs differ, here only memory does.
+    "verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-p4d-24xl-12k-tt-lora": ("ml.p4de.24xlarge",),
+    "verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-p4d-24xl-21k-tt-fft": ("ml.p4de.24xlarge",),
+    "verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-g6-48xl-11k-tt-fft": ("ml.p4de.24xlarge",),
+    "verl-sft-deepseek-r1-distilled-qwen-14b-g5-48xl-4k-tt-lora": ("ml.p4de.24xlarge",),
+    "verl-sft-deepseek-r1-distilled-qwen-14b-p4d-24xl-15k-tt-lora": ("ml.p4de.24xlarge",),
+    "verl-sft-deepseek-r1-distilled-qwen-32b-g6-48xl-5k-tt-lora": ("ml.p4de.24xlarge",),
+    "verl-sft-deepseek-r1-distilled-qwen-32b-p4d-24xl-12k-tt-lora": ("ml.p4de.24xlarge",),
+    # The 7B SFT LoRA g5-48xl-10k rung also gets p5, which its llmft predecessor lists. The
+    # rung already lists ml.g5.48xlarge (A10G, 24 GB per GPU) and ml.p4d.24xlarge (A100,
+    # 40 GB per GPU) at its max_length of 10240, and p5 (H100) has 80 GB per GPU. Unlike the
+    # Llama entry above, this does not lean on a longer p4d rung: the slot's p4d-24xl-20k
+    # rung, run as shipped on 2026-11-04, stopped logging at 37.9 of 39.5 GB reserved per GPU.
+    "verl-sft-deepseek-r1-distilled-qwen-7b-g5-48xl-10k-tt-lora": ("ml.p4de.24xlarge", "ml.p5.48xlarge"),
+}
+
 
 def inherited_for(rung):
     """Instances this rung may list without a measured ceiling of their own."""
-    return tuple(i for i in INHERITED_INSTANCES.get(rung["family"], ()) if gpus_for(i) == rung["gpus"])
+    inherited = INHERITED_INSTANCES.get(rung["family"], ()) + INHERITED_INSTANCES_BY_RUNG.get(rung["stem"], ())
+    return tuple(i for i in inherited if gpus_for(i) == rung["gpus"])
 
 
 def target_state(ladders, manifest):
     """[(rung, want_instance_types, want_gpus)] for every rung, plus problems."""
     plan, problems = [], []
+    rungs_by_stem = {r["stem"]: r for rungs in ladders.values() for r in rungs}
+    for stem, instances in sorted(INHERITED_INSTANCES_BY_RUNG.items()):
+        rung = rungs_by_stem.get(stem)
+        if rung is None:
+            problems.append(f"INHERITED_INSTANCES_BY_RUNG: '{stem}' matches no ladder rung — renamed or deleted?")
+            continue
+        for instance in instances:
+            if gpus_for(instance) != rung["gpus"]:
+                problems.append(
+                    f"INHERITED_INSTANCES_BY_RUNG: '{stem}' is a {rung['gpus']}-GPU rung, so it cannot list {instance}"
+                )
     slots_by_name = {}
     for slot in ladders:
         slots_by_name.setdefault(slot[0], []).append(slot)

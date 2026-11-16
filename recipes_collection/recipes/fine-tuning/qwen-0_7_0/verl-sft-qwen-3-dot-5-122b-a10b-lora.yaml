@@ -108,7 +108,7 @@ training_config:
     clip_grad: 1.0
     lr: 5.0e-05
     lr_scheduler_type: cosine
-    lr_warmup_steps: 20
+    lr_warmup_steps: -1
     lr_warmup_steps_ratio: 0.1
     min_lr_ratio: 0.0
     num_cycles: 0.5
@@ -174,4 +174,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 1.0.1
+version: 1.0.4

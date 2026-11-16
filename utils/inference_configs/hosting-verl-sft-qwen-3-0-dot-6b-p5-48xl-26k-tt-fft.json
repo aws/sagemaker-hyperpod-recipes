@@ -75,5 +75,65 @@
       "NumberOfCpuCoresRequired": 100,
       "NumberOfAcceleratorDevicesRequired": 8
     }
+  },
+  {
+    "InstanceType": "ml.g7.2xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi27.0.0-cu130",
+    "Environment": {
+      "OPTION_TENSOR_PARALLEL_DEGREE": "1",
+      "OPTION_ROLLING_BATCH": "disable",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "4",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1",
+      "OPTION_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "OPTION_TOOL_CALL_PARSER": "hermes",
+      "OPTION_ATTENTION_BACKEND": "TRITON_ATTN"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 8192,
+      "NumberOfCpuCoresRequired": 2,
+      "NumberOfAcceleratorDevicesRequired": 1
+    }
+  },
+  {
+    "InstanceType": "ml.g7.4xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi27.0.0-cu130",
+    "Environment": {
+      "OPTION_TENSOR_PARALLEL_DEGREE": "1",
+      "OPTION_ROLLING_BATCH": "disable",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "4",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1",
+      "OPTION_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "OPTION_TOOL_CALL_PARSER": "hermes",
+      "OPTION_ATTENTION_BACKEND": "TRITON_ATTN"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 32768,
+      "NumberOfCpuCoresRequired": 8,
+      "NumberOfAcceleratorDevicesRequired": 1
+    }
+  },
+  {
+    "InstanceType": "ml.g7.8xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi27.0.0-cu130",
+    "Environment": {
+      "OPTION_TENSOR_PARALLEL_DEGREE": "1",
+      "OPTION_ROLLING_BATCH": "disable",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "4",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1",
+      "OPTION_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "OPTION_TOOL_CALL_PARSER": "hermes",
+      "OPTION_ATTENTION_BACKEND": "TRITON_ATTN"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 57344,
+      "NumberOfCpuCoresRequired": 14,
+      "NumberOfAcceleratorDevicesRequired": 1
+    }
   }
 ]

@@ -12,7 +12,7 @@ defaults:
   - /hydra_config/verl-0_7_0/sft/peft/lora
   - _self_
 
-version: 1.0.1
+version: 1.0.2
 
 run:
   name: verl-dpo-gpt-oss-120b-lora

@@ -159,6 +159,9 @@ def _verl_regional_key_for_path(recipe_path: str) -> str:
     """
     parts = Path(recipe_path).parts
     tail = "/".join(parts[-2:]).lower() if len(parts) >= 2 else Path(recipe_path).name.lower()
+    # verl 0.9.0 (ForgeVerl) is a single image; check before 0.7.0, whose config shape it shares.
+    if "0_9_0" in tail:
+        return "verl-0.9.0"
     if "0_7_0" in tail:
         if "nemotron-3-5-lightning" in tail:
             return "verl-0.7.0-megatron"
@@ -405,9 +408,11 @@ def _get_model_family_from_recipe(recipe: Any) -> str:
     # Strip version suffixes like "qwen-0_7_0" → "qwen", "gpt_oss-0_7_0" → "gpt_oss"
     # But preserve model names like "gemma4" (the 4 is part of the model name, not a version)
     family_lower = family.lower()
-    # Only strip if it matches the specific pattern "-0_7_0" (recipe version suffix)
-    if "-0_7_0" in family_lower:
-        family = family_lower.split("-0_7_0")[0]
+    # Only strip if it matches a specific recipe version suffix ("-0_7_0" / "-0_9_0")
+    for suffix in ("-0_7_0", "-0_9_0"):
+        if suffix in family_lower:
+            family = family_lower.split(suffix)[0]
+            break
 
     # Normalize gemma variants: "gemma" and "gemma4" both refer to Gemma 4 models
     # Check the stripped value, not the original

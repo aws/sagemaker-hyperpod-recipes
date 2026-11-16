@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Muse-Glimmer 30B GRPO RLAIF Full Fine-Tuning (Text)
-version: 2.0.6
+version: 2.0.10
 instance_types:
   - ml.p5.48xlarge
 run:
@@ -124,7 +124,7 @@ training_config:
     reward_kwargs:
       reward_fn_name: llmj
       kwargs:
-        llmj_prompt_template_path: /opt/ml/code/verl/grader.jinja
+        llmj_prompt_template_path: /opt/ml/code/verl/evaluate.jinja
         model_id: bedrock/deepseek.v3-v1:0
         service_tier: flex
         max_workers: 100
@@ -132,7 +132,7 @@ training_config:
         range:
           - 0.0
           - 1.0
-        aws_region_name: us-west-2
+        aws_region_name: null
         sampling_params:
           temperature: 0.0
           max_completion_tokens: 2048

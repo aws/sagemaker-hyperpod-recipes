@@ -1,7 +1,41 @@
 [
   {
-    "InstanceType": "ml.g6e.48xlarge",
+    "InstanceType": "ml.g7.24xlarge",
     "Profile": "Default",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi25.0.0-cu130",
+    "Environment": {
+      "OPTION_TENSOR_PARALLEL_DEGREE": "4",
+      "OPTION_ROLLING_BATCH": "auto",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "OPTION_TRUST_REMOTE_CODE": "true",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 188416,
+      "NumberOfCpuCoresRequired": 46,
+      "NumberOfAcceleratorDevicesRequired": 4
+    }
+  },
+  {
+    "InstanceType": "ml.g7.48xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi25.0.0-cu130",
+    "Environment": {
+      "OPTION_TENSOR_PARALLEL_DEGREE": "8",
+      "OPTION_ROLLING_BATCH": "auto",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "OPTION_TRUST_REMOTE_CODE": "true",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 385024,
+      "NumberOfCpuCoresRequired": 94,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  },
+  {
+    "InstanceType": "ml.g6e.48xlarge",
     "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi25.0.0-cu130",
     "Environment": {
       "OPTION_TENSOR_PARALLEL_DEGREE": "8",
@@ -19,7 +53,6 @@
   },
   {
     "InstanceType": "ml.p5.48xlarge",
-    "Profile": "Default",
     "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi25.0.0-cu130",
     "Environment": {
       "OPTION_TENSOR_PARALLEL_DEGREE": "8",

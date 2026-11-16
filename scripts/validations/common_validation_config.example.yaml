@@ -133,6 +133,22 @@ recipe_type_config:
     model_config_key: "verl"
     container_key: "verl_0_7_0"
     recipe_structure: "verl_rlaif"
+  # Verl 0.9 recipe types (ForgeVerl 0.9 engine + ForgeVerlAlchemist business-feature patches)
+  verl_sft_0_9_0:
+    detection_keywords: ["0_9_0/verl-sft"]
+    model_config_key: "verl"
+    container_key: "verl_0_9_0"
+    recipe_structure: "verl_sft"
+  verl_rlvr_0_9_0:
+    detection_keywords: ["0_9_0/verl-grpo-rlvr"]
+    model_config_key: "verl"
+    container_key: "verl_0_9_0"
+    recipe_structure: "verl_rlvr"
+  verl_rlaif_0_9_0:
+    detection_keywords: ["0_9_0/verl-grpo-rlaif"]
+    model_config_key: "verl"
+    container_key: "verl_0_9_0"
+    recipe_structure: "verl_rlaif"
   # Verl 0.5 recipe types
   verl_sft:
     detection_keywords: ["verl-sft"]
@@ -442,6 +458,19 @@ recipe_dataset_mapping:
     slurm: ["panda"]
     k8: ["panda"]
     smjobs: ["panda"]
+  # Verl 0.9 dataset mappings (same datasets as the 0.7 siblings)
+  verl_sft_0_9_0:
+    slurm: ["tat_qa-sft-openai-parquet"]
+    k8: ["tat_qa-sft-openai-parquet"]
+    smjobs: ["tat_qa-sft-openai-parquet"]
+  verl_rlvr_0_9_0:
+    slurm: ["gsm8k"]
+    k8: ["gsm8k"]
+    smjobs: ["gsm8k"]
+  verl_rlaif_0_9_0:
+    slurm: ["panda"]
+    k8: ["panda"]
+    smjobs: ["panda"]
   # Verl 0.5 dataset mappings
   verl_sft:
     slurm: ["tat_qa-sft-openai-parquet"]
@@ -487,31 +516,36 @@ entry_module: amzn_awsllm_fine_tuning.train_hp
 # Key should match the 'container_key' in recipe_type_config
 container_info:
   llmft:
-    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
-    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
-    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
+    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0"
     # llama 90b vision
     # smjobs: "839249767557.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0-llama"
   verl:
-    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
-    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
-    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
+    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
+    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-eks"
+    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:verl-v1.0.0-smtj"
   verl_0_7_0:
-    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj"
-    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj"
-    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj"
+    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj"
+    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj"
+    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj"
   verl_0_7_0_vllm012:
-    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
-    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
-    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.0-smtj-vllm012"
+    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-vllm012"
+    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-vllm012"
+    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-vllm012"
   verl_0_7_0_megatron:
-    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.2-smtj-megatron"
-    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.2-smtj-megatron"
-    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.2-smtj-megatron"
+    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-megatron"
+    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-megatron"
+    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-megatron"
   verl_0_7_0_tf58:
-    slurm: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj-tf58"
-    k8: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj-tf58"
-    smjobs: "920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.6-smtj-tf58"
+    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58"
+    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58"
+    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58"
+  # verl 0.9 (ForgeVerl): beta image -- no prod 0.9 image exists yet
+  verl_0_9_0:
+    slurm: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-9-0:verl-v1.0.0-smtj"
+    k8: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-9-0:verl-v1.0.0-smtj"
+    smjobs: "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-9-0:verl-v1.0.0-smtj"
 
 git:
   use_default: false

@@ -155,9 +155,9 @@ class TestCheckInferenceCoverageForRecipes:
     def test_all_covered(self, temp_dir):
         paths, model_map, configs_dir = self._setup_env(
             temp_dir,
-            recipes={"llama/llmft_llama3_1_8b_sft_lora.yaml": {"run": {"name": "llama-8b"}}},
+            recipes={"llama/llmft_testmodel_8b_sft_lora.yaml": {"run": {"name": "llama-8b"}}},
             model_id_map={"llama-8b": "meta-llama-8b"},
-            hosting_stems=["llmft_llama3_1_8b_sft_lora"],
+            hosting_stems=["llmft_testmodel_8b_sft_lora"],
         )
         result = check_inference_coverage_for_recipes(paths, model_map, configs_dir)
         assert result == []
@@ -165,7 +165,7 @@ class TestCheckInferenceCoverageForRecipes:
     def test_missing_hosting_config(self, temp_dir):
         paths, model_map, configs_dir = self._setup_env(
             temp_dir,
-            recipes={"llama/llmft_llama3_1_8b_sft_lora.yaml": {"run": {"name": "llama-8b"}}},
+            recipes={"llama/llmft_testmodel_8b_sft_lora.yaml": {"run": {"name": "llama-8b"}}},
             model_id_map={"llama-8b": "meta-llama-8b"},
             hosting_stems=[],  # No hosting config
         )
@@ -173,7 +173,7 @@ class TestCheckInferenceCoverageForRecipes:
         assert len(result) == 1
         assert result[0]["js_model_id"] == "meta-llama-8b"
         assert "Hosting configuration not found" in result[0]["reason"]
-        assert "hosting-llmft_llama3_1_8b_sft_lora.json" in result[0]["reason"]
+        assert "hosting-llmft_testmodel_8b_sft_lora.json" in result[0]["reason"]
 
     def test_missing_model_id(self, temp_dir):
         paths, model_map, configs_dir = self._setup_env(
@@ -201,14 +201,16 @@ class TestCheckInferenceCoverageForRecipes:
         paths, model_map, configs_dir = self._setup_env(
             temp_dir,
             recipes={
-                "llama/llmft_llama3_1_8b_sft_lora.yaml": {"run": {"name": "llama-8b"}},
-                "qwen/llmft_qwen3_4b_sft_lora.yaml": {"run": {"name": "qwen-4b"}},
+                "llama/llmft_testmodel_8b_sft_lora.yaml": {"run": {"name": "llama-8b"}},
+                # The real exclusion list applies here, so the uncovered example must be a
+                # recipe no pattern matches (the llmft Qwen 2.5/3 recipes are excluded).
+                "qwen/llmft_testmodel_4b_sft_lora.yaml": {"run": {"name": "qwen-4b"}},
             },
             model_id_map={
                 "llama-8b": "meta-llama-8b",
                 "qwen-4b": "hf-qwen-4b",
             },
-            hosting_stems=["llmft_llama3_1_8b_sft_lora"],  # Only llama covered
+            hosting_stems=["llmft_testmodel_8b_sft_lora"],  # Only llama covered
         )
         result = check_inference_coverage_for_recipes(paths, model_map, configs_dir)
         assert len(result) == 1
@@ -255,15 +257,15 @@ class TestCheckInferenceCoverageForRecipes:
         paths, model_map, configs_dir = self._setup_env(
             temp_dir,
             recipes={
-                "llama/llmft_llama3_1_8b_sft_lora.yaml": {"run": {"name": "llama-8b"}},
-                "llama/llmft_llama3_1_8b_dpo.yaml": {"run": {"name": "llama-8b"}},
+                "llama/llmft_testmodel_8b_sft_lora.yaml": {"run": {"name": "llama-8b"}},
+                "llama/llmft_testmodel_8b_dpo.yaml": {"run": {"name": "llama-8b"}},
             },
             model_id_map={"llama-8b": "meta-llama-8b"},
-            hosting_stems=["llmft_llama3_1_8b_sft_lora"],  # Only sft_lora covered
+            hosting_stems=["llmft_testmodel_8b_sft_lora"],  # Only sft_lora covered
         )
         result = check_inference_coverage_for_recipes(paths, model_map, configs_dir)
         assert len(result) == 1
-        assert "llmft_llama3_1_8b_dpo" in result[0]["reason"]
+        assert "llmft_testmodel_8b_dpo" in result[0]["reason"]
 
 
 # ── check_inference_coverage (directory scan) ────────────────────────────────

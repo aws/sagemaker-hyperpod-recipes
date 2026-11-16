@@ -10,7 +10,7 @@ defaults:
   - /hydra_config/verl-0_7_0/sft/peft/lora
   - _self_
 display_name: "Ministral-3-8B-Instruct-2512-BF16 SFT LoRA Fine-Tuning (Text)"
-version: 2.0.2
+version: 2.0.5
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge
@@ -49,7 +49,8 @@ training_config:
     weight_decay: 0.01
     betas: [0.9, 0.999]
     lr_scheduler_type: cosine
-    lr_warmup_steps: 20
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.1
   trainer:
     merge_lora_on_final_save: true
     project_name: ministral-sft

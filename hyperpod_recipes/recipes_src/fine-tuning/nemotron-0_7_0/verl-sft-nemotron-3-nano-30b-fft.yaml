@@ -11,7 +11,7 @@ defaults:
   - _self_
 
 display_name: "Nemotron 3 Nano 30B SFT FFT Fine-Tuning"
-version: 2.0.5
+version: 2.0.6
 instance_types: ["ml.p5.48xlarge"]
 
 run:
@@ -45,7 +45,8 @@ training_config:
   optim:
     lr: 1.0e-4
     min_lr: 1.0e-6
-    lr_warmup_steps: 10
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.1
     weight_decay: 0.1
     betas: [0.9, 0.95]
     lr_decay_style: cosine

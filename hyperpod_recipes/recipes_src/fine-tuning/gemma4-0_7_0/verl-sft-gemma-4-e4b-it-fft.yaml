@@ -11,7 +11,7 @@ defaults:
   - _self_
 
 display_name: "Gemma 4 E4B IT SFT Full Fine-Tuning (Text)"
-version: 2.0.7
+version: 2.0.11
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
 
 run:
@@ -35,7 +35,8 @@ training_config:
     strategy: fsdp2
   optim:
     lr: 5.0e-06
-    lr_warmup_steps: 10
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.1
 
   trainer:
     project_name: gemma4-sft

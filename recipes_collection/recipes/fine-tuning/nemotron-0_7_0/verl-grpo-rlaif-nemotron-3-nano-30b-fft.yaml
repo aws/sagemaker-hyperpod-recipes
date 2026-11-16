@@ -1,7 +1,6 @@
 display_name: Nemotron 3 Nano 30B GRPO RLAIF Fine-Tuning with Megatron FFT
 instance_types:
 - ml.p5.48xlarge
-- ml.p4de.24xlarge
 ray_cluster:
   worker_nodes:
     replicas: 1
@@ -668,7 +667,7 @@ training_config:
       tool_config: ${oc.select:recipes.training_config.actor_rollout_ref.actor.profiler.tool_config,null}
     reward_kwargs:
       kwargs:
-        aws_region_name: us-west-2
+        aws_region_name: null
         llmj_prompt_template_path: /opt/ml/code/verl/summarize.jinja
         max_workers: 100
         model_id: bedrock/deepseek.v3-v1:0
@@ -746,4 +745,4 @@ training_config:
     val_before_train: true
   transfer_queue:
     enable: false
-version: 2.0.5
+version: 2.0.8

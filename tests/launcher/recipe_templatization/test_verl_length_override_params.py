@@ -34,6 +34,8 @@ import pytest
 from launcher.recipe_templatization.verl.verl_recipe_template_processor import (
     VerlRecipeTemplateProcessor,
 )
+from scripts.generate_launch_jsons import LaunchJsonGenerator
+from utils.recipe_utils import load_recipe_with_hydra
 from utils.resolve_override_params import resolve_params
 
 TEMPLATE_DIR = Path("launcher/recipe_templatization")
@@ -42,7 +44,10 @@ VERL_TEMPLATE_FILE = TEMPLATE_DIR / "verl" / "verl_recipe_template_parameters.js
 LLMFT_TEMPLATE_FILE = TEMPLATE_DIR / "llmft" / "llmft_recipe_template_parameters.json"
 
 GRPO_TEMPLATES = ["grpo_rlaif", "grpo_rlvr", "grpo_rlaif_fft", "grpo_rlvr_fft"]
+# The default SFT/DPO templates, which also expose the llmft override names.
 VERL_SFT_DPO_TEMPLATES = ["sft", "sft_fft", "dpo", "dpo_fft"]
+# Their copies without the llmft override names, used by the Nemotron recipes.
+VERL_SFT_DPO_NEMOTRON_TEMPLATES = [f"{key}_nemotron" for key in VERL_SFT_DPO_TEMPLATES]
 LLMFT_SFT_DPO_TEMPLATES = [
     "llmft_sft_lora",
     "llmft_sft_fft",
@@ -99,13 +104,13 @@ class TestGrpoLengthOverrideParams:
 class TestVerlSftDpoLengthOverrideParams:
     """verl SFT/DPO recipes expose dataset_max_len (mapped from data.max_length)."""
 
-    @pytest.mark.parametrize("template_key", VERL_SFT_DPO_TEMPLATES)
+    @pytest.mark.parametrize("template_key", VERL_SFT_DPO_TEMPLATES + VERL_SFT_DPO_NEMOTRON_TEMPLATES)
     def test_exposes_dataset_max_len(self, template_key):
         resolved = _resolve(VERL_TEMPLATE_FILE, template_key)
         assert "dataset_max_len" in resolved
         assert resolved["dataset_max_len"]["type"] == "integer"
 
-    @pytest.mark.parametrize("template_key", VERL_SFT_DPO_TEMPLATES)
+    @pytest.mark.parametrize("template_key", VERL_SFT_DPO_NEMOTRON_TEMPLATES)
     def test_does_not_expose_prompt_response_or_max_length(self, template_key):
         resolved = _resolve(VERL_TEMPLATE_FILE, template_key)
         assert "max_prompt_length" not in resolved
@@ -114,6 +119,25 @@ class TestVerlSftDpoLengthOverrideParams:
         assert "max_length" not in resolved
 
     @pytest.mark.parametrize("template_key", VERL_SFT_DPO_TEMPLATES)
+    def test_default_template_does_not_expose_prompt_or_max_length(self, template_key):
+        resolved = _resolve(VERL_TEMPLATE_FILE, template_key)
+        assert "max_prompt_length" not in resolved
+        # max_length is the recipe field; the customer-facing param is dataset_max_len.
+        assert "max_length" not in resolved
+
+    @pytest.mark.parametrize("template_key", VERL_SFT_DPO_TEMPLATES)
+    def test_max_response_length_is_generation_max_new_tokens(self, template_key):
+        """max_response_length on the default verl SFT/DPO templates is the llmft-compatible
+        override for model.generation_cfg.max_new_tokens (inference/eval only, never read by
+        the training loop), NOT an RL prompt/response length. Only recipes that carry
+        model.generation_cfg (the Llama 3.x and DeepSeek ones) advertise it, since the override
+        is pruned elsewhere; its max is the recipe's power-of-2 length, like dataset_max_len's."""
+        template = json.loads(VERL_TEMPLATE_FILE.read_text())["templates"][template_key]
+        model = template["recipe_template"]["training_config"]["model"]
+        assert model["generation_cfg"]["max_new_tokens"] == "{{max_response_length}}"
+        assert "max_response_length" not in json.dumps(template["recipe_template"]["training_config"]["data"])
+
+    @pytest.mark.parametrize("template_key", VERL_SFT_DPO_TEMPLATES + VERL_SFT_DPO_NEMOTRON_TEMPLATES)
     def test_recipe_body_wires_dataset_max_len(self, template_key):
         template = json.loads(VERL_TEMPLATE_FILE.read_text())["templates"][template_key]
         data = template["recipe_template"]["training_config"]["data"]
@@ -137,8 +161,9 @@ class TestLlmftSftDpoLengthOverrideParams:
 # Both cases ship sp=1.
 VERL_CLAMP_CASES = [
     # (recipe, expected override max = budget, expected label = floor-pow2 of budget)
-    # 72b-sft: budget 8192 -> "8K"; gemma-31b-dpo: budget 33280 -> "32K" (floored).
-    ("fine-tuning/qwen-0_7_0/verl-sft-qwen-2-5-72b-instruct-fft", 8192, "8K"),
+    # qwen3.5-4b-sft: budget 16384 -> "16K"; gemma-31b-dpo: budget 33280 -> "32K" (floored).
+    # (Qwen 2.5 / Qwen 3 recipes publish the power-of-2 cap instead; see TestVerlPow2LengthCap.)
+    ("fine-tuning/qwen-0_7_0/verl-sft-qwen-3-dot-5-4b-lora", 16384, "16K"),
     ("fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-31b-it-lora", 33280, "32K"),
 ]
 
@@ -383,3 +408,136 @@ class TestVerlSequenceLengthClamp:
         spec["max"] = max(tiny_context_length, floor)
         assert spec["max"] == 1024  # floored to default, not 100
         assert spec["max"] >= spec["min"]
+
+
+def _largest_power_of_two_at_most(n):
+    return 1 << (int(n).bit_length() - 1)
+
+
+def _released_pow2_cap_recipes():
+    """The Llama 3.x and DeepSeek verl SFT/DPO recipes JumpStart publishes, matched the way the publisher does."""
+    generator = LaunchJsonGenerator()
+    released = []
+    paths = [
+        p
+        for family in ("llama-0_7_0", "deepseek-0_7_0")
+        for p in (generator.recipes_dir / "fine-tuning" / family).glob("verl-*.yaml")
+    ]
+    for path in sorted(paths):
+        if not VerlRecipeTemplateProcessor._uses_pow2_length_cap(path.stem):
+            continue
+        recipe_id = path.relative_to(generator.recipes_dir).as_posix()
+        if not any(pattern.search(recipe_id) for pattern in generator.exclusion_patterns):
+            released.append(recipe_id[: -len(".yaml")])
+    return released
+
+
+RELEASED_POW2_CAP_RECIPES = _released_pow2_cap_recipes()
+
+
+@pytest.fixture(scope="module")
+def pow2_processor():
+    base = json.loads(BASE_FILE.read_text())["fine_tuning"]
+    return VerlRecipeTemplateProcessor(staging_cfg=base, platform="sm_jobs")
+
+
+class TestVerlPow2LengthCap:
+    """The Llama and DeepSeek verl recipes that replace llmft on JumpStart publish one power-of-2 length.
+
+    For these recipes the dataset_max_len default and max, the max_response_length max and
+    the SequenceLength label are all the largest power of 2 <= data.max_length (per
+    sequence for DPO), and the hints quote that range. Every other verl recipe keeps the
+    raw-budget clamp tested above.
+    """
+
+    def test_released_recipes_found(self):
+        # Guards the discovery above: an empty list would make the next test vacuous.
+        assert RELEASED_POW2_CAP_RECIPES
+
+    @pytest.mark.parametrize("recipe_path", RELEASED_POW2_CAP_RECIPES)
+    def test_released_recipe_publishes_power_of_two_length(self, recipe_path):
+        # staging_cfg is the recipe itself, as launcher/nemo/stages.py passes it, so the
+        # defaults start from the recipe's own values.
+        recipe_cfg = load_recipe_with_hydra(recipe_path)
+        processor = VerlRecipeTemplateProcessor(staging_cfg=recipe_cfg, platform="sm_jobs")
+        processor.process_recipe(recipe_file_path=recipe_path)
+        metadata, override_params, _ = processor.get_additional_data(recipe_path)
+
+        data = recipe_cfg.training_config.data
+        cap = _largest_power_of_two_at_most(data.max_length)
+        dataset_max_len = override_params["dataset_max_len"]
+        assert dataset_max_len["default"] == dataset_max_len["max"] == cap
+        assert dataset_max_len["hint"] == f"Must be a value between {dataset_max_len['min']} and {cap}"
+        response = override_params["max_response_length"]
+        assert response["max"] == cap
+        assert response["min"] <= response["default"] <= cap
+        assert response["hint"] == f"Must be a value between {response['min']} and {cap}"
+        assert metadata["SequenceLength"] == f"{cap // 1024}K"
+
+        # The longest sample the cap admits fits the token budget verl packs against: one
+        # sequence for SFT, the chosen + rejected pair for DPO.
+        sp = int((recipe_cfg.training_config.get("engine") or {}).get("ulysses_sequence_parallel_size") or 1)
+        sequences_per_sample = 2 if "/verl-dpo-" in recipe_path else 1
+        assert sequences_per_sample * cap <= data.max_token_len_per_gpu * sp
+
+    def test_cap_is_largest_power_of_two_at_most_max_length(self, pow2_processor):
+        from omegaconf import OmegaConf
+
+        cfg = OmegaConf.create({"training_config": {"data": {"max_length": 17408, "max_token_len_per_gpu": 17408}}})
+        assert pow2_processor._pow2_length_cap("verl-sft-llama-3-dot-2-1b-instruct-x", cfg) == 16384
+
+    def test_dpo_cap_keeps_the_pair_within_the_token_budget(self, pow2_processor):
+        # 8192 tokens per side but a 12288-token budget: each side of the pair gets 6144,
+        # so the cap is 4096, not 8192.
+        from omegaconf import OmegaConf
+
+        cfg = OmegaConf.create(
+            {
+                "training_config": {
+                    "trainer": {"beta": 0.1},
+                    "data": {"max_length": 8192, "max_token_len_per_gpu": 12288},
+                }
+            }
+        )
+        assert pow2_processor._pow2_length_cap("verl-dpo-llama-3-dot-2-1b-instruct-x", cfg) == 4096
+
+    def test_no_cap_outside_the_pow2_cap_recipes(self, pow2_processor):
+        from omegaconf import OmegaConf
+
+        cfg = OmegaConf.create({"training_config": {"data": {"max_length": 17408, "max_token_len_per_gpu": 17408}}})
+        for name in ("verl-sft-qwen-3-dot-5-4b-lora", "verl-sft-deepseek-r1-distilled-qwen-3b-x"):
+            assert pow2_processor._pow2_length_cap(name, cfg) is None, name
+
+    def test_qwen_2_5_and_3_recipes_get_the_cap(self, pow2_processor):
+        from omegaconf import OmegaConf
+
+        sft = OmegaConf.create({"training_config": {"data": {"max_length": 12800, "max_token_len_per_gpu": 12800}}})
+        assert pow2_processor._pow2_length_cap("verl-sft-qwen-3-8b-p4d-24xl-10k-tt-lora", sft) == 8192
+        dpo = OmegaConf.create(
+            {
+                "training_config": {
+                    "trainer": {"beta": 0.01},
+                    "data": {"max_length": 5120, "max_token_len_per_gpu": 10240},
+                }
+            }
+        )
+        assert pow2_processor._pow2_length_cap("verl-dpo-qwen-2-5-7b-instruct-g5-48xl-5k-tt-lora", dpo) == 4096
+
+    def test_deepseek_distill_recipes_get_the_cap(self, pow2_processor):
+        from omegaconf import OmegaConf
+
+        cfg = OmegaConf.create({"training_config": {"data": {"max_length": 12800, "max_token_len_per_gpu": 12800}}})
+        assert pow2_processor._pow2_length_cap("verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-x", cfg) == 8192
+
+    def test_cap_does_not_carry_over_to_the_next_recipe(self, pow2_processor):
+        # One processor reused for a capped recipe and then an ordinary one: the second
+        # still gets the raw-budget clamp (33280, not a power of 2).
+        capped = RELEASED_POW2_CAP_RECIPES[0]
+        pow2_processor.process_recipe(recipe_file_path=capped)
+        pow2_processor.get_additional_data(capped)
+        assert pow2_processor._pow2_cap is None
+
+        other = "fine-tuning/gemma4-0_7_0/verl-dpo-gemma-4-31b-it-lora"
+        pow2_processor.process_recipe(recipe_file_path=other)
+        _, override_params, _ = pow2_processor.get_additional_data(other)
+        assert override_params["dataset_max_len"]["max"] == 33280

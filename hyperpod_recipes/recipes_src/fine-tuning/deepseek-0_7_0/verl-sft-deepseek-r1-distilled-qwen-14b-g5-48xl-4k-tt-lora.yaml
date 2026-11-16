@@ -3,9 +3,14 @@ defaults:
   - _self_
 
 display_name: "DeepSeek R1 Distill Qwen 14B SFT LoRA Fine-Tuning (4k)"
-instance_types: ["ml.g5.48xlarge", "ml.p4d.24xlarge", "ml.p5.48xlarge"]
+instance_types: ["ml.g5.48xlarge", "ml.g6.48xlarge", "ml.p4d.24xlarge", "ml.p4de.24xlarge", "ml.p5.48xlarge"]
 
 training_config:
   data:
+    # ml.g6.48xlarge is listed on a check of this rung, not a sweep: training job
+    # verl-sft-deepseek-r1-distilled-qwe-0c33o-20261104221100 (2026-11-04, verl-v1.1.9-smtj) ran
+    # this recipe as shipped on 8 x L4 for 30 steps of 32 samples of 2048-4096 tokens, with no
+    # out-of-memory error: peak 10.1 GB allocated and 17.7 GB reserved of 22.0 GB per GPU.
+    # scripts/measured_ceilings.json records it at this rung's max_length.
     max_length: 4096
     max_token_len_per_gpu: 4096

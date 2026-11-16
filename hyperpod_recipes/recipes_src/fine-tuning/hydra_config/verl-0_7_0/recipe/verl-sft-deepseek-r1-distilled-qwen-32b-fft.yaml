@@ -10,7 +10,7 @@ defaults:
   - /hydra_config/verl-0_7_0/sft/checkpoint/default
   - _self_
 
-version: 1.0.1
+version: 1.0.4
 
 run:
   name: verl-sft-deepseek-r1-distilled-qwen-32b-fft
@@ -27,6 +27,10 @@ training_config:
     # truncation drops the head of the prompt and keeps the target response, which is
     # what SFT trains on.
     truncation: left
+    train_val_split_ratio: 0.9
+    train_dataset_name: ""  # llmft parity override: training_data_name
+    val_dataset_name: ""  # llmft parity override: validation_data_name
+    seed: 42  # llmft parity override: seed
 
   engine:
     strategy: fsdp2
@@ -38,12 +42,17 @@ training_config:
     trust_remote_code: false
     use_liger: true
     use_fused_kernels: false
+    generation_cfg:  # llmft parity override: temperature, max_response_length
+      temperature: 0.6
+      max_new_tokens: 2048
 
   optim:
     lr: 1.0e-05
-    weight_decay: 0.1
+    lr_warmup_steps_ratio: 0.1
+    weight_decay: 0.0
     betas: [0.9, 0.95]
     lr_scheduler_type: cosine
+    gradient_clipping: true  # llmft parity override: gradient_clipping
 
   trainer:
     project_name: verl_sft_deepseek_r1_distill_qwen_32b
@@ -51,3 +60,4 @@ training_config:
     total_epochs: 1
     max_ckpt_to_keep: 3
     resume_mode: resume_path
+    logging_steps: 1  # llmft parity override: logging_steps

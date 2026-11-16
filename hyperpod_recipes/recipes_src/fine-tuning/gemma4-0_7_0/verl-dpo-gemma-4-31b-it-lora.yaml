@@ -13,7 +13,7 @@ defaults:
   - _self_
 
 display_name: "Gemma 4 31B IT DPO LoRA Fine-Tuning"
-version: 2.0.8
+version: 2.0.12
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
 
 run:
@@ -41,7 +41,8 @@ training_config:
     strategy: fsdp2
   optim:
     lr: 5.0e-5
-    lr_warmup_steps: 10
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.1
   trainer:
     beta: 0.01
     total_epochs: 3

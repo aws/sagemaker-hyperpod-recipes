@@ -30,6 +30,23 @@ class LLMFTRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         """Return the category key for base parameter lookup."""
         return "fine_tuning"
 
+    def _deferred_bound_params(self) -> tuple:
+        return ("dataset_max_len",)
+
+    def _apply_recipe_specific_bounds(self, override_params: dict, recipe_file_path: str) -> bool:
+        """Cap dataset_max_len at the recipe's training_args.max_len."""
+        spec = override_params.get("dataset_max_len")
+        if not isinstance(spec, dict) or recipe_file_path is None:
+            return False
+        recipe_cfg = self._load_recipe_config(recipe_file_path)
+        max_len = recipe_cfg.get("training_config", {}).get("training_args", {}).get("max_len")
+        if not isinstance(max_len, int):
+            return False
+        spec["max"] = max(max_len, spec.get("min", 0))
+        if isinstance(spec.get("default"), int):
+            spec["default"] = min(spec["default"], spec["max"])
+        return True
+
     def _load_template(self):
         """Load LLMFT template files."""
         with open(self.template_path) as f:
