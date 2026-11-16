@@ -13,7 +13,6 @@ Container images are shown for both Kubernetes (K8S) and SageMaker Jobs (SM) pip
 - [GPT-OSS](#gpt-oss)
 - [Nova](#nova)
 - [Gemma](#gemma)
-- [Glm](#glm)
 - [Ministral](#ministral)
 - [Muse-Glimmer](#muse-glimmer)
 - [Nemotron](#nemotron)
@@ -858,18 +857,6 @@ Container images are shown for both Kubernetes (K8S) and SageMaker Jobs (SM) pip
 | Gemma 4 E4B IT SFT LoRA Fine-Tuning (Text) | 327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | K8S: 556809692997.dkr.ecr.us-east-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | K8S: 827510180725.dkr.ecr.us-west-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | 920498770698.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | 356859066553.dkr.ecr.ap-northeast-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | K8S: 423350936952.dkr.ecr.ap-south-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | K8S: 885852567298.dkr.ecr.ap-southeast-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | K8S: 304708117039.dkr.ecr.ap-southeast-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | K8S: 391061375763.dkr.ecr.eu-central-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | K8S: 963403601044.dkr.ecr.eu-north-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | K8S: 330290781619.dkr.ecr.eu-south-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | 942446708630.dkr.ecr.eu-west-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | K8S: 016839105697.dkr.ecr.eu-west-2.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 | K8S: 311136344257.dkr.ecr.sa-east-1.amazonaws.com/hyperpod-recipes-verl-0-7-0:verl-v1.1.9-smtj-tf58 |
 | evaluation/open-source/open_source_deterministic_eval | 763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:latest | — | — | 763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:latest | 763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:latest | — | — | K8S: 763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:latest | K8S: 763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:latest | — | — | 763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:latest | — | — |
 | evaluation/open-source/open_source_llmaj_eval | 763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:latest | — | — | 763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:latest | 763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:latest | — | — | K8S: 763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:latest | K8S: 763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:latest | — | — | 763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:latest | — | — |
-
-## Glm
-
-### huggingface-vlm-glm-5-3-flash
-
-| Recipe | us-east-1 | us-west-2 | ap-northeast-1 | ap-southeast-2 | eu-central-1 | eu-west-1 |
-|-----|-----|-----|-----|-----|-----|-----|
-| GLM 5.3 Flash SFT Full Fine-Tuning (verl 0.9) (32k) | — | — | — | — | — | — |
-| GLM 5.3 Flash SFT Full Fine-Tuning (verl 0.9) (64k) | — | — | — | — | — | — |
-| GLM 5.3 Flash SFT LoRA Fine-Tuning (verl 0.9) (29k) | — | — | — | — | — | — |
-| evaluation/open-source/open_source_deterministic_eval | 763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:latest | 763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:latest | 763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:latest | K8S: 763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:latest | K8S: 763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:latest | 763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:latest |
-| evaluation/open-source/open_source_llmaj_eval | 763104351884.dkr.ecr.us-east-1.amazonaws.com/sagemaker-evaluation:latest | 763104351884.dkr.ecr.us-west-2.amazonaws.com/sagemaker-evaluation:latest | 763104351884.dkr.ecr.ap-northeast-1.amazonaws.com/sagemaker-evaluation:latest | K8S: 763104351884.dkr.ecr.ap-southeast-2.amazonaws.com/sagemaker-evaluation:latest | K8S: 763104351884.dkr.ecr.eu-central-1.amazonaws.com/sagemaker-evaluation:latest | 763104351884.dkr.ecr.eu-west-1.amazonaws.com/sagemaker-evaluation:latest |
 
 ## Ministral
 

@@ -20,8 +20,7 @@ llmft name left out on purpose is ``merge_weights``: verl LoRA recipes always me
 templates do not let a job turn merging off.
 
 The Nemotron recipes run in their own container, which does not support the llmft keys yet, so
-they use ``<key>_nemotron`` copies of the templates without those fields. The Megatron-engine GLM
-recipes (verl 0.9) use them too, because their ``{{min_lr}}`` is an absolute ``optim.min_lr``.
+they use ``<key>_nemotron`` copies of the templates without those fields.
 
 This module pins three things:
 
@@ -31,7 +30,7 @@ This module pins three things:
    default template adds exactly the pinned llmft paths. The only override text allowed to differ
    is listed in ``DEFAULT_ONLY_DESCRIPTIONS``. A change to one template that is not mirrored in the
    other fails here.
-2. Every verl SFT/DPO recipe under ``nemotron-0_7_0/`` or ``glm-0_9_0/`` uses a Nemotron template,
+2. Every verl SFT/DPO recipe under ``nemotron-0_7_0/`` uses a Nemotron template,
    and every other verl SFT/DPO recipe uses a default template. GRPO routing is unchanged.
 3. Only the verl SFT/DPO recipes of the Llama 3.x, DeepSeek R1 distill, Qwen 2.5 and Qwen 3 models
    in ``POW2_CAP_MODELS`` publish the power-of-2 length cap, and the count per (technique, model) is
@@ -88,8 +87,6 @@ EXPECTED_LLMFT_FIELDS = {
 DEFAULT_ONLY_DESCRIPTIONS = {"min_lr"}
 
 NEMOTRON_DIR = "fine-tuning/nemotron-0_7_0/"
-# The Megatron-engine recipes, routed to the Nemotron templates by engine.strategy, not by path.
-MEGATRON_ENGINE_DIR = "fine-tuning/glm-0_9_0/"
 
 
 def _without_default_only_descriptions(override_parameters):
@@ -189,9 +186,6 @@ class TestNemotronTemplateIsDefaultWithoutLlmftFields:
         ("fine-tuning/nemotron-0_7_0/verl-sft-nemotron-3-nano-30b-fft", "sft_fft" + SUFFIX),
         ("fine-tuning/nemotron-0_7_0/verl-dpo-nemotron-3-super-120b-lora", "dpo" + SUFFIX),
         ("fine-tuning/nemotron-0_7_0/verl-dpo-nemotron-3-5-lightning-30b-fft", "dpo_fft" + SUFFIX),
-        # So do the Megatron-engine GLM recipes.
-        ("fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5-48xl-29k-tt-lora", "sft" + SUFFIX),
-        ("fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5en-48xl-64k-tt-fft", "sft_fft" + SUFFIX),
         # GRPO routing is unchanged, Nemotron included.
         ("fine-tuning/nemotron-0_7_0/verl-grpo-rlvr-nemotron-3-nano-30b-lora", "grpo_rlvr"),
         ("fine-tuning/nemotron-0_7_0/verl-grpo-rlaif-nemotron-3-nano-30b-fft", "grpo_rlaif_fft"),
@@ -213,14 +207,13 @@ def _sft_dpo_key(recipe_path: Path):
     return f"{algo}_fft" if "fft" in recipe_path.stem.lower() else algo
 
 
-# Verl SFT/DPO recipes in recipes_collection routed to the Nemotron templates, per template key
-# (Nemotron, then the Megatron-engine GLM recipes). A routed recipe added or removed changes a
-# count, so the change is deliberate.
-EXPECTED_NEMOTRON_ROUTED_COUNTS = {"sft": 4 + 1, "sft_fft": 3 + 2, "dpo": 4, "dpo_fft": 3}
+# Verl SFT/DPO recipes in recipes_collection routed to the Nemotron templates, per template key.
+# A routed recipe added or removed changes a count, so the change is deliberate.
+EXPECTED_NEMOTRON_ROUTED_COUNTS = {"sft": 4, "sft_fft": 3, "dpo": 4, "dpo_fft": 3}
 
 
 def test_routed_sets(processor, templates):
-    """Every Nemotron and GLM verl SFT/DPO recipe uses a *_nemotron template; every other one the default."""
+    """Every Nemotron verl SFT/DPO recipe uses a *_nemotron template; every other one the default."""
     nemotron_counts = Counter()
     wrong = []
     for path in sorted(RECIPES_DIR.rglob("verl-*.yaml")):
@@ -229,7 +222,7 @@ def test_routed_sets(processor, templates):
             continue
         rel = path.relative_to(RECIPES_DIR).as_posix()[: -len(".yaml")]
         selected = processor.get_recipe_template({}, templates, rel)
-        is_nemotron = rel.startswith((NEMOTRON_DIR, MEGATRON_ENGINE_DIR))
+        is_nemotron = rel.startswith(NEMOTRON_DIR)
         expected = base_key + SUFFIX if is_nemotron else base_key
         if selected is not templates[expected]:
             wrong.append(f"{rel}: expected {expected}")

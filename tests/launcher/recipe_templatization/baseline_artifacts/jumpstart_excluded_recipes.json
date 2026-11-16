@@ -60,9 +60,6 @@
         "fine-tuning/deepseek/llmft_deepseek_r1_distilled_qwen_7b_seq4k_gpu_dpo_fft",
         "fine-tuning/deepseek/llmft_deepseek_r1_distilled_qwen_7b_seq4k_gpu_sft_fft",
         "fine-tuning/deepseek/llmft_deepseek_r1_distilled_qwen_7b_seq4k_gpu_sft_lora",
-        "fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5-48xl-29k-tt-lora",
-        "fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5-48xl-32k-tt-fft",
-        "fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5en-48xl-64k-tt-fft",
         "fine-tuning/gpt_oss-0_7_0/verl-dpo-gpt-oss-120b-p5-48xl-4k-tt-lora",
         "fine-tuning/gpt_oss-0_7_0/verl-dpo-gpt-oss-20b-p5-48xl-12k-tt-fft",
         "fine-tuning/gpt_oss-0_7_0/verl-dpo-gpt-oss-20b-p5-48xl-8k-tt-lora",
@@ -453,11 +450,6 @@
             "fine-tuning/llama-0_7_0/verl-dpo-llama-3-dot-1-8b-instruct-p4de-24xl-24k-tt-lora"
         ],
         "fine-tuning/llama-0_7_0/verl-sft-llama-3-dot-3-70b-instruct-(?!(?:p5-48xl-8k-tt-lora|p5-48xl-8k-tt-fft)(?:\\.yaml)?$)": [],
-        "fine-tuning/llama-0_7_0/verl-dpo-llama-3-dot-3-70b-instruct-(?!(?:p4de-24xl-4k-tt-lora|p5-48xl-4k-tt-fft)(?:\\.yaml)?$)": [],
-        "-0_9_0/": [
-            "fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5-48xl-29k-tt-lora",
-            "fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5-48xl-32k-tt-fft",
-            "fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5en-48xl-64k-tt-fft"
-        ]
+        "fine-tuning/llama-0_7_0/verl-dpo-llama-3-dot-3-70b-instruct-(?!(?:p4de-24xl-4k-tt-lora|p5-48xl-4k-tt-fft)(?:\\.yaml)?$)": []
     }
 }

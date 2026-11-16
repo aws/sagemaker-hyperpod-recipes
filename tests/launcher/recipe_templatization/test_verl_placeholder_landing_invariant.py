@@ -3,8 +3,7 @@
 For every verl recipe under `recipes_collection/recipes/fine-tuning/*/verl-*.yaml` and its matched
 template (same selection rule as `VerlRecipeTemplateProcessor.get_recipe_template`: algorithm type,
 `fft` in the filename, and the `_nemotron` suffix for the recipes
-`VerlRecipeTemplateProcessor._uses_nemotron_templates` selects: Nemotron, and the Megatron-engine
-GLM recipes), a placeholder that lands on none of its
+`VerlRecipeTemplateProcessor._uses_nemotron_templates` selects: Nemotron), a placeholder that lands on none of its
 template paths is a placeholder the recipe does not carry. `_prune_unlanded_placeholder_params`
 drops it from that recipe's advertised overrides at generation time.
 
@@ -13,7 +12,7 @@ DeepSeek R1 distill, Qwen 2.5 and Qwen 3 recipes carry every llmft key, so an un
 expected on the other families. This module still catches a template mistake by pinning, per family:
 
 - every placeholder of the matched template lands on every Llama 3.x, DeepSeek, Qwen 2.5 and Qwen 3 recipe;
-- every placeholder of the matched `*_nemotron` template lands on every Nemotron and GLM recipe;
+- every placeholder of the matched `*_nemotron` template lands on every Nemotron recipe;
 - on every other family, the only unlanded placeholders are llmft keys (and the pruning removes
   them from the published overrides, which `test_unlanded_placeholder_pruning.py` covers);
 - `{{min_lr}}` lands on `optim.min_lr_ratio` (a fraction of the peak learning rate, as the default
@@ -42,7 +41,7 @@ TEMPLATE_PATH = REPO_ROOT / "launcher" / "recipe_templatization" / "verl" / "ver
 PLACEHOLDER = re.compile(r"\{\{(\w+)\}\}")
 
 # Families whose recipes carry every llmft key, so every placeholder must land.
-FULL_LANDING_DIRS = ("llama-0_7_0", "deepseek-0_7_0", "nemotron-0_7_0", "glm-0_9_0")
+FULL_LANDING_DIRS = ("llama-0_7_0", "deepseek-0_7_0", "nemotron-0_7_0")
 # Models in other family directories whose recipes also carry every llmft key: the Qwen 2.5 and
 # Qwen 3 models that replace llmft recipes on JumpStart. qwen-0_7_0 also holds Qwen 3.5/3.6/3.8,
 # which do not, so these are matched by recipe name.
@@ -175,8 +174,8 @@ def test_verl_recipes_exist():
 
 
 def test_every_placeholder_lands_on_llama_deepseek_and_nemotron(templates):
-    """The Llama 3.x, DeepSeek, Qwen 2.5 and Qwen 3 recipes carry every llmft key; Nemotron and GLM carry
-    every key their templates name."""
+    """The Llama 3.x, DeepSeek, Qwen 2.5 and Qwen 3 recipes carry every llmft key; Nemotron carries
+    every key its templates name."""
     violations = []
     checked_qwen = 0
     for family, name, recipe, key in SFT_DPO_RECIPES:

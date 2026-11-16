@@ -498,25 +498,6 @@ def test_sp_for_gate_credits_the_right_section():
     assert _sp_for_gate(tc_no_sp, ("actor_rollout_ref", "rollout", "log_prob_max_token_len_per_gpu")) == 1
 
 
-# verl 0.9 recipes are JumpStart-excluded, so discover_recipes() (RELS) never yields them.
-# Collect them from disk instead and check the processor routes them to the 0.9 regional key.
-VERL_09_RELS = sorted(
-    str(p.relative_to(RECIPES_ROOT).with_suffix("")) for p in RECIPES_ROOT.glob("fine-tuning/*-0_9_0/verl-*.yaml")
-)
-
-
-def test_verl_09_recipes_found():
-    assert VERL_09_RELS, "no verl 0.9 recipes found under recipes_collection/recipes/fine-tuning/*-0_9_0/"
-
-
-@pytest.mark.parametrize("rel", VERL_09_RELS)
-def test_verl_09_recipe_uses_verl_09_regional_key(rel):
-    """0.9 recipes also carry profiler/global_profiler, so the path check must win over the 0.7 shape check."""
-    _LENGTH_PROC.process_recipe(recipe_file_path=rel)
-    _LENGTH_PROC.get_recipe_metadata(rel)
-    assert _LENGTH_PROC._verl_regional_key == "verl-0.9.0"
-
-
 # The 0.7.0 Nemotron recipes, whose container the processor picks by model substring. Each container
 # is pinned in three places: the processor (what JumpStart publishes), the validator's container_key
 # (what the recipe is validated on) and generate_containers_doc (what CONTAINERS.md lists).

@@ -194,11 +194,6 @@ INHERITED_INSTANCES_BY_RUNG = {
     # which is why it is not keyed on the slot: only p4de reached the 29696 rung, its GPUs
     # have the same 80 GB as p5's, and p4de and p5 measured differently in 20 of 46 slots.
     "verl-dpo-llama-3-dot-2-1b-instruct-g5-48xl-8k-tt-lora": ("ml.p5.48xlarge",),
-    # GLM-5.3-Flash 64k FFT was measured on 4 x ml.p5en.48xlarge. ml.p5e.48xlarge has the same
-    # H200 GPUs (141 GB) and the same 2 TiB host memory, but no p5e run of this recipe reached
-    # 65,536 tokens, so p5e is inherited here for this rung only and does not carry down to the
-    # shorter rungs in the slot.
-    "verl-sft-glm-5-dot-3-flash-p5en-48xl-64k-tt-fft": ("ml.p5e.48xlarge",),
     # DeepSeek R1 distill Qwen SFT rungs that list ml.p4d.24xlarge but not ml.p4de.24xlarge,
     # which every llmft SFT recipe they replace (deepseek/llmft_deepseek_r1_distilled_qwen_*)
     # lists. p4de has the same eight A100 GPUs, host memory and network as p4d, with 80 GB per
