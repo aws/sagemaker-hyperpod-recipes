@@ -11,7 +11,7 @@ defaults:
   - /hydra_config/verl-0_7_0/sft/peft/lora
   - _self_
 
-version: 1.0.1
+version: 1.0.4
 
 run:
   name: verl-sft-qwen-3-1-dot-7b-lora
@@ -25,6 +25,10 @@ training_config:
     micro_batch_size_per_gpu: 8
     truncation: left
     ignore_input_ids_mismatch: true
+    train_val_split_ratio: 0.9
+    train_dataset_name: ""  # llmft parity override: training_data_name
+    val_dataset_name: ""  # llmft parity override: validation_data_name
+    seed: 42  # llmft parity override: seed
 
   engine:
     strategy: fsdp2
@@ -34,14 +38,23 @@ training_config:
   model:
     path: Qwen/Qwen3-1.7B
     use_liger: true
+    lora_rank: 16
+    lora_alpha: 32
+    lora_dropout: 0.05  # llmft parity override: lora_dropout
+    generation_cfg:  # llmft parity override: temperature, max_response_length
+      temperature: 0.6
+      max_new_tokens: 2048
   optim:
-    lr: 2.0e-04
-    weight_decay: 0.001
+    lr: 1.0e-04
+    lr_warmup_steps_ratio: 0.1
+    weight_decay: 0.0
     betas: [0.9, 0.95]
     lr_scheduler_type: cosine
+    gradient_clipping: true  # llmft parity override: gradient_clipping
 
   trainer:
     project_name: verl_sft_qwen_3_1_dot_7b
     experiment_name: qwen_3_1_dot_7b_sft_fsdp_lora_tatqa
     max_ckpt_to_keep: 3
     resume_mode: resume_path
+    logging_steps: 1  # llmft parity override: logging_steps

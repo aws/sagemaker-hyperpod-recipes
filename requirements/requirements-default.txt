@@ -11,7 +11,7 @@
 # - boto3>=1.35.66
 # - PyYAML>=6.0
 # - pydantic>=2.0.0
-# - sagemaker>=2.0.0
+# - sagemaker<3,>=2.257.6; python_version >= "3.9"
 # - pytest-xdist
 # - pytest-cov
 # - pytest-subtests
@@ -36,12 +36,12 @@ attrs==25.4.0
     #   pytest-subtests
     #   referencing
     #   sagemaker
-boto3==1.35.66
+boto3==1.43.126
     # via
     #   hatch.envs.default
     #   sagemaker
     #   sagemaker-core
-botocore==1.35.99
+botocore==1.43.126
     # via
     #   boto3
     #   s3transfer
@@ -202,6 +202,8 @@ python-dateutil==2.9.0.post0
     #   botocore
     #   graphene
     #   pandas
+pytz==2026.6
+    # via sagemaker
 pyyaml==6.0.3
     # via
     #   hatch.envs.default
@@ -229,16 +231,14 @@ rpds-py==0.30.0
     #   referencing
 rsa==4.9.1
     # via google-auth
-s3transfer==0.10.4
+s3transfer==0.19.3
     # via boto3
-sagemaker==2.250.0
+sagemaker==2.257.6 ; python_version >= "3.9"
     # via hatch.envs.default
-sagemaker-core==1.0.77
+sagemaker-core==1.0.78
     # via sagemaker
 schema==0.7.8
     # via sagemaker
-setuptools==82.0.1
-    # via tensorboard
 six==1.17.0
     # via
     #   google-pasta
@@ -290,3 +290,7 @@ zipp==3.23.0
     # via importlib-metadata
 zstandard==0.15.2
     # via hatch.envs.default
+
+# The following packages are considered to be unsafe in a requirements file:
+setuptools==82.0.1
+    # via tensorboard

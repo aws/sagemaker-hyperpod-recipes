@@ -1,0 +1,171 @@
+[
+  {
+    "InstanceType": "ml.g7.24xlarge",
+    "Profile": "Default",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.28.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "4",
+      "SM_VLLM_MAX_MODEL_LEN": "16384",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.90",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_LIMIT_MM_PER_PROMPT": "{\"image\":0,\"video\":0}",
+      "SM_VLLM_REASONING_PARSER": "muse_glimmer",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "muse_glimmer",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 188416,
+      "NumberOfCpuCoresRequired": 46,
+      "NumberOfAcceleratorDevicesRequired": 4
+    }
+  },
+  {
+    "InstanceType": "ml.g7.48xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.28.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "8",
+      "SM_VLLM_MAX_MODEL_LEN": "16384",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.90",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_LIMIT_MM_PER_PROMPT": "{\"image\":0,\"video\":0}",
+      "SM_VLLM_REASONING_PARSER": "muse_glimmer",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "muse_glimmer",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 385024,
+      "NumberOfCpuCoresRequired": 94,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  },
+  {
+    "InstanceType": "ml.g6.12xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.28.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "4",
+      "SM_VLLM_MAX_MODEL_LEN": "16384",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.90",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_LIMIT_MM_PER_PROMPT": "{\"image\":0,\"video\":0}",
+      "SM_VLLM_REASONING_PARSER": "muse_glimmer",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "muse_glimmer",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 98304,
+      "NumberOfCpuCoresRequired": 36,
+      "NumberOfAcceleratorDevicesRequired": 4
+    }
+  },
+  {
+    "InstanceType": "ml.g6e.24xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.28.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "4",
+      "SM_VLLM_MAX_MODEL_LEN": "16384",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.90",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_LIMIT_MM_PER_PROMPT": "{\"image\":0,\"video\":0}",
+      "SM_VLLM_REASONING_PARSER": "muse_glimmer",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "muse_glimmer",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 393216,
+      "NumberOfCpuCoresRequired": 72,
+      "NumberOfAcceleratorDevicesRequired": 4
+    }
+  },
+  {
+    "InstanceType": "ml.g6.48xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.28.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "8",
+      "SM_VLLM_MAX_MODEL_LEN": "16384",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.90",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_LIMIT_MM_PER_PROMPT": "{\"image\":0,\"video\":0}",
+      "SM_VLLM_REASONING_PARSER": "muse_glimmer",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "muse_glimmer",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 393216,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  },
+  {
+    "InstanceType": "ml.g6e.48xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.28.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "8",
+      "SM_VLLM_MAX_MODEL_LEN": "16384",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.90",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_LIMIT_MM_PER_PROMPT": "{\"image\":0,\"video\":0}",
+      "SM_VLLM_REASONING_PARSER": "muse_glimmer",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "muse_glimmer",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1024000,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  },
+  {
+    "InstanceType": "ml.p5.48xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.28.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "8",
+      "SM_VLLM_MAX_MODEL_LEN": "16384",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.90",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_LIMIT_MM_PER_PROMPT": "{\"image\":0,\"video\":0}",
+      "SM_VLLM_REASONING_PARSER": "muse_glimmer",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "muse_glimmer",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1539316,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  },
+  {
+    "InstanceType": "ml.p5en.48xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.28.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "8",
+      "SM_VLLM_MAX_MODEL_LEN": "16384",
+      "SM_VLLM_MAX_NUM_SEQS": "4",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.90",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_LIMIT_MM_PER_PROMPT": "{\"image\":0,\"video\":0}",
+      "SM_VLLM_REASONING_PARSER": "muse_glimmer",
+      "SM_VLLM_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "SM_VLLM_TOOL_CALL_PARSER": "muse_glimmer",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1539316,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  }
+]

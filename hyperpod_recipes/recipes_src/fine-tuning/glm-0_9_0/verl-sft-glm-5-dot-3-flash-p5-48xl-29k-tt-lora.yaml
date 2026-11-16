@@ -1,0 +1,14 @@
+defaults:
+  - /hydra_config/verl-0_9_0/recipe/verl-sft-glm-5-dot-3-flash-lora
+  - _self_
+
+display_name: "GLM 5.3 Flash SFT LoRA Fine-Tuning (verl 0.9) (29k)"
+instance_types: ["ml.p5.48xlarge"]
+
+training_config:
+  data:
+    # 30,000 rather than 32,768 keeps the TP8 / EP16 layout within 80 GB GPU memory.
+    # The recipe label is 30000 // 1024 = 29k.
+    max_length: 30000
+    # Packed tokens per GPU per micro-batch.
+    max_token_len_per_gpu: 30000

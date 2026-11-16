@@ -36,7 +36,7 @@ dependencies = [
     "boto3>=1.35.66",
     "PyYAML>=6.0",
     "pydantic>=2.0.0",
-    "sagemaker>=2.0.0",
+    "sagemaker>=2.257.6,<3; python_version >= '3.9'",
     "pytest-xdist",
     "pytest-cov",
     "pytest-subtests",

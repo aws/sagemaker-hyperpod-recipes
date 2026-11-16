@@ -3,10 +3,9 @@ defaults:
   - _self_
 
 display_name: Nemotron 3 Nano 30B GRPO RLAIF Fine-Tuning with Megatron FFT
-version: 2.0.5
+version: 2.0.8
 instance_types:
   - ml.p5.48xlarge
-  - ml.p4de.24xlarge
 
 run:
   model_type: verl
@@ -147,7 +146,7 @@ training_config:
         range:
           - 0.0
           - 1.0
-        aws_region_name: us-west-2
+        aws_region_name: null
         sampling_params:
           temperature: 0.0
           max_completion_tokens: 2048

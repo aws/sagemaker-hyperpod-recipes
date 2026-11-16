@@ -341,7 +341,21 @@
                     "description": "Dropout probability applied to LoRA adapter layers for regularization. Typically set to 0.05 for SFT/DPO, and 0 for Mixture-of-Experts models.",
                     "visibility_tier": "tertiary",
                     "control_type": "number_input",
-                    "step": 0.1
+                    "step": 0.1,
+                    "conditional_constraints": {
+                        "max": {
+                            "Model_ID": {
+                                "openai-reasoning-gpt-oss-20b": 0.0,
+                                "default": 1.0
+                            }
+                        },
+                        "default": {
+                            "Model_ID": {
+                                "openai-reasoning-gpt-oss-20b": 0.0,
+                                "default": 0.05
+                            }
+                        }
+                    }
                 },
                 "lora_alpha": {
                     "type": "integer",
@@ -777,7 +791,21 @@
                     "description": "Dropout probability applied to LoRA adapter layers for regularization. Typically set to 0.05 for SFT/DPO, and 0 for Mixture-of-Experts models.",
                     "visibility_tier": "tertiary",
                     "control_type": "number_input",
-                    "step": 0.1
+                    "step": 0.1,
+                    "conditional_constraints": {
+                        "max": {
+                            "Model_ID": {
+                                "openai-reasoning-gpt-oss-20b": 0.0,
+                                "default": 1.0
+                            }
+                        },
+                        "default": {
+                            "Model_ID": {
+                                "openai-reasoning-gpt-oss-20b": 0.0,
+                                "default": 0.05
+                            }
+                        }
+                    }
                 },
                 "lora_alpha": {
                     "type": "integer",

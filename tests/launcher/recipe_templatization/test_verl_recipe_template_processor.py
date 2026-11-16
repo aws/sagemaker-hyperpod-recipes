@@ -73,3 +73,56 @@ class TestDpoTemplateRouting:
         result = processor.get_recipe_template(yaml_data={}, template=template, recipe_file_path=DPO_FFT_RECIPE)
         assert result is template["dpo_fft"]
         assert processor.algorithm_type == "dpo"
+
+
+class TestVerl090RewardKwargsPath:
+    """verl 0.9 RLAIF recipes take the judge settings at training_config.reward.reward_kwargs."""
+
+    RLAIF_07 = "fine-tuning/qwen-0_7_0/verl-grpo-rlaif-qwen-3-dot-6-27b-lora"
+    # No 0.9 GRPO recipe ships in this repo, so these paths are served by _grpo_0_9_recipes below.
+    RLAIF_09 = "fine-tuning/qwen-0_9_0/verl-grpo-rlaif-qwen-3-dot-6-27b-lora"
+    RLVR_09 = "fine-tuning/qwen-0_9_0/verl-grpo-rlvr-qwen-3-dot-5-4b-lora"
+    JUDGE_KWARGS = {
+        "model_id": "{{judge_model_id}}",
+        "llmj_prompt_template_path": "{{judge_prompt_template}}",
+    }
+
+    @pytest.fixture(autouse=True)
+    def _grpo_0_9_recipes(self, processor, monkeypatch):
+        """Serve minimal 0.9 GRPO recipe configs; template selection reads only these fields."""
+        recipes = {
+            self.RLAIF_09: {
+                "display_name": "Qwen 3.6 27B GRPO RLAIF Fine-Tuning with LoRA (verl 0.9)",
+                "training_config": {"algorithm": {"adv_estimator": "grpo"}},
+            },
+            self.RLVR_09: {
+                "display_name": "Qwen 3.5 4B GRPO RLVR Fine-Tuning with LoRA (verl 0.9)",
+                "training_config": {"algorithm": {"adv_estimator": "grpo"}},
+            },
+        }
+        load = processor._load_recipe_config
+        monkeypatch.setattr(processor, "_load_recipe_config", lambda path: recipes.get(path) or load(path))
+
+    def test_0_9_rlaif_template_writes_judge_settings_under_reward(self, processor):
+        template = processor.template_data["templates"]
+        result = processor.get_recipe_template(yaml_data={}, template=template, recipe_file_path=self.RLAIF_09)
+        training_config = result["recipe_template"]["training_config"]
+        assert training_config["reward"]["reward_kwargs"]["kwargs"] == self.JUDGE_KWARGS
+        assert "reward_model" not in training_config
+
+    def test_0_9_relocation_does_not_mutate_the_shared_template(self, processor):
+        template = processor.template_data["templates"]
+        processor.get_recipe_template(yaml_data={}, template=template, recipe_file_path=self.RLAIF_09)
+        shared = template["grpo_rlaif"]["recipe_template"]["training_config"]
+        assert shared["reward_model"]["reward_kwargs"]["kwargs"] == self.JUDGE_KWARGS
+        assert "reward" not in shared
+
+    def test_0_7_rlaif_template_is_unchanged(self, processor):
+        template = processor.template_data["templates"]
+        result = processor.get_recipe_template(yaml_data={}, template=template, recipe_file_path=self.RLAIF_07)
+        assert result is template["grpo_rlaif"]
+
+    def test_0_9_template_without_reward_kwargs_is_returned_as_is(self, processor):
+        template = processor.template_data["templates"]
+        result = processor.get_recipe_template(yaml_data={}, template=template, recipe_file_path=self.RLVR_09)
+        assert result is template["grpo_rlvr"]

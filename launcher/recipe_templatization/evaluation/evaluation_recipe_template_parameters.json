@@ -69,7 +69,6 @@
                     "max": null
                 },
                 "temperature": {
-                    "type": "integer",
                     "required": false,
                     "min": null,
                     "max": null

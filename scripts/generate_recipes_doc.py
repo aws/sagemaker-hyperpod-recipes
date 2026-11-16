@@ -241,6 +241,15 @@ def _detect_technique(data: dict, framework: str, path_parts: tuple) -> str:
         if isinstance(tt, str) and tt.lower() == "sft":
             return "SFT"
 
+        # verl SFT/DPO trainers: DPO uses a DPO dataset config with chosen/rejected keys,
+        # SFT uses a chat dataset with a messages key
+        verl_data = _get(data, "training_config", "data") or {}
+        if isinstance(verl_data, dict):
+            if "dpo" in str(verl_data.get("_target_") or "").lower() or "chosen_key" in verl_data:
+                return "DPO"
+            if "messages_key" in verl_data and not algo:
+                return "SFT"
+
         algo_upper = algo.upper() if algo else ""
         if reward_type:
             return f"{algo_upper} + {reward_type}".strip(" +")
@@ -264,7 +273,7 @@ def _detect_technique(data: dict, framework: str, path_parts: tuple) -> str:
 
     if framework == "checkpointless":
         # Derive from display_name or filename: pretrain, lora, full_fine_tuning
-        display = (data.get("display_name") or "").lower()
+        display = (data.get("display_name") or "").lower().replace("-", "")
         if "pretrain" in display:
             return "Pretraining"
         if "full fine" in display:
@@ -272,6 +281,10 @@ def _detect_technique(data: dict, framework: str, path_parts: tuple) -> str:
         if "lora" in display:
             return "LoRA"
         return ""
+
+    if framework == "mtrl":
+        # Multi-turn RL recipes are agentic reinforcement fine-tuning ("Agentic RFT")
+        return "Agentic RFT" if data.get("rl") is not None or data.get("rollout") is not None else ""
 
     if framework == "evaluation":
         stem = path_parts[-1] if path_parts else ""
@@ -349,6 +362,12 @@ def _detect_adapter(data: dict, framework: str) -> str:
             return str(pt).upper()
         return ""
 
+    if framework == "mtrl":
+        rank = _get(data, "model", "lora_rank")
+        if rank is None:
+            return ""
+        return "LoRA" if int(rank) > 0 else "FFT"
+
     return ""
 
 
@@ -425,6 +444,8 @@ def _extract_seq_len(data: dict, framework: str) -> Optional[int]:
     paths = [
         ("training_config", "training_args", "max_len"),  # LLMFT (87)
         ("training_config", "max_length"),  # Nova FT (30)
+        ("training_config", "data", "max_length"),  # VERL SFT/DPO
+        ("model", "max_sequence_length"),  # MTRL
         ("inference", "max_new_tokens"),  # Nova eval (17)
         ("data", "seq_length"),  # Checkpointless (4)
         ("model", "max_context_width"),  # Falcon (1)
@@ -734,8 +755,13 @@ def _extract_model_short_name(display_name: str, run_name: str = "", model_type:
 # =============================================================================
 
 
-def _find_launcher_script(stem: str) -> str:
-    """Find launcher script by convention: run_{stem}.sh (normalizing hyphens)."""
+def _find_launcher_script(stem: str, recipe_dir: str = "") -> str:
+    """Find launcher script by convention: run_{stem}.sh (normalizing hyphens).
+
+    Recipes of different versions share file names (qwen-0_7_0/ and qwen-0_9_0/), so the script in
+    the launcher directory named like the recipe's own directory wins. Otherwise the shortest path
+    wins, preferring the base directory over versioned variants.
+    """
     target = f"run_{stem.replace('-', '_')}.sh"
     matches = []
     for root, _, files in os.walk(LAUNCHER_DIR):
@@ -743,8 +769,13 @@ def _find_launcher_script(stem: str) -> str:
             matches.append(os.path.join(root, target))
     if not matches:
         return ""
-    # Return the shortest path to prefer base directory over versioned variants
-    return min(matches, key=len)
+    for match in matches:
+        if recipe_dir and Path(match).parent.name == recipe_dir:
+            return match
+    # Equal-length versioned directories tie, so break ties by path: the result must not depend
+    # on filesystem walk order, and the latest version (0_9_0) wins.
+    shortest = min(len(p) for p in matches)
+    return max(p for p in matches if len(p) == shortest)
 
 
 # =============================================================================
@@ -777,7 +808,7 @@ def parse_recipe(hp_recipe: HpRecipe) -> Optional[Recipe]:
     model_name = _extract_model_name(data, stem)
     # recipe_path in the output points to the canonical recipes_collection path for user-facing links
     collection_path = _RECIPES_COLLECTION_DIR / Path(hp_recipe.name).with_suffix(".yaml")
-    script = _find_launcher_script(stem)
+    script = _find_launcher_script(stem, Path(hp_recipe.name).parent.name)
     return Recipe(
         model=model_name,
         model_short_name=_extract_model_short_name(model_name, run_name, model_type),

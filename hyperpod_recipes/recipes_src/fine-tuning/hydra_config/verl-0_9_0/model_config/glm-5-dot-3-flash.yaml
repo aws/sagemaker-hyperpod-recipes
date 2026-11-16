@@ -1,0 +1,36 @@
+# @package recipes
+# GLM-5.3-Flash model configuration for verl-0.9.0 (Megatron engine only)
+# Text only: the vision tower and the MTP layer are not trained; the HF export copies them through
+# unchanged, so it is still a full checkpoint.
+training_config:
+  data:
+    # The chat template ends an assistant turn with no stop token, so train one after the final answer.
+    assistant_eos_token: "<|endoftext|>"
+
+  model:
+    path: zai-org/GLM-5.3-Flash
+    trust_remote_code: false
+    use_liger: false
+    use_fused_kernels: false
+    # Packing (THD) needs a verl 0.9 image with GLM-5.3-Flash packing support.
+    use_remove_padding: true
+
+  engine:
+    strategy: megatron
+    # Pipeline and context parallelism (PP > 1, CP > 1) are not supported for this model.
+    expert_tensor_parallel_size: 1
+    # verl overwrites this with model.use_remove_padding; keep the two equal.
+    use_remove_padding: true
+    override_transformer_config:
+      recompute_granularity: full
+      recompute_method: uniform
+      recompute_num_layers: 1
+      # Fused DSA kernels from the verl 0.9 container image. The unfused path is quadratic in sequence
+      # length and does not fit at 32k.
+      dsa_kernel_backend: cudnn
+      moe_grouped_gemm: true
+      moe_token_dispatcher_type: alltoall
+
+  checkpoint:
+    async_save: false
+    strict: true

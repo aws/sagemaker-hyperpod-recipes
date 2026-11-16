@@ -11,7 +11,6 @@
 
 exclusion_patterns:
   # Nova evaluation recipes on the JumpStart RECIPE_DENYLIST
-  - "muse"
   - "multi_modal_benchmark_eval$"
   - "llm_judge_eval$"
   - "rubric_llm_judge_eval$"
@@ -20,44 +19,146 @@ exclusion_patterns:
   - "llama[_-]?4[_-]?scout"
   # Checkpointless recipes are not published to Jumpstart
   - "checkpointless"
-  # Block Verl SFT recipes for Qwen models other than 3-dot-5, 3-dot-6 and 3-dot-8
-  - "verl-sft-qwen-3-(?!dot-[568])"
-  - "verl-sft-qwen-2-5"
+  # Block Verl SFT recipes for Qwen models other than 3-dot-5, 3-dot-6 and 3-dot-8.
+  # Per-instance (-<N>k-tt-) recipes are not matched here: the Qwen 2.5 and Qwen 3 lines
+  # below decide which of them are published.
+  - "verl-sft-qwen-3-(?!dot-[568])(?!.*-\\d+k-tt-(fft|lora)(?:\\.yaml)?$)"
+  - "verl-sft-qwen-2-5(?!.*-\\d+k-tt-(fft|lora)(?:\\.yaml)?$)"
   - "fine-tuning/qwen-0_7_0/verl-sft-qwen-3-14b-fft"
-  # Block gpt_oss-0_7_0 and qwen-0_7_0/qwen-3-32b recipes (use verl 0.5.0 versions instead)
+  # Block gpt_oss-0_7_0 recipes (use verl 0.5.0 versions instead)
   - "gpt_oss-0_7_0/"
-  - "qwen-0_7_0/.*qwen-3-32b"
   - "verl-sft-gpt-oss-20b-lora"
-  # FFT recipes we do not want to publish — FFT x {SFT, DPO, RLAIF, RLVR} for
-  # Llama-3-2-1b / Llama-3-1-8b / Llama-3-2-3b (pending inference endpoint fix).
-  - "fine-tuning/llama/llmft_llama3_2_1b_instruct_seq4k_gpu_dpo_fft"
-  - "fine-tuning/llama/llmft_llama3_2_1b_instruct_seq4k_gpu_sft_fft"
-  - "fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-2-1b-instruct-fft"
-  - "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-2-1b-instruct-fft"
-  - "fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_dpo_fft"
-  - "fine-tuning/llama/llmft_llama3_1_8b_instruct_seq4k_gpu_sft_fft"
-  - "fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-1-8b-instruct-fft"
-  - "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-1-8b-instruct-fft"
-  - "fine-tuning/llama/llmft_llama3_2_3b_instruct_seq4k_gpu_dpo_fft"
-  - "fine-tuning/llama/llmft_llama3_2_3b_instruct_seq4k_gpu_sft_fft"
-  - "fine-tuning/llama/verl-grpo-rlaif-llama-3-dot-2-3b-instruct-fft"
-  - "fine-tuning/llama/verl-grpo-rlvr-llama-3-dot-2-3b-instruct-fft"
-  # Qwen 3.5 35B-A3B and 122B-A10B recipes stay blocked — pending serverless validation
-  - "qwen-0_7_0/verl-(grpo-(rlaif|rlvr)|sft)-qwen-3-dot-5-(35b-a3b|122b-a10b)"
-  # Per-instance verl SFT/DPO recipes for Llama, GPT-OSS, DeepSeek and Qwen: the
+  # All llmft Llama-3 recipes (1b/3b/8b/70b x sft_lora/sft_fft/dpo/dpo_fft) are
+  # superseded by the verl per-instance Llama recipes below and are no longer
+  # published to JumpStart.
+  - "fine-tuning/llama/llmft_llama3_"
+  # Qwen 3.5 35B-A3B recipes stay blocked — pending serverless validation
+  - "qwen-0_7_0/verl-(grpo-(rlaif|rlvr)|sft)-qwen-3-dot-5-35b-a3b"
+  # Per-instance verl SFT/DPO recipes for GPT-OSS: the
   # measured sequence lengths ship as recipes but are not published to JumpStart yet.
   # One entry per (model, instance, length), so a single pattern covers all of them.
-  - "fine-tuning/(llama|gpt_oss|deepseek|qwen)-0_7_0/verl-(sft|dpo)-.*-\\d+k-tt-(fft|lora)"
-  # Muse-Glimmer-30B recipes ship but are not published to JumpStart yet —
-  # hosting (inference-serving) and evaluation configs pending.
-  - "muse_glimmer-0_7_0/verl-sft-muse-glimmer-30b-"
-  # Muse-Glimmer-30B DPO recipes ship but are not published to JumpStart yet — hosting
-  # (inference-serving) configs pending. muse_glimmer is not a native transformers
-  # architecture, so a serving stack has to carry the same vendored support the
-  # training container does before a hosting config can be measured.
-  - "muse_glimmer-0_7_0/verl-dpo-muse-glimmer-30b"
-  # Muse-Glimmer-30B GRPO (RLVR + RLAIF) recipes ship but are not published to JumpStart yet —
-  # hosting (inference-serving) configs pending. muse_glimmer is not a native transformers or
-  # vLLM architecture, so a serving stack has to carry the same vendored support the training
-  # container does before a hosting config can be measured.
-  - "muse_glimmer-0_7_0/verl-grpo-(rlvr|rlaif)-muse-glimmer-30b"
+  # (Llama, DeepSeek and Qwen dropped from this group — see the model-specific lines below.)
+  - "fine-tuning/gpt_oss-0_7_0/verl-(sft|dpo)-.*-\\d+k-tt-(fft|lora)"
+  # Per-instance verl SFT/DPO recipes for Qwen 2.5 7B/14B/32B/72B and Qwen 3
+  # 0.6B/1.7B/4B/8B/14B/32B. Each line below excludes every per-instance recipe for one
+  # (model, technique) except the ones it names, so a rung added later stays unpublished
+  # until it is named here. The lines publish the 36 rungs published by #1294 (one per
+  # (model, technique, PEFT) that has an llmft predecessor, plus the single-GPU Qwen 3 4B
+  # SFT LoRA g5-2xl-4k rung) and 59 other rungs, 6 of them Qwen 3 32B's, that trained
+  # end to end as serverless jobs on verl-v1.1.9-smtj on 2026-11-05. Serverless training
+  # keeps every entry that matches the technique, PEFT and sequence length as a candidate
+  # and runs each one on its own SupportedInstanceTypes.
+  # Qwen 2.5 72B DPO FFT has no llmft predecessor; its one rung, p5-48xl-4k, passed and is
+  # now published.
+  # One rung stays excluded:
+  #   verl-dpo-qwen-2-5-14b-instruct-p4d-24xl-8k-tt-lora
+  #     (stopped logging 17 seconds into its first step on ml.p4d.24xlarge, no error line;
+  #     likely out of memory)
+  # Qwen 3 32B publishes all 8 of its rungs in place of its llmft recipes: those 6, the
+  # SFT LoRA g6-48xl-4k rung, checked as a SageMaker training job on 2026-11-06, and the
+  # SFT LoRA p5-48xl-32k rung, checked on 2026-11-12. Its verl 0.7.0
+  # GRPO recipe stays excluded by the qwen-3-32b line after its SFT and DPO lines: it has
+  # the same name as the published verl 0.5.0 recipe in fine-tuning/qwen/.
+  # (Same optional `(?:\.yaml)?$` anchor as the Llama lines; see the NOTE there.)
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-3-0-dot-6b-(?!(?:g5-48xl-7k-tt-lora|p4d-24xl-14k-tt-lora|p4de-24xl-25k-tt-lora|g6-48xl-7k-tt-fft|p4d-24xl-14k-tt-fft|p4de-24xl-51k-tt-fft|p5-48xl-26k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-dpo-qwen-3-0-dot-6b-(?!(?:g5-48xl-7k-tt-lora|g6-12xl-7k-tt-lora|g6e-12xl-14k-tt-lora|p4d-24xl-12k-tt-lora|p4de-24xl-26k-tt-lora|g6-48xl-7k-tt-fft|p5-48xl-12k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-3-1-dot-7b-(?!(?:g5-48xl-6k-tt-lora|p4d-24xl-12k-tt-lora|p5-48xl-23k-tt-lora|p4d-24xl-23k-tt-fft|p4de-24xl-24k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-dpo-qwen-3-1-dot-7b-(?!(?:g5-48xl-6k-tt-lora|g6-12xl-6k-tt-lora|g6e-12xl-13k-tt-lora|p4d-24xl-12k-tt-lora|p5-48xl-11k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-3-4b-(?!(?:g5-2xl-4k-tt-lora|g5-48xl-6k-tt-lora|p4d-24xl-12k-tt-lora|p4de-24xl-22k-tt-lora|p4d-24xl-10k-tt-fft|p4de-24xl-45k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-dpo-qwen-3-4b-(?!(?:g5-48xl-3k-tt-lora|g6-12xl-5k-tt-lora|g6-48xl-5k-tt-lora|g6e-12xl-6k-tt-lora|p4d-24xl-11k-tt-lora|p4de-24xl-12k-tt-lora|g6-48xl-5k-tt-fft|p5-48xl-23k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-3-8b-(?!(?:g5-48xl-5k-tt-lora|p4d-24xl-10k-tt-lora|p4de-24xl-20k-tt-lora|p4d-24xl-8k-tt-fft|p4de-24xl-20k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-dpo-qwen-3-8b-(?!(?:g5-48xl-5k-tt-lora|p4d-24xl-10k-tt-lora|p5-48xl-9k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-3-14b-(?!(?:g5-48xl-8k-tt-lora|g6-12xl-5k-tt-lora|g6e-12xl-9k-tt-lora|p4de-24xl-19k-tt-lora|p4d-24xl-6k-tt-fft|p4de-24xl-17k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-dpo-qwen-3-14b-(?!(?:g5-48xl-4k-tt-lora|g6-12xl-1k-tt-lora|g6e-12xl-9k-tt-lora|p4d-24xl-8k-tt-lora|p4de-24xl-18k-tt-lora|p5-48xl-19k-tt-lora|p5-48xl-8k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-3-32b-(?!(?:g6-48xl-4k-tt-lora|p4d-24xl-6k-tt-lora|p5-48xl-32k-tt-lora|p5-48xl-19k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-dpo-qwen-3-32b-(?!(?:p4d-24xl-6k-tt-lora|p4de-24xl-8k-tt-lora|p5-48xl-15k-tt-lora|p4de-24xl-5k-tt-fft)(?:\\.yaml)?$)"
+  # Every other Qwen 3 32B qwen-0_7_0 recipe, such as verl-grpo-rlvr-qwen-3-32b-lora, stays
+  # excluded.
+  - "qwen-0_7_0/(?!verl-(?:sft|dpo)-).*qwen-3-32b"
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-2-5-7b-instruct-(?!(?:p4d-24xl-10k-tt-lora|p4de-24xl-22k-tt-lora|p4d-24xl-18k-tt-fft|p4de-24xl-42k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-dpo-qwen-2-5-7b-instruct-(?!(?:g5-48xl-5k-tt-lora|p4d-24xl-10k-tt-lora|p4de-24xl-23k-tt-lora|p5-48xl-22k-tt-lora|p5-48xl-16k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-2-5-14b-instruct-(?!(?:p4d-24xl-8k-tt-lora|p5-48xl-17k-tt-lora|p4d-24xl-6k-tt-fft|p4de-24xl-32k-tt-fft|p5-48xl-16k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-dpo-qwen-2-5-14b-instruct-(?!(?:g6-12xl-1k-tt-lora|g6-48xl-4k-tt-lora|g6e-12xl-8k-tt-lora|p4de-24xl-18k-tt-lora|p4de-24xl-11k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-2-5-32b-instruct-(?!(?:p5-48xl-14k-tt-lora|p5-48xl-19k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-dpo-qwen-2-5-32b-instruct-(?!(?:g6-48xl-2k-tt-lora|g6e-12xl-5k-tt-lora|p4d-24xl-6k-tt-lora|p4de-24xl-15k-tt-lora|p5-48xl-8k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-sft-qwen-2-5-72b-instruct-(?!(?:p5-48xl-4k-tt-lora|p5-48xl-4k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/qwen-0_7_0/verl-dpo-qwen-2-5-72b-instruct-(?!(?:p4de-24xl-4k-tt-lora|p5-48xl-4k-tt-fft)(?:\\.yaml)?$)"
+  # The llmft SFT/DPO recipes for those ten Qwen models are superseded by the verl
+  # recipes above.
+  - "fine-tuning/qwen/llmft_qwen(2_5_(7b|14b|32b|72b)|3_(0_dot_6b|1_dot_7b|4b|8b|14b|32b))_"
+  # Per-instance verl SFT/DPO recipes for the DeepSeek R1 distills. Each Qwen line below
+  # excludes every per-instance recipe for one (model, technique) except the ones it names,
+  # so a rung added later stays unpublished until it is named here.
+  # The two Llama-based distills are held back for now, so their verl SFT/DPO recipes
+  # stay excluded and their llmft recipes stay published (their verl GRPO recipes are
+  # published already and are not affected): Llama 70B is not validated
+  # yet, and Llama 8B waits for a verl image that keeps its byte-level tokenizer
+  # (transformers 5.3 rebuilds it as a SentencePiece-style tokenizer).
+  # For the four Qwen distills, the lines publish the 16 rungs published on 2026-10-28,
+  # every other rung that trained end to end as a serverless job on verl-v1.1.9-smtj on
+  # 2026-11-04 (30 rungs), and the 8-GPU 1.5B SFT FFT g6-48xl-11k rung, measured on
+  # ml.g5.48xlarge and ml.g6.48xlarge the same day. Nine rungs stay excluded.
+  # Three ran out of memory, or stopped logging at their peak, on long-sequence data:
+  #   verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-g5-12xl-13k-tt-lora
+  #     (CUDA out of memory at step 2, 21.5 of 22.1 GB per GPU on ml.g5.12xlarge)
+  #   verl-sft-deepseek-r1-distilled-qwen-7b-p4d-24xl-20k-tt-lora
+  #     (no log after step 5, 37.9 of 39.5 GB per GPU on ml.p4d.24xlarge)
+  #   verl-dpo-deepseek-r1-distilled-qwen-14b-p5-48xl-16k-tt-fft
+  #     (no log after step 2, 76.7 of 79.2 GB per GPU on ml.p5.48xlarge)
+  # Six never ran: serverless gave them no ml.g6.12xlarge or ml.g6e.12xlarge instance in
+  # two tries, the second ending at its 6-hour limit on waiting for capacity:
+  #   verl-dpo-deepseek-r1-distilled-qwen-1-dot-5b-g6e-12xl-13k-tt-lora
+  #   verl-sft-deepseek-r1-distilled-qwen-7b-g6e-12xl-11k-tt-lora
+  #   verl-dpo-deepseek-r1-distilled-qwen-7b-g6-12xl-5k-tt-lora
+  #   verl-dpo-deepseek-r1-distilled-qwen-7b-g6e-12xl-11k-tt-lora
+  #   verl-sft-deepseek-r1-distilled-qwen-32b-g6e-12xl-5k-tt-lora
+  #   verl-dpo-deepseek-r1-distilled-qwen-32b-g6e-12xl-3k-tt-lora
+  # (Same optional `(?:\.yaml)?$` anchor as the Llama lines; see the NOTE there.)
+  - "fine-tuning/deepseek-0_7_0/verl-(sft|dpo)-deepseek-r1-distilled-llama-(8b|70b)-"
+  - "fine-tuning/deepseek-0_7_0/verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-(?!(?:p4d-24xl-12k-tt-lora|p5-48xl-25k-tt-lora|g6-12xl-11k-tt-fft|g6-48xl-11k-tt-fft|p4d-24xl-21k-tt-fft|p5-48xl-48k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/deepseek-0_7_0/verl-dpo-deepseek-r1-distilled-qwen-1-dot-5b-(?!(?:g6-48xl-6k-tt-lora|p4d-24xl-12k-tt-lora|p5-48xl-24k-tt-lora|p4d-24xl-10k-tt-fft|p4de-24xl-21k-tt-fft|p5-48xl-24k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/deepseek-0_7_0/verl-sft-deepseek-r1-distilled-qwen-7b-(?!(?:g5-12xl-5k-tt-lora|g5-48xl-10k-tt-lora|p4d-24xl-16k-tt-fft|p4de-24xl-29k-tt-fft|p5-48xl-21k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/deepseek-0_7_0/verl-dpo-deepseek-r1-distilled-qwen-7b-(?!(?:g5-12xl-2k-tt-lora|g5-48xl-5k-tt-lora|g6-48xl-4k-tt-lora|p4d-24xl-10k-tt-lora|p4de-24xl-23k-tt-lora|p5-48xl-22k-tt-lora|p4d-24xl-8k-tt-fft|p4de-24xl-16k-tt-fft|p5-48xl-10k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/deepseek-0_7_0/verl-sft-deepseek-r1-distilled-qwen-14b-(?!(?:g5-48xl-4k-tt-lora|p4d-24xl-15k-tt-lora|p5-48xl-18k-tt-lora|p4d-24xl-10k-tt-fft|p4de-24xl-27k-tt-fft|p5-48xl-16k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/deepseek-0_7_0/verl-dpo-deepseek-r1-distilled-qwen-14b-(?!(?:g5-48xl-2k-tt-lora|p4d-24xl-8k-tt-lora|p4de-24xl-18k-tt-lora|p4d-24xl-5k-tt-fft|p4de-24xl-13k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/deepseek-0_7_0/verl-sft-deepseek-r1-distilled-qwen-32b-(?!(?:g6-48xl-5k-tt-lora|p4d-24xl-12k-tt-lora|p5-48xl-15k-tt-lora|p4de-24xl-16k-tt-fft|p5-48xl-11k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/deepseek-0_7_0/verl-dpo-deepseek-r1-distilled-qwen-32b-(?!(?:g6-48xl-2k-tt-lora|p4d-24xl-6k-tt-lora|p4de-24xl-15k-tt-lora|p4de-24xl-8k-tt-fft|p5-48xl-5k-tt-fft)(?:\\.yaml)?$)"
+  # The llmft SFT/DPO recipes for those four Qwen distills are superseded by the
+  # verl recipes above. Llama 8B and 70B are not listed, so their llmft recipes stay published.
+  - "fine-tuning/deepseek/llmft_deepseek_r1_distilled_(qwen_1_dot_5b|qwen_7b|qwen_14b|qwen_32b)_"
+  # Per-instance verl SFT/DPO recipes for Llama: exactly one recipe per
+  # (model, technique, PEFT) — the instance with the most instance_types entries —
+  # is published; the other 36 stay excluded. Each line below excludes every
+  # per-instance recipe for one (model, technique) EXCEPT the kept LoRA and FFT
+  # suffixes. The 16 kept recipe stems are:
+  #   verl-sft-llama-3-dot-2-1b-instruct-g6-48xl-17k-tt-lora
+  #   verl-sft-llama-3-dot-2-1b-instruct-g6-48xl-15k-tt-fft
+  #   verl-dpo-llama-3-dot-2-1b-instruct-g5-48xl-8k-tt-lora
+  #   verl-dpo-llama-3-dot-2-1b-instruct-g6-48xl-4k-tt-fft
+  #   verl-sft-llama-3-dot-2-3b-instruct-g6-48xl-6k-tt-lora
+  #   verl-sft-llama-3-dot-2-3b-instruct-g6-48xl-13k-tt-fft
+  #   verl-dpo-llama-3-dot-2-3b-instruct-g5-48xl-6k-tt-lora
+  #   verl-dpo-llama-3-dot-2-3b-instruct-g6-48xl-6k-tt-fft
+  #   verl-sft-llama-3-dot-1-8b-instruct-g6-48xl-11k-tt-lora
+  #   verl-sft-llama-3-dot-1-8b-instruct-g6-48xl-5k-tt-fft
+  #   verl-dpo-llama-3-dot-1-8b-instruct-g5-48xl-6k-tt-lora
+  #   verl-dpo-llama-3-dot-1-8b-instruct-p5-48xl-12k-tt-fft
+  #   verl-sft-llama-3-dot-3-70b-instruct-p5-48xl-8k-tt-lora
+  #   verl-sft-llama-3-dot-3-70b-instruct-p5-48xl-8k-tt-fft
+  #   verl-dpo-llama-3-dot-3-70b-instruct-p4de-24xl-4k-tt-lora
+  #   verl-dpo-llama-3-dot-3-70b-instruct-p5-48xl-4k-tt-fft
+  # NOTE on the `(?:\.yaml)?$` anchor: the golden test / Lambda match the recipe id
+  # WITHOUT the .yaml suffix, while scripts/generate_launch_jsons.py matches it WITH
+  # the .yaml suffix. Anchoring the kept suffixes with an optional .yaml makes the
+  # negative lookahead correct under both conventions.
+  - "fine-tuning/llama-0_7_0/verl-sft-llama-3-dot-2-1b-instruct-(?!(?:g6-48xl-17k-tt-lora|g6-48xl-15k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/llama-0_7_0/verl-dpo-llama-3-dot-2-1b-instruct-(?!(?:g5-48xl-8k-tt-lora|g6-48xl-4k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/llama-0_7_0/verl-sft-llama-3-dot-2-3b-instruct-(?!(?:g6-48xl-6k-tt-lora|g6-48xl-13k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/llama-0_7_0/verl-dpo-llama-3-dot-2-3b-instruct-(?!(?:g5-48xl-6k-tt-lora|g6-48xl-6k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/llama-0_7_0/verl-sft-llama-3-dot-1-8b-instruct-(?!(?:g6-48xl-11k-tt-lora|g6-48xl-5k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/llama-0_7_0/verl-dpo-llama-3-dot-1-8b-instruct-(?!(?:g5-48xl-6k-tt-lora|p5-48xl-12k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/llama-0_7_0/verl-sft-llama-3-dot-3-70b-instruct-(?!(?:p5-48xl-8k-tt-lora|p5-48xl-8k-tt-fft)(?:\\.yaml)?$)"
+  - "fine-tuning/llama-0_7_0/verl-dpo-llama-3-dot-3-70b-instruct-(?!(?:p4de-24xl-4k-tt-lora|p5-48xl-4k-tt-fft)(?:\\.yaml)?$)"
+  # verl 0.9 (ForgeVerl) recipes ship for the 0.9 beta gate but are not published to JumpStart:
+  # there is no prod 0.9 image yet (verl_regional_parameters.json has beta/gamma only).
+  - "-0_9_0/"

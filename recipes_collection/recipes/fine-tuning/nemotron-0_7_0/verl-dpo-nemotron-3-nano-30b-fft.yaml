@@ -122,8 +122,8 @@ training_config:
     lr_decay_steps: null
     lr_decay_style: cosine
     lr_warmup_init: 0.0
-    lr_warmup_steps: 10
-    lr_warmup_steps_ratio: 0.0
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.1
     lr_wsd_decay_steps: null
     lr_wsd_decay_style: exponential
     min_lr: 1.0e-06
@@ -195,4 +195,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 2.0.4
+version: 2.0.5

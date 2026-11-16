@@ -3,9 +3,15 @@ defaults:
   - _self_
 
 display_name: "DeepSeek R1 Distill Qwen 1.5B DPO LoRA Fine-Tuning (6k)"
-instance_types: ["ml.g6.48xlarge", "ml.p4d.24xlarge", "ml.p4de.24xlarge", "ml.p5.48xlarge"]
+instance_types: ["ml.g5.48xlarge", "ml.g6.48xlarge", "ml.p4d.24xlarge", "ml.p4de.24xlarge", "ml.p5.48xlarge"]
 
 training_config:
   data:
+    # ml.g5.48xlarge is listed on a check of this rung, not a sweep: training job
+    # verl-dpo-deepseek-r1-distilled-qwe-2kszi-20261104221037 (2026-11-04, verl-v1.1.9-smtj) ran
+    # this recipe as shipped on 8 x A10G for 30 steps of 16 preference pairs of 4096-8192 tokens
+    # per side, truncated to 6250, with no out-of-memory error: peak 15.7 GB allocated and
+    # 20.6 GB reserved of 22.1 GB per GPU. scripts/measured_ceilings.json records it at this
+    # rung's max_length.
     max_length: 6250
     max_token_len_per_gpu: 12500
