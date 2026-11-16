@@ -159,6 +159,3 @@ exclusion_patterns:
   - "fine-tuning/llama-0_7_0/verl-dpo-llama-3-dot-1-8b-instruct-(?!(?:g5-48xl-6k-tt-lora|p5-48xl-12k-tt-fft)(?:\\.yaml)?$)"
   - "fine-tuning/llama-0_7_0/verl-sft-llama-3-dot-3-70b-instruct-(?!(?:p5-48xl-8k-tt-lora|p5-48xl-8k-tt-fft)(?:\\.yaml)?$)"
   - "fine-tuning/llama-0_7_0/verl-dpo-llama-3-dot-3-70b-instruct-(?!(?:p4de-24xl-4k-tt-lora|p5-48xl-4k-tt-fft)(?:\\.yaml)?$)"
-  # verl 0.9 (ForgeVerl) recipes ship for the 0.9 beta gate but are not published to JumpStart:
-  # there is no prod 0.9 image yet (verl_regional_parameters.json has beta/gamma only).
-  - "-0_9_0/"

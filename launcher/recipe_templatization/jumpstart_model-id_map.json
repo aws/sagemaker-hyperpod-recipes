@@ -295,8 +295,6 @@
     "verl-grpo-rlvr-qwen-3-dot-8-27b-lora": "huggingface-vlm-qwen3-8-27b",
     "verl-sft-qwen-3-dot-8-27b-fft": "huggingface-vlm-qwen3-8-27b",
     "verl-sft-qwen-3-dot-8-27b-lora": "huggingface-vlm-qwen3-8-27b",
-    "verl-sft-glm-5-dot-3-flash-lora": "huggingface-vlm-glm-5-3-flash",
-    "verl-sft-glm-5-dot-3-flash-fft": "huggingface-vlm-glm-5-3-flash",
     "verl-dpo-gemma-4-e2b-it-fft": "huggingface-vlm-gemma-4-e2b-instruct",
     "verl-dpo-gemma-4-e2b-it-lora": "huggingface-vlm-gemma-4-e2b-instruct",
     "verl-grpo-rlaif-gemma-4-e2b-it-fft": "huggingface-vlm-gemma-4-e2b-instruct",

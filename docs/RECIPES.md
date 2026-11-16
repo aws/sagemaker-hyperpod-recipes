@@ -573,16 +573,6 @@ VERL recipes support reinforcement learning from AI feedback (RLAIF) and verifia
 | Gemma 4 31B IT SFT Full Fine-Tuning (Text) | verl | SFT | FFT | 32,768 | 1 | p5.48xlarge | [verl-sft-gemma-4-31b-it-fft.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-sft-gemma-4-31b-it-fft.yaml) | [run_verl_sft_gemma_4_31b_it_fft.sh](../launcher_scripts/gemma4-0_7_0/run_verl_sft_gemma_4_31b_it_fft.sh) |
 | Gemma 4 31B IT SFT LoRA Fine-Tuning (Text) | verl | SFT | LoRA | 32,768 | 1 | p5.48xlarge, p4de.24xlarge | [verl-sft-gemma-4-31b-it-lora.yaml](../recipes_collection/recipes/fine-tuning/gemma4-0_7_0/verl-sft-gemma-4-31b-it-lora.yaml) | [run_verl_sft_gemma_4_31b_it_lora.sh](../launcher_scripts/gemma4-0_7_0/run_verl_sft_gemma_4_31b_it_lora.sh) |
 
-### Glm Models
-
-#### Glm 5.3 Flash
-
-| Model | Framework | Technique | Adapter | Seq Length | Nodes | Instance Type | Recipe | Launcher Script |
-|-----|-----|-----|-----|-----|-----|-----|-----|-----|
-| GLM 5.3 Flash SFT Full Fine-Tuning (verl 0.9) (32k) | verl | SFT | FFT | 32,768 | 8 | p5.48xlarge, p5en.48xlarge | [verl-sft-glm-5-dot-3-flash-p5-48xl-32k-tt-fft.yaml](../recipes_collection/recipes/fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5-48xl-32k-tt-fft.yaml) | [run_verl_sft_glm_5_dot_3_flash_p5_48xl_32k_tt_fft.sh](../launcher_scripts/glm-0_9_0/run_verl_sft_glm_5_dot_3_flash_p5_48xl_32k_tt_fft.sh) |
-| GLM 5.3 Flash SFT Full Fine-Tuning (verl 0.9) (64k) | verl | SFT | FFT | 65,536 | 4 | p5e.48xlarge, p5en.48xlarge | [verl-sft-glm-5-dot-3-flash-p5en-48xl-64k-tt-fft.yaml](../recipes_collection/recipes/fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5en-48xl-64k-tt-fft.yaml) | [run_verl_sft_glm_5_dot_3_flash_p5en_48xl_64k_tt_fft.sh](../launcher_scripts/glm-0_9_0/run_verl_sft_glm_5_dot_3_flash_p5en_48xl_64k_tt_fft.sh) |
-| GLM 5.3 Flash SFT LoRA Fine-Tuning (verl 0.9) (29k) | verl | SFT | LoRA | 30,000 | 2 | p5.48xlarge | [verl-sft-glm-5-dot-3-flash-p5-48xl-29k-tt-lora.yaml](../recipes_collection/recipes/fine-tuning/glm-0_9_0/verl-sft-glm-5-dot-3-flash-p5-48xl-29k-tt-lora.yaml) | [run_verl_sft_glm_5_dot_3_flash_p5_48xl_29k_tt_lora.sh](../launcher_scripts/glm-0_9_0/run_verl_sft_glm_5_dot_3_flash_p5_48xl_29k_tt_lora.sh) |
-
 ### Llama Models
 
 #### Llama 3.1 8B Instruct
