@@ -70,8 +70,6 @@ training_config:
         use_torch_compile: true
         wrap_policy:
           min_num_params: 0
-          transformer_layer_cls_to_wrap:
-          - MistralDecoderLayer
       grad_clip: 1.0
       kl_loss_coef: 0
       kl_loss_type: low_var_kl
@@ -155,7 +153,7 @@ training_config:
       custom_chat_template: null
       enable_activation_offload: false
       enable_gradient_checkpointing: true
-      exclude_modules: .*visual.*
+      exclude_modules: .*(vision_tower|multi_modal_projector).*
       external_lib: null
       fused_kernel_options:
         impl_backend: torch
@@ -201,8 +199,6 @@ training_config:
         use_torch_compile: true
         wrap_policy:
           min_num_params: 0
-          transformer_layer_cls_to_wrap:
-          - MistralDecoderLayer
       log_prob_max_token_len_per_gpu: ${oc.select:recipes.training_config.actor_rollout_ref.actor.ppo_max_token_len_per_gpu,16384}
       log_prob_micro_batch_size: null
       log_prob_micro_batch_size_per_gpu: null
@@ -689,4 +685,4 @@ training_config:
     validation_data_dir: null
   transfer_queue:
     enable: false
-version: 2.0.2
+version: 2.0.4

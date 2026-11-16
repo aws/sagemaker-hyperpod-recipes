@@ -12,7 +12,7 @@ defaults:
   - _self_
 
 display_name: "Qwen 3.5 35B A3B SFT LoRA Fine-Tuning"
-version: 1.0.1
+version: 1.0.2
 instance_types: ["ml.p5.48xlarge"]
 
 run:
@@ -45,7 +45,7 @@ training_config:
 
   optim:
     lr: 5.0e-05
-    lr_warmup_steps: 20
+    lr_warmup_steps: -1
     lr_warmup_steps_ratio: 0.1
     betas: [0.9, 0.95]
     lr_scheduler_type: cosine

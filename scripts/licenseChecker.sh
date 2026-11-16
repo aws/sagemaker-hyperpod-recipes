@@ -20,6 +20,35 @@ APPROVED_UNKNOWN_PACKAGES=(
     # "another-package"
 )
 
+is_approved() {
+    echo "$LICENSE_LIST" | grep -q "$1"
+}
+
+# Packages that ship PEP 639 metadata report SPDX expressions such as
+# "Apache-2.0 OR BSD-2-Clause". OR means either license may be chosen, so one
+# approved term is enough; AND means all terms apply, so every term must be approved.
+# AND binds tighter than OR, so splitting on OR first is correct. Parenthesized
+# expressions pass only if listed verbatim in ApprovedLicenses.txt.
+is_expression_approved() {
+    local expr="$1" term
+    if [[ "$expr" != *" OR "* && "$expr" != *" AND "* ]] || [[ "$expr" == *"("* ]]; then
+        is_approved "$expr"
+        return
+    fi
+    if [[ "$expr" == *" OR "* ]]; then
+        while IFS= read -r term; do
+            is_expression_approved "$term" && return 0
+        done < <(echo "$expr" | sed 's/ OR /\n/g')
+        return 1
+    fi
+    if [[ "$expr" == *" AND "* ]]; then
+        while IFS= read -r term; do
+            is_approved "$term" || { echo "License '$term' (in '$1') is not in the allowed list."; return 1; }
+        done < <(echo "$expr" | sed 's/ AND /\n/g')
+        return 0
+    fi
+}
+
 check_licenses() {
     LICENSE_LIST=$(cat ./ApprovedLicenses.txt | tr '\n' '|'| sed 's/|$//')
     pip-licenses --summary > LicenseSummary.txt
@@ -45,7 +74,7 @@ check_licenses() {
         fi
 
         # Check other licenses
-        if ! echo "$LICENSE_LIST" | grep -q "$line"; then
+        if ! is_expression_approved "$line"; then
             echo "License '$line' is not in the allowed list."
             exit 1
         fi

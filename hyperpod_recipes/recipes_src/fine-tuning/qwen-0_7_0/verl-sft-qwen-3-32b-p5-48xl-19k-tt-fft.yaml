@@ -3,9 +3,17 @@ defaults:
   - _self_
 
 display_name: "Qwen 3 32B SFT Full Fine-Tuning (19k)"
-instance_types: ["ml.p5.48xlarge"]
+instance_types: ["ml.p4de.24xlarge", "ml.p5.48xlarge"]
 
 training_config:
   data:
+    # ml.p4de.24xlarge is listed on a check of this rung, not a sweep: training job
+    # verl-sft-qwen-3-32b-fft-odii8-20261106024900 (2026-11-06, verl-v1.1.9-smtj) ran this
+    # recipe as shipped on 8 x A100 80 GB for 30 steps of 16 samples of 16423-20000 tokens,
+    # one per micro-batch, with no out-of-memory error: peak 65.9 GB allocated and 77.7 GB
+    # reserved of 79.25 GB per GPU. In token-sweep job
+    # verl-sft-qwen-3-32b-fft-qpen8-2026-08-28-02-07-42-432 (verl-v1.1.0-smtj, batch 8) the same
+    # instance type reached 24576 and ran out of memory at 32768. scripts/measured_ceilings.json
+    # records the check at this rung's max_length.
     max_length: 20000
     max_token_len_per_gpu: 20000

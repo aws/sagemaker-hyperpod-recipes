@@ -1,0 +1,99 @@
+[
+  {
+    "InstanceType": "ml.g7e.24xlarge",
+    "Profile": "Default",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi28.0.0-cu130",
+    "Environment": {
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ROLLING_BATCH": "auto",
+      "OPTION_TENSOR_PARALLEL_DEGREE": "4",
+      "OPTION_MAX_MODEL_LEN": "16384",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "4",
+      "OPTION_GPU_MEMORY_UTILIZATION": "0.90",
+      "OPTION_DTYPE": "bf16",
+      "OPTION_ENFORCE_EAGER": "false",
+      "OPTION_COMPILATION_CONFIG": "{\"mode\":0,\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+      "OPTION_TRUST_REMOTE_CODE": "true",
+      "OPTION_REASONING_PARSER": "qwen3",
+      "OPTION_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "OPTION_TOOL_CALL_PARSER": "qwen3_coder",
+      "OPTION_ENABLE_LORA": "true",
+      "OPTION_MAX_LORAS": "1",
+      "OPTION_MAX_LORA_RANK": "128",
+      "OPTION_MAX_CPU_LORAS": "2",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "2",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 524288,
+      "NumberOfCpuCoresRequired": 72,
+      "NumberOfAcceleratorDevicesRequired": 4
+    }
+  },
+  {
+    "InstanceType": "ml.g6e.48xlarge",
+    "Profile": "Default",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi28.0.0-cu130",
+    "Environment": {
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ROLLING_BATCH": "auto",
+      "OPTION_TENSOR_PARALLEL_DEGREE": "8",
+      "OPTION_MAX_MODEL_LEN": "16384",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "4",
+      "OPTION_GPU_MEMORY_UTILIZATION": "0.90",
+      "OPTION_DTYPE": "bf16",
+      "OPTION_ENFORCE_EAGER": "false",
+      "OPTION_COMPILATION_CONFIG": "{\"mode\":0,\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+      "OPTION_TRUST_REMOTE_CODE": "true",
+      "OPTION_REASONING_PARSER": "qwen3",
+      "OPTION_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "OPTION_TOOL_CALL_PARSER": "qwen3_coder",
+      "OPTION_FULLY_SHARDED_LORAS": "true",
+      "OPTION_ENABLE_LORA": "true",
+      "OPTION_MAX_LORAS": "1",
+      "OPTION_MAX_LORA_RANK": "128",
+      "OPTION_MAX_CPU_LORAS": "2",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "2",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 786432,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  },
+  {
+    "InstanceType": "ml.g7e.48xlarge",
+    "Profile": "Default",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/djl-inference:0.36.0-lmi28.0.0-cu130",
+    "Environment": {
+      "OPTION_ENTRYPOINT": "djl_python.lmi_vllm.vllm_async_service",
+      "OPTION_ASYNC_MODE": "true",
+      "OPTION_ROLLING_BATCH": "auto",
+      "OPTION_TENSOR_PARALLEL_DEGREE": "8",
+      "OPTION_MAX_MODEL_LEN": "16384",
+      "OPTION_MAX_ROLLING_BATCH_SIZE": "4",
+      "OPTION_GPU_MEMORY_UTILIZATION": "0.90",
+      "OPTION_DTYPE": "bf16",
+      "OPTION_ENFORCE_EAGER": "false",
+      "OPTION_COMPILATION_CONFIG": "{\"mode\":0,\"cudagraph_mode\":\"FULL_DECODE_ONLY\"}",
+      "OPTION_TRUST_REMOTE_CODE": "true",
+      "OPTION_REASONING_PARSER": "qwen3",
+      "OPTION_ENABLE_AUTO_TOOL_CHOICE": "true",
+      "OPTION_TOOL_CALL_PARSER": "qwen3_coder",
+      "OPTION_ENABLE_LORA": "true",
+      "OPTION_MAX_LORAS": "1",
+      "OPTION_MAX_LORA_RANK": "128",
+      "OPTION_MAX_CPU_LORAS": "2",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "2",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1048576,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  }
+]

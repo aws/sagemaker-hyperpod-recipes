@@ -216,6 +216,52 @@ def test_template_type_override_consistent_with_base(category, framework, templa
 
 
 # ---------------------------------------------------------------------------
+# Test 2b: Template type overrides must not narrow a fractional base type
+# ---------------------------------------------------------------------------
+
+# Types whose accepted values include fractions. "number" is listed so the guard
+# also covers a base that uses it, although base_override_parameters.json uses
+# "float" throughout.
+_FRACTIONAL_TYPES = frozenset({"float", "number"})
+
+
+def _collect_template_raw_type_overrides() -> List[Tuple[str, str, str, str, str]]:
+    """Like _collect_template_type_overrides, but returns the raw `type` value
+    instead of its family: (category, framework, template_name, param_name, raw_type).
+    """
+    instances = []
+    for framework, fpath in sorted(_discover_template_files().items()):
+        with open(fpath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for tname, tdata in data.get("templates", {}).items():
+            category = _get_category_for_template(framework, tname)
+            for pname, pdef in tdata.get("override_parameters", {}).items():
+                if "type" in pdef:
+                    instances.append((category, framework, tname, pname, pdef["type"]))
+    return instances
+
+
+TEMPLATE_RAW_TYPE_OVERRIDES = _collect_template_raw_type_overrides()
+
+
+@pytest.mark.parametrize(
+    "category,framework,template_name,param_name,override_type",
+    TEMPLATE_RAW_TYPE_OVERRIDES,
+    ids=[f"{i[0]}|{i[1]}::{i[2]}::{i[3]}" for i in TEMPLATE_RAW_TYPE_OVERRIDES],
+)
+def test_template_type_override_does_not_narrow_fractional_base(
+    category, framework, template_name, param_name, override_type
+):
+    """A template must not override a float base type to `integer`."""
+    base_type = BASE_PARAMS.get(category, {}).get(param_name, {}).get("type")
+    assert not (base_type in _FRACTIONAL_TYPES and override_type == "integer"), (
+        f"'{param_name}' in {framework}::{template_name} ({category}) narrows the base type "
+        f"'{base_type}' to 'integer', which rejects fractional values the base allows. "
+        f"Remove the template-level 'type' to inherit the base type."
+    )
+
+
+# ---------------------------------------------------------------------------
 # Test 3: No cross-framework type family conflicts within each category
 #          (combining base definitions + template overrides)
 # ---------------------------------------------------------------------------

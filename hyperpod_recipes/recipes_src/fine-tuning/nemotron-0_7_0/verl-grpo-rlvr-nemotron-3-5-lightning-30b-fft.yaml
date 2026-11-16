@@ -3,10 +3,9 @@ defaults:
   - _self_
 
 display_name: Nemotron 3.5 Lightning 30B GRPO RLVR Fine-Tuning with Megatron FFT
-version: 2.0.1
+version: 2.0.3
 instance_types:
   - ml.p5.48xlarge
-  - ml.p4de.24xlarge
 
 run:
   model_type: verl
@@ -43,7 +42,8 @@ training_config:
       optim:
         lr: 1.0e-6
         min_lr: 0.0
-        lr_warmup_steps: 10
+        lr_warmup_steps: -1
+        lr_warmup_steps_ratio: 0.05
         lr_decay_style: constant
         weight_decay: 0.1
         betas: [0.9, 0.95]

@@ -18,6 +18,7 @@ from pathlib import Path
 
 import pytest
 
+import scripts.generate_recipes_doc as recipes_doc
 from scripts.generate_recipes_doc import (
     OUTPUT_FILE,
     RECIPES_DIR,
@@ -112,6 +113,45 @@ class TestRecipesDocGenerator:
         assert isinstance(recipes, list)
         assert len(recipes) > 0, "Expected at least one recipe"
         assert all(isinstance(r, Recipe) for r in recipes)
+
+    @pytest.mark.parametrize("reverse_walk", [False, True], ids=["walk_order", "reversed_walk_order"])
+    def test_launcher_script_tie_prefers_latest_version(self, tmp_path, monkeypatch, reverse_walk):
+        """Equal-length versioned launcher dirs resolve to the same script whatever the walk order."""
+        for family in ("qwen-0_7_0", "qwen-0_9_0"):
+            (tmp_path / family).mkdir()
+            (tmp_path / family / "run_verl_sft_x.sh").write_text("")
+        real_walk = os.walk
+
+        def walk(top):
+            for root, dirs, files in real_walk(top):
+                dirs.sort(reverse=reverse_walk)
+                yield root, dirs, files
+
+        monkeypatch.setattr(recipes_doc, "LAUNCHER_DIR", tmp_path)
+        monkeypatch.setattr(recipes_doc.os, "walk", walk)
+
+        assert recipes_doc._find_launcher_script("verl-sft-x") == str(tmp_path / "qwen-0_9_0" / "run_verl_sft_x.sh")
+
+    def test_launcher_script_prefers_base_dir(self, tmp_path, monkeypatch):
+        """A base-directory script is shorter than its versioned variants, so it wins."""
+        for family in ("qwen", "qwen-0_7_0"):
+            (tmp_path / family).mkdir()
+            (tmp_path / family / "run_verl_sft_x.sh").write_text("")
+        monkeypatch.setattr(recipes_doc, "LAUNCHER_DIR", tmp_path)
+
+        assert recipes_doc._find_launcher_script("verl-sft-x") == str(tmp_path / "qwen" / "run_verl_sft_x.sh")
+
+    @pytest.mark.parametrize("recipe_dir", ["qwen-0_7_0", "qwen-0_9_0"])
+    def test_launcher_script_prefers_recipe_dir(self, tmp_path, monkeypatch, recipe_dir):
+        """A recipe links the script in its own launcher directory, even over a shorter base-directory one."""
+        for family in ("qwen", "qwen-0_7_0", "qwen-0_9_0"):
+            (tmp_path / family).mkdir()
+            (tmp_path / family / "run_verl_sft_x.sh").write_text("")
+        monkeypatch.setattr(recipes_doc, "LAUNCHER_DIR", tmp_path)
+
+        assert recipes_doc._find_launcher_script("verl-sft-x", recipe_dir) == str(
+            tmp_path / recipe_dir / "run_verl_sft_x.sh"
+        )
 
     def test_generate_markdown_returns_string(self):
         """generate_markdown returns a non-empty string."""

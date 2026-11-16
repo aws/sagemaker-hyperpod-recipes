@@ -2,7 +2,7 @@ defaults:
 - /hydra_config/verl-0_7_0/default
 - _self_
 display_name: Ministral-3-3B-Instruct-2512-BF16 GRPO RLVR FFT Fine-Tuning
-version: 2.0.2
+version: 2.0.4
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge

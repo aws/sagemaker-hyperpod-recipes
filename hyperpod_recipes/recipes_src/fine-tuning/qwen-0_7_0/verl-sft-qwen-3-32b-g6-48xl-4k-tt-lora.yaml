@@ -1,0 +1,17 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-qwen-3-32b-lora
+  - _self_
+
+display_name: "Qwen 3 32B SFT LoRA Fine-Tuning (4k)"
+instance_types: ["ml.g6.48xlarge", "ml.p4d.24xlarge", "ml.p4de.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    # ml.g6.48xlarge (8 x L4) reached 4096 tokens in token-sweep job
+    # verl-sft-qwen-3-32b-lora-nuaqf-2026-08-27-08-03-23-474 (verl-v1.1.0-smtj) and ran out of
+    # memory at 6144. Training job verl-sft-qwen-3-32b-lora-cnsw2-20261106024911 (2026-11-06,
+    # verl-v1.1.9-smtj) ran this recipe as shipped on 8 x L4 for 30 steps of 16 samples of
+    # 3980-4096 tokens, one per micro-batch, with no out-of-memory error: peak 15.4 GB allocated
+    # and 20.5 GB reserved of 22.0 GB per GPU.
+    max_length: 4096
+    max_token_len_per_gpu: 4096

@@ -27,6 +27,7 @@ from scripts.generate_containers_doc import (
     _get_container_for_region,
     _load_regional_parameters,
     _match_recipe_to_regional_key,
+    _verl_regional_key_for_path,
     check_generation,
     generate_markdown,
     run_generation,
@@ -195,6 +196,18 @@ class TestRecipeMatching:
         result = _match_recipe_to_regional_key(recipe_filename, regional_keys)
         # Could match a framework fallback or be None
         assert result is None or result in regional_keys
+
+    @pytest.mark.parametrize(
+        "recipe_path,expected",
+        [
+            ("fine-tuning/nemotron-0_7_0/verl-sft-nemotron-3-5-lightning-30b-lora.yaml", "verl-0.7.0-megatron"),
+            ("fine-tuning/nemotron-0_7_0/verl-dpo-nemotron-3-nano-4b-lora.yaml", "verl-0.7.0-megatron"),
+            ("fine-tuning/nemotron-0_7_0/verl-dpo-nemotron-3-nano-30b-lora.yaml", "verl-0.7.0-vllm012"),
+        ],
+    )
+    def test_verl_0_7_0_nemotron_container_routing(self, recipe_path, expected):
+        """Nemotron verl 0.7.0 recipes route to their expected container key."""
+        assert _verl_regional_key_for_path(recipe_path) == expected
 
 
 # =============================================================================

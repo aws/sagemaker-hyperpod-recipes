@@ -11,7 +11,7 @@ defaults:
   - /hydra_config/verl-0_7_0/sft/checkpoint/default
   - _self_
 
-version: 1.0.1
+version: 1.0.2
 
 run:
   name: verl-dpo-deepseek-r1-distilled-llama-70b-fft
@@ -29,9 +29,14 @@ training_config:
     train_batch_size: 32
     micro_batch_size_per_gpu: 1
     truncation: left
+    train_dataset_name: ""  # llmft parity override: training_data_name
+    val_dataset_name: ""  # llmft parity override: validation_data_name
 
   model:
     path: deepseek-ai/DeepSeek-R1-Distill-Llama-70B
+    generation_cfg:  # llmft parity override: temperature / max_response_length
+      temperature: 0.6
+      max_new_tokens: 2048
 
   engine:
     use_torch_compile: true
@@ -44,6 +49,7 @@ training_config:
     lr_warmup_steps_ratio: 0.1
     min_lr_ratio: 0.1
     lr_scheduler_type: cosine
+    gradient_clipping: true  # llmft parity override: gradient_clipping
 
   trainer:
     beta: 0.01
@@ -51,3 +57,4 @@ training_config:
     total_epochs: 3
     save_freq: after_each_epoch
     test_freq: 5
+    logging_steps: 1  # llmft parity override: logging_steps

@@ -5,7 +5,7 @@ defaults:
   - _self_
 
 display_name: "Nemo3 Super 120B DPO LoRA Fine-Tuning with Megatron"
-version: 2.0.4
+version: 2.0.5
 instance_types:
   - ml.p5.48xlarge
 
@@ -89,8 +89,8 @@ training_config:
     weight_decay: 0.1
     clip_grad: 1.0
     lr_decay_style: cosine
-    lr_warmup_steps: 10
-    lr_warmup_steps_ratio: 0.0
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.1
     override_optimizer_config:
       use_precision_aware_optimizer: true
 

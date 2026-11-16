@@ -1,0 +1,26 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-qwen-3-4b-lora
+  - _self_
+
+display_name: "Qwen 3 4B SFT LoRA Fine-Tuning (4k)"
+instance_types: ["ml.g5.2xlarge"]
+# A single-accelerator instance, not the 8 GPUs the base recipe assumes. Any instance added
+# here must also have exactly 1 GPU: a multi-GPU type would provision the whole instance and
+# then train on one of its GPUs.
+trainer:
+  devices: 1
+
+training_config:
+  trainer:
+    n_gpus_per_node: 1
+  data:
+    max_length: 4096
+    max_token_len_per_gpu: 4096
+    # The budget above, not this, is what bounds peak memory: with use_dynamic_bsz the budget
+    # is the per-micro-batch token count, so it sets activation memory almost independently of
+    # the batch size. Measured on ml.g5.2xlarge at a 4096 budget, utilization is
+    # 0.554 / 0.561 / 0.565 / 0.581 for batch 1 / 4 / 8 / 32 -- flat, peaking at 13.9 GB of
+    # the 24 GB card. At an 8192 budget it is 0.773 at batch 1 and OOMs at batch 4, 8 and
+    # (with max_length 4096) 32. Raising the budget to buy headroom for a larger batch does
+    # the opposite: it raises the per-micro-batch token count.
+    train_batch_size: 32

@@ -39,7 +39,7 @@ LADDER_INSTANCE_SEG_RE = re.compile(r"-(?:g5|g6|g6e|p4d|p4de|p5|p5e|p5en)-(\d+)x
 # The `(Nk)` suffix every rung's display_name carries — the customer-visible length.
 DISPLAY_NAME_LABEL_RE = re.compile(r"\((\d+)k\)\s*$")
 TOKENS_PER_LABEL_STEP = 1024
-GPUS_BY_SIZE = {"48": 8, "24": 8, "12": 4}
+GPUS_BY_SIZE = {"48": 8, "24": 8, "12": 4, "16": 1, "8": 1, "4": 1, "2": 1}
 
 
 def _collect_verl_recipe_files():
@@ -60,8 +60,10 @@ def _ladder_length_label(stem):
 def _ladder_gpu_count(stem):
     """GPUs per node for the instance a rung's filename names, or None if unrecognised.
 
-    `*.12xlarge` is 4 GPUs, `*.24xlarge` and `*.48xlarge` are 8. An unknown suffix is
-    reported rather than guessed, matching scripts/enforce_recipe_instance_conventions.py.
+    `*.12xlarge` is 4 GPUs, `*.24xlarge` and `*.48xlarge` are 8, and the 2/4/8/16xlarge
+    sizes are 1 for every family the segment regex accepts (g5/g6/g6e — p4d/p4de/p5* exist
+    only at 24xlarge and 48xlarge). An unknown suffix is reported rather than guessed,
+    matching scripts/enforce_recipe_instance_conventions.py.
     """
     match = LADDER_INSTANCE_SEG_RE.search(stem)
     return GPUS_BY_SIZE.get(match.group(1)) if match else None
@@ -79,10 +81,12 @@ def _fingerprint_without_display_name(text):
 
 
 def _group_ladder_rungs_by_slot():
-    """{(run.name, gpus_per_node): [(path, max_length, fingerprint)]} for every ladder rung.
+    """{(run.name, gpus_per_node, family): [(path, max_length, fingerprint)]} for every ladder rung.
 
     The GPU count is part of the key on purpose: two rungs at the same length on a 4-GPU
-    and an 8-GPU instance are two distinct measurements, not a duplicated one.
+    and an 8-GPU instance are two distinct measurements, not a duplicated one. So is the
+    family directory: a verl 0.9 rung (`gpt_oss-0_9_0/`) keeps its 0.7 sibling's run.name and
+    length but runs on a different image, so it is a separate offer, not a duplicate.
     """
     slots = {}
     for path in VERL_LADDER_RECIPE_FILES:
@@ -93,7 +97,7 @@ def _group_ladder_rungs_by_slot():
             # test_ladder_rung_names_a_known_gpu_class fails on these; skipping here keeps
             # the grouping honest instead of lumping unrelated rungs together.
             continue
-        key = (config["run"]["name"], gpus)
+        key = (config["run"]["name"], gpus, path.parent.name)
         slots.setdefault(key, []).append(
             (path, config["training_config"]["data"]["max_length"], _fingerprint_without_display_name(text))
         )
@@ -103,6 +107,7 @@ def _group_ladder_rungs_by_slot():
 VERL_RECIPE_FILES = _collect_verl_recipe_files()
 VERL_GRPO_RECIPE_FILES = [f for f in VERL_RECIPE_FILES if "grpo" in str(f)]
 VERL_LORA_RECIPE_FILES = [f for f in VERL_RECIPE_FILES if "-lora" in f.stem]
+VERL_RLAIF_RECIPE_FILES = [f for f in VERL_RECIPE_FILES if "-rlaif-" in f.stem]
 VERL_LADDER_RECIPE_FILES = [f for f in VERL_RECIPE_FILES if LADDER_STEM_RE.match(f.stem)]
 
 LADDER_SLOTS = _group_ladder_rungs_by_slot()
@@ -154,6 +159,68 @@ def test_total_epochs_within_bounds(recipe_path):
     )
 
 
+def _warmup_blocks(node, path=""):
+    """Yield (dotted_path, block) for every dict in a resolved recipe that sets lr_warmup_steps."""
+    if isinstance(node, dict):
+        if "lr_warmup_steps" in node:
+            yield path, node
+        for key, value in node.items():
+            yield from _warmup_blocks(value, f"{path}.{key}" if path else key)
+    elif isinstance(node, list):
+        for i, value in enumerate(node):
+            yield from _warmup_blocks(value, f"{path}[{i}]")
+
+
+@pytest.mark.parametrize(
+    "recipe_path",
+    VERL_RECIPE_FILES,
+    ids=[_get_recipe_id(p) for p in VERL_RECIPE_FILES],
+)
+def test_optim_has_no_fixed_warmup_steps(recipe_path):
+    """
+    Verify that verl optimizer configs do not set a positive lr_warmup_steps.
+
+    A fixed warmup of N steps fails any run with N or fewer optimizer steps (small datasets): Megatron's
+    OptimizerParamScheduler asserts lr_warmup_steps < lr_decay_steps, and the FSDP trainers
+    reject lr_warmup_steps >= total_training_steps. Use lr_warmup_steps: -1 with
+    lr_warmup_steps_ratio < 1 instead; int(ratio * steps) < steps always holds.
+    """
+    with open(recipe_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    problems = _fixed_warmup_problems(config)
+    assert not problems, f"in {recipe_path.relative_to(ROOT_DIR)}:\n  " + "\n  ".join(problems)
+
+
+def _fixed_warmup_problems(config):
+    """Return one message per optimizer block whose warmup settings can exceed the run's step count."""
+    problems = []
+    for path, optim in _warmup_blocks(config):
+        warmup = optim.get("lr_warmup_steps")
+        # bool is a subclass of int, and YAML parses 10.0 as a float, so check the type explicitly.
+        if type(warmup) is not int or warmup > 0:
+            problems.append(
+                f"{path}.lr_warmup_steps ({warmup!r}) must be an integer <= 0; "
+                "use lr_warmup_steps: -1 with lr_warmup_steps_ratio"
+            )
+        ratio = optim.get("lr_warmup_steps_ratio", 0.0)
+        if not 0.0 <= ratio < 1.0:
+            problems.append(f"{path}.lr_warmup_steps_ratio ({ratio}) must be in [0, 1)")
+    return problems
+
+
+@pytest.mark.parametrize("warmup", [10, 10.0, True, 0.5, "10", None])
+def test_fixed_warmup_check_rejects_non_integer_or_positive_steps(warmup):
+    config = {"training_config": {"optim": {"lr_warmup_steps": warmup, "lr_warmup_steps_ratio": 0.1}}}
+    assert _fixed_warmup_problems(config)
+
+
+@pytest.mark.parametrize("warmup", [-1, 0])
+def test_fixed_warmup_check_accepts_ratio_based_warmup(warmup):
+    config = {"training_config": {"optim": {"lr_warmup_steps": warmup, "lr_warmup_steps_ratio": 0.1}}}
+    assert not _fixed_warmup_problems(config)
+
+
 @pytest.mark.parametrize(
     "recipe_path",
     VERL_RECIPE_FILES,
@@ -201,6 +268,98 @@ def test_merge_lora_on_final_save_true(recipe_path):
     assert merge_lora is True, (
         f"merge_lora_on_final_save must be true for LoRA recipes, "
         f"got {merge_lora!r} in {recipe_path.relative_to(ROOT_DIR)}"
+    )
+
+
+MINISTRAL3_GRPO_LORA_RECIPE_FILES = [
+    f for f in VERL_LORA_RECIPE_FILES if "-ministral-3-" in f.stem and "-grpo-" in f.stem
+]
+# Linear module names in transformers 5.3.0's Mistral3ForConditionalGeneration (Ministral 3).
+MINISTRAL3_VISION_MODULES = [
+    "model.vision_tower.transformer.layers.0.attention.q_proj",
+    "model.multi_modal_projector.linear_1",
+    "model.multi_modal_projector.patch_merger.merging_layer",
+]
+MINISTRAL3_TEXT_MODULES = [
+    "model.language_model.layers.0.self_attn.q_proj",
+    "model.language_model.layers.0.mlp.down_proj",
+]
+
+
+def _ministral3_param(path):
+    # The 8B recipes exclude only `.*vision_tower.*`, so LoRA still lands on the multimodal projector.
+    marks = (
+        [pytest.mark.xfail(strict=True, reason="8B recipes do not exclude multi_modal_projector yet (follow-up)")]
+        if "-ministral-3-8b-" in path.stem
+        else []
+    )
+    return pytest.param(path, marks=marks, id=_get_recipe_id(path))
+
+
+def test_ministral3_grpo_lora_recipes_collected():
+    """Guard against the filter matching no recipes (and the check below passing vacuously)."""
+    assert MINISTRAL3_GRPO_LORA_RECIPE_FILES, f"no Ministral 3 GRPO LoRA recipes found under {RECIPES_DIR}"
+
+
+@pytest.mark.parametrize("recipe_path", [_ministral3_param(p) for p in MINISTRAL3_GRPO_LORA_RECIPE_FILES])
+def test_ministral3_lora_wrap_class_and_exclude_pattern(recipe_path):
+    """
+    Verify the FSDP wrap class and the LoRA exclude pattern of the Ministral 3 GRPO LoRA recipes.
+
+    A wrap class that matches no module makes verl's apply_fsdp2 wrap the whole model as one unit,
+    and the LoRA adapter save then writes an empty adapter. The key must be absent (verl falls back
+    to the model's _no_split_modules) or name the text decoder layer; an explicit null crashes
+    apply_fsdp2. The exclude pattern must match the vision tower and the projector, and no text module.
+    """
+    with open(recipe_path, "r") as f:
+        arr = yaml.safe_load(f)["training_config"]["actor_rollout_ref"]
+
+    for role in ("actor", "ref"):
+        wrap_policy = arr[role]["fsdp_config"].get("wrap_policy") or {}
+        if "transformer_layer_cls_to_wrap" in wrap_policy:
+            wrap = wrap_policy["transformer_layer_cls_to_wrap"]
+            assert wrap == ["Ministral3DecoderLayer"], (
+                f"{role} transformer_layer_cls_to_wrap must be absent or ['Ministral3DecoderLayer'], "
+                f"got {wrap!r} in {recipe_path.relative_to(ROOT_DIR)}"
+            )
+
+    pattern = arr["model"]["exclude_modules"]
+    assert all(
+        re.fullmatch(pattern, m) for m in MINISTRAL3_VISION_MODULES
+    ), f"exclude_modules {pattern!r} must match every vision module {MINISTRAL3_VISION_MODULES}"
+    assert not any(
+        re.fullmatch(pattern, m) for m in MINISTRAL3_TEXT_MODULES
+    ), f"exclude_modules {pattern!r} must not match the text modules {MINISTRAL3_TEXT_MODULES}"
+
+
+def test_rlaif_recipes_collected():
+    """Guard against the glob silently matching no RLAIF recipes (and the check below passing vacuously)."""
+    assert VERL_RLAIF_RECIPE_FILES, f"no verl RLAIF recipes found under {RECIPES_DIR}"
+
+
+@pytest.mark.parametrize(
+    "recipe_path",
+    VERL_RLAIF_RECIPE_FILES,
+    ids=[_get_recipe_id(p) for p in VERL_RLAIF_RECIPE_FILES],
+)
+def test_rlaif_judge_region_not_hardcoded(recipe_path):
+    """
+    Verify that RLAIF recipes leave the LLM-judge Bedrock region unset.
+
+    With aws_region_name null the judge calls Bedrock in the job's own region. A hardcoded
+    region breaks every job launched elsewhere: the training container cannot reach another
+    region's Bedrock endpoint, so each judge call times out.
+    """
+    with open(recipe_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    reward_kwargs = config["training_config"].get("reward_model", {}).get("reward_kwargs") or {}
+    judge_kwargs = reward_kwargs.get("kwargs") or {}
+    region = judge_kwargs.get("aws_region_name")
+
+    assert region is None, (
+        f"reward_model.reward_kwargs.kwargs.aws_region_name must be null so the judge uses the "
+        f"job's region, got {region!r} in {recipe_path.relative_to(ROOT_DIR)}"
     )
 
 
@@ -298,7 +457,7 @@ def test_ladder_display_name_label_matches_filename(recipe_path):
 @pytest.mark.parametrize(
     "slot",
     LADDER_MULTI_RUNG_SLOTS,
-    ids=[f"{name}-{gpus}gpu" for name, gpus in LADDER_MULTI_RUNG_SLOTS],
+    ids=[f"{name}-{gpus}gpu-{family}" for name, gpus, family in LADDER_MULTI_RUNG_SLOTS],
 )
 def test_no_two_ladder_rungs_in_a_slot_share_a_max_length(slot):
     """
@@ -318,7 +477,7 @@ def test_no_two_ladder_rungs_in_a_slot_share_a_max_length(slot):
     collisions = {length: sorted(stems) for length, stems in by_length.items() if len(stems) > 1}
 
     assert not collisions, (
-        f"Slot {slot[0]} ({slot[1]} GPUs) has rungs sharing a max_length — merge them, "
+        f"Slot {slot[0]} ({slot[1]} GPUs, {slot[2]}) has rungs sharing a max_length — merge them, "
         f"keeping the lower, and record the retired rung's measured ceiling in "
         f"scripts/measured_ceilings.json first:\n"
         + "\n".join(f"  max_length={length}: {', '.join(stems)}" for length, stems in sorted(collisions.items()))
@@ -328,7 +487,7 @@ def test_no_two_ladder_rungs_in_a_slot_share_a_max_length(slot):
 @pytest.mark.parametrize(
     "slot",
     LADDER_MULTI_RUNG_SLOTS,
-    ids=[f"{name}-{gpus}gpu" for name, gpus in LADDER_MULTI_RUNG_SLOTS],
+    ids=[f"{name}-{gpus}gpu-{family}" for name, gpus, family in LADDER_MULTI_RUNG_SLOTS],
 )
 def test_no_two_ladder_rungs_in_a_slot_are_byte_identical(slot):
     """
@@ -347,7 +506,7 @@ def test_no_two_ladder_rungs_in_a_slot_are_byte_identical(slot):
     duplicates = [sorted(stems) for stems in by_fingerprint.values() if len(stems) > 1]
 
     assert not duplicates, (
-        f"Slot {slot[0]} ({slot[1]} GPUs) has rungs that are the same recipe once "
+        f"Slot {slot[0]} ({slot[1]} GPUs, {slot[2]}) has rungs that are the same recipe once "
         f"display_name is stripped — merge them, keeping the lower max_length, and record "
         f"the retired rung's measured ceiling in scripts/measured_ceilings.json first:\n"
         + "\n".join(f"  {', '.join(stems)}" for stems in sorted(duplicates))
@@ -383,3 +542,27 @@ def test_ladder_instance_types_match_measured_ceilings():
         f"{len(drift)} rung(s) drifted from the measured-ceiling rules. Run "
         "`python scripts/enforce_recipe_instance_conventions.py --check` for the full diff:\n  " + "\n  ".join(drift)
     )
+
+
+def test_inherited_instances_by_rung_rejects_unknown_or_mismatched_rungs(monkeypatch):
+    """A per-rung inheritance entry must name a real rung and an instance of its GPU class.
+
+    inherited_for() silently skips an instance whose GPU count differs from the rung's, and
+    a stem that matches no rung inherits nothing, so without these problems a renamed rung
+    or a typo would drop the inherited instance with no failure anywhere.
+    """
+    from scripts import enforce_recipe_instance_conventions as conventions
+
+    monkeypatch.setattr(
+        conventions,
+        "INHERITED_INSTANCES_BY_RUNG",
+        {
+            "verl-sft-no-such-model-p5-48xl-8k-tt-lora": ("ml.p5.48xlarge",),
+            # A 4-GPU rung cannot take an 8-GPU instance.
+            "verl-dpo-llama-3-dot-2-1b-instruct-g5-12xl-8k-tt-lora": ("ml.p5.48xlarge",),
+        },
+    )
+    _plan, problems = conventions.target_state(conventions.load_ladders(), conventions.load_manifest())
+
+    assert any("verl-sft-no-such-model-p5-48xl-8k-tt-lora" in p and "matches no ladder rung" in p for p in problems)
+    assert any("g5-12xl-8k-tt-lora" in p and "4-GPU rung" in p for p in problems)

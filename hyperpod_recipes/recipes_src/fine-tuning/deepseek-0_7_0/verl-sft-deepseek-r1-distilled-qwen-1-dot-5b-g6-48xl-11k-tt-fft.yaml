@@ -1,0 +1,19 @@
+defaults:
+  - /hydra_config/verl-0_7_0/recipe/verl-sft-deepseek-r1-distilled-qwen-1-dot-5b-fft
+  - _self_
+
+display_name: "DeepSeek R1 Distill Qwen 1.5B SFT Full Fine-Tuning (11k)"
+instance_types: ["ml.g5.48xlarge", "ml.g6.48xlarge", "ml.p4d.24xlarge", "ml.p4de.24xlarge", "ml.p5.48xlarge"]
+
+training_config:
+  data:
+    # The 8-GPU counterpart of the g6-12xl-11k rung, so instances with eight 24 GB GPUs get
+    # an 8K recipe in this slot. Same 11264-token length as that rung. Checked, not swept:
+    # two training jobs (2026-11-04, verl-v1.1.9-smtj) ran this recipe as shipped for 30 steps
+    # of 64 samples truncated to 11264 tokens, with no out-of-memory error, each peaking at
+    # 15.4 GB allocated and 21.5 GB reserved per GPU:
+    #   ml.g6.48xlarge (8 x L4, 22.0 GB): verl-sft-deepseek-r1-distilled-qwe-oclaw-20261104221105
+    #   ml.g5.48xlarge (8 x A10G, 22.1 GB): verl-sft-deepseek-r1-distilled-qwe-v50et-20261104221111
+    # scripts/measured_ceilings.json records the g5.48xlarge run; this file's name records g6.
+    max_length: 11264
+    max_token_len_per_gpu: 11264

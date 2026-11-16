@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Nemotron 3 Super 120B GRPO RLAIF Fine-Tuning with Megatron LoRA
-version: 1.1.5
+version: 1.1.8
 instance_types:
   - ml.p5.48xlarge
 
@@ -164,7 +164,7 @@ training_config:
         range:
           - 0.0
           - 1.0
-        aws_region_name: us-west-2
+        aws_region_name: null
         sampling_params:
           temperature: 0.0
           max_completion_tokens: 2048

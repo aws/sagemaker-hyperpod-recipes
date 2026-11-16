@@ -294,6 +294,42 @@ This document contains the list of parameters that can be overridden when using 
 | `data_path` | string | Yes | — | File path to training dataset |
 | `dataset_max_len` | integer | Yes | 256–recipe sequence length | Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory. |
 | `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory. |
+| `gradient_clipping` | boolean | Yes | — | Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training. |
+| `gradient_clipping_threshold` | float | Yes | 0.0–5.0 | Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down. |
+| `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4). |
+| `logging_steps` | integer | Yes | 1–100 | Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead. |
+| `lora_alpha` | integer | Yes | 16, 32, 64, 128, 256 | LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank. |
+| `lora_dropout` | float | Yes | 0.0–1.0 | Dropout probability applied to LoRA adapter layers for regularization. Typically set to 0.05 for SFT/DPO, and 0 for Mixture-of-Experts models. |
+| `lora_rank` | integer | Yes | 8, 16, 32, 64, 128 | Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory. |
+| `lr_scheduler` | string | Yes | cosine, constant | Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero. |
+| `lr_warmup_steps_ratio` | float | Yes | 0–1 | Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training. |
+| `max_epochs` | integer | Yes | 1–100 | Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting. |
+| `max_response_length` | integer | Yes | 100–recipe sequence length | Maximum number of tokens allowed for the generated response portion. |
+| `min_lr` | float | Yes | 0.0–1.0 | Lowest learning rate the cosine schedule decays to, as a fraction of the peak learning rate. For example, 0.1 ends training at 10% of the peak and 0 decays it to zero. Has no effect when lr_scheduler is constant. |
+| `mlflow_run_id` | string | No | — | MLflow run ID for resuming or linking to an existing run |
+| `mlflow_tracking_uri` | string | No | — | MLflow tracking server URI for experiment logging |
+| `model_name_or_path` | string | Yes | — | Model identifier or path to pretrained model |
+| `name` | string | Yes | — | Custom model name |
+| `namespace` | string | Yes | — | Namespace for HyperPod cluster resources (default: kubeflow) |
+| `output_path` | string | Yes | — | Local output path for model artifacts |
+| `results_directory` | string | Yes | — | Directory for storing training results and logs |
+| `resume_from_path` | string | No | — | Path to checkpoint for resuming training |
+| `seed` | integer | Yes | 0–2147483647 | Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations. |
+| `temperature` | float | Yes | 0.0–2.0 | Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic. |
+| `train_val_split_ratio` | float | No | 0.0–1.0 | Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation. |
+| `training_data_name` | string | Yes | — | Name identifier for the training dataset |
+| `validation_data_name` | string | Yes | — | Name identifier for the validation dataset |
+| `validation_data_path` | string | Yes | — | File path to validation dataset |
+| `warmup_steps` | integer | Yes | -1–100 | Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0. |
+| `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
+
+### SFT (LoRA, Nemotron)
+
+| Parameter | Type | Required | Range / Values | Description |
+|-----|-----|-----|-----|-----|
+| `data_path` | string | Yes | — | File path to training dataset |
+| `dataset_max_len` | integer | Yes | 256–recipe sequence length | Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory. |
+| `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory. |
 | `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4). |
 | `lora_alpha` | integer | Yes | 16, 32, 64, 128, 256 | LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank. |
 | `lora_rank` | integer | Yes | 8, 16, 32, 64, 128 | Number of trainable dimensions in the LoRA adapter. Higher values increase model capacity but use more memory. |
@@ -311,10 +347,43 @@ This document contains the list of parameters that can be overridden when using 
 | `resume_from_path` | string | No | — | Path to checkpoint for resuming training |
 | `train_val_split_ratio` | float | No | 0.0–1.0 | Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation. |
 | `validation_data_path` | string | Yes | — | File path to validation dataset |
-| `warmup_steps` | integer | Yes | -1–100 | Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value. |
+| `warmup_steps` | integer | Yes | -1–100 | Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0. |
 | `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
 
 ### SFT (FFT)
+
+| Parameter | Type | Required | Range / Values | Description |
+|-----|-----|-----|-----|-----|
+| `data_path` | string | Yes | — | File path to training dataset |
+| `dataset_max_len` | integer | Yes | 256–recipe sequence length | Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory. |
+| `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of training samples processed per optimizer step. Larger values improve training stability but use more memory. |
+| `gradient_clipping` | boolean | Yes | — | Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training. |
+| `gradient_clipping_threshold` | float | Yes | 0.0–5.0 | Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down. |
+| `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. Set lower for RL (e.g., 1e-5) to avoid policy collapse; higher for SFT/DPO (e.g., 1e-4). |
+| `logging_steps` | integer | Yes | 1–100 | Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead. |
+| `lr_scheduler` | string | Yes | cosine, constant | Learning rate decay schedule over training. Cosine anneals smoothly from peak to near-zero. |
+| `lr_warmup_steps_ratio` | float | Yes | 0–1 | Fraction of total training steps spent gradually increasing the learning rate from zero. Helps stabilize early training. |
+| `max_epochs` | integer | Yes | 1–100 | Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting. |
+| `max_response_length` | integer | Yes | 100–recipe sequence length | Maximum number of tokens allowed for the generated response portion. |
+| `min_lr` | float | Yes | 0.0–1.0 | Lowest learning rate the cosine schedule decays to, as a fraction of the peak learning rate. For example, 0.1 ends training at 10% of the peak and 0 decays it to zero. Has no effect when lr_scheduler is constant. |
+| `mlflow_run_id` | string | No | — | MLflow run ID for resuming or linking to an existing run |
+| `mlflow_tracking_uri` | string | No | — | MLflow tracking server URI for experiment logging |
+| `model_name_or_path` | string | Yes | — | Model identifier or path to pretrained model |
+| `name` | string | Yes | — | Custom model name |
+| `namespace` | string | Yes | — | Namespace for HyperPod cluster resources (default: kubeflow) |
+| `output_path` | string | Yes | — | Local output path for model artifacts |
+| `results_directory` | string | Yes | — | Directory for storing training results and logs |
+| `resume_from_path` | string | No | — | Path to checkpoint for resuming training |
+| `seed` | integer | Yes | 0–2147483647 | Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations. |
+| `temperature` | float | Yes | 0.0–2.0 | Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic. |
+| `train_val_split_ratio` | float | No | 0.0–1.0 | Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation. |
+| `training_data_name` | string | Yes | — | Name identifier for the training dataset |
+| `validation_data_name` | string | Yes | — | Name identifier for the validation dataset |
+| `validation_data_path` | string | Yes | — | File path to validation dataset |
+| `warmup_steps` | integer | Yes | -1–100 | Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0. |
+| `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
+
+### SFT (FFT, Nemotron)
 
 | Parameter | Type | Required | Range / Values | Description |
 |-----|-----|-----|-----|-----|
@@ -336,7 +405,7 @@ This document contains the list of parameters that can be overridden when using 
 | `resume_from_path` | string | No | — | Path to checkpoint for resuming training |
 | `train_val_split_ratio` | float | No | 0.0–1.0 | Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation. |
 | `validation_data_path` | string | Yes | — | File path to validation dataset |
-| `warmup_steps` | integer | Yes | -1–100 | Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value. |
+| `warmup_steps` | integer | Yes | -1–100 | Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0. |
 | `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
 
 ### GRPO RLVR (FFT)
@@ -382,6 +451,43 @@ This document contains the list of parameters that can be overridden when using 
 | `data_path` | string | Yes | — | File path to training dataset |
 | `dataset_max_len` | integer | Yes | 256–recipe sequence length | Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory. |
 | `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory. |
+| `gradient_clipping` | boolean | Yes | — | Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training. |
+| `gradient_clipping_threshold` | float | Yes | 0.0–5.0 | Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down. |
+| `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. |
+| `logging_steps` | integer | Yes | 1–100 | Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead. |
+| `lora_alpha` | integer | Yes | 16, 32, 64, 128, 256 | LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank. |
+| `lora_dropout` | float | Yes | 0.0–1.0 | Dropout probability applied to LoRA adapter layers for regularization. Typically set to 0.05 for SFT/DPO, and 0 for Mixture-of-Experts models. |
+| `lora_rank` | integer | Yes | 8, 16, 32, 64, 128 | Rank of the low-rank decomposition in LoRA adapters. Higher rank increases expressiveness but uses more memory and compute. |
+| `lr_scheduler` | string | Yes | cosine, constant | Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve. |
+| `lr_warmup_steps_ratio` | float | Yes | 0–1 | Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates. |
+| `max_epochs` | integer | Yes | 1–100 | Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting. |
+| `max_response_length` | integer | Yes | 100–recipe sequence length | Maximum number of tokens allowed for the generated response portion. |
+| `min_lr` | float | Yes | 0.0–1.0 | Lowest learning rate the cosine schedule decays to, as a fraction of the peak learning rate. For example, 0.1 ends training at 10% of the peak and 0 decays it to zero. Has no effect when lr_scheduler is constant. |
+| `mlflow_run_id` | string | No | — | MLflow run ID for resuming or linking to an existing run |
+| `mlflow_tracking_uri` | string | No | — | MLflow tracking server URI for experiment logging |
+| `model_name_or_path` | string | Yes | — | Model identifier or path to pretrained model |
+| `name` | string | Yes | — | Custom model name |
+| `namespace` | string | Yes | — | Namespace for HyperPod cluster resources (default: kubeflow) |
+| `output_path` | string | Yes | — | Local output path for model artifacts |
+| `results_directory` | string | Yes | — | Directory for storing training results and logs |
+| `resume_from_path` | string | No | — | Path to checkpoint for resuming training |
+| `seed` | integer | Yes | 0–2147483647 | Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations. |
+| `temperature` | float | Yes | 0.0–2.0 | Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic. |
+| `train_val_split_ratio` | float | No | 0.0–1.0 | Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation. |
+| `training_data_name` | string | Yes | — | Name identifier for the training dataset |
+| `validation_data_name` | string | Yes | — | Name identifier for the validation dataset |
+| `validation_data_path` | string | Yes | — | File path to validation dataset |
+| `warmup_steps` | integer | Yes | -1–100 | Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0. |
+| `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
+
+### DPO (LoRA, Nemotron)
+
+| Parameter | Type | Required | Range / Values | Description |
+|-----|-----|-----|-----|-----|
+| `adam_beta` | float | Yes | 1e-03–1.0 | KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation. |
+| `data_path` | string | Yes | — | File path to training dataset |
+| `dataset_max_len` | integer | Yes | 256–recipe sequence length | Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory. |
+| `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory. |
 | `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. |
 | `lora_alpha` | integer | Yes | 16, 32, 64, 128, 256 | LoRA scaling factor. The effective learning rate for LoRA adapters scales as alpha/rank. Typically set to 2x the LoRA rank. |
 | `lora_rank` | integer | Yes | 8, 16, 32, 64, 128 | Rank of the low-rank decomposition in LoRA adapters. Higher rank increases expressiveness but uses more memory and compute. |
@@ -399,10 +505,44 @@ This document contains the list of parameters that can be overridden when using 
 | `resume_from_path` | string | No | — | Path to checkpoint for resuming training |
 | `train_val_split_ratio` | float | No | 0.0–1.0 | Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation. |
 | `validation_data_path` | string | Yes | — | File path to validation dataset |
-| `warmup_steps` | integer | Yes | -1–100 | Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value. |
+| `warmup_steps` | integer | Yes | -1–100 | Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0. |
 | `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
 
 ### DPO (FFT)
+
+| Parameter | Type | Required | Range / Values | Description |
+|-----|-----|-----|-----|-----|
+| `adam_beta` | float | Yes | 1e-03–1.0 | KL divergence penalty coefficient for DPO. Controls how much the policy is penalized for deviating from the reference model. Lower values allow more deviation. |
+| `data_path` | string | Yes | — | File path to training dataset |
+| `dataset_max_len` | integer | Yes | 256–recipe sequence length | Maximum number of tokens in a single training example (prompt + completion). Longer sequences capture more context but use more memory. |
+| `global_batch_size` | integer | Yes | 32, 64, 128, 256, 512, 1024 | Total number of samples processed per optimizer step across all GPUs and accumulation steps. Larger batch sizes provide more stable gradients but require more memory. |
+| `gradient_clipping` | boolean | Yes | — | Boolean flag to enable gradient norm clipping. When enabled, gradients are scaled down if their norm exceeds the threshold, preventing exploding gradients during training. |
+| `gradient_clipping_threshold` | float | Yes | 0.0–5.0 | Maximum allowed gradient norm. Gradients exceeding this value are proportionally scaled down. |
+| `learning_rate` | float | Yes | 1e-07–1e-03 | Step size for weight updates during optimization. Controls how much model weights change per gradient step. |
+| `logging_steps` | integer | Yes | 1–100 | Frequency (in optimizer steps) at which training metrics are logged. A value of 1 logs every step. Higher values reduce logging overhead. |
+| `lr_scheduler` | string | Yes | cosine, constant | Learning rate decay schedule over training. 'cosine' anneals the LR smoothly from peak to near-zero following a cosine curve. |
+| `lr_warmup_steps_ratio` | float | Yes | 0–1 | Fraction of total training steps spent linearly ramping the learning rate from 0 up to the target value. Stabilizes early training by avoiding large initial updates. |
+| `max_epochs` | integer | Yes | 1–100 | Number of complete passes through the entire training dataset. More epochs allow the model to learn patterns more thoroughly but increase training time and risk of overfitting. |
+| `max_response_length` | integer | Yes | 100–recipe sequence length | Maximum number of tokens allowed for the generated response portion. |
+| `min_lr` | float | Yes | 0.0–1.0 | Lowest learning rate the cosine schedule decays to, as a fraction of the peak learning rate. For example, 0.1 ends training at 10% of the peak and 0 decays it to zero. Has no effect when lr_scheduler is constant. |
+| `mlflow_run_id` | string | No | — | MLflow run ID for resuming or linking to an existing run |
+| `mlflow_tracking_uri` | string | No | — | MLflow tracking server URI for experiment logging |
+| `model_name_or_path` | string | Yes | — | Model identifier or path to pretrained model |
+| `name` | string | Yes | — | Custom model name |
+| `namespace` | string | Yes | — | Namespace for HyperPod cluster resources (default: kubeflow) |
+| `output_path` | string | Yes | — | Local output path for model artifacts |
+| `results_directory` | string | Yes | — | Directory for storing training results and logs |
+| `resume_from_path` | string | No | — | Path to checkpoint for resuming training |
+| `seed` | integer | Yes | 0–2147483647 | Random seed for reproducibility. Controls data shuffling order, weight initialization, and other stochastic operations. |
+| `temperature` | float | Yes | 0.0–2.0 | Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic. |
+| `train_val_split_ratio` | float | No | 0.0–1.0 | Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation. |
+| `training_data_name` | string | Yes | — | Name identifier for the training dataset |
+| `validation_data_name` | string | Yes | — | Name identifier for the validation dataset |
+| `validation_data_path` | string | Yes | — | File path to validation dataset |
+| `warmup_steps` | integer | Yes | -1–100 | Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0. |
+| `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
+
+### DPO (FFT, Nemotron)
 
 | Parameter | Type | Required | Range / Values | Description |
 |-----|-----|-----|-----|-----|
@@ -425,7 +565,7 @@ This document contains the list of parameters that can be overridden when using 
 | `resume_from_path` | string | No | — | Path to checkpoint for resuming training |
 | `train_val_split_ratio` | float | No | 0.0–1.0 | Fraction of the dataset allocated to training versus validation. For example, 0.9 means 90% training and 10% validation. |
 | `validation_data_path` | string | Yes | — | File path to validation dataset |
-| `warmup_steps` | integer | Yes | -1–100 | Absolute number of training steps over which the learning rate linearly warms up from 0 to the target value. |
+| `warmup_steps` | integer | Yes | -1–100 | Number of training steps over which the learning rate rises linearly from 0 to its target value. A positive value overrides lr_warmup_steps_ratio, while -1 or 0 uses lr_warmup_steps_ratio instead. To turn warmup off, set both this and lr_warmup_steps_ratio to 0. |
 | `weight_decay` | float | Yes | 0.0–1.0 | L2 regularization coefficient applied to model weights during optimization. Helps prevent overfitting by penalizing large weights. |
 
 ## Amazon Nova
@@ -896,7 +1036,7 @@ This document contains the list of parameters that can be overridden when using 
 | `strategy` | string | No | zs_cot, gen_qa, zs, fs_cot | — |
 | `subtask` | string | No | abstract_algebra, anatomy, astronomy, business_ethics, … (91 values) | — |
 | `task` | string | Yes | mmlu, mmlu_pro, bbh, gpqa, math, strong_reject, ifeval, gen_qa, inference_only | — |
-| `temperature` | integer | No | — | Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic. |
+| `temperature` | float | No | — | Sampling temperature for evaluation and generation. Higher values increase output randomness/diversity; lower values make outputs more deterministic. |
 | `top_k` | integer | No | — | Top-k nucleus sampling cutoff |
 | `top_p` | number | No | — | Top-p nucleus sampling cutoff |
 

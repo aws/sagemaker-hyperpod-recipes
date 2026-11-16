@@ -1,0 +1,125 @@
+defaults:
+- /hydra_config/verl-0_7_0/default
+- _self_
+display_name: gemma-4-E2B-it GRPO RLVR FFT Fine-Tuning
+version: 2.0.3
+instance_types:
+- ml.p5.48xlarge
+- ml.p4de.24xlarge
+- ml.p4d.24xlarge
+run:
+  name: verl-grpo-rlvr-gemma-4-e2b-it-fft
+  model_type: verl
+  results_dir: ${base_results_dir}/${.name}
+trainer:
+  num_nodes: 1
+ray_cluster:
+  head_node:
+    cpu: '16'
+    cpuLimit: null
+    gpu: '0'
+    memory: 32Gi
+    memoryLimit: null
+  worker_nodes:
+    cpu: '48'
+    cpuLimit: null
+    gpu: '8'
+    memory: 144Gi
+    memoryLimit: null
+    replicas: 1
+training_config:
+  algorithm:
+    adv_estimator: grpo
+    norm_adv_by_std_in_grpo: true
+  actor_rollout_ref:
+    hybrid_engine: true
+    nccl_timeout: 600
+    actor:
+      strategy: fsdp2
+      use_kl_loss: true
+      kl_loss_coef: 0.01
+      kl_loss_type: low_var_kl
+      ppo_micro_batch_size_per_gpu: 1
+      ppo_mini_batch_size: 64
+      ppo_max_token_len_per_gpu: 20480
+      optim:
+        lr: 3.0e-06
+        warmup_style: constant
+      fsdp_config:
+        strategy: fsdp2
+        optimizer_offload: true
+        param_offload: false
+        wrap_policy:
+          transformer_layer_cls_to_wrap: &id001
+          - Gemma4TextDecoderLayer
+      freeze_vision_tower: true
+      clip_ratio_high: 0.28
+    ref:
+      fsdp_config:
+        param_offload: true
+        strategy: fsdp2
+        wrap_policy:
+          transformer_layer_cls_to_wrap: *id001
+      log_prob_micro_batch_size_per_gpu: 1
+      log_prob_use_dynamic_bsz: true
+      log_prob_max_token_len_per_gpu: 20480
+    rollout:
+      name: vllm
+      log_prob_micro_batch_size_per_gpu: 1
+      log_prob_use_dynamic_bsz: true
+      log_prob_max_token_len_per_gpu: 20480
+      tensor_model_parallel_size: 1
+      prompt_length: 16384
+      response_length: 4096
+      max_model_len: 20480
+      max_num_batched_tokens: 20480
+      enable_chunked_prefill: true
+      merge_lora_for_inference: false
+    model:
+      path: google/gemma-4-E2B-it
+      trust_remote_code: true
+      override_config:
+        attn_implementation: flash_attention_2
+      enable_gradient_checkpointing: true
+      use_remove_padding: true
+      exclude_modules: .*vision_tower.*|.*visual.*|.*embed_vision.*|.*embed_audio.*|.*audio_tower.*
+      use_fused_kernels: true
+      tiled_mlp:
+        enabled: true
+        num_shards: 8
+  trainer:
+    project_name: verl-grpo-rlvr
+    experiment_name: gemma-4-e2b-it-fft
+    total_epochs: 1
+    resume_mode: auto
+    logger:
+    - console
+    default_local_dir: /opt/ml/model
+    save_freq: 5
+    test_freq: 5
+  data:
+    train_batch_size: 256
+    max_prompt_length: 16384
+    max_response_length: 4096
+    train_val_split_ratio: 0.9
+    shuffle: true
+    return_raw_chat: true
+    truncation: left
+    trust_remote_code: true
+    split_seed: 42
+    apply_chat_template_kwargs:
+      enable_thinking: false
+  mlflow:
+    run_id: ''
+    tracking_uri: ''
+  reward_manager:
+    _target_: verl.trainer.config.config.RewardManagerConfig
+    source: register
+    name: prime
+  custom_reward_function:
+    lambda_arn: ''
+    path: ''
+    name: ''
+  reward_model:
+    rollout:
+      name: vllm

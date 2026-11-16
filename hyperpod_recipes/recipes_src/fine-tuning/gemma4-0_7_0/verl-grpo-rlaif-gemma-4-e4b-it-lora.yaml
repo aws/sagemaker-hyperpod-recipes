@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 display_name: Gemma 4 E4B IT GRPO RLAIF Fine-Tuning with LoRA (Text)
-version: 2.0.9
+version: 2.0.13
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge", "ml.p4d.24xlarge"]
 run:
   model_type: verl
@@ -122,7 +122,7 @@ training_config:
         range:
           - 0.0
           - 1.0
-        aws_region_name: us-west-2
+        aws_region_name: null
         sampling_params:
           temperature: 0.0
           max_completion_tokens: 2048

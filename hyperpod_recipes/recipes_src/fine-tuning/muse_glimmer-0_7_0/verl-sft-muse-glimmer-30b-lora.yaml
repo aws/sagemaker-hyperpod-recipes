@@ -12,7 +12,7 @@ defaults:
   - _self_
 
 display_name: "Muse-Glimmer 30B SFT LoRA Fine-Tuning (Text)"
-version: 2.0.2
+version: 2.0.6
 instance_types: ["ml.p5.48xlarge", "ml.p4de.24xlarge"]
 
 run:
@@ -40,7 +40,8 @@ training_config:
 
   optim:
     lr: 5.0e-05
-    lr_warmup_steps: 10
+    lr_warmup_steps: -1
+    lr_warmup_steps_ratio: 0.1
 
   trainer:
     project_name: muse-glimmer-sft

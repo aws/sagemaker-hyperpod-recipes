@@ -2,7 +2,7 @@ defaults:
 - /hydra_config/verl-0_7_0/default
 - _self_
 display_name: Ministral-3-14B-Instruct-2512 GRPO RLAIF LoRA Fine-Tuning (Text)
-version: 2.0.2
+version: 2.0.4
 instance_types:
 - ml.p5.48xlarge
 - ml.p4de.24xlarge
@@ -44,18 +44,13 @@ training_config:
         lr: 1.0e-05
       fsdp_config:
         strategy: fsdp2
-        offload_policy: true
+        offload_policy: false
         optimizer_offload: true
         param_offload: true
-        wrap_policy:
-          transformer_layer_cls_to_wrap: &id001
-          - MistralDecoderLayer
     ref:
       fsdp_config:
         param_offload: true
         strategy: fsdp2
-        wrap_policy:
-          transformer_layer_cls_to_wrap: *id001
     rollout:
       name: vllm
       tensor_model_parallel_size: 2
@@ -79,7 +74,7 @@ training_config:
       lora_rank: 32
       lora_alpha: 64
       target_modules: all-linear
-      exclude_modules: .*visual.*
+      exclude_modules: .*(vision_tower|multi_modal_projector).*
   trainer:
     project_name: verl-grpo-rlaif
     experiment_name: ministral-3-14b-instruct-lora

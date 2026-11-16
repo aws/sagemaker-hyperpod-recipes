@@ -871,7 +871,10 @@ class SMTraining(Training):
         """
         if self.cluster == "k8s":
             if self._is_verl_non_ray_job():
-                return "--config-path=/config --config-name=verl_config"
+                # Name the file exactly as mounted by the ConfigMap (training-config.yaml). Hydra
+                # accepts the suffix, and wrapper entry scripts (e.g. verl_trainer_script.py) open
+                # config-path/config-name directly, so an extensionless name isn't found.
+                return "--config-path=/config --config-name=verl_config.yaml"
             return "--config-path=/config --config-name=config.yaml"
         return f"--config-path={stage_cfg_path.parents[0]} --config-name={stage_cfg_path.name}"
 
@@ -1218,7 +1221,7 @@ class SMTraining(Training):
         # HyperPodPyTorchJob/torchrun SFT path).
         # For K8s: Creates verl_config.yaml in k8s_template/ (mounted via ConfigMap)
         # Contains only VERL-specific configs, filters out platform-specific sections.
-        # The non-ray (SFT) path consumes it via `--config-name=verl_config` too.
+        # The non-ray (SFT) path consumes it via `--config-name=verl_config.yaml` too.
         if self._is_ray_job() or self._is_verl_non_ray_job():
             self._generate_verl_config(k8s_template_path)
 

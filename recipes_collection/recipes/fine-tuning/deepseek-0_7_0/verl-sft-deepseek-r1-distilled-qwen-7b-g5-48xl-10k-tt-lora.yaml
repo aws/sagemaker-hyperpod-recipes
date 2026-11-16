@@ -3,6 +3,8 @@ instance_types:
 - ml.g5.48xlarge
 - ml.g6.48xlarge
 - ml.p4d.24xlarge
+- ml.p4de.24xlarge
+- ml.p5.48xlarge
 run:
   model_type: verl
   name: verl-sft-deepseek-r1-distilled-qwen-7b-lora
@@ -28,17 +30,20 @@ training_config:
     custom_cls:
       name: null
       path: null
-    ignore_input_ids_mismatch: true
+    ignore_input_ids_mismatch: false
     max_length: 10240
     max_token_len_per_gpu: 10240
     messages_key: messages
     micro_batch_size_per_gpu: 8
     pad_mode: no_padding
+    seed: 42
     train_batch_size: 64
+    train_dataset_name: ''
     train_files: null
-    train_val_split_ratio: 1.0
+    train_val_split_ratio: 0.9
     truncation: left
     use_dynamic_bsz: true
+    val_dataset_name: ''
     val_files: null
   engine:
     _target_: verl.workers.config.FSDPEngineConfig
@@ -73,10 +78,14 @@ training_config:
     external_lib: null
     fused_kernel_options:
       impl_backend: torch
+    generation_cfg:
+      max_new_tokens: 2048
+      temperature: 0.6
     hf_config_path: null
     lora_adapter_path: null
-    lora_alpha: 64
-    lora_rank: 32
+    lora_alpha: 32
+    lora_dropout: 0.05
+    lora_rank: 16
     override_config: {}
     path: deepseek-ai/DeepSeek-R1-Distill-Qwen-7B
     target_modules: all-linear
@@ -95,10 +104,11 @@ training_config:
     - 0.9
     - 0.95
     clip_grad: 1.0
-    lr: 0.0002
+    gradient_clipping: true
+    lr: 0.0001
     lr_scheduler_type: cosine
     lr_warmup_steps: -1
-    lr_warmup_steps_ratio: 0.0
+    lr_warmup_steps_ratio: 0.1
     min_lr_ratio: 0.0
     num_cycles: 0.5
     optimizer: AdamW
@@ -106,7 +116,7 @@ training_config:
     override_optimizer_config: null
     total_training_steps: -1
     warmup_style: null
-    weight_decay: 0.001
+    weight_decay: 0.0
   profiler:
     _target_: verl.utils.profiler.ProfilerConfig
     all_ranks: false
@@ -146,6 +156,7 @@ training_config:
     - console
     - mlflow
     - tensorboard
+    logging_steps: 1
     max_ckpt_to_keep: 3
     merge_lora_on_final_save: true
     n_gpus_per_node: 8
@@ -163,4 +174,4 @@ training_config:
   trainer_callbacks:
   - _target_: metering_callback.MeteringCallback
     output_path: /opt/ml/metering
-version: 1.0.1
+version: 1.0.4

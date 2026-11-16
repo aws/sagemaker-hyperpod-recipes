@@ -1010,23 +1010,35 @@ class ServerlessValidationLauncher(BaseLauncher):
                 stream_name = stream["logStreamName"]
 
                 try:
-                    # Get recent log events (last 1000 events should be sufficient)
-                    events_response = logs_client.get_log_events(
-                        logGroupName=log_group,
-                        logStreamName=stream_name,
-                        limit=1000,
-                        startFromHead=False,  # Get most recent events first
-                    )
+                    # Page backwards from the most recent events. GetLogEvents can return an
+                    # empty page while more events remain, so follow nextBackwardToken until
+                    # it stops changing (start of stream) rather than trusting the first page.
+                    request_kwargs = {
+                        "logGroupName": log_group,
+                        "logStreamName": stream_name,
+                        "limit": 1000,
+                        "startFromHead": False,  # Get most recent events first
+                    }
+                    checked_events = 0
+                    while True:
+                        events_response = logs_client.get_log_events(**request_kwargs)
 
-                    events = events_response.get("events", [])
-                    self.logger.info(f"Checking {len(events)} events in stream {stream_name}")
+                        events = events_response.get("events", [])
+                        checked_events += len(events)
 
-                    # Search for expected messages
-                    for event in events:
-                        message = event.get("message", "")
-                        for expected_msg in messages_to_find:
-                            if expected_msg.lower() in message.lower():
-                                return True, f"Found '{expected_msg}' in CloudWatch logs (stream: {stream_name})"
+                        # Search for expected messages
+                        for event in events:
+                            message = event.get("message", "")
+                            for expected_msg in messages_to_find:
+                                if expected_msg.lower() in message.lower():
+                                    return True, f"Found '{expected_msg}' in CloudWatch logs (stream: {stream_name})"
+
+                        next_token = events_response.get("nextBackwardToken")
+                        if not next_token or next_token == request_kwargs.get("nextToken"):
+                            break
+                        request_kwargs["nextToken"] = next_token
+
+                    self.logger.info(f"Checked {checked_events} events in stream {stream_name}")
 
                 except Exception as stream_error:
                     self.logger.warning(f"Error reading stream {stream_name}: {stream_error}")

@@ -46,6 +46,10 @@ class BaseRecipeTemplateProcessor(ABC):
         self.recipe_jumpstart_model_id_mapping = None
         self.avoid_default_val_update_attributes = {"results_directory"}
         self.base_override_parameters = None
+        # Params whose resolved bounds collapse to a single value (min == max) for the
+        # current recipe. They stay as literals in the recipe and are omitted from
+        # recipe_override_parameters, i.e. they are not user-overridable.
+        self.pinned_parameters = {}
         self._load_template()
         self._load_base_override_parameters()
 
@@ -108,7 +112,12 @@ class BaseRecipeTemplateProcessor(ABC):
             self.recipe_override_parameters = self.resolve_override_parameters(
                 self.matched_template_group, self.matched_template
             )
+            self.pinned_parameters = {}
+            if recipe_file_path is not None and self._may_have_pinned_parameters(self.recipe_override_parameters):
+                resolved = self._resolve_constraints_using_metadata(self.get_recipe_metadata(recipe_file_path))
+                self.pinned_parameters = self._get_pinned_parameters(resolved)
             result = self.apply_template(self.staging_cfg, self.matched_template, dont_override_list)
+            self._prune_unlanded_placeholder_params(recipe_file_path)
 
             # Save result
             if output_path:
@@ -124,6 +133,14 @@ class BaseRecipeTemplateProcessor(ABC):
     def apply_template(self, yaml_data: dict, template: dict, dont_override_list=None) -> dict:
         """Apply template substitutions to YAML data."""
         flattened = self.flatten_template(template, "all")
+        # Names of template placeholders that actually landed on a path present in
+        # the recipe (i.e. `current_path in flattened` matched a real recipe key).
+        # process_recipe uses this to prune placeholder-derived override params whose
+        # placeholder landed on no path -- a phantom override otherwise advertised
+        # with the template default but never applied.
+        self._landed_placeholder_names = set()
+        # getattr: some callers/tests build the processor without __init__
+        pinned_parameters = getattr(self, "pinned_parameters", None) or {}
 
         def _substitute(data, path=""):
             if isinstance(data, (dict, DictConfig)):
@@ -131,14 +148,25 @@ class BaseRecipeTemplateProcessor(ABC):
                 for key, value in data.items():
                     current_path = f"{path}.{key}" if path else key
                     if current_path in flattened:
+                        template_override = flattened[current_path][
+                            2:-2
+                        ]  # Get the override key without the '{{' and '}}'
+                        self._landed_placeholder_names.add(template_override)
                         if dont_override_list and key in dont_override_list:
                             result[key] = _substitute(value, current_path)
                             continue
                         current_value = data[key]
+                        if template_override in pinned_parameters:
+                            # Pinned param: keep the recipe's literal value instead of a placeholder
+                            pinned_value = pinned_parameters[template_override]
+                            if current_value != pinned_value:
+                                raise ValueError(
+                                    f"Parameter '{template_override}' is pinned to {pinned_value} for this recipe "
+                                    f"(min == max), but the recipe sets it to {current_value}"
+                                )
+                            result[key] = _substitute(value, current_path)
+                            continue
                         result[key] = flattened[current_path]
-                        template_override = flattened[current_path][
-                            2:-2
-                        ]  # Get the override key without the '{{' and '}}'
                         if template_override in self.recipe_override_parameters:
                             # Dont update the default value for override parameter if it is in deny list
                             if template_override in self.avoid_default_val_update_attributes:
@@ -156,6 +184,84 @@ class BaseRecipeTemplateProcessor(ABC):
             return data
 
         return _substitute(yaml_data)
+
+    def _prune_unlanded_placeholder_params(self, recipe_file_path: str = None) -> None:
+        """Drop placeholder-derived override params whose placeholder landed on no recipe path.
+
+        `resolve_override_parameters` advertises an override for every {{placeholder}}
+        in the matched template, but `apply_template` only substitutes a placeholder
+        whose dotted path already exists in the recipe. A placeholder added to a
+        shared template at a path only some recipes carry is therefore advertised on
+        every other recipe with the base default and never applied -- a phantom
+        override. This removes those entries after apply_template has recorded which
+        placeholders landed (`self._landed_placeholder_names`).
+
+        Params that come only from the template's `override_parameters` block (not
+        {{placeholders}}) are untouched: only names in the template's placeholder set
+        are eligible for pruning. A placeholder placed at two alternative paths where
+        exactly one exists in the recipe (the `lr_scheduler`/`min_lr` FSDP-vs-Megatron
+        pattern) counts as landed and is kept.
+
+        Landing is resolved against the recipe loaded from `recipe_file_path` (the
+        brief's "path exists in the recipe" definition), falling back to the paths
+        apply_template recorded on `self.staging_cfg` when no path is available.
+        """
+        if not self.recipe_override_parameters or self.matched_template is None:
+            return
+
+        placeholder_names = extract_placeholder_names(self.matched_template)
+
+        # Map each placeholder name to every flattened template path it appears at,
+        # for landing checks and an actionable log line naming the paths tried.
+        flattened = self.flatten_template(self.matched_template, "all")
+        paths_by_placeholder: dict = {}
+        for path, value in flattened.items():
+            if isinstance(value, str) and value.startswith("{{") and value.endswith("}}"):
+                paths_by_placeholder.setdefault(value[2:-2], []).append(path)
+
+        # Prefer the actual recipe for the "path exists in the recipe" test; fall back
+        # to the substitutions apply_template recorded when a recipe cannot be loaded.
+        recipe_cfg = None
+        if recipe_file_path:
+            try:
+                recipe_cfg = self._load_recipe_config(recipe_file_path)
+            except Exception:  # pragma: no cover - defensive; fall back to recorded set
+                recipe_cfg = None
+        recorded_landed = getattr(self, "_landed_placeholder_names", set())
+
+        def _landed(name: str) -> bool:
+            if recipe_cfg is not None:
+                return any(self._path_in_recipe(recipe_cfg, p) for p in paths_by_placeholder.get(name, []))
+            return name in recorded_landed
+
+        recipe_name = self.get_recipe_name_from_path(recipe_file_path) if recipe_file_path else "<unknown>"
+
+        for name in sorted(placeholder_names):
+            if name not in self.recipe_override_parameters:
+                continue
+            if _landed(name):
+                continue
+            del self.recipe_override_parameters[name]
+            logger.info(
+                "Pruned phantom override parameter '%s' from recipe '%s': "
+                "its template placeholder landed on no recipe path (paths tried: %s)",
+                name,
+                recipe_name,
+                sorted(paths_by_placeholder.get(name, [])),
+            )
+
+    @staticmethod
+    def _path_in_recipe(recipe_cfg, dotted: str) -> bool:
+        """True if the dotted path exists in the recipe config (dict or DictConfig)."""
+        cur = recipe_cfg
+        for part in dotted.split("."):
+            if isinstance(cur, (dict, DictConfig)):
+                if part not in cur:
+                    return False
+                cur = cur[part]
+            else:
+                return False
+        return True
 
     # Flattening the template essentially converts the json nesting into dot notation
     # Our recipe files can have any level of nesting. To make it easier to traverse this nesting during
@@ -206,6 +312,10 @@ class BaseRecipeTemplateProcessor(ABC):
         self._apply_recipe_specific_bounds(resolved_override_parameters, recipe_file_path)
         resolve_bound_placeholders(resolved_override_parameters)
 
+        # Pinned params (min == max) are not overridable; process_recipe left them as literals
+        for param_name in self._get_pinned_parameters(resolved_override_parameters):
+            del resolved_override_parameters[param_name]
+
         # Update the instance variable so it's used in the main processing
         self.recipe_override_parameters = resolved_override_parameters
 
@@ -214,6 +324,40 @@ class BaseRecipeTemplateProcessor(ABC):
         regional_parameters = self._get_regional_parameters(recipe_name, recipe_metadata) if recipe_name else {}
 
         return [recipe_metadata, resolved_override_parameters, regional_parameters]
+
+    @staticmethod
+    def _may_have_pinned_parameters(override_params: dict) -> bool:
+        """Cheap pre-check: can any numeric param resolve to min == max?
+
+        Avoids generating recipe metadata in process_recipe unless a conditional
+        min/max (or a static collapsed range) could pin a parameter.
+        """
+        for config in (override_params or {}).values():
+            if not isinstance(config, dict) or config.get("type") not in ("integer", "number", "float"):
+                continue
+            conditional = config.get("conditional_constraints", {})
+            if "min" in conditional or "max" in conditional:
+                return True
+            if config.get("min") is not None and config.get("min") == config.get("max"):
+                return True
+        return False
+
+    @staticmethod
+    def _get_pinned_parameters(override_params: dict) -> dict:
+        """Return {name: value} for numeric params whose resolved min equals max.
+
+        A collapsed range means the value is fixed for this recipe (e.g. lora_dropout
+        pinned to 0.0 for a specific Model_ID via conditional_constraints), so the
+        param is treated as non-overridable.
+        """
+        pinned = {}
+        for name, config in (override_params or {}).items():
+            if not isinstance(config, dict) or config.get("type") not in ("integer", "number", "float"):
+                continue
+            min_value, max_value = config.get("min"), config.get("max")
+            if min_value is not None and max_value is not None and min_value == max_value:
+                pinned[name] = min_value
+        return pinned
 
     def _apply_recipe_specific_bounds(self, override_params: dict, recipe_file_path: str) -> bool:
         """Hook for subclasses to set `min`/`max` from the recipe itself.
@@ -489,17 +633,21 @@ class BaseRecipeTemplateProcessor(ABC):
             if condition_key not in metadata:
                 raise KeyError(f"Condition key {condition_key} not found in metadata")
 
-            resolved_values = None
-
             condition_value = metadata[condition_key]
 
-            # Look for exact match first, then fall back to "default"
+            # Look for exact match first, then fall back to "default".
+            # Use a sentinel rather than truthiness so a legitimately falsy
+            # resolved value (0, 0.0, False, "") is not discarded in favor
+            # of the default.
+            _unset = object()
+            resolved_values = _unset
+
             for constraint in resolver_map:
                 if constraint in condition_value:
                     resolved_values = resolver_map[constraint]
                     break
 
-            if not resolved_values:
+            if resolved_values is _unset:
                 resolved_values = resolver_map["default"]
 
             # Resolve the constraints

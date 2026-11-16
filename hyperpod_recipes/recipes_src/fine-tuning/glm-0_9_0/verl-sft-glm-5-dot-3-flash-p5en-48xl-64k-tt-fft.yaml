@@ -1,0 +1,29 @@
+defaults:
+  - /hydra_config/verl-0_9_0/recipe/verl-sft-glm-5-dot-3-flash-fft
+  - _self_
+
+display_name: "GLM 5.3 Flash SFT Full Fine-Tuning (verl 0.9) (64k)"
+# Named after the instance this length was measured on (p5en). ml.p5e.48xlarge has the same GPUs and
+# host memory but was not measured at this length; it is listed through INHERITED_INSTANCES_BY_RUNG
+# in scripts/enforce_recipe_instance_conventions.py.
+instance_types: ["ml.p5e.48xlarge", "ml.p5en.48xlarge"]
+
+# 4 nodes of 141 GB GPUs: TP16 x EP32 over 32 GPUs => DP2.
+trainer:
+  num_nodes: 4
+
+training_config:
+  data:
+    max_length: 65536
+    # Packed tokens per GPU per micro-batch.
+    max_token_len_per_gpu: 65536
+
+  optim:
+    override_optimizer_config:
+      # On 4 nodes the fully offloaded optimizer state does not fit in host memory, so 20% of it
+      # stays on the GPU. At 0.7 the GPU runs out of memory after validation at this length.
+      optimizer_offload_fraction: 0.8
+
+  trainer:
+    # Must equal trainer.num_nodes: this is the world size declared to verl.
+    nnodes: 4

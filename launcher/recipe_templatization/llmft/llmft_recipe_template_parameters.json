@@ -136,6 +136,24 @@
                 "lora_rank": {
                     "default": 16
                 },
+                "lora_dropout": {
+                    "min": 0.0,
+                    "max": 1.0,
+                    "conditional_constraints": {
+                        "max": {
+                            "Model_ID": {
+                                "openai-reasoning-gpt-oss-20b": 0.0,
+                                "default": 1.0
+                            }
+                        },
+                        "default": {
+                            "Model_ID": {
+                                "openai-reasoning-gpt-oss-20b": 0.0,
+                                "default": 0.05
+                            }
+                        }
+                    }
+                },
                 "namespace": {
                     "default": "default"
                 }
@@ -225,6 +243,24 @@
                 },
                 "lora_rank": {
                     "default": 16
+                },
+                "lora_dropout": {
+                    "min": 0.0,
+                    "max": 1.0,
+                    "conditional_constraints": {
+                        "max": {
+                            "Model_ID": {
+                                "openai-reasoning-gpt-oss-20b": 0.0,
+                                "default": 1.0
+                            }
+                        },
+                        "default": {
+                            "Model_ID": {
+                                "openai-reasoning-gpt-oss-20b": 0.0,
+                                "default": 0.05
+                            }
+                        }
+                    }
                 },
                 "namespace": {
                     "default": "default"

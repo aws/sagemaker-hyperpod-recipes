@@ -1,0 +1,4 @@
+# @package recipes.training_config
+defaults:
+  - ppo_megatron_trainer
+  - _self_
