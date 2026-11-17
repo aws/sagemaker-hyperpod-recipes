@@ -1,0 +1,211 @@
+[
+  {
+    "InstanceType": "ml.g7e.2xlarge",
+    "Profile": "Default",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.31.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "1",
+      "SM_VLLM_MAX_MODEL_LEN": "65536",
+      "SM_VLLM_MAX_NUM_SEQS": "16",
+      "SM_VLLM_ENABLE_CHUNKED_PREFILL": "true",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+      "SM_VLLM_DTYPE": "bfloat16",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "4",
+      "SM_VLLM_MAX_CPU_LORAS": "32",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_ENFORCE_EAGER": "true",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "32",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 4096,
+      "NumberOfCpuCoresRequired": 6,
+      "NumberOfAcceleratorDevicesRequired": 1
+    }
+  },
+  {
+    "InstanceType": "ml.g6e.xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.31.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "1",
+      "SM_VLLM_MAX_MODEL_LEN": "65536",
+      "SM_VLLM_MAX_NUM_SEQS": "16",
+      "SM_VLLM_ENABLE_CHUNKED_PREFILL": "true",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+      "SM_VLLM_DTYPE": "bfloat16",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "4",
+      "SM_VLLM_MAX_CPU_LORAS": "32",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_ENFORCE_EAGER": "true",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "32",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 4096,
+      "NumberOfCpuCoresRequired": 3,
+      "NumberOfAcceleratorDevicesRequired": 1
+    }
+  },
+  {
+    "InstanceType": "ml.g7.2xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.31.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "1",
+      "SM_VLLM_MAX_MODEL_LEN": "65536",
+      "SM_VLLM_MAX_NUM_SEQS": "16",
+      "SM_VLLM_ENABLE_CHUNKED_PREFILL": "true",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+      "SM_VLLM_DTYPE": "bfloat16",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "4",
+      "SM_VLLM_MAX_CPU_LORAS": "32",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_ENFORCE_EAGER": "true",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "32",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 8192,
+      "NumberOfCpuCoresRequired": 2,
+      "NumberOfAcceleratorDevicesRequired": 1
+    }
+  },
+  {
+    "InstanceType": "ml.g6e.2xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.31.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "1",
+      "SM_VLLM_MAX_MODEL_LEN": "65536",
+      "SM_VLLM_MAX_NUM_SEQS": "16",
+      "SM_VLLM_ENABLE_CHUNKED_PREFILL": "true",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+      "SM_VLLM_DTYPE": "bfloat16",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "4",
+      "SM_VLLM_MAX_CPU_LORAS": "32",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_ENFORCE_EAGER": "true",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "32",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 30720,
+      "NumberOfCpuCoresRequired": 6,
+      "NumberOfAcceleratorDevicesRequired": 1
+    }
+  },
+  {
+    "InstanceType": "ml.g6.12xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.31.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "4",
+      "SM_VLLM_MAX_MODEL_LEN": "65536",
+      "SM_VLLM_MAX_NUM_SEQS": "16",
+      "SM_VLLM_ENABLE_CHUNKED_PREFILL": "true",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+      "SM_VLLM_DTYPE": "bfloat16",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "4",
+      "SM_VLLM_MAX_CPU_LORAS": "32",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_ENFORCE_EAGER": "true",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "32",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 98304,
+      "NumberOfCpuCoresRequired": 36,
+      "NumberOfAcceleratorDevicesRequired": 4
+    }
+  },
+  {
+    "InstanceType": "ml.g6e.12xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.31.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "4",
+      "SM_VLLM_MAX_MODEL_LEN": "65536",
+      "SM_VLLM_MAX_NUM_SEQS": "16",
+      "SM_VLLM_ENABLE_CHUNKED_PREFILL": "true",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+      "SM_VLLM_DTYPE": "bfloat16",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "4",
+      "SM_VLLM_MAX_CPU_LORAS": "32",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_ENFORCE_EAGER": "true",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "32",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 196608,
+      "NumberOfCpuCoresRequired": 36,
+      "NumberOfAcceleratorDevicesRequired": 4
+    }
+  },
+  {
+    "InstanceType": "ml.g7e.24xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.31.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "4",
+      "SM_VLLM_MAX_MODEL_LEN": "65536",
+      "SM_VLLM_MAX_NUM_SEQS": "16",
+      "SM_VLLM_ENABLE_CHUNKED_PREFILL": "true",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+      "SM_VLLM_DTYPE": "bfloat16",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "4",
+      "SM_VLLM_MAX_CPU_LORAS": "32",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_ENFORCE_EAGER": "true",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "32",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 524288,
+      "NumberOfCpuCoresRequired": 72,
+      "NumberOfAcceleratorDevicesRequired": 4
+    }
+  },
+  {
+    "InstanceType": "ml.p5en.48xlarge",
+    "EcrAddress": "763104351884.dkr.ecr.us-west-2.amazonaws.com/vllm:0.31.0-gpu-py312-cu130-ubuntu24.04-sagemaker",
+    "Environment": {
+      "SM_VLLM_TENSOR_PARALLEL_SIZE": "8",
+      "SM_VLLM_MAX_MODEL_LEN": "65536",
+      "SM_VLLM_MAX_NUM_SEQS": "16",
+      "SM_VLLM_ENABLE_CHUNKED_PREFILL": "true",
+      "SM_VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+      "SM_VLLM_DTYPE": "bfloat16",
+      "SM_VLLM_TRUST_REMOTE_CODE": "true",
+      "SM_VLLM_ENABLE_LORA": "true",
+      "SM_VLLM_MAX_LORAS": "4",
+      "SM_VLLM_MAX_CPU_LORAS": "32",
+      "SM_VLLM_MAX_LORA_RANK": "128",
+      "SM_VLLM_ENFORCE_EAGER": "true",
+      "VLLM_ALLOW_RUNTIME_LORA_UPDATING": "true",
+      "SAGEMAKER_MAX_NUMBER_OF_ADAPTERS_IN_MEMORY": "32",
+      "SAGEMAKER_ENABLE_LOAD_AWARE": "1"
+    },
+    "ComputeResourceRequirements": {
+      "MinMemoryRequiredInMb": 1048576,
+      "NumberOfCpuCoresRequired": 100,
+      "NumberOfAcceleratorDevicesRequired": 8
+    }
+  }
+]

@@ -148,7 +148,7 @@ def _verl_regional_key_for_path(recipe_path: str) -> str:
     image each recipe uses. verl 0.7.0 recipes live under ``*-0_7_0`` dirs (the processor
     keys off the profiler/global_profiler block, a 0.7.0-only field); within 0.7.0 the
     container is selected by model substring:
-      nemotron-3-5-lightning -> megatron, other nemotron -> vllm012, gemma4 -> tf58,
+      nemotron-3-5-lightning / nemotron-3-nano-4b -> megatron, other nemotron -> vllm012, gemma4 -> tf58,
       everything else -> the base 0.7.0 group. verl 0.5 recipes -> the generic "verl" key.
 
     Matches on the version dir + filename only (the recipe's location relative to its
@@ -160,7 +160,7 @@ def _verl_regional_key_for_path(recipe_path: str) -> str:
     parts = Path(recipe_path).parts
     tail = "/".join(parts[-2:]).lower() if len(parts) >= 2 else Path(recipe_path).name.lower()
     if "0_7_0" in tail:
-        if "nemotron-3-5-lightning" in tail:
+        if any(k in tail for k in ("nemotron-3-5-lightning", "nemotron-3-nano-4b")):
             return "verl-0.7.0-megatron"
         if "nemotron" in tail:
             return "verl-0.7.0-vllm012"

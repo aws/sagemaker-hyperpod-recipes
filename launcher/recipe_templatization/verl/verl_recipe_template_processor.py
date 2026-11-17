@@ -133,7 +133,7 @@ class VerlRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         # while RL 0.7.0 recipes (GRPO/PPO) have "global_profiler" instead.
         is_verl_0_7_0 = "profiler" in recipe_cfg.training_config or "global_profiler" in recipe_cfg.training_config
         if is_verl_0_7_0:
-            if "nemotron-3-5-lightning" in recipe_file_path.lower():
+            if any(k in recipe_file_path.lower() for k in ("nemotron-3-5-lightning", "nemotron-3-nano-4b")):
                 self._verl_regional_key = "verl-0.7.0-megatron"
             elif "nemotron" in recipe_file_path.lower():
                 self._verl_regional_key = "verl-0.7.0-vllm012"

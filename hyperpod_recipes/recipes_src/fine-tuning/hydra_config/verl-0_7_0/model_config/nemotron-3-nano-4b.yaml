@@ -1,0 +1,13 @@
+# @package recipes
+# NVIDIA Nemotron 3 Nano 4B (dense hybrid Mamba2/attention NemotronH, no MoE, no MTP)
+# model configuration for verl-0.7.0 SFT/DPO on the Megatron (mbridge) engine.
+# trust_remote_code is required: the native transformers NemotronHConfig defaults its MoE
+# fields (n_routed_experts, ...) to non-null values, while the repo's remote config leaves
+# them unset for this dense checkpoint.
+training_config:
+  model:
+    path: nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16
+    trust_remote_code: true
+    external_lib: verl.models.mcore.nemotron_h_patch
+    use_liger: false
+    use_fused_kernels: false

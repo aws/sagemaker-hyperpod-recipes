@@ -40,6 +40,7 @@ from launcher.recipe_templatization.base_recipe_template_processor import (
 from launcher.recipe_templatization.verl.verl_recipe_template_processor import (
     VerlRecipeTemplateProcessor,
 )
+from scripts.generate_containers_doc import _verl_regional_key_for_path
 from scripts.generate_launch_jsons import LaunchJsonGenerator
 from scripts.validations.validation_launchers.launcher_utils import (
     COMMON_CONFIG_PATH,
@@ -98,7 +99,7 @@ REGIONAL_KEY_TO_TAG = {
     "verl-0.7.0": "verl-v1.1.6",
     "verl-0.7.0-vllm012": "verl-v1.1.0",
     "verl-0.7.0-tf58": "verl-v1.1.6",
-    "verl-0.7.0-megatron": "verl-v1.1.2",
+    "verl-0.7.0-megatron": "verl-v1.1.10",
 }
 VALID_BUCKETS = {"1K", "2K", "4K", "8K", "16K", "32K", "64K", "128K"}
 
@@ -470,3 +471,26 @@ def test_sp_for_gate_credits_the_right_section():
     # actor sp absent -> defaults to 1 (so actor_rollout_ref.* gates all fall back to 1)
     tc_no_sp = {"actor_rollout_ref": {"actor": {}}}
     assert _sp_for_gate(tc_no_sp, ("actor_rollout_ref", "rollout", "log_prob_max_token_len_per_gpu")) == 1
+
+
+# The 0.7.0 Nemotron recipes, whose container the processor picks by model substring. Each container
+# is pinned in three places: the processor (what JumpStart publishes), the validator's container_key
+# (what the recipe is validated on) and generate_containers_doc (what CONTAINERS.md lists).
+NEMOTRON_07_RELS = [rel for rel in RELS if rel.startswith("fine-tuning/nemotron-0_7_0/")]
+
+
+def test_nemotron_07_recipes_found():
+    assert any("nemotron-3-nano-4b" in rel for rel in NEMOTRON_07_RELS)
+    assert any("nemotron-3-5-lightning" in rel for rel in NEMOTRON_07_RELS)
+
+
+@pytest.mark.parametrize("rel", NEMOTRON_07_RELS)
+def test_nemotron_07_processor_key_matches_validator_and_doc(rel):
+    """The processor publishes the regional key the validator runs and CONTAINERS.md lists, so a routing
+    change in one place (e.g. Nano 4B or 3.5 Lightning moving off verl-0.7.0-megatron) cannot go unnoticed."""
+    key, _ = resolve_container(rel + ".yaml")
+    _LENGTH_PROC.process_recipe(recipe_file_path=rel)
+    _LENGTH_PROC.get_recipe_metadata(rel)
+    published = _LENGTH_PROC._verl_regional_key
+    assert published == CONTAINER_KEY_TO_REGIONAL.get(key), f"{rel}: processor {published!r}, validator {key!r}"
+    assert published == _verl_regional_key_for_path(rel + ".yaml"), f"{rel}: processor {published!r} != doc"
