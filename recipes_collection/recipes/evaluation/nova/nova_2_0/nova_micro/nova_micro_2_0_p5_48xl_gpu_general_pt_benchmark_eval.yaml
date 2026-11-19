@@ -1,0 +1,24 @@
+run:
+  name: nova-micro-v2-mmlu-eval-job
+  model_type: amazon.nova-2-micro-pt-v1:0:64k
+  model_name_or_path: nova-micro-2/pretraining-text-CE # or s3://escrow_bucket/model_location
+  replicas: 1 # modifiable for Sagemaker Training job, unmodifiable for Sagemaker Hyperpod job
+  data_s3_path: "" # unmodifiable
+  output_s3_path: "" # (Required) Output artifact path, Sagemaker Hyperpod job-specific configuration - not compatible with Sagemaker Training jobs
+  mlflow_tracking_uri: "" # Required for MLFlow
+  mlflow_experiment_name: "" # Optional for MLFlow
+  mlflow_run_name: "" # Optional for MLFlow
+
+evaluation:
+  task: mmlu_pt
+  strategy: zs_cot
+  metric: accuracy
+  subtask: "" # optional
+
+# Optional Inference configs
+inference:
+  max_new_tokens: 1
+  top_k: -1
+  top_p: 1.0
+  temperature: 0.0
+  top_logprobs: 5
